@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("C#-SQLite 3")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("C#-SQLite is an independent reimplementation of the SQLite software library")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SQLite3Shell.Properties")]
+[assembly: AssemblyCompany("Pioneer Software Consulting")]
+[assembly: AssemblyProduct("C#-SQLite3 shell")]
 [assembly: AssemblyCopyright("Copyright ©  2009")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("3.6.16.1")]
 [assembly: AssemblyFileVersion("1.0.0.0")]

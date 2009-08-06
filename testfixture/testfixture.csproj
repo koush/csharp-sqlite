@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CS_SQLite3</RootNamespace>
-    <AssemblyName>Testing</AssemblyName>
+    <AssemblyName>Testfixture</AssemblyName>
     <StartupObject>Testing</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

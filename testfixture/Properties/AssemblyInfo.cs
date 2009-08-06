@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Test Harness to run all the TCL tests")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Pioneer Software Consulting")]
-[assembly: AssemblyProduct("CS_SQLite3.Properties")]
+[assembly: AssemblyProduct("Textfixture")]
 [assembly: AssemblyCopyright("Copyright ©  2009")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.8")]
+[assembly: AssemblyVersion("3.6.16.1")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
