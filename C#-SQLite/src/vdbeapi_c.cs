@@ -67,7 +67,7 @@ namespace CS_SQLite3
 ** This routine sets the error code and string returned by
 ** sqlite3_errcode(), sqlite3_errmsg() and sqlite3_errmsg16().
 */
-    public static int sqlite3_finalize( sqlite3_stmt pStmt )
+    public static int sqlite3_finalize( ref sqlite3_stmt pStmt )
     {
       int rc;
       if ( pStmt == null )
@@ -798,7 +798,7 @@ __attribute__((aligned(8)))
     ** The following routines are used to access elements of the current row
     ** in the result set.
     */
-    static byte[] sqlite3_column_blob( sqlite3_stmt pStmt, int i )
+    public static byte[] sqlite3_column_blob( sqlite3_stmt pStmt, int i )
     {
       byte[] val;
       val = sqlite3_value_blob( columnMem( pStmt, i ) );
@@ -821,19 +821,19 @@ __attribute__((aligned(8)))
       columnMallocFailure( pStmt );
       return val;
     }
-    static double sqlite3_column_double( sqlite3_stmt pStmt, int i )
+    public static double sqlite3_column_double( sqlite3_stmt pStmt, int i )
     {
       double val = sqlite3_value_double( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );
       return val;
     }
-    static int sqlite3_column_int( sqlite3_stmt pStmt, int i )
+    public static int sqlite3_column_int( sqlite3_stmt pStmt, int i )
     {
       int val = sqlite3_value_int( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );
       return val;
     }
-    static sqlite_int64 sqlite3_column_int64( sqlite3_stmt pStmt, int i )
+    public static sqlite_int64 sqlite3_column_int64( sqlite3_stmt pStmt, int i )
     {
       sqlite_int64 val = sqlite3_value_int64( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );
@@ -863,7 +863,7 @@ __attribute__((aligned(8)))
 //  return val;
 //}
 #endif // * SQLITE_OMIT_UTF16 */
-    static int sqlite3_column_type( sqlite3_stmt pStmt, int i )
+    public static int sqlite3_column_type( sqlite3_stmt pStmt, int i )
     {
       int iType = sqlite3_value_type( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );

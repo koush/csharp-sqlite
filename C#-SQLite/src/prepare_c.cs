@@ -819,7 +819,7 @@ end_prepare:
       rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, ref ppStmt, ref pzTail );
       if ( rc == SQLITE_SCHEMA )
       {
-        sqlite3_finalize( ppStmt );
+        sqlite3_finalize( ref ppStmt );
         rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, ref ppStmt, ref  pzTail );
       }
       sqlite3BtreeLeaveAll( db );

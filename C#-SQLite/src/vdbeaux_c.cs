@@ -2521,7 +2521,7 @@ fclose(out);
       {
         return SQLITE_MISUSE;
       }
-      sqlite3VdbeDelete( p );
+      sqlite3VdbeDelete( ref p );
       return rc;
     }
 
@@ -2551,7 +2551,7 @@ fclose(out);
     /*
     ** Delete an entire VDBE.
     */
-    static void sqlite3VdbeDelete( Vdbe p )
+    static void sqlite3VdbeDelete( ref Vdbe p )
     {
       int i;
       sqlite3 db;

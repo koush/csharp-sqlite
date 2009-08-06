@@ -630,7 +630,7 @@ sqlite3ParserStackPeak(pEngine)
       }
       if ( pParse.pVdbe != null && pParse.nErr > 0 && pParse.nested == 0 )
       {
-        sqlite3VdbeDelete( pParse.pVdbe );
+        sqlite3VdbeDelete( ref pParse.pVdbe );
         pParse.pVdbe = null;
       }
 #if !SQLITE_OMIT_SHARED_CACHE

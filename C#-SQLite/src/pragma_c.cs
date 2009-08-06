@@ -1216,154 +1216,154 @@ else
 #endif // * !SQLITE_OMIT_FOREIGN_KEY) */
 
 #if !NDEBUG
-                                                if ( sqlite3StrICmp( zLeft, "parser_trace" ) == 0 )
+                                        if ( sqlite3StrICmp( zLeft, "parser_trace" ) == 0 )
+                                        {
+                                          if ( zRight != null )
+                                          {
+                                            if ( getBoolean( zRight ) != 0 )
+                                            {
+                                              sqlite3ParserTrace( Console.Out, "parser: " );
+                                            }
+                                            else
+                                            {
+                                              sqlite3ParserTrace( null, "" );
+                                            }
+                                          }
+                                        }
+                                        else
+#endif
+
+                                                /* Reinstall the LIKE and GLOB functions.  The variant of LIKE
+** used will be case sensitive or not depending on the RHS.
+*/
+                                                if ( sqlite3StrICmp( zLeft, "case_sensitive_like" ) == 0 )
                                                 {
                                                   if ( zRight != null )
                                                   {
-                                                    if ( getBoolean( zRight ) != 0 )
-                                                    {
-                                                      sqlite3ParserTrace( Console.Out, "parser: " );
-                                                    }
-                                                    else
-                                                    {
-                                                      sqlite3ParserTrace( null, "" );
-                                                    }
+                                                    sqlite3RegisterLikeFunctions( db, getBoolean( zRight ) );
                                                   }
                                                 }
                                                 else
-#endif
-
-                                                  /* Reinstall the LIKE and GLOB functions.  The variant of LIKE
-** used will be case sensitive or not depending on the RHS.
-*/
-                                                  if ( sqlite3StrICmp( zLeft, "case_sensitive_like" ) == 0 )
-                                                  {
-                                                    if ( zRight != null )
-                                                    {
-                                                      sqlite3RegisterLikeFunctions( db, getBoolean( zRight ) );
-                                                    }
-                                                  }
-                                                  else
 
 #if !SQLITE_INTEGRITY_CHECK_ERROR_MAX
-                                                    //const int SQLITE_INTEGRITY_CHECK_ERROR_MAX = 100;
+                                                  //const int SQLITE_INTEGRITY_CHECK_ERROR_MAX = 100;
 #endif
 
 #if !SQLITE_OMIT_INTEGRITY_CHECK
-                                                    /* Pragma "quick_check" is an experimental reduced version of 
+                                                  /* Pragma "quick_check" is an experimental reduced version of 
 ** integrity_check designed to detect most database corruption
 ** without most of the overhead of a full integrity-check.
 */
-                                                    if ( sqlite3StrICmp( zLeft, "integrity_check" ) == 0
-                                                     || sqlite3StrICmp( zLeft, "quick_check" ) == 0
-                                                    )
-                                                    {
-                                                      const int SQLITE_INTEGRITY_CHECK_ERROR_MAX = 100;
-                                                      int i, j, addr, mxErr;
+                                                  if ( sqlite3StrICmp( zLeft, "integrity_check" ) == 0
+                                                   || sqlite3StrICmp( zLeft, "quick_check" ) == 0
+                                                  )
+                                                  {
+                                                    const int SQLITE_INTEGRITY_CHECK_ERROR_MAX = 100;
+                                                    int i, j, addr, mxErr;
 
-                                                      /* Code that appears at the end of the integrity check.  If no error
-                                                      ** messages have been generated, output OK.  Otherwise output the
-                                                      ** error message
-                                                      */
-                                                      VdbeOpList[] endCode = new VdbeOpList[]  {
+                                                    /* Code that appears at the end of the integrity check.  If no error
+                                                    ** messages have been generated, output OK.  Otherwise output the
+                                                    ** error message
+                                                    */
+                                                    VdbeOpList[] endCode = new VdbeOpList[]  {
 new VdbeOpList( OP_AddImm,      1, 0,        0),    /* 0 */
 new                    VdbeOpList( OP_IfNeg,       1, 0,        0),    /* 1 */
 new    VdbeOpList( OP_String8,     0, 3,        0),    /* 2 */
 new  VdbeOpList( OP_ResultRow,   3, 1,        0),
 };
 
-                                                      bool isQuick = ( zLeft[0] == 'q' );
+                                                    bool isQuick = ( zLeft[0] == 'q' );
 
-                                                      /* Initialize the VDBE program */
-                                                      if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
-                                                      pParse.nMem = 6;
-                                                      sqlite3VdbeSetNumCols( v, 1 );
-                                                      sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "integrity_check", SQLITE_STATIC );
+                                                    /* Initialize the VDBE program */
+                                                    if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                                    pParse.nMem = 6;
+                                                    sqlite3VdbeSetNumCols( v, 1 );
+                                                    sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "integrity_check", SQLITE_STATIC );
 
-                                                      /* Set the maximum error count */
-                                                      mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
-                                                      if ( zRight != null )
+                                                    /* Set the maximum error count */
+                                                    mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
+                                                    if ( zRight != null )
+                                                    {
+                                                      mxErr = atoi( zRight );
+                                                      if ( mxErr <= 0 )
                                                       {
-                                                        mxErr = atoi( zRight );
-                                                        if ( mxErr <= 0 )
+                                                        mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
+                                                      }
+                                                    }
+                                                    sqlite3VdbeAddOp2( v, OP_Integer, mxErr, 1 );  /* reg[1] holds errors left */
+
+                                                    /* Do an integrity check on each database file */
+                                                    for ( i = 0 ; i < db.nDb ; i++ )
+                                                    {
+                                                      HashElem x;
+                                                      Hash pTbls;
+                                                      int cnt = 0;
+
+                                                      if ( OMIT_TEMPDB != 0 && i == 1 ) continue;
+
+                                                      sqlite3CodeVerifySchema( pParse, i );
+                                                      addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 ); /* Halt if out of errors */
+                                                      sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
+                                                      sqlite3VdbeJumpHere( v, addr );
+
+                                                      /* Do an integrity check of the B-Tree
+                                                      **
+                                                      ** Begin by filling registers 2, 3, ... with the root pages numbers
+                                                      ** for all tables and indices in the database.
+                                                      */
+                                                      pTbls = db.aDb[i].pSchema.tblHash;
+                                                      for ( x = pTbls.first ; x != null ; x = x.next )
+                                                      {//          for(x=sqliteHashFirst(pTbls); x; x=sqliteHashNext(x)){
+                                                        Table pTab = (Table)x.data;// sqliteHashData( x );
+                                                        Index pIdx;
+                                                        sqlite3VdbeAddOp2( v, OP_Integer, pTab.tnum, 2 + cnt );
+                                                        cnt++;
+                                                        for ( pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext )
                                                         {
-                                                          mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
+                                                          sqlite3VdbeAddOp2( v, OP_Integer, pIdx.tnum, 2 + cnt );
+                                                          cnt++;
                                                         }
                                                       }
-                                                      sqlite3VdbeAddOp2( v, OP_Integer, mxErr, 1 );  /* reg[1] holds errors left */
 
-                                                      /* Do an integrity check on each database file */
-                                                      for ( i = 0 ; i < db.nDb ; i++ )
+                                                      /* Make sure sufficient number of registers have been allocated */
+                                                      if ( pParse.nMem < cnt + 4 )
                                                       {
-                                                        HashElem x;
-                                                        Hash pTbls;
-                                                        int cnt = 0;
+                                                        pParse.nMem = cnt + 4;
+                                                      }
 
-                                                        if ( OMIT_TEMPDB != 0 && i == 1 ) continue;
+                                                      /* Do the b-tree integrity checks */
+                                                      sqlite3VdbeAddOp3( v, OP_IntegrityCk, 2, cnt, 1 );
+                                                      sqlite3VdbeChangeP5( v, (u8)i );
+                                                      addr = sqlite3VdbeAddOp1( v, OP_IsNull, 2 );
+                                                      sqlite3VdbeAddOp4( v, OP_String8, 0, 3, 0,
+                                                         sqlite3MPrintf( db, "*** in database %s ***\n", db.aDb[i].zName ),
+                                                         P4_DYNAMIC );
+                                                      sqlite3VdbeAddOp3( v, OP_Move, 2, 4, 1 );
+                                                      sqlite3VdbeAddOp3( v, OP_Concat, 4, 3, 2 );
+                                                      sqlite3VdbeAddOp2( v, OP_ResultRow, 2, 1 );
+                                                      sqlite3VdbeJumpHere( v, addr );
 
-                                                        sqlite3CodeVerifySchema( pParse, i );
-                                                        addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 ); /* Halt if out of errors */
+                                                      /* Make sure all the indices are constructed correctly.
+                                                      */
+                                                      for ( x = pTbls.first ; x != null && !isQuick ; x = x.next )
+                                                      {
+                                                        ;//          for(x=sqliteHashFirst(pTbls); x && !isQuick; x=sqliteHashNext(x)){
+                                                        Table pTab = (Table)x.data;// sqliteHashData( x );
+                                                        Index pIdx;
+                                                        int loopTop;
+
+                                                        if ( pTab.pIndex == null ) continue;
+                                                        addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 );  /* Stop if out of errors */
                                                         sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
                                                         sqlite3VdbeJumpHere( v, addr );
-
-                                                        /* Do an integrity check of the B-Tree
-                                                        **
-                                                        ** Begin by filling registers 2, 3, ... with the root pages numbers
-                                                        ** for all tables and indices in the database.
-                                                        */
-                                                        pTbls = db.aDb[i].pSchema.tblHash;
-                                                        for ( x = pTbls.first ; x != null ; x = x.next )
-                                                        {//          for(x=sqliteHashFirst(pTbls); x; x=sqliteHashNext(x)){
-                                                          Table pTab = (Table)x.data;// sqliteHashData( x );
-                                                          Index pIdx;
-                                                          sqlite3VdbeAddOp2( v, OP_Integer, pTab.tnum, 2 + cnt );
-                                                          cnt++;
-                                                          for ( pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext )
-                                                          {
-                                                            sqlite3VdbeAddOp2( v, OP_Integer, pIdx.tnum, 2 + cnt );
-                                                            cnt++;
-                                                          }
-                                                        }
-
-                                                        /* Make sure sufficient number of registers have been allocated */
-                                                        if ( pParse.nMem < cnt + 4 )
+                                                        sqlite3OpenTableAndIndices( pParse, pTab, 1, OP_OpenRead );
+                                                        sqlite3VdbeAddOp2( v, OP_Integer, 0, 2 );  /* reg(2) will count entries */
+                                                        loopTop = sqlite3VdbeAddOp2( v, OP_Rewind, 1, 0 );
+                                                        sqlite3VdbeAddOp2( v, OP_AddImm, 2, 1 );   /* increment entry count */
+                                                        for ( j = 0, pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext, j++ )
                                                         {
-                                                          pParse.nMem = cnt + 4;
-                                                        }
-
-                                                        /* Do the b-tree integrity checks */
-                                                        sqlite3VdbeAddOp3( v, OP_IntegrityCk, 2, cnt, 1 );
-                                                        sqlite3VdbeChangeP5( v, (u8)i );
-                                                        addr = sqlite3VdbeAddOp1( v, OP_IsNull, 2 );
-                                                        sqlite3VdbeAddOp4( v, OP_String8, 0, 3, 0,
-                                                           sqlite3MPrintf( db, "*** in database %s ***\n", db.aDb[i].zName ),
-                                                           P4_DYNAMIC );
-                                                        sqlite3VdbeAddOp3( v, OP_Move, 2, 4, 1 );
-                                                        sqlite3VdbeAddOp3( v, OP_Concat, 4, 3, 2 );
-                                                        sqlite3VdbeAddOp2( v, OP_ResultRow, 2, 1 );
-                                                        sqlite3VdbeJumpHere( v, addr );
-
-                                                        /* Make sure all the indices are constructed correctly.
-                                                        */
-                                                        for ( x = pTbls.first ; x != null && !isQuick ; x = x.next )
-                                                        {
-                                                          ;//          for(x=sqliteHashFirst(pTbls); x && !isQuick; x=sqliteHashNext(x)){
-                                                          Table pTab = (Table)x.data;// sqliteHashData( x );
-                                                          Index pIdx;
-                                                          int loopTop;
-
-                                                          if ( pTab.pIndex == null ) continue;
-                                                          addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 );  /* Stop if out of errors */
-                                                          sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
-                                                          sqlite3VdbeJumpHere( v, addr );
-                                                          sqlite3OpenTableAndIndices( pParse, pTab, 1, OP_OpenRead );
-                                                          sqlite3VdbeAddOp2( v, OP_Integer, 0, 2 );  /* reg(2) will count entries */
-                                                          loopTop = sqlite3VdbeAddOp2( v, OP_Rewind, 1, 0 );
-                                                          sqlite3VdbeAddOp2( v, OP_AddImm, 2, 1 );   /* increment entry count */
-                                                          for ( j = 0, pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext, j++ )
-                                                          {
-                                                            int jmp2;
-                                                            VdbeOpList[] idxErr = new VdbeOpList[]  {
+                                                          int jmp2;
+                                                          VdbeOpList[] idxErr = new VdbeOpList[]  {
 new VdbeOpList( OP_AddImm,      1, -1,  0),
 new VdbeOpList( OP_String8,     0,  3,  0),    /* 1 */
 new VdbeOpList( OP_Rowid,       1,  4,  0),
@@ -1376,20 +1376,20 @@ new VdbeOpList( OP_ResultRow,   3,  1,  0),
 new VdbeOpList(  OP_IfPos,       1,  0,  0),    /* 9 */
 new VdbeOpList(  OP_Halt,        0,  0,  0),
 };
-                                                            sqlite3GenerateIndexKey( pParse, pIdx, 1, 3, true );
-                                                            jmp2 = sqlite3VdbeAddOp3( v, OP_Found, j + 2, 0, 3 );
-                                                            addr = sqlite3VdbeAddOpList( v, ArraySize( idxErr ), idxErr );
-                                                            sqlite3VdbeChangeP4( v, addr + 1, "rowid ", SQLITE_STATIC );
-                                                            sqlite3VdbeChangeP4( v, addr + 3, " missing from index ", SQLITE_STATIC );
-                                                            sqlite3VdbeChangeP4( v, addr + 4, pIdx.zName, P4_STATIC );
-                                                            sqlite3VdbeJumpHere( v, addr + 9 );
-                                                            sqlite3VdbeJumpHere( v, jmp2 );
-                                                          }
-                                                          sqlite3VdbeAddOp2( v, OP_Next, 1, loopTop + 1 );
-                                                          sqlite3VdbeJumpHere( v, loopTop );
-                                                          for ( j = 0, pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext, j++ )
-                                                          {
-                                                            VdbeOpList[] cntIdx = new VdbeOpList[] {
+                                                          sqlite3GenerateIndexKey( pParse, pIdx, 1, 3, true );
+                                                          jmp2 = sqlite3VdbeAddOp3( v, OP_Found, j + 2, 0, 3 );
+                                                          addr = sqlite3VdbeAddOpList( v, ArraySize( idxErr ), idxErr );
+                                                          sqlite3VdbeChangeP4( v, addr + 1, "rowid ", SQLITE_STATIC );
+                                                          sqlite3VdbeChangeP4( v, addr + 3, " missing from index ", SQLITE_STATIC );
+                                                          sqlite3VdbeChangeP4( v, addr + 4, pIdx.zName, P4_STATIC );
+                                                          sqlite3VdbeJumpHere( v, addr + 9 );
+                                                          sqlite3VdbeJumpHere( v, jmp2 );
+                                                        }
+                                                        sqlite3VdbeAddOp2( v, OP_Next, 1, loopTop + 1 );
+                                                        sqlite3VdbeJumpHere( v, loopTop );
+                                                        for ( j = 0, pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext, j++ )
+                                                        {
+                                                          VdbeOpList[] cntIdx = new VdbeOpList[] {
 new VdbeOpList( OP_Integer,      0,  3,  0),
 new VdbeOpList( OP_Rewind,       0,  0,  0),  /* 1 */
 new VdbeOpList( OP_AddImm,       3,  1,  0),
@@ -1401,30 +1401,30 @@ new VdbeOpList( OP_String8,      0,  3,  0),  /* 7 */
 new VdbeOpList( OP_Concat,       3,  2,  2),
 new VdbeOpList( OP_ResultRow,    2,  1,  0),
 };
-                                                            addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 );
-                                                            sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
-                                                            sqlite3VdbeJumpHere( v, addr );
-                                                            addr = sqlite3VdbeAddOpList( v, ArraySize( cntIdx ), cntIdx );
-                                                            sqlite3VdbeChangeP1( v, addr + 1, j + 2 );
-                                                            sqlite3VdbeChangeP2( v, addr + 1, addr + 4 );
-                                                            sqlite3VdbeChangeP1( v, addr + 3, j + 2 );
-                                                            sqlite3VdbeChangeP2( v, addr + 3, addr + 2 );
-                                                            sqlite3VdbeJumpHere( v, addr + 4 );
-                                                            sqlite3VdbeChangeP4( v, addr + 6,
-                                                                       "wrong # of entries in index ", P4_STATIC );
-                                                            sqlite3VdbeChangeP4( v, addr + 7, pIdx.zName, P4_STATIC );
-                                                          }
+                                                          addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 );
+                                                          sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
+                                                          sqlite3VdbeJumpHere( v, addr );
+                                                          addr = sqlite3VdbeAddOpList( v, ArraySize( cntIdx ), cntIdx );
+                                                          sqlite3VdbeChangeP1( v, addr + 1, j + 2 );
+                                                          sqlite3VdbeChangeP2( v, addr + 1, addr + 4 );
+                                                          sqlite3VdbeChangeP1( v, addr + 3, j + 2 );
+                                                          sqlite3VdbeChangeP2( v, addr + 3, addr + 2 );
+                                                          sqlite3VdbeJumpHere( v, addr + 4 );
+                                                          sqlite3VdbeChangeP4( v, addr + 6,
+                                                                     "wrong # of entries in index ", P4_STATIC );
+                                                          sqlite3VdbeChangeP4( v, addr + 7, pIdx.zName, P4_STATIC );
                                                         }
                                                       }
-                                                      addr = sqlite3VdbeAddOpList( v, ArraySize( endCode ), endCode );
-                                                      sqlite3VdbeChangeP2( v, addr, -mxErr );
-                                                      sqlite3VdbeJumpHere( v, addr + 1 );
-                                                      sqlite3VdbeChangeP4( v, addr + 2, "ok", P4_STATIC );
                                                     }
-                                                    else
+                                                    addr = sqlite3VdbeAddOpList( v, ArraySize( endCode ), endCode );
+                                                    sqlite3VdbeChangeP2( v, addr, -mxErr );
+                                                    sqlite3VdbeJumpHere( v, addr + 1 );
+                                                    sqlite3VdbeChangeP4( v, addr + 2, "ok", P4_STATIC );
+                                                  }
+                                                  else
 #endif // * SQLITE_OMIT_INTEGRITY_CHECK */
 
-                                                      /*
+                                                    /*
 **   PRAGMA encoding
 **   PRAGMA encoding = "utf-8"|"utf-16"|"utf-16le"|"utf-16be"
 **
@@ -1446,9 +1446,9 @@ new VdbeOpList( OP_ResultRow,    2,  1,  0),
 ** new database files created using this database handle. It is only
 ** useful if invoked immediately after the main database i
 */
-                                                      if ( sqlite3StrICmp( zLeft, "encoding" ) == 0 )
-                                                      {
-                                                        EncName[] encnames = new EncName[]  {
+                                                    if ( sqlite3StrICmp( zLeft, "encoding" ) == 0 )
+                                                    {
+                                                      EncName[] encnames = new EncName[]  {
 new EncName( "UTF8",     SQLITE_UTF8        ),
 new EncName( "UTF-8",    SQLITE_UTF8        ),/* Must be element [1] */
 new EncName( "UTF-16le", SQLITE_UTF16LE     ),/* Must be element [2] */
@@ -1459,19 +1459,19 @@ new EncName( "UTF-16",   0                  ), /* SQLITE_UTF16NATIVE */
 new EncName( "UTF16",    0                  ), /* SQLITE_UTF16NATIVE */
 new EncName( null, 0 )
 };
-                                                        int iEnc;
-                                                        if ( null == zRight )
-                                                        {    /* "PRAGMA encoding" */
-                                                          if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
-                                                          sqlite3VdbeSetNumCols( v, 1 );
-                                                          sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "encoding", SQLITE_STATIC );
-                                                          sqlite3VdbeAddOp2( v, OP_String8, 0, 1 );
-                                                          Debug.Assert( encnames[SQLITE_UTF8].enc == SQLITE_UTF8 );
-                                                          Debug.Assert( encnames[SQLITE_UTF16LE].enc == SQLITE_UTF16LE );
-                                                          Debug.Assert( encnames[SQLITE_UTF16BE].enc == SQLITE_UTF16BE );
-                                                          sqlite3VdbeChangeP4( v, -1, encnames[ENC( pParse.db )].zName, P4_STATIC );
-                                                          sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 1 );
-                                                        }
+                                                      int iEnc;
+                                                      if ( null == zRight )
+                                                      {    /* "PRAGMA encoding" */
+                                                        if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                                        sqlite3VdbeSetNumCols( v, 1 );
+                                                        sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "encoding", SQLITE_STATIC );
+                                                        sqlite3VdbeAddOp2( v, OP_String8, 0, 1 );
+                                                        Debug.Assert( encnames[SQLITE_UTF8].enc == SQLITE_UTF8 );
+                                                        Debug.Assert( encnames[SQLITE_UTF16LE].enc == SQLITE_UTF16LE );
+                                                        Debug.Assert( encnames[SQLITE_UTF16BE].enc == SQLITE_UTF16BE );
+                                                        sqlite3VdbeChangeP4( v, -1, encnames[ENC( pParse.db )].zName, P4_STATIC );
+                                                        sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 1 );
+                                                      }
 #if !SQLITE_OMIT_UTF16
 else
 {                        /* "PRAGMA encoding = XXX" */
@@ -1501,11 +1501,11 @@ sqlite3ErrorMsg( pParse, "unsupported encoding: %s", zRight );
 }
 }
 #endif
-                                                      }
-                                                      else
+                                                    }
+                                                    else
 
 #if !SQLITE_OMIT_SCHEMA_VERSION_PRAGMAS
-                                                        /*
+                                                      /*
 **   PRAGMA [database.]schema_version
 **   PRAGMA [database.]schema_version = <integer>
 **
@@ -1530,107 +1530,107 @@ sqlite3ErrorMsg( pParse, "unsupported encoding: %s", zRight );
 ** The user-version is not used internally by SQLite. It may be used by
 ** applications for any purpose.
 */
-                                                        if ( sqlite3StrICmp( zLeft, "schema_version" ) == 0
-                                                         || sqlite3StrICmp( zLeft, "user_version" ) == 0
-                                                         || sqlite3StrICmp( zLeft, "freelist_count" ) == 0
-                                                        )
+                                                      if ( sqlite3StrICmp( zLeft, "schema_version" ) == 0
+                                                       || sqlite3StrICmp( zLeft, "user_version" ) == 0
+                                                       || sqlite3StrICmp( zLeft, "freelist_count" ) == 0
+                                                      )
+                                                      {
+                                                        int iCookie;   /* Cookie index. 1 for schema-cookie, 6 for user-cookie. */
+                                                        sqlite3VdbeUsesBtree( v, iDb );
+                                                        switch ( zLeft[0] )
                                                         {
-                                                          int iCookie;   /* Cookie index. 1 for schema-cookie, 6 for user-cookie. */
-                                                          sqlite3VdbeUsesBtree( v, iDb );
-                                                          switch ( zLeft[0] )
-                                                          {
-                                                            case 'f':
-                                                            case 'F':
-                                                              iCookie = BTREE_FREE_PAGE_COUNT;
-                                                              break;
-                                                            case 's':
-                                                            case 'S':
-                                                              iCookie = BTREE_SCHEMA_VERSION;
-                                                              break;
-                                                            default:
-                                                              iCookie = BTREE_USER_VERSION;
-                                                              break;
-                                                          }
+                                                          case 'f':
+                                                          case 'F':
+                                                            iCookie = BTREE_FREE_PAGE_COUNT;
+                                                            break;
+                                                          case 's':
+                                                          case 'S':
+                                                            iCookie = BTREE_SCHEMA_VERSION;
+                                                            break;
+                                                          default:
+                                                            iCookie = BTREE_USER_VERSION;
+                                                            break;
+                                                        }
 
-                                                          if ( zRight != null && iCookie != BTREE_FREE_PAGE_COUNT )
-                                                          {
-                                                            /* Write the specified cookie value */
-                                                            VdbeOpList[] setCookie = new VdbeOpList[] {
+                                                        if ( zRight != null && iCookie != BTREE_FREE_PAGE_COUNT )
+                                                        {
+                                                          /* Write the specified cookie value */
+                                                          VdbeOpList[] setCookie = new VdbeOpList[] {
 new VdbeOpList( OP_Transaction,    0,  1,  0),    /* 0 */
 new   VdbeOpList( OP_Integer,        0,  1,  0),    /* 1 */
 new VdbeOpList( OP_SetCookie,      0,  0,  1),    /* 2 */
 };
-                                                            int addr = sqlite3VdbeAddOpList( v, ArraySize( setCookie ), setCookie );
-                                                            sqlite3VdbeChangeP1( v, addr, iDb );
-                                                            sqlite3VdbeChangeP1( v, addr + 1, atoi( zRight ) );
-                                                            sqlite3VdbeChangeP1( v, addr + 2, iDb );
-                                                            sqlite3VdbeChangeP2( v, addr + 2, iCookie );
-                                                          }
-                                                          else
-                                                          {
-                                                            /* Read the specified cookie value */
-                                                            VdbeOpList[] readCookie = new VdbeOpList[]  {
+                                                          int addr = sqlite3VdbeAddOpList( v, ArraySize( setCookie ), setCookie );
+                                                          sqlite3VdbeChangeP1( v, addr, iDb );
+                                                          sqlite3VdbeChangeP1( v, addr + 1, atoi( zRight ) );
+                                                          sqlite3VdbeChangeP1( v, addr + 2, iDb );
+                                                          sqlite3VdbeChangeP2( v, addr + 2, iCookie );
+                                                        }
+                                                        else
+                                                        {
+                                                          /* Read the specified cookie value */
+                                                          VdbeOpList[] readCookie = new VdbeOpList[]  {
 new VdbeOpList( OP_ReadCookie,      0,  1,  0),    /* 0 */
 new VdbeOpList( OP_ResultRow,       1,  1,  0)
 };
-                                                            int addr = sqlite3VdbeAddOpList( v, readCookie.Length, readCookie );// ArraySize(readCookie), readCookie);
-                                                            sqlite3VdbeChangeP1( v, addr, iDb );
-                                                            sqlite3VdbeChangeP3( v, addr, iCookie );
-                                                            sqlite3VdbeSetNumCols( v, 1 );
-                                                            sqlite3VdbeSetColName( v, 0, COLNAME_NAME, zLeft, SQLITE_TRANSIENT );
-                                                          }
+                                                          int addr = sqlite3VdbeAddOpList( v, readCookie.Length, readCookie );// ArraySize(readCookie), readCookie);
+                                                          sqlite3VdbeChangeP1( v, addr, iDb );
+                                                          sqlite3VdbeChangeP3( v, addr, iCookie );
+                                                          sqlite3VdbeSetNumCols( v, 1 );
+                                                          sqlite3VdbeSetColName( v, 0, COLNAME_NAME, zLeft, SQLITE_TRANSIENT );
                                                         }
-                                                        else if ( sqlite3StrICmp( zLeft, "reload_schema" ) == 0 )
-                                                        {
-                                                          /* force schema reloading*/
-                                                          sqlite3ResetInternalSchema( db, 0 );
-                                                        }
-                                                        else if ( sqlite3StrICmp( zLeft, "file_format" ) == 0 )
-                                                        {
-                                                          pDb.pSchema.file_format = (u8)atoi( zRight );
-                                                          sqlite3ResetInternalSchema( db, 0 );
-                                                        }
+                                                      }
+                                                      else if ( sqlite3StrICmp( zLeft, "reload_schema" ) == 0 )
+                                                      {
+                                                        /* force schema reloading*/
+                                                        sqlite3ResetInternalSchema( db, 0 );
+                                                      }
+                                                      else if ( sqlite3StrICmp( zLeft, "file_format" ) == 0 )
+                                                      {
+                                                        pDb.pSchema.file_format = (u8)atoi( zRight );
+                                                        sqlite3ResetInternalSchema( db, 0 );
+                                                      }
 
-                                                        else
+                                                      else
 #endif // * SQLITE_OMIT_SCHEMA_VERSION_PRAGMAS */
 
 #if SQLITE_DEBUG || SQLITE_TEST
-                                                          /*
+                                                  /*
 ** Report the current state of file logs for all databases
 */
-                                                          if ( sqlite3StrICmp( zLeft, "lock_status" ) == 0 )
-                                                          {
-                                                            string[] azLockName = {
+                                                  if ( sqlite3StrICmp( zLeft, "lock_status" ) == 0 )
+                                                  {
+                                                    string[] azLockName = {
 "unlocked", "shared", "reserved", "pending", "exclusive"
 };
-                                                            int i;
-                                                            sqlite3VdbeSetNumCols( v, 2 );
-                                                            pParse.nMem = 2;
-                                                            sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "database", SQLITE_STATIC );
-                                                            sqlite3VdbeSetColName( v, 1, COLNAME_NAME, "status", SQLITE_STATIC );
-                                                            for ( i = 0 ; i < db.nDb ; i++ )
-                                                            {
-                                                              Btree pBt;
-                                                              Pager pPager;
-                                                              string zState = "unknown";
-                                                              int j = 0;
-                                                              if ( db.aDb[i].zName == null ) continue;
-                                                              sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0, db.aDb[i].zName, P4_STATIC );
-                                                              pBt = db.aDb[i].pBt;
-                                                              if ( pBt == null || ( pPager = sqlite3BtreePager( pBt ) ) == null )
-                                                              {
-                                                                zState = "closed";
-                                                              }
-                                                              else if ( sqlite3_file_control( db, i != 0 ? db.aDb[i].zName : null,
-                                                       SQLITE_FCNTL_LOCKSTATE, ref j ) == SQLITE_OK )
-                                                              {
-                                                                zState = azLockName[j];
-                                                              }
-                                                              sqlite3VdbeAddOp4( v, OP_String8, 0, 2, 0, zState, P4_STATIC );
-                                                              sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 2 );
-                                                            }
-                                                          }
-                                                          else
+                                                    int i;
+                                                    sqlite3VdbeSetNumCols( v, 2 );
+                                                    pParse.nMem = 2;
+                                                    sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "database", SQLITE_STATIC );
+                                                    sqlite3VdbeSetColName( v, 1, COLNAME_NAME, "status", SQLITE_STATIC );
+                                                    for ( i = 0 ; i < db.nDb ; i++ )
+                                                    {
+                                                      Btree pBt;
+                                                      Pager pPager;
+                                                      string zState = "unknown";
+                                                      int j = 0;
+                                                      if ( db.aDb[i].zName == null ) continue;
+                                                      sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0, db.aDb[i].zName, P4_STATIC );
+                                                      pBt = db.aDb[i].pBt;
+                                                      if ( pBt == null || ( pPager = sqlite3BtreePager( pBt ) ) == null )
+                                                      {
+                                                        zState = "closed";
+                                                      }
+                                                      else if ( sqlite3_file_control( db, i != 0 ? db.aDb[i].zName : null,
+                                               SQLITE_FCNTL_LOCKSTATE, ref j ) == SQLITE_OK )
+                                                      {
+                                                        zState = azLockName[j];
+                                                      }
+                                                      sqlite3VdbeAddOp4( v, OP_String8, 0, 2, 0, zState, P4_STATIC );
+                                                      sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 2 );
+                                                    }
+                                                  }
+                                                  else
 #endif
 
 #if SQLITE_HAS_CODEC
@@ -1672,7 +1672,7 @@ sqlite3_activate_cerod(&zRight[6]);
 #endif
 }else
 #endif
-                                                          { /* Empty ELSE clause */}
+                                                      { /* Empty ELSE clause */}
 
       /* Code an OP_Expire at the end of each PRAGMA program to cause
       ** the VDBE implementing the pragma to expire. Most (all?) pragmas

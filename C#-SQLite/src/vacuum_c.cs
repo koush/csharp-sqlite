@@ -67,7 +67,7 @@ namespace CS_SQLite3
 #else
 sqlite3_step(pStmt);
 #endif
-      return sqlite3_finalize( pStmt );
+      return sqlite3_finalize( ref pStmt );
     }
 
     /*
@@ -88,12 +88,12 @@ sqlite3_step(pStmt);
         rc = execSql( db, sqlite3_column_text( pStmt, 0 ) );
         if ( rc != SQLITE_OK )
         {
-          sqlite3_finalize( pStmt );
+          sqlite3_finalize( ref pStmt );
           return rc;
         }
       }
 
-      return sqlite3_finalize( pStmt );
+      return sqlite3_finalize( ref pStmt );
     }
 
     /*

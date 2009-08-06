@@ -3165,16 +3165,16 @@ extern "C" {
     //# define SQLITE_TEXT     3
     //#endif
     //#define SQLITE3_TEXT     3
-    const u8 SQLITE_INTEGER = 1;
-    const u8 SQLITE_FLOAT = 2;
-    const u8 SQLITE_BLOB = 4;
-    const u8 SQLITE_NULL = 5;
+    public const u8 SQLITE_INTEGER = 1;
+    public const u8 SQLITE_FLOAT = 2;
+    public const u8 SQLITE_BLOB = 4;
+    public const u8 SQLITE_NULL = 5;
 #if  SQLITE_TEXT
 /# undef SQLITE_TEXT
 #else
-    const u8 SQLITE_TEXT = 3;
+    public const u8 SQLITE_TEXT = 3;
 #endif
-    const u8 SQLITE3_TEXT = 3;
+    public const u8 SQLITE3_TEXT = 3;
 
     /*
     ** CAPI3REF: Result Values From A Query {H13800} <S10700>
