@@ -694,7 +694,9 @@ int origPc;                  /* Program counter at start of opcode */
       /*** INSERT STACK UNION HERE ***/
 
       Debug.Assert( p.magic == VDBE_MAGIC_RUN );  /* sqlite3_step() verifies this */
+#if SQLITE_DEBUG
       Debug.Assert( db.magic == SQLITE_MAGIC_BUSY );
+#endif
       sqlite3VdbeMutexArrayEnter( p );
       if ( p.rc == SQLITE_NOMEM )
       {
