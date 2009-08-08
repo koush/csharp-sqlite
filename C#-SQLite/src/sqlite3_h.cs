@@ -3525,12 +3525,12 @@ extern "C" {
     ** using these functions, we are not going to tell you what they do.
     */
 #if !SQLITE_OMIT_DEPRECATED
-    //SQLITE_DEPRECATED int sqlite3_aggregate_count(sqlite3_context*);
-    //SQLITE_DEPRECATED int sqlite3_expired(sqlite3_stmt*);
-    //SQLITE_DEPRECATED int sqlite3TransferBindings(sqlite3_stmt*, sqlite3_stmt*);
-    //SQLITE_DEPRECATED int sqlite3_global_recover(void);
-    //SQLITE_DEPRECATED void sqlite3_thread_cleanup(void);
-    //SQLITE_DEPRECATED int sqlite3MemoryAlarm(void(*)(void*,sqlite3_int64,int),void*,sqlite3_int64);
+    SQLITE_DEPRECATED int sqlite3_aggregate_count(sqlite3_context*);
+    SQLITE_DEPRECATED int sqlite3_expired(sqlite3_stmt*);
+    SQLITE_DEPRECATED int sqlite3TransferBindings(sqlite3_stmt*, sqlite3_stmt*);
+    SQLITE_DEPRECATED int sqlite3_global_recover(void);
+    SQLITE_DEPRECATED void sqlite3_thread_cleanup(void);
+    SQLITE_DEPRECATED int sqlite3MemoryAlarm(void(*)(void*,sqlite3_int64,int),void*,sqlite3_int64);
 #endif
 
     /*

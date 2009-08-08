@@ -152,7 +152,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
     //{
     //  sqlite3_aggregate_context,
 #if !SQLITE_OMIT_DEPRECATED
-    //  sqlite3_aggregate_count,
+    /  sqlite3_aggregate_count,
 #else
 //  0,
 #endif

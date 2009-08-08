@@ -360,7 +360,7 @@ sqlite3_value_text(argv[0]);
         {
           sqlite3_result_value( pCtx, sqlite3_column_value( pStmt, 0 ) );
         }
-        rc = sqlite3_finalize( pStmt );
+        rc = sqlite3_finalize( ref pStmt );
       }
       if ( rc != 0 )
       {

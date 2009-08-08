@@ -1265,6 +1265,7 @@ Debugger.Break (); // TODO --
       }
     }
 
+#if !SQLITE_OMIT_DEPRECATED
     static void legacyCountStep(
     sqlite3_context context,
     int argc,
@@ -1277,7 +1278,7 @@ Debugger.Break (); // TODO --
     {
       sqlite3_result_int( context, sqlite3_aggregate_count( context ) );
     }
-
+#endif
     /*
     ** Usage:  sqlite3_create_aggregate DB
     **
@@ -1320,17 +1321,18 @@ Debugger.Break (); // TODO --
         rc = sqlite3_create_function( db, "x_count", 1, SQLITE_UTF8, 0, null,
         t1CountStep, t1CountFinalize );
       }
+#if !SQLITE_OMIT_DEPRECATED
       if ( rc == SQLITE_OK )
       {
         rc = sqlite3_create_function( db, "legacy_count", 0, SQLITE_ANY, 0, null,
         legacyCountStep, legacyCountFinalize
         );
       }
-      if ( sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
+#endif
+      if (sqlite3TestErrCode(interp, db, rc) != 0) return TCL.TCL_ERROR;
       TCL.Tcl_SetResult( interp, t1ErrorName( rc ), 0 );
       return TCL.TCL_OK;
     }
-
 
     /*
     ** Usage:  printf TEXT
@@ -2244,7 +2246,7 @@ error_out:
       {
         db = sqlite3_db_handle( pStmt );// StmtToDb( pStmt );
       }
-      rc = sqlite3_finalize( pStmt );
+      rc = sqlite3_finalize( ref pStmt );
       TCL.Tcl_SetResult( interp, sqlite3TestErrorName( rc ), TCL.TCL_STATIC );//t1ErrorName( rc ), TCL.TCL_STATIC );
       if ( db != null && sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
       return TCL.TCL_OK;
@@ -2321,6 +2323,7 @@ error_out:
       return TCL.TCL_OK;
     }
 
+#if !SQLITE_OMIT_DEPRECATED
     /*
     ** Usage:  sqlite3_expired STMT 
     **
@@ -2344,6 +2347,7 @@ error_out:
       TCL.Tcl_SetObjResult( interp, TCL.Tcl_NewBooleanObj( sqlite3_expired( pStmt ) ) );
       return TCL.TCL_OK;
     }
+#endif
 
     /*
     ** Usage:  sqlite3TransferBindings FROMSTMT TOSTMT
@@ -5355,7 +5359,7 @@ new _aCmd( "sqlite3_get_table_printf",      test_get_table_printf ),
 new _aCmd( "sqlite3_close",                 sqlite_test_close     ),
 new _aCmd( "sqlite3_create_function",       test_create_function  ),
 new _aCmd( "sqlite3_create_aggregate",      test_create_aggregate ),
-new _aCmd( "sqlite_register_test_function", test_register_func    ),
+        new _aCmd( "sqlite_register_test_function", test_register_func    ),
 //     new _aCmd( "sqlite_abort",                  sqlite_abort          ),
 new _aCmd( "sqlite_bind",                   test_bind             ),
 new _aCmd( "breakpoint",                    test_breakpoint       ),
@@ -5405,7 +5409,9 @@ new _aObjCmd( "sqlite3_prepare_tkt3134",       test_prepare_tkt3134, 0),
 //     new _aObjCmd( "sqlite3_prepare16_v2",          test_prepare16_v2  ,0 ),
 new _aObjCmd( "sqlite3_finalize",              test_finalize      ,0 ),
 new _aObjCmd( "sqlite3_reset",                 test_reset         ,0 ),
-new _aObjCmd( "sqlite3_expired",               test_expired       ,0 ),
+#if !SQLITE_OMIT_DEPRECATED
+        new _aObjCmd( "sqlite3_expired",               test_expired       ,0 ),
+#endif
 new _aObjCmd( "sqlite3_transfer_bindings",     test_transfer_bind ,0 ),
 new _aObjCmd( "sqlite3_changes",               test_changes       ,0 ),
 new _aObjCmd( "sqlite3_step",                  test_step          ,0 ),

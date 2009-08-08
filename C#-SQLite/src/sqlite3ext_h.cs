@@ -224,7 +224,7 @@ namespace CS_SQLite3
 #if !SQLITE_CORE
     //#define sqlite3_aggregate_context      sqlite3_api->aggregate_context
 #if !SQLITE_OMIT_DEPRECATED
-    //#define sqlite3_aggregate_count        sqlite3_api->aggregate_count
+    /#define sqlite3_aggregate_count        sqlite3_api->aggregate_count
 #endif
     //#define sqlite3_bind_blob              sqlite3_api->bind_blob
     //#define sqlite3_bind_double            sqlite3_api->bind_double
@@ -282,7 +282,7 @@ namespace CS_SQLite3
     //#define sqlite3_errmsg16               sqlite3_api->errmsg16
     //#define sqlite3_exec                   sqlite3_api->exec
 #if !SQLITE_OMIT_DEPRECATED
-    //#define sqlite3_expired                sqlite3_api->expired
+    /#define sqlite3_expired                sqlite3_api->expired
 #endif
     //#define sqlite3_finalize               sqlite3_api->finalize
     //#define sqlite3_free                   sqlite3_api->free

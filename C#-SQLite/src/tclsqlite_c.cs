@@ -478,7 +478,7 @@ return TCL.TCL_OK;
 
       while ( pDb.stmtList != null )
       {
-        sqlite3_finalize( pDb.stmtList.pStmt );
+        sqlite3_finalize( ref pDb.stmtList.pStmt );
         pPreStmt = pDb.stmtList;
         pDb.stmtList = pDb.stmtList.pNext;
         TCL.Tcl_Free( ref pPreStmt );
@@ -1711,7 +1711,7 @@ rc = TCL_ERROR;
             {
               nCol = sqlite3_column_count( pStmt );
             }
-            sqlite3_finalize( pStmt );
+            sqlite3_finalize( ref pStmt );
             if ( nCol == 0 )
             {
               return TCL.TCL_ERROR;
@@ -1738,14 +1738,14 @@ rc = TCL_ERROR;
             if ( rc != 0 )
             {
               TCL.Tcl_AppendResult( interp, "Error: ", sqlite3_errmsg( pDb.db ) );
-              sqlite3_finalize( pStmt );
+              sqlite3_finalize( ref pStmt );
               return TCL.TCL_ERROR;
             }
             _in = new StreamReader( zFile );//fopen(zFile, "rb");
             if ( _in == null )
             {
               TCL.Tcl_AppendResult( interp, "Error: cannot open file: ", zFile );
-              sqlite3_finalize( pStmt );
+              sqlite3_finalize( ref pStmt );
               return TCL.TCL_ERROR;
             }
             azCol = new string[nCol + 1];//malloc( sizeof(azCol[0])*(nCol+1) );
@@ -1814,7 +1814,7 @@ rc = TCL_ERROR;
             }
             //free(azCol);
             _in.Close();// fclose( _in );
-            sqlite3_finalize( pStmt );
+            sqlite3_finalize( ref pStmt );
             sqlite3_exec( pDb.db, zCommit, 0, 0, 0 );
 
             if ( zCommit[0] == 'C' )
@@ -2266,7 +2266,7 @@ rc = TCL_ERROR;
                 ** the SQL
                 */
                 TCL.Tcl_SetObjResult( interp, dbTextToObj( sqlite3_errmsg( pDb.db ) ) );
-                sqlite3_finalize( pStmt );
+                sqlite3_finalize( ref pStmt );
                 rc = TCL.TCL_ERROR;
                 if ( pPreStmt != null ) TCL.Tcl_Free( ref pPreStmt );
                 break;
@@ -2275,7 +2275,7 @@ rc = TCL_ERROR;
               {
                 /* If the cache is turned off, deallocated the statement */
                 if ( pPreStmt != null ) TCL.Tcl_Free( ref pPreStmt );
-                sqlite3_finalize( pStmt );
+                sqlite3_finalize( ref pStmt );
               }
               else
               {
@@ -2320,7 +2320,7 @@ rc = TCL_ERROR;
                 */
                 while ( pDb.nStmt > pDb.maxStmt )
                 {
-                  sqlite3_finalize( pDb.stmtLast.pStmt );
+                  sqlite3_finalize( ref pDb.stmtLast.pStmt );
                   pDb.stmtLast = pDb.stmtLast.pPrev;
                   TCL.Tcl_Free( ref pDb.stmtLast.pNext );
                   pDb.stmtLast.pNext = null;
