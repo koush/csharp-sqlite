@@ -821,7 +821,7 @@ __attribute__((aligned(8)))
       columnMallocFailure( pStmt );
       return val;
     }
-    public static double sqlite3_column_double( sqlite3_stmt pStmt, int i )
+    public static double sqlite3_column_double(sqlite3_stmt pStmt, int i)
     {
       double val = sqlite3_value_double( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );

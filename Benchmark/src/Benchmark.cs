@@ -127,7 +127,7 @@ public class Benchmark
 
     String strKey = ""; 
     i = 0;
-    c2 = new SQLiteVdbe( db, SELECT_Command_i );
+    c2 = new SQLiteVdbe( db, SELECT_Command_s );
     while ( c2.ExecuteStep() != csSQLite.SQLITE_DONE )
     {
       string recStrKey = (string)c2.Result_Text( 1 );
