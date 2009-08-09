@@ -1001,7 +1001,7 @@ if( db ) sqlite3_interrupt(db);
         fprintf( _out, "%s;\n", csSQLite.sqlite3_column_text( pSelect, 0 ) );
         rc = csSQLite.sqlite3_step( pSelect );
       }
-      return csSQLite.sqlite3_finalize( pSelect );
+      return csSQLite.sqlite3_finalize( ref pSelect );
     }
 
 
@@ -1100,7 +1100,7 @@ if( db ) sqlite3_interrupt(db);
             appendText( zSelect, ") ", '\0' );
           }
         }
-        rc = csSQLite.sqlite3_finalize( pTableInfo );
+        rc = csSQLite.sqlite3_finalize( ref pTableInfo );
         if ( rc != csSQLite.SQLITE_OK )
         {
           //if ( zSelect ) free( ref zSelect );
@@ -1587,7 +1587,7 @@ int i, j;                     /* Loop counters */
                           {
                             nCol = csSQLite.sqlite3_column_count( pStmt );
                           }
-                          csSQLite.sqlite3_finalize( pStmt );
+                          csSQLite.sqlite3_finalize( ref pStmt );
                           if ( nCol == 0 ) return 0;
                           zSql = new StringBuilder( nByte + 20 + nCol * 2 );//malloc( nByte + 20 + nCol * 2 );
                           if ( zSql == null ) return 0;
@@ -1605,14 +1605,14 @@ int i, j;                     /* Loop counters */
                           if ( rc != 0 )
                           {
                             fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( db ) );
-                            csSQLite.sqlite3_finalize( pStmt );
+                            csSQLite.sqlite3_finalize( ref pStmt );
                             return 1;
                           }
                           _in = new StreamReader( zFile );// fopen( zFile, "rb" );
                           if ( _in == null )
                           {
                             fprintf( stderr, "cannot open file: %s\n", zFile );
-                            csSQLite.sqlite3_finalize( pStmt );
+                            csSQLite.sqlite3_finalize( ref pStmt );
                             return 0;
                           }
                           azCol = new string[nCol + 1];//malloc( sizeof(azCol[0])*(nCol+1) );
@@ -1670,7 +1670,7 @@ int i, j;                     /* Loop counters */
                           }
                           //free( ref azCol );
                           _in.Close();// fclose( _in );
-                          csSQLite.sqlite3_finalize( pStmt );
+                          csSQLite.sqlite3_finalize( ref pStmt );
                           csSQLite.sqlite3_exec( p.db, zCommit.ToString(), null, null, ref sDummy );
                         }
                         else
@@ -2581,7 +2581,7 @@ data.zDbFilename = (string )convertCpPathToUtf8( argv[i++] );
 #if !SQLITE_OMIT_MEMORYDB
         data.zDbFilename = ":memory:";
 #else
-data.zDbFilename = 0;
+data.zDbFilename = "";
 #endif
       }
       if ( i < argc )
@@ -2591,9 +2591,10 @@ data.zDbFilename = 0;
       data._out = stdout;
 
 #if SQLITE_OMIT_MEMORYDB
-if( data.zDbFilename==0 ){
-fprintf(stderr,"%s: no database filename specified\n", argv[0]);
-exit(1);
+if( data.zDbFilename=="" ){
+  fprintf(stderr, "C#-SQLite: Error, no database filename specified\n");
+  exit(0);
+  return 0;
 }
 #endif
 
@@ -2863,6 +2864,14 @@ if( zHistory ) read_history(zHistory);
 
     private static void exit( int p )
     {
-      throw new Exception( "The method or operation is not implemented." );
+      if (p == 0)
+      {
+        Console.WriteLine("Enter to CONTINUE:");
+        Console.ReadKey();
+      }
+      else
+      {
+        throw new Exception("The method or operation is not implemented.");
+      }
     }
   }

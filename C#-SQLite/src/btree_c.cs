@@ -1814,7 +1814,7 @@ return SQLITE_CORRUPT;
       */
 #if !SQLITE_OMIT_SHARED_CACHE || !SQLITE_OMIT_AUTOVACUUM
 #if SQLITE_OMIT_MEMORYDB
-const int isMemdb = 0;
+const bool isMemdb = false;
 #else
       bool isMemdb = zFilename == ":memory:";//!strcmp(zFilename, ":memory:");
 #endif

@@ -355,7 +355,7 @@ TCL.Tcl_SetVar2(interp, "sqlite_options", "lookaside", "1", TCL.TCL_GLOBAL_ONLY)
       //TCL.TCL_GLOBAL_ONLY);
 
 #if SQLITE_OMIT_MEMORYDB
-Tcl_SetVar2(interp, "sqlite_options", "memorydb", "0", TCL.TCL_GLOBAL_ONLY);
+      TCL.Tcl_SetVar2(interp, "sqlite_options", "memorydb", "0", TCL.TCL_GLOBAL_ONLY);
 #else
       TCL.Tcl_SetVar2( interp, "sqlite_options", "memorydb", "1", TCL.TCL_GLOBAL_ONLY );
 #endif

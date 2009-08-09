@@ -421,7 +421,8 @@ void *pCodec;               /* First argument to xCodec... methods */
     ** out code that would never execute.
     */
 #if SQLITE_OMIT_MEMORYDB
-/# define MEMDB 0
+//# define MEMDB 0
+    const int MEMDB = 0;
 #else
     //# define MEMDB pPager.memDb
 #endif
@@ -592,7 +593,7 @@ static bool assert_pager_state( Pager pPager ) { return true; }
     */
 #if SQLITE_ENABLE_ATOMIC_WRITE
 static int jrnlBufferSize(Pager *pPager){
-assert( !MEMDB );
+assert( 0==MEMDB );
 if( !pPager.tempFile ){
 int dc;                           /* Device characteristics */
 int nSector;                      /* Sector size */
@@ -1518,7 +1519,7 @@ sqlite3PcacheIterateDirty(pPager.pPCache, pager_set_pagehash);
       sqlite3PcacheTruncate( pPager.pPCache, pPager.dbSize );
       if (
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -1699,7 +1700,7 @@ sqlite3PcacheIterateDirty(pPager.pPCache, pager_set_pagehash);
       pPg = pager_lookup( pPager, pgno );
       Debug.Assert( pPg != null ||
 #if SQLITE_OMIT_MEMORYDB
-!MEMDB 
+0==MEMDB 
 #else
  pPager.memDb == 0
 #endif
@@ -2981,7 +2982,7 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
       pager_reset( pPager );
       if (
 #if SQLITE_OMIT_MEMORYDB
-1==memDb 
+1==MEMDB
 #else
  1 == pPager.memDb
 #endif
@@ -3504,7 +3505,7 @@ pList.pageHash = pager_pagehash(pList);
       Pager pPager = null;     /* Pager object to allocate and return */
       int rc = SQLITE_OK;      /* Return code */
       u8 tempFile = 0;         /* True for temp files (incl. in-memory files) */ // Needs to be u8 for later tests
-      bool memDb = false;      /* True if this is an in-memory file */
+      u8 memDb = 0;            /* True if this is an in-memory file */
       bool readOnly = false;   /* True if this is a read-only file */
       int journalFileSize;     /* Bytes to allocate for each journal fd */
       StringBuilder zPathname = null; /* Full path to database file */
@@ -3549,7 +3550,7 @@ pList.pageHash = pager_pagehash(pList);
 #if !SQLITE_OMIT_MEMORYDB
         if ( zFilename == ":memory:" )//if( strcmp(zFilename,":memory:")==null )
         {
-          memDb = true;
+          memDb = 1;
           zPathname.Length = 0;
         }
         else
@@ -3630,7 +3631,7 @@ pList.pageHash = pager_pagehash(pList);
 
       /* Open the pager file.
       */
-      if ( !String.IsNullOrEmpty( zFilename ) && !memDb )
+      if (!String.IsNullOrEmpty(zFilename) && 0 == memDb)
       {
         int fout = 0;                    /* VFS flags returned by xOpen() */
         rc = sqlite3OsOpen( pVfs, pPager.zFilename, ref pPager.fd, vfsFlags, ref fout );
@@ -3714,8 +3715,8 @@ szPageDflt = ii;
       /* Initialize the PCache object. */
       Debug.Assert( nExtra < 1000 );
       nExtra = ROUND8( nExtra );
-      sqlite3PcacheOpen( szPageDflt, nExtra, !memDb,
-      !memDb ? (dxStress)pagerStress : null, pPager, pPager.pPCache );
+      sqlite3PcacheOpen(szPageDflt, nExtra, 0 == memDb,
+      0 == memDb ? (dxStress)pagerStress : null, pPager, pPager.pPCache);
 
       PAGERTRACE( "OPEN %d %s\n", FILEHANDLEID( pPager.fd ), pPager.zFilename );
       IOTRACE( "OPEN %p %s\n", pPager, pPager.zFilename );
@@ -3724,7 +3725,7 @@ szPageDflt = ii;
       /* pPager.stmtOpen = 0; */
       /* pPager.stmtInUse = 0; */
       /* pPager.nRef = 0; */
-      pPager.dbSizeValid = memDb;
+      pPager.dbSizeValid = memDb!=0;
       /* pPager.stmtSize = 0; */
       /* pPager.stmtJSize = 0; */
       /* pPager.nPage = 0; */
@@ -3738,7 +3739,7 @@ szPageDflt = ii;
       Debug.Assert( PAGER_LOCKINGMODE_EXCLUSIVE == 1 );
       pPager.exclusiveMode = tempFile != 0;
       pPager.changeCountDone = pPager.tempFile;
-      pPager.memDb = (u8)( memDb ? 1 : 0 );
+      pPager.memDb = memDb;
       pPager.readOnly = readOnly;
       /* pPager.needSync = 0; */
       pPager.noSync = ( pPager.tempFile || !useJournal );
@@ -3751,7 +3752,7 @@ szPageDflt = ii;
       pPager.journalSizeLimit = SQLITE_DEFAULT_JOURNAL_SIZE_LIMIT;
       Debug.Assert( isOpen( pPager.fd ) || tempFile != 0 );
       setSectorSize( pPager );
-      if ( memDb )
+      if ( memDb!=0 )
       {
         pPager.journalMode = PAGER_JOURNALMODE_MEMORY;
       }
@@ -3908,7 +3909,7 @@ szPageDflt = ii;
       int rc;                      /* Return code */
       i64 iOffset;                 /* Byte offset of file to read from */
 #if SQLITE_OMIT_MEMORYDB
-Debug.Assert(  pPager.state>=PAGER_SHARED && !MEMDB );
+Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
 #endif
       Debug.Assert( pPager.fd.pMethods != null || pPager.tempFile );
       if ( !isOpen( pPager.fd ) )
@@ -3989,7 +3990,7 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
       */
       if ( 0 ==
 #if SQLITE_OMIT_MEMORYDB
-memDb 
+ MEMDB 
 #else
  pPager.memDb
 #endif
@@ -4018,7 +4019,7 @@ memDb
         int isHotJournal = 0;
         Debug.Assert(
 #if SQLITE_OMIT_MEMORYDB
-0==memDb
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -4374,7 +4375,7 @@ return SQLITE_CORRUPT_BKPT;
 
         if ( nMax < (int)pgno ||
 #if SQLITE_OMIT_MEMORYDB
-MEMDB 
+1==MEMDB 
 #else
  pPager.memDb != 0
 #endif
@@ -4657,7 +4658,7 @@ pVfs, pPager.zJournal, pPager.jfd, flags, jrnlBufferSize(pPager)
       {
         Debug.Assert( pPager.pInJournal == null );
 #if SQLITE_OMIT_MEMORYDB
-Debug.Assert( !MEMDB && !pPager.tempFile );
+Debug.Assert( 0==MEMDB && !pPager.tempFile );
 #endif
         /* Obtain a RESERVED lock on the database file. If the exFlag parameter
 ** is true, then immediately upgrade this to an EXCLUSIVE lock. The
@@ -4906,7 +4907,7 @@ CHECK_PAGE(pPg);
         */
         Debug.Assert(
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -4979,7 +4980,7 @@ CHECK_PAGE(pPg);
         {
           Debug.Assert(
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -5147,7 +5148,7 @@ const int isDirect = isDirectMode;
       int rc;                             /* Return code */
       if (
 #if SQLITE_OMIT_MEMORYDB
-MEMDB 
+1 == MEMDB 
 #else
  pPager.memDb != 0
 #endif
@@ -5209,7 +5210,7 @@ MEMDB
       */
       if ( pPager.state != PAGER_SYNCED &&
 #if SQLITE_OMIT_MEMORYDB
-0!==memDb 
+ 0==MEMDB 
 #else
  0 != pPager.memDb
 #endif
@@ -5416,7 +5417,7 @@ commit_phase_one_exit:
       PAGERTRACE( "COMMIT %d\n", PAGERID( pPager ) );
       Debug.Assert( pPager.state == PAGER_SYNCED ||
 #if SQLITE_OMIT_MEMORYDB
-1 == memDb 
+ 1 == MEMDB
 #else
  1 == pPager.memDb
 #endif
@@ -5503,7 +5504,7 @@ commit_phase_one_exit:
 
         if (
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -5574,7 +5575,7 @@ commit_phase_one_exit:
     static bool sqlite3PagerIsMemdb( Pager pPager )
     {
 #if SQLITE_OMIT_MEMORYDB
-return MEMDB;
+      return MEMDB != 0;
 #else
       return pPager.memDb != 0;
 #endif
@@ -5927,7 +5928,7 @@ return pPager->pCodec;
         pPager.needSync = true;
         Debug.Assert( pPager.noSync == false &&
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
@@ -5945,7 +5946,7 @@ return pPager->pCodec;
       */
       if (
 #if SQLITE_OMIT_MEMORYDB
-MEMDB 
+MEMDB != 0
 #else
  pPager.memDb != 0
 #endif
@@ -6036,7 +6037,7 @@ MEMDB
       if ( eMode >= 0
       && (
 #if SQLITE_OMIT_MEMORYDB
-0==memDb 
+0==MEMDB
 #else
  0 == pPager.memDb
 #endif
