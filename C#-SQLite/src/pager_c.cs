@@ -5210,7 +5210,7 @@ const int isDirect = isDirectMode;
       */
       if ( pPager.state != PAGER_SYNCED &&
 #if SQLITE_OMIT_MEMORYDB
- 0==MEMDB
+ 0 != MEMDB
 #else
  0 != pPager.memDb
 #endif
