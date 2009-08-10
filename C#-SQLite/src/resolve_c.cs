@@ -33,7 +33,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -54,7 +54,7 @@ namespace CS_SQLite3
     **
     ** The reason for suppressing the TK_AS term when the expression is a simple
     ** column reference is so that the column reference will be recognized as
-    ** usable by indices within the WHERE clause processing logic. 
+    ** usable by indices within the WHERE clause processing logic.
     **
     ** Hack:  The TK_AS operator is inhibited if zType[0]=='G'.  This means
     ** that in a GROUP BY clause, the expression is evaluated twice.  Hence:
@@ -121,12 +121,12 @@ namespace CS_SQLite3
       }
       sqlite3ExprClear( db, pExpr );
       pExpr.CopyFrom( pDup ); //memcpy(pExpr, pDup, sizeof(*pExpr));
-      sqlite3DbFree( db, ref pDup );
+      //sqlite3DbFree( db, ref pDup );
     }
 
     /*
     ** Given the name of a column of the form X.Y.Z or Y.Z or just Z, look up
-    ** that name in the set of source tables in pSrcList and make the pExpr 
+    ** that name in the set of source tables in pSrcList and make the pExpr
     ** expression node refer back to that source column.  The following changes
     ** are made to pExpr:
     **
@@ -239,14 +239,14 @@ namespace CS_SQLite3
                 pExpr.iColumn = (short)( j == pTab.iPKey ? -1 : j );
                 if ( i < pSrcList.nSrc - 1 )
                 {
-                  if ( ( pSrcList.a[i + 1].jointype & JT_NATURAL ) != 0 )// pItem[1].jointype 
+                  if ( ( pSrcList.a[i + 1].jointype & JT_NATURAL ) != 0 )// pItem[1].jointype
                   {
                     /* If this match occurred in the left table of a natural join,
                     ** then skip the right table to avoid a duplicate match */
                     //pItem++;
                     i++;
                   }
-                  else if ( ( pUsing = pSrcList.a[i + 1].pUsing ) != null )//pItem[1].pUsing 
+                  else if ( ( pUsing = pSrcList.a[i + 1].pUsing ) != null )//pItem[1].pUsing
                   {
                     /* If this match occurs on a column that is in the USING clause
                     ** of a join, skip the search of the right table of the join
@@ -270,7 +270,7 @@ namespace CS_SQLite3
         }
 
 #if !SQLITE_OMIT_TRIGGER
-        /* If we have not already resolved the name, then maybe 
+        /* If we have not already resolved the name, then maybe
 ** it is a new.* or old.* trigger argument reference
 */
         if ( zDb == null && zTab != null && cnt == 0 && pParse.trigStack != null )
@@ -304,7 +304,7 @@ namespace CS_SQLite3
 
             pSchema = pTab.pSchema;
             cntTab++;
-            for ( iCol = 0 ; iCol < pTab.nCol ; iCol++ )//, pCol++) 
+            for ( iCol = 0 ; iCol < pTab.nCol ; iCol++ )//, pCol++)
             {
               pCol = pTab.aCol[iCol];
               if ( sqlite3StrICmp( pCol.zName, zCol ) == 0 )
@@ -521,7 +521,7 @@ case TK_ROW: {
 SrcList pSrcList = pNC.pSrcList;
 SrcList_item pItem;
 Debug.Assert( pSrcList !=null && pSrcList.nSrc==1 );
-pItem = pSrcList.a[0]; 
+pItem = pSrcList.a[0];
 pExpr.op = TK_COLUMN;
 pExpr.pTab = pItem.pTab;
 pExpr.iTable = pItem.iCursor;
@@ -643,7 +643,7 @@ return WRC_Prune;
             sqlite3WalkExprList( pWalker, pList );
             if ( is_agg ) pNC.allowAgg = 1;
             /* FIX ME:  Compute pExpr.affinity based on the expected return
-            ** type of the function 
+            ** type of the function
             */
             return WRC_Prune;
           }
@@ -687,7 +687,7 @@ return WRC_Prune;
           }
 #endif
       }
-      return ( pParse.nErr != 0 || pParse.db.mallocFailed != 0 ) ? WRC_Abort : WRC_Continue;
+      return ( pParse.nErr != 0 /* || pParse.db.mallocFailed != 0 */ ) ? WRC_Abort : WRC_Continue;
     }
 
     /*
@@ -876,7 +876,7 @@ return 1;
             if ( iCol == 0 )
             {
               pDup = sqlite3ExprDup( db, pE, 0 );
-              if ( 0 == db.mallocFailed )
+              ////if ( 0 == db.mallocFailed )
               {
                 Debug.Assert( pDup != null );
                 iCol = resolveOrderByTermToExprList( pParse, pSelect, pDup );
@@ -938,7 +938,7 @@ return 1;
       ExprList pEList;
       ExprList_item pItem;
 
-      if ( pOrderBy == null || pParse.db.mallocFailed != 0 ) return 0;
+      if ( pOrderBy == null /* || pParse.db.mallocFailed != 0 */ ) return 0;
 #if SQLITE_MAX_COLUMN
 if( pOrderBy.nExpr>db.aLimit[SQLITE_LIMIT_COLUMN] ){
 sqlite3ErrorMsg(pParse, "too many terms in %s BY clause", zType);
@@ -1072,7 +1072,7 @@ return 1;
       if ( ( p.selFlags & SF_Expanded ) == 0 )
       {
         sqlite3SelectPrep( pParse, p, pOuterNC );
-        return ( pParse.nErr != 0 || db.mallocFailed != 0 ) ? WRC_Abort : WRC_Prune;
+        return ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ ) ? WRC_Abort : WRC_Prune;
       }
 
       isCompound = p.pPrior != null;
@@ -1125,11 +1125,11 @@ return 1;
             if ( pItem.zName != null ) pParse.zAuthContext = pItem.zName;
             sqlite3ResolveSelectNames( pParse, pItem.pSelect, pOuterNC );
             pParse.zAuthContext = zSavedContext;
-            if ( pParse.nErr != 0 || db.mallocFailed != 0 ) return WRC_Abort;
+            if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ ) return WRC_Abort;
           }
         }
 
-        /* If there are no aggregate functions in the result-set, and no GROUP BY 
+        /* If there are no aggregate functions in the result-set, and no GROUP BY
         ** expression, do not allow aggregates in any of the other expressions.
         */
         Debug.Assert( ( p.selFlags & SF_Aggregate ) == 0 );
@@ -1168,7 +1168,7 @@ return 1;
         }
 
         /* The ORDER BY and GROUP BY clauses may not refer to terms in
-        ** outer queries 
+        ** outer queries
         */
         sNC.pNext = null;
         sNC.allowAgg = 1;
@@ -1182,19 +1182,19 @@ return 1;
         {
           return WRC_Abort;
         }
-        if ( db.mallocFailed != 0 )
-        {
-          return WRC_Abort;
-        }
+        //if ( db.mallocFailed != 0 )
+        //{
+        //  return WRC_Abort;
+        //}
 
-        /* Resolve the GROUP BY clause.  At the same time, make sure 
+        /* Resolve the GROUP BY clause.  At the same time, make sure
         ** the GROUP BY clause does not contain aggregate functions.
         */
         if ( pGroupBy != null )
         {
           ExprList_item pItem;
 
-          if ( resolveOrderGroupBy( sNC, p, pGroupBy, "GROUP" ) != 0 || db.mallocFailed != 0 )
+          if ( resolveOrderGroupBy( sNC, p, pGroupBy, "GROUP" ) != 0 /*|| db.mallocFailed != 0 */ )
           {
             return WRC_Abort;
           }
@@ -1233,7 +1233,7 @@ return 1;
     ** checking on function usage and set a flag if any aggregate functions
     ** are seen.
     **
-    ** To resolve table columns references we look for nodes (or subtrees) of the 
+    ** To resolve table columns references we look for nodes (or subtrees) of the
     ** form X.Y.Z or Y.Z or just Z where
     **
     **      X:   The name of a database.  Ex:  "main" or "temp" or
@@ -1265,7 +1265,7 @@ return 1;
     **
     **      SELECT a+b AS x, c+d AS y FROM t1 ORDER BY a+b;
     **
-    ** Function calls are checked to make sure that the function is 
+    ** Function calls are checked to make sure that the function is
     ** defined and that the correct number of arguments are specified.
     ** If the function is an aggregate function, then the pNC.hasAgg is
     ** set and the opcode is changed from TK_FUNCTION to TK_AGG_FUNCTION.

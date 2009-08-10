@@ -411,6 +411,7 @@ do_test memdb-8.2 {
   }
 } 0
 
+ifcapable malloc {
 # Test that auto-vacuum works with in-memory databases.
 # 
 ifcapable autovacuum {
@@ -431,6 +432,7 @@ ifcapable autovacuum {
     set memused2 [lindex [sqlite3_status SQLITE_STATUS_MEMORY_USED 0] 1]
     expr {($memused2 + 2048 < $memused) || $pgovfl==0}
   } {1}
+}
 }
 
 } ;# ifcapable memorydb

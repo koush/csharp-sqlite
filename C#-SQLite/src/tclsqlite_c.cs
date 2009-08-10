@@ -43,7 +43,7 @@ using sqlite3_blob = sqlite.Incrblob;
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -68,8 +68,8 @@ using sqlite3_blob = sqlite.Incrblob;
 * BUILD_sqlite should be undefined for Unix.
 */
 #if BUILD_sqlite
-/#undef TCL.Tcl_STORAGE_CLASS
-/#define TCL.Tcl_STORAGE_CLASS DLLEXPORT
+//#undef TCL.Tcl_STORAGE_CLASS
+//#define TCL.Tcl_STORAGE_CLASS DLLEXPORT
 #endif // * BUILD_sqlite */
 
     const int NUM_PREPARED_STMTS = 10;//#define NUM_PREPARED_STMTS 10
@@ -77,12 +77,12 @@ using sqlite3_blob = sqlite.Incrblob;
 
     /*
     ** If TCL uses UTF-8 and SQLite is configured to use iso8859, then we
-    ** have to do a translation when going between the two.  Set the 
+    ** have to do a translation when going between the two.  Set the
     ** UTF_TRANSLATION_NEEDED macro to indicate that we need to do
-    ** this translation.  
+    ** this translation.
     */
 #if Tcl_UTF_MAX && !SQLITE_UTF8
-/# define UTF_TRANSLATION_NEEDED 1
+//# define UTF_TRANSLATION_NEEDED 1
 #endif
 
     /*
@@ -201,7 +201,7 @@ for ( p = pDb.pIncrblob ; p != null ; p = pNext )
 {
 pNext = p.pNext;
 
-/* Note: Calling unregister here call TCL.Tcl_Close on the incrblob channel, 
+/* Note: Calling unregister here call TCL.Tcl_Close on the incrblob channel,
 ** which deletes the IncrblobChannel structure at p. So do not
 ** call TCL.Tcl_Free() here.
 */
@@ -242,8 +242,8 @@ TCL.Tcl_UnregisterChannel( pDb.interp, p.channel );
 ** Read data from an incremental blob channel.
 */
 //static int incrblobInput(
-//  object instanceData, 
-//  char *buf, 
+//  object instanceData,
+//  char *buf,
 //  int bufSize,
 //  int *errorCodePtr
 //){
@@ -274,8 +274,8 @@ TCL.Tcl_UnregisterChannel( pDb.interp, p.channel );
 ** Write data to an incremental blob channel.
 */
 //static int incrblobOutput(
-//  object instanceData, 
-//  CONST char *buf, 
+//  object instanceData,
+//  CONST char *buf,
 //  int toWrite,
 //  int *errorCodePtr
 //){
@@ -307,7 +307,7 @@ TCL.Tcl_UnregisterChannel( pDb.interp, p.channel );
 ** Seek an incremental blob channel.
 */
 //static int incrblobSeek(
-//  object instanceData, 
+//  object instanceData,
 //  long offset,
 //  int seekMode,
 //  int *errorCodePtr
@@ -332,8 +332,8 @@ TCL.Tcl_UnregisterChannel( pDb.interp, p.channel );
 //}
 
 
-//static void incrblobWatch(object instanceData, int mode){ 
-//  /* NO-OP */ 
+//static void incrblobWatch(object instanceData, int mode){
+//  /* NO-OP */
 //}
 //static int incrblobHandle(object instanceData, int dir, object *hPtr){
 //  return TCL.TCL_ERROR;
@@ -362,11 +362,11 @@ incrblobHandle,                    /* getHandleProc (always returns error) */
 */
 static int count = 0;
 static int createIncrblobChannel(
-Tcl_Interp interp, 
-SqliteDb pDb, 
+Tcl_Interp interp,
+SqliteDb pDb,
 string zDb,
-string zTable, 
-string zColumn, 
+string zTable,
+string zColumn,
 sqlite_int64 iRow,
 int isReadonly
 ){
@@ -771,7 +771,7 @@ pDb->pUnlockNotify = 0;
         ** script object, lappend the arguments, then evaluate the copy.
         **
         ** By "shallow" copy, we mean a only the outer list Tcl_Obj is duplicated.
-        ** The new Tcl_Obj contains pointers to the original list elements. 
+        ** The new Tcl_Obj contains pointers to the original list elements.
         ** That way, when TCL.Tcl_EvalObjv() is run and shimmers the first element
         ** of the list to tclCmdNameType, that alternate representation will
         ** be preserved and reused on the next invocation.
@@ -977,7 +977,7 @@ return rc;
 
     /*
 ** zText is a pointer to text obtained via an sqlite3_result_text()
-** or similar interface. This routine returns a Tcl string object, 
+** or similar interface. This routine returns a Tcl string object,
 ** reference count set to 0, containing the text. If a translation
 ** between iso8859 and UTF-8 is required, it is preformed.
 */
@@ -1163,7 +1163,7 @@ else pVal = TCL.Tcl_NewStringObj( zText, -1 );
 "restore",            "rollback_hook",     "status",
 "timeout",            "total_changes",     "trace",
 "transaction",        "unlock_notify",     "update_hook",
-"version"  
+"version"
 };
 
       /* don't leave trailing commas on DB_enum, it confuses the AIX xlc compiler */
@@ -1416,7 +1416,7 @@ sqlite3_set_authorizer(pDb.db, 0, 0);
         /*     $db changes
         **
         ** Return the number of rows that were modified, inserted, or deleted by
-        ** the most recent INSERT, UPDATE or DELETE statement, not including 
+        ** the most recent INSERT, UPDATE or DELETE statement, not including
         ** any changes made by trigger programs.
         */
         case (int)DB_enum.DB_CHANGES:
@@ -1701,7 +1701,7 @@ rc = TCL_ERROR;
             }
             nByte = strlen30( zSql );
             string Dummy = null; rc = sqlite3_prepare( pDb.db, zSql, -1, ref pStmt, ref Dummy );
-            sqlite3DbFree( null, ref zSql );
+            //sqlite3DbFree( null, ref zSql );
             if ( rc != 0 )
             {
               TCL.Tcl_AppendResult( interp, "Error: ", sqlite3_errmsg( pDb.db ) );
@@ -2111,7 +2111,7 @@ rc = TCL_ERROR;
 
                 /* Compute column names. This must be done after the first successful
                 ** call to sqlite3_step(), in case the query is recompiled and the
-                ** number or names of the returned columns changes. 
+                ** number or names of the returned columns changes.
                 */
                 Debug.Assert( pArray == null || pScript != null );
                 if ( nCol < 0 )
@@ -2224,8 +2224,8 @@ rc = TCL_ERROR;
                                     SQLITE_STMTSTATUS_FULLSCAN_STEP, 0 );
                 pDb.nSort = sqlite3_stmt_status( pStmt,
                                     SQLITE_STMTSTATUS_SORT, 0 );
-                /* If the query returned no rows, but an array variable was 
-                ** specified, call computeColumnNames() now to populate the 
+                /* If the query returned no rows, but an array variable was
+                ** specified, call computeColumnNames() now to populate the
                 ** arrayname(*) variable.
                 */
                 if ( pArray != null && nCol < 0 )
@@ -2499,7 +2499,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
           }
 
         /*
-        **     $db last_insert_rowid 
+        **     $db last_insert_rowid
         **
         ** Return an integer which is the ROWID for the most recent insert.
         */
@@ -2523,7 +2523,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
         */
 
         /*    $db progress ?N CALLBACK?
-        ** 
+        **
         ** Invoke the given callback every N virtual machine opcodes while executing
         ** queries.
         */
@@ -2661,7 +2661,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
 
         /*    $db restore ?DATABASE? FILENAME
         **
-        ** Open a database file named FILENAME.  Transfer the content 
+        ** Open a database file named FILENAME.  Transfer the content
         ** of FILENAME into the local database DATABASE (default: "main").
         */
         case (int)DB_enum.DB_RESTORE:
@@ -2736,7 +2736,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
         /*
         **     $db status (step|sort)
         **
-        ** Display SQLITE_STMTSTATUS_FULLSCAN_STEP or 
+        ** Display SQLITE_STMTSTATUS_FULLSCAN_STEP or
         ** SQLITE_STMTSTATUS_SORT for the most recent eval.
         */
         case (int)DB_enum.DB_STATUS:
@@ -2787,7 +2787,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
         /*
         **     $db total_changes
         **
-        ** Return the number of rows that were modified, inserted, or deleted 
+        ** Return the number of rows that were modified, inserted, or deleted
         ** since the database handle was created.
         */
         case (int)DB_enum.DB_TOTAL_CHANGES:
@@ -2940,12 +2940,12 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
             if ( sqlite3_exec( pDb.db, zEnd, 0, 0, 0 ) != 0 )
             {
               /* This is a tricky scenario to handle. The most likely cause of an
-              ** error is that the exec() above was an attempt to commit the 
+              ** error is that the exec() above was an attempt to commit the
               ** top-level transaction that returned SQLITE_BUSY. Or, less likely,
               ** that an IO-error has occurred. In either case, throw a Tcl exception
               ** and try to rollback the transaction.
               **
-              ** But it could also be that the user executed one or more BEGIN, 
+              ** But it could also be that the user executed one or more BEGIN,
               ** COMMIT, SAVEPOINT, RELEASE or ROLLBACK commands that are confusing
               ** this method's logic. Not clear how this would be best handled.
               */
@@ -2968,7 +2968,7 @@ interp, pDb, zDb, zTable, zColumn, iRow, isReadonly
         case (int)DB_enum.DB_ROLLBACK_HOOK:
           {
 
-            /* set ppHook to point at pUpdateHook or pRollbackHook, depending on 
+            /* set ppHook to point at pUpdateHook or pRollbackHook, depending on
             ** whether [$db update_hook] or [$db rollback_hook] was invoked.
             */
             Tcl_Obj ppHook;
@@ -3203,7 +3203,7 @@ sqlite3_key(p.db, pKey, nKey);
       {
         TCL.Tcl_SetResult( interp, zErrMsg, TCL.TCL_VOLATILE );
         TCL.Tcl_Free( ref p );
-        zErrMsg = "";// sqlite3DbFree( db, ref zErrMsg );
+        zErrMsg = "";// //sqlite3DbFree( db, ref zErrMsg );
         return TCL.TCL_ERROR;
       }
       p.maxStmt = NUM_PREPARED_STMTS;
@@ -3273,7 +3273,7 @@ sqlite3_key(p.db, pKey, nKey);
 #if TCLSH
 /*****************************************************************************
 ** The code that follows is used to build standalone TCL interpreters
-** that are statically linked with SQLite.  
+** that are statically linked with SQLite.
 */
 
 /*
@@ -3312,9 +3312,9 @@ static char zMainloop[] =
 ** the separate file "spaceanal_tcl.h".
 */
 #if TCLSH // TCLSH==2
-static char zMainloop[] = 
-/#include "spaceanal_tcl.h"
-;
+//static char zMainloop[] =
+//    #include "spaceanal_tcl.h"
+//;
 #endif
 
 #define TCLSH_MAIN //main   /* Needed to fake out mktclapp */

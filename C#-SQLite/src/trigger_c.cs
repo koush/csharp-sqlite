@@ -24,7 +24,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -47,12 +47,12 @@ namespace CS_SQLite3
         sqlite3SelectDelete( db, ref pTmp.pSelect );
         sqlite3IdListDelete( db, ref pTmp.pIdList );
 
-        sqlite3DbFree( db, ref pTmp );
+        //sqlite3DbFree( db, ref pTmp );
       }
     }
 
     /*
-    ** Given table pTab, return a list of all the triggers attached to 
+    ** Given table pTab, return a list of all the triggers attached to
     ** the table. The list is connected by Trigger.pNext pointers.
     **
     ** All of the triggers on pTab that are in the same database as pTab
@@ -149,7 +149,7 @@ namespace CS_SQLite3
       ** If sqlite3SrcListLookup() returns 0, indicating the table does not
       ** exist, the error is caught by the block below.
       */
-      if ( pTableName == null || db.mallocFailed != 0 )
+      if ( pTableName == null /*|| db.mallocFailed != 0 */ )
       {
         goto trigger_cleanup;
       }
@@ -160,7 +160,7 @@ namespace CS_SQLite3
       }
 
       /* Ensure the table name matches database name and that the table exists */
-      if ( db.mallocFailed != 0 ) goto trigger_cleanup;
+//      if ( db.mallocFailed != 0 ) goto trigger_cleanup;
       Debug.Assert( pTableName.nSrc == 1 );
       if ( sqlite3FixInit( sFix, pParse, iDb, "trigger", pName ) != 0 &&
       sqlite3FixSrcList( sFix, pTableName ) != 0 )
@@ -261,7 +261,7 @@ goto trigger_cleanup;
       pParse.pNewTrigger = pTrigger;
 
 trigger_cleanup:
-      sqlite3DbFree( db, ref zName );
+      //sqlite3DbFree( db, ref zName );
       sqlite3SrcListDelete( db, ref pTableName );
       sqlite3IdListDelete( db, ref pColumns );
       sqlite3ExprDelete( db, ref pWhen );
@@ -312,7 +312,7 @@ trigger_cleanup:
         goto triggerfinish_cleanup;
       }
 
-      /* if we are not initializing, and this trigger is not on a TEMP table, 
+      /* if we are not initializing, and this trigger is not on a TEMP table,
       ** build the sqlite_master entry
       */
       if ( 0 == db.init.busy )
@@ -329,7 +329,7 @@ trigger_cleanup:
         "INSERT INTO %Q.%s VALUES('trigger',%Q,%Q,0,'CREATE TRIGGER %q')",
         db.aDb[iDb].zName, SCHEMA_TABLE( iDb ), zName,
         pTrig.table, z );
-        sqlite3DbFree( db, ref z );
+        //sqlite3DbFree( db, ref z );
         sqlite3ChangeCookie( pParse, iDb );
         sqlite3VdbeAddOp4( v, OP_ParseSchema, iDb, 0, 0, sqlite3MPrintf(
         db, "type='trigger' AND name='%q'", zName ), P4_DYNAMIC
@@ -343,7 +343,7 @@ trigger_cleanup:
         pTrig = (Trigger)sqlite3HashInsert( ref pHash, zName, sqlite3Strlen30( zName ), pTrig );
         if ( pTrig != null )
         {
-          db.mallocFailed = 1;
+          //db.mallocFailed = 1;
         }
         else if ( pLink.pSchema == pLink.pTabSchema )
         {
@@ -367,7 +367,7 @@ triggerfinish_cleanup:
     ** a trigger step.  Return a pointer to a TriggerStep structure.
     **
     ** The parser calls this routine when it finds a SELECT statement in
-    ** body of a TRIGGER.  
+    ** body of a TRIGGER.
     */
     static TriggerStep sqlite3TriggerSelectStep( sqlite3 db, Select pSelect )
     {
@@ -436,7 +436,7 @@ triggerfinish_cleanup:
       TriggerStep pTriggerStep;
 
       Debug.Assert( pEList == null || pSelect == null );
-      Debug.Assert( pEList != null || pSelect != null || db.mallocFailed != 0 );
+      Debug.Assert( pEList != null || pSelect != null /*|| db.mallocFailed != 0 */ );
 
       pTriggerStep = triggerStepAllocate( db, TK_INSERT, pTableName );
       if ( pTriggerStep != null )
@@ -508,22 +508,22 @@ triggerfinish_cleanup:
 
 
 
-    /* 
+    /*
     ** Recursively delete a Trigger structure
     */
     static void sqlite3DeleteTrigger( sqlite3 db, ref Trigger pTrigger )
     {
       if ( pTrigger == null ) return;
       sqlite3DeleteTriggerStep( db, ref pTrigger.step_list );
-      pTrigger.name = null;//sqlite3DbFree(db,ref pTrigger.name);
-      sqlite3DbFree( db, ref pTrigger.table );
+      pTrigger.name = null;////sqlite3DbFree(db,ref pTrigger.name);
+      //sqlite3DbFree( db, ref pTrigger.table );
       sqlite3ExprDelete( db, ref pTrigger.pWhen );
       sqlite3IdListDelete( db, ref pTrigger.pColumns );
-      sqlite3DbFree( db, ref pTrigger );
+      //sqlite3DbFree( db, ref pTrigger );
     }
 
     /*
-    ** This function is called to drop a trigger from the database schema. 
+    ** This function is called to drop a trigger from the database schema.
     **
     ** This may be called directly from the parser and therefore identifies
     ** the trigger by name.  The sqlite3DropTriggerPtr() routine does the
@@ -539,7 +539,7 @@ triggerfinish_cleanup:
       int nName;
       sqlite3 db = pParse.db;
 
-      if ( db.mallocFailed != 0 ) goto drop_trigger_cleanup;
+//      if ( db.mallocFailed != 0 ) goto drop_trigger_cleanup;
       if ( SQLITE_OK != sqlite3ReadSchema( pParse ) )
       {
         goto drop_trigger_cleanup;
@@ -582,7 +582,7 @@ drop_trigger_cleanup:
 
 
     /*
-    ** Drop a trigger given a pointer to that trigger. 
+    ** Drop a trigger given a pointer to that trigger.
     */
     static void sqlite3DropTriggerPtr( Parse pParse, Trigger pTrigger )
     {
@@ -704,7 +704,7 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
 
     /*
     ** Return a list of all triggers on table pTab if there exists at least
-    ** one trigger that must be fired when an operation of type 'op' is 
+    ** one trigger that must be fired when an operation of type 'op' is
     ** performed on the table, and, if that operation is an UPDATE, if at
     ** least one of the columns in pChanges is being modified.
     */
@@ -771,7 +771,7 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
 
     /*
     ** Generate VDBE code for zero or more statements inside the body of a
-    ** trigger.  
+    ** trigger.
     */
     static int codeTriggerProgram(
     Parse pParse,            /* The parser context */
@@ -856,7 +856,7 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
     /*
     ** This is called to code FOR EACH ROW triggers.
     **
-    ** When the code that this function generates is executed, the following 
+    ** When the code that this function generates is executed, the following
     ** must be true:
     **
     ** 1. No cursors may be open in the main database.  (But newIdx and oldIdx
@@ -874,7 +874,7 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
     **
     ** If they are not NULL, the piOldColMask and piNewColMask output variables
     ** are set to values that describe the columns used by the trigger program
-    ** in the OLD.* and NEW.* tables respectively. If column N of the 
+    ** in the OLD.* and NEW.* tables respectively. If column N of the
     ** pseudo-table is read at least once, the corresponding bit of the output
     ** mask is set. If a column with an index greater than 32 is read, the
     ** output mask is set to the special value 0xffffffff.
@@ -969,7 +969,7 @@ sqlite3AuthContextPush( pParse, sContext, p.name );
           /* code the WHEN clause */
           endTrigger = sqlite3VdbeMakeLabel( pParse.pVdbe );
           whenExpr = sqlite3ExprDup( db, p.pWhen, 0 );
-          if ( db.mallocFailed != 0 || sqlite3ResolveExprNames( sNC, ref whenExpr ) != 0 )
+          if ( /* db.mallocFailed != 0 || */ sqlite3ResolveExprNames( sNC, ref whenExpr ) != 0 )
           {
             pParse.trigStack = trigStackEntry.pNext;
             sqlite3ExprDelete( db, ref whenExpr );

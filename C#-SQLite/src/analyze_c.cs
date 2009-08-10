@@ -27,12 +27,12 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -68,7 +68,7 @@ namespace CS_SQLite3
       pDb = db.aDb[iDb];
       if ( ( pStat = sqlite3FindTable( db, "sqlite_stat1", pDb.zName ) ) == null )
       {
-        /* The sqlite_stat1 tables does not exist.  Create it.  
+        /* The sqlite_stat1 tables does not exist.  Create it.
         ** Note that a side-effect of the CREATE TABLE statement is to leave
         ** the rootpage of the new table in register pParse.regRoot.  This is
         ** important because the OpenWrite opcode below will be needing it. */
@@ -97,8 +97,8 @@ namespace CS_SQLite3
       }
 
       /* Open the sqlite_stat1 table for writing. Unless it was created
-      ** by this vdbe program, lock it for writing at the shared-cache level. 
-      ** If this vdbe did create the sqlite_stat1 table, then it must have 
+      ** by this vdbe program, lock it for writing at the shared-cache level.
+      ** If this vdbe did create the sqlite_stat1 table, then it must have
       ** already obtained a schema-lock, making the write-lock redundant.
       */
       if ( createStat1 == 0 )
@@ -224,7 +224,7 @@ return;
         sqlite3VdbeAddOp2( v, OP_Next, iIdxCur, topOfLoop );
         sqlite3VdbeAddOp1( v, OP_Close, iIdxCur );
 
-        /* Store the results.  
+        /* Store the results.
         **
         ** The result is a single row of the sqlite_stat1 table.  The first
         ** two columns are the names of the table and index.  The third column
@@ -238,7 +238,7 @@ return;
         **
         **        I = (K+D-1)/D
         **
-        ** If K==0 then no entry is made into the sqlite_stat1 table.  
+        ** If K==0 then no entry is made into the sqlite_stat1 table.
         ** If K>0 then it is always the case the D>0 so division by zero
         ** is never possible.
         */
@@ -377,7 +377,7 @@ return;
           if ( z != null )
           {
             pTab = sqlite3LocateTable( pParse, 0, z, null );
-            sqlite3DbFree( db, ref z );
+            //sqlite3DbFree( db, ref z );
             if ( pTab != null )
             {
               analyzeTable( pParse, pTab );
@@ -396,7 +396,7 @@ return;
           if ( z != null )
           {
             pTab = sqlite3LocateTable( pParse, 0, z, zDb );
-            sqlite3DbFree( db, ref z );
+            //sqlite3DbFree( db, ref z );
             if ( pTab != null )
             {
               analyzeTable( pParse, pTab );
@@ -419,7 +419,7 @@ return;
 
     /*
     ** This callback is invoked once for each index when reading the
-    ** sqlite_stat1 table.  
+    ** sqlite_stat1 table.
     **
     **     argv[0] = name of the index
     **     argv[1] = results of analysis - on integer for each column
@@ -502,8 +502,8 @@ return;
         sqlite3SafetyOff( db );
         rc = sqlite3_exec( db, zSql, (dxCallback)analysisLoader, sInfo, 0 );
         sqlite3SafetyOn( db );
-        sqlite3DbFree( db, ref zSql );
-        if ( rc == SQLITE_NOMEM ) db.mallocFailed = 1;
+        //sqlite3DbFree( db, ref zSql );
+//        if ( rc == SQLITE_NOMEM ) db.mallocFailed = 1;
       }
       return rc;
     }

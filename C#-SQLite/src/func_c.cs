@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     ** This file contains the C functions that implement various SQL
-    ** functions of SQLite.  
+    ** functions of SQLite.
     **
     ** There is only one exported symbol in this file - the function
     ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
@@ -37,7 +37,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -353,7 +353,7 @@ namespace CS_SQLite3
       else
       {
         sqlite3AtoF( zBuf, ref r );
-        sqlite3_free( ref zBuf );
+        //sqlite3_free( ref zBuf );
         sqlite3_result_double( context, r );
       }
     }
@@ -416,7 +416,7 @@ namespace CS_SQLite3
         //{
         //(char)sqlite3Toupper( z1[i] );
         //}
-        sqlite3_result_text( context, z2.Length == 0 ? "" : z2.Substring( 0, n ).ToUpper(), -1, sqlite3_free );
+        sqlite3_result_text(context, z2.Length == 0 ? "" : z2.Substring(0, n).ToUpper(), -1, null); //sqlite3_free );
         // }
       }
     }
@@ -446,13 +446,13 @@ namespace CS_SQLite3
         //    z1[i] = (char)sqlite3Tolower( z1[i] );
         //  }
         z1 = z2.Length == 0 ? "" : z2.Substring( 0, n ).ToLower();
-        sqlite3_result_text( context, z1, -1, sqlite3_free );
+        sqlite3_result_text(context, z1, -1, null);//sqlite3_free );
         //}
       }
     }
 
     /*
-    ** Implementation of the IFNULL(), NVL(), and COALESCE() functions.  
+    ** Implementation of the IFNULL(), NVL(), and COALESCE() functions.
     ** All three do the same thing.  They return the first non-NULL
     ** argument.
     */
@@ -474,7 +474,7 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Implementation of random().  Return a random integer.  
+    ** Implementation of random().  Return a random integer.
     */
     static void randomFunc(
     sqlite3_context context,
@@ -487,11 +487,11 @@ namespace CS_SQLite3
       sqlite3_randomness( sizeof( sqlite_int64 ), ref r );
       if ( r < 0 )
       {
-        /* We need to prevent a random number of 0x8000000000000000 
+        /* We need to prevent a random number of 0x8000000000000000
         ** (or -9223372036854775808) since when you do abs() of that
         ** number of you get the same value back again.  To do this
         ** in a way that is testable, mask the sign bit off of negative
-        ** values, resulting in a positive value.  Then take the 
+        ** values, resulting in a positive value.  Then take the
         ** 2s complement of that positive value.  The end result can
         ** therefore be no less than -9223372036854775807.
         */
@@ -528,7 +528,7 @@ namespace CS_SQLite3
           sqlite3_randomness( sizeof( u8 ), ref _p );
           p[i] = (char)( _p & 0x7F );
         }
-        sqlite3_result_blob( context, new string( p ), n, sqlite3_free );
+        sqlite3_result_blob( context, new string( p ), n,  null);//sqlite3_free );
       }
     }
 
@@ -602,8 +602,8 @@ namespace CS_SQLite3
     ** whereas only characters less than 0x80 do in ASCII.
     */
 #if (SQLITE_EBCDIC)
-/# define sqlite3Utf8Read(A,C)    (*(A++))
-/# define GlogUpperToLower(A)     A = sqlite3UpperToLower[A]
+//# define sqlite3Utf8Read(A,C)    (*(A++))
+//# define GlogUpperToLower(A)     A = sqlite3UpperToLower[A]
 #else
     //# define GlogUpperToLower(A)     if( A<0x80 ){ A = sqlite3UpperToLower[A]; }
 #endif
@@ -902,7 +902,7 @@ namespace CS_SQLite3
     ** digits. */
     static char[] hexdigits = new char[]  {
 '0', '1', '2', '3', '4', '5', '6', '7',
-'8', '9', 'A', 'B', 'C', 'D', 'E', 'F' 
+'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
 };
 
     /*
@@ -939,7 +939,7 @@ namespace CS_SQLite3
             byte[] zBlob = sqlite3_value_blob( argv[0] );
             int nBlob = sqlite3_value_bytes( argv[0] );
             Debug.Assert( zBlob.Length == sqlite3_value_blob( argv[0] ).Length ); /* No encoding change */
-            zText = new StringBuilder( 2 * nBlob + 4 );//(char*)contextMalloc(context, (2*(i64)nBlob)+4); 
+            zText = new StringBuilder( 2 * nBlob + 4 );//(char*)contextMalloc(context, (2*(i64)nBlob)+4);
             zText.Append( "X'" );
             if ( zText != null )
             {
@@ -955,7 +955,7 @@ namespace CS_SQLite3
               //zText[0] = 'X';
               //zText[1] = '\'';
               sqlite3_result_text( context, zText.ToString(), -1, SQLITE_TRANSIENT );
-              sqlite3_free( ref  zText );
+              //sqlite3_free( ref  zText );
             }
             break;
           }
@@ -982,7 +982,7 @@ namespace CS_SQLite3
               }
               z.Append( '\'' ); j++;
               //z[j] = '\0'; ;
-              sqlite3_result_text( context, z.ToString(), j, sqlite3_free );
+              sqlite3_result_text(context, z.ToString(), j, null);//sqlite3_free );
             }
             break;
           }
@@ -1023,7 +1023,7 @@ namespace CS_SQLite3
           zHex.Append( hexdigits[( c >> 4 ) & 0xf] );
           zHex.Append( hexdigits[c & 0xf] );
         }
-        sqlite3_result_text( context, zHex.ToString(), n * 2, sqlite3_free );
+        sqlite3_result_text(context, zHex.ToString(), n * 2, null); //sqlite3_free );
       }
     }
 
@@ -1086,7 +1086,8 @@ namespace CS_SQLite3
       if ( zPattern == null )
       {
         Debug.Assert( sqlite3_value_type( argv[1] ) == SQLITE_NULL
-        || sqlite3_context_db_handle( context ).mallocFailed != 0 );
+        //|| sqlite3_context_db_handle( context ).mallocFailed != 0
+        );
         return;
       }
       if ( zPattern == "" )
@@ -1107,7 +1108,7 @@ namespace CS_SQLite3
       //if( zOut==0 ){
       //  return;
       //}
-      //loopLimit = nStr - nPattern;  
+      //loopLimit = nStr - nPattern;
       //for(i=j=0; i<=loopLimit; i++){
       //  if( zStr[i]!=zPattern[0] || memcmp(&zStr[i], zPattern, nPattern) ){
       //    zOut[j++] = zStr[i];
@@ -1119,14 +1120,14 @@ namespace CS_SQLite3
       //testcase( nOut-2==db->aLimit[SQLITE_LIMIT_LENGTH] );
       //if( nOut-1>db->aLimit[SQLITE_LIMIT_LENGTH] ){
       //      sqlite3_result_error_toobig(context);
-      //      sqlite3DbFree(db,ref  zOut);
+      //      //sqlite3DbFree(db,ref  zOut);
       //      return;
       //    }
       //    zOld = zOut;
       //    zOut = sqlite3_realloc(zOut, (int)nOut);
       //    if( zOut==0 ){
       //      sqlite3_result_error_nomem(context);
-      //      sqlite3DbFree(db,ref  zOld);
+      //      //sqlite3DbFree(db,ref  zOld);
       //      return;
       //    }
       //    memcpy(&zOut[j], zRep, nRep);
@@ -1141,7 +1142,7 @@ namespace CS_SQLite3
       //zOut[j] = 0;
       zOut = zStr.Replace( zPattern, zRep );
       j = zOut.Length;
-      sqlite3_result_text( context, zOut, j, sqlite3_free );
+      sqlite3_result_text(context, zOut, j, null);//sqlite3_free );
     }
 
     /*
@@ -1252,7 +1253,7 @@ namespace CS_SQLite3
         }
         if ( zCharSet != null )
         {
-          sqlite3_free( ref  azChar );
+          //sqlite3_free( ref  azChar );
         }
       }
       StringBuilder sb = new StringBuilder( nIn );
@@ -1339,7 +1340,7 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
       if ( zFile != null && sqlite3_load_extension( db, zFile, zProc, ref zErrMsg ) != 0 )
       {
         sqlite3_result_error( context, zErrMsg, -1 );
-        sqlite3DbFree( db, ref  zErrMsg );
+        //sqlite3DbFree( db, ref  zErrMsg );
       }
     }
 #endif
@@ -1510,7 +1511,7 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
       }
 #if !SQLITE_OMIT_DEPRECATED
       /* The sqlite3_aggregate_count() function is deprecated.  But just to make
-** sure it still operates correctly, verify that its count agrees with our 
+** sure it still operates correctly, verify that its count agrees with our
 ** internal count when using count(*) and when the total count can be
 ** expressed as a 32-bit integer. */
       Debug.Assert( argc == 1 || p == null || p.n > 0x7fffffff
@@ -1642,14 +1643,14 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
         {
           sqlite3_result_error_toobig( context );
         }
-        else if ( pAccum.mallocFailed != 0 )
-        {
-          sqlite3_result_error_nomem( context );
-        }
+        //else if ( pAccum.mallocFailed != 0 )
+        //{
+        //  sqlite3_result_error_nomem( context );
+        //}
         else
         {
           sqlite3_result_text( context, sqlite3StrAccumFinish( pAccum ), -1,
-          sqlite3_free );
+          null); //sqlite3_free );
         }
       }
     }
@@ -1704,13 +1705,13 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
 #if !SQLITE_OMIT_ALTERTABLE
       sqlite3AlterFunctions( db );
 #endif
-      if ( 0 == db.mallocFailed )
+      ////if ( 0 == db.mallocFailed )
       {
         int rc = sqlite3_overload_function( db, "MATCH", 2 );
         Debug.Assert( rc == SQLITE_NOMEM || rc == SQLITE_OK );
         if ( rc == SQLITE_NOMEM )
         {
-          db.mallocFailed = 1;
+  ////        db.mallocFailed = 1;
         }
       }
     }

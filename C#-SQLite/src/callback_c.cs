@@ -13,7 +13,7 @@ namespace CS_SQLite3
   public partial class csSQLite
   {
     /*
-    ** 2005 May 23 
+    ** 2005 May 23
     **
     ** The author disclaims copyright to this source code.  In place of
     ** a legal notice, here is a blessing:
@@ -31,7 +31,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -52,7 +52,7 @@ namespace CS_SQLite3
         string zExternal = zName;// sqlite3DbStrDup(db, zName);
         if ( zExternal == null ) return;
         db.xCollNeeded( db.pCollNeededArg, db, db.aDb[0].pSchema.enc, zExternal );//(int)ENC(db), zExternal);
-        sqlite3DbFree( db, ref  zExternal );
+        //sqlite3DbFree( db, ref  zExternal );
       }
 #if !SQLITE_OMIT_UTF16
 if( db.xCollNeeded16!=null ){
@@ -99,15 +99,15 @@ sqlite3ValueFree(ref pTmp);
     ** or substituting a collation sequence of a different encoding when the
     ** requested collation sequence is not available in the database native
     ** encoding.
-    ** 
-    ** If it is not NULL, then pColl must point to the database native encoding 
+    **
+    ** If it is not NULL, then pColl must point to the database native encoding
     ** collation sequence with name zName, length nName.
     **
     ** The return value is either the collation sequence to be used in database
     ** db for collation type name zName, length nName, or NULL, if no collation
     ** sequence can be found.
     **
-    ** See also: sqlite3LocateCollSeq(), sqlite3FindCollSeq()    
+    ** See also: sqlite3LocateCollSeq(), sqlite3FindCollSeq()
     */
     static CollSeq sqlite3GetCollSeq(
     sqlite3 db,         /* The database connection */
@@ -145,7 +145,7 @@ sqlite3ValueFree(ref pTmp);
     ** that have not been defined by sqlite3_create_collation() etc.
     **
     ** If required, this routine calls the 'collation needed' callback to
-    ** request a definition of the collating sequence. If this doesn't work, 
+    ** request a definition of the collating sequence. If this doesn't work,
     ** an equivalent collating sequence that uses a text encoding different
     ** from the main database is substituted, if one is available.
     */
@@ -210,15 +210,15 @@ sqlite3ValueFree(ref pTmp);
           //pColl[0].zName[nName] = 0;
           pDel = (CollSeq)sqlite3HashInsert( ref db.aCollSeq, pColl[0].zName, nName, pColl );
 
-          /* If a malloc() failure occurred in sqlite3HashInsert(), it will 
+          /* If a malloc() failure occurred in sqlite3HashInsert(), it will
           ** return the pColl pointer to be deleted (because it wasn't added
           ** to the hash table).
           */
           Debug.Assert( pDel == null || pDel == pColl[0] );
           if ( pDel != null )
           {
-            db.mallocFailed = 1;
-            pDel = null; //was  sqlite3DbFree(db,ref  pDel);
+    ////        db.mallocFailed = 1;
+            pDel = null; //was  //sqlite3DbFree(db,ref  pDel);
             pColl = null;
           }
         }
@@ -470,7 +470,7 @@ FuncDefHash pHash = GLOBAL( FuncDefHash, sqlite3GlobalFunctions );
 
     /*
     ** Free all resources held by the schema structure. The void* argument points
-    ** at a Schema struct. This function does not call sqlite3DbFree(db, ) on the 
+    ** at a Schema struct. This function does not call //sqlite3DbFree(db, ) on the
     ** pointer itself, it just cleans up subsiduary resources (i.e. the contents
     ** of the schema hash tables).
     **
@@ -522,7 +522,7 @@ FuncDefHash pHash = GLOBAL( FuncDefHash, sqlite3GlobalFunctions );
       }
       if ( p == null )
       {
-        db.mallocFailed = 1;
+////        db.mallocFailed = 1;
       }
       else if ( 0 == p.file_format )
       {

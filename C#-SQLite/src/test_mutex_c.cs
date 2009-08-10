@@ -30,12 +30,12 @@ namespace CS_SQLite3
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** 
+    **
     ** $Id: test_mutex.c,v 1.15 2009/03/20 13:15:30 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -290,7 +290,7 @@ namespace CS_SQLite3
     //  Tcl_Obj pRet;
     //  int ii;
     //  char *aName[8] = {
-    //    "fast",        "recursive",   "static_master", "static_mem", 
+    //    "fast",        "recursive",   "static_master", "static_mem",
     //    "static_open", "static_prng", "static_lru",    "static_lru2"
     //  };
 
@@ -485,7 +485,7 @@ new ConfigOption(null,0)
       //static struct {
       //  char *zName;
       //  Tcl_ObjCmdProc *xProc;
-      //} 
+      //}
       _aObjCmd[] aCmd = new _aObjCmd[]{
 new _aObjCmd( "sqlite3_shutdown",         test_shutdown ),
 new _aObjCmd( "sqlite3_initialize",       test_initialize ),
@@ -505,9 +505,9 @@ new _aObjCmd( "sqlite3_config",           test_config ),
         TCL.Tcl_CreateObjCommand( interp, aCmd[i].zName, aCmd[i].xProc, null, null );
       }
 
-      //Tcl_LinkVar(interp, "disable_mutex_init", 
+      //Tcl_LinkVar(interp, "disable_mutex_init",
       //             g.disableInit, VarFlag.SQLITE3_LINK_INT  );
-      //Tcl_LinkVar(interp, "disable_mutex_try", 
+      //Tcl_LinkVar(interp, "disable_mutex_try",
       //            g.disableTry, VarFlag.SQLITE3_LINK_INT  );
       return SQLITE_OK;
     }

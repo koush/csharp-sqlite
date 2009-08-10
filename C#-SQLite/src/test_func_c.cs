@@ -40,7 +40,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -118,7 +118,7 @@ namespace CS_SQLite3
     ** and returns the same argument interpreted as TEXT. A destructor is
     ** passed with the sqlite3_result_text() call.
     **
-    ** SQL function 'test_destructor_count' returns the number of outstanding 
+    ** SQL function 'test_destructor_count' returns the number of outstanding
     ** allocations made by 'test_destructor';
     **
     ** WARNING: Not threadsafe.
@@ -129,7 +129,7 @@ namespace CS_SQLite3
       string zVal = p;
       Debug.Assert( zVal != null );
       //zVal--;
-      sqlite3DbFree( null, ref zVal );
+      //sqlite3DbFree( null, ref zVal );
       test_destructor_count_var--;
     }
     static void test_destructor(
@@ -169,7 +169,7 @@ int len;
 test_destructor_count_var++;
 Debug.Assert(nArg==1 );
 if( sqlite3_value_type(argv[0])==SQLITE_NULL ) return;
-len = sqlite3_value_bytes16(argv[0]); 
+len = sqlite3_value_bytes16(argv[0]);
 zVal = testContextMalloc(pCtx, len+3);
 if( !zVal ){
 return;
@@ -192,7 +192,7 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     }
 
     /*
-    ** The following aggregate function, test_agg_errmsg16(), takes zero 
+    ** The following aggregate function, test_agg_errmsg16(), takes zero
     ** arguments. It returns the text value returned by the sqlite3_errmsg16()
     ** API function.
     */
@@ -223,7 +223,10 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     ** registration, the result for that argument is 1.  The overall result
     ** is the individual argument results separated by spaces.
     */
-    static void free_test_auxdata( ref string p ) { sqlite3DbFree( null, ref p ); }
+    static void free_test_auxdata( ref string p ) {
+      p = null;
+      //sqlite3DbFree( null, ref p );
+    }
     static void test_auxdata(
     sqlite3_context pCtx,     /* Function context */
     int nArg,                 /* Number of function arguments */
@@ -300,7 +303,7 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     //      return;
     //    }
     //    *pCounter = sqlite3_value_int(argv[0]);
-    //    sqlite3_set_auxdata(pCtx, 0, pCounter, sqlite3_free);
+    //    sqlite3_set_auxdata(pCtx, 0, pCounter, //sqlite3_free);
     //  }else{
     //    ++*pCounter;
     //  }
@@ -337,7 +340,7 @@ sqlite3_value_text(argv[0]);
     }
 
     /*
-    ** Invoke an SQL statement recursively.  The function result is the 
+    ** Invoke an SQL statement recursively.  The function result is the
     ** first column of the first row of the result set.
     */
     static void test_eval(
@@ -367,7 +370,7 @@ sqlite3_value_text(argv[0]);
         string zErr;
         Debug.Assert( pStmt == null );
         zErr = sqlite3_mprintf( "sqlite3_prepare_v2() error: %s", sqlite3_errmsg( db ) );
-        sqlite3_result_text( pCtx, zErr, -1, sqlite3_free );
+        sqlite3_result_text(pCtx, zErr, -1, null);//sqlite3_free );
         sqlite3_result_error_code( pCtx, rc );
       }
     }
@@ -531,7 +534,7 @@ abuse_err:
       //static struct {
       //   char *zName;
       //   Tcl_ObjCmdProc *xProc;
-      //} 
+      //}
       _aObjCmd[] aObjCmd = new _aObjCmd[]  {
 new _aObjCmd( "autoinstall_test_functions",    autoinstall_test_funcs ),
 new _aObjCmd( "abuse_create_function",         abuse_create_function  ),

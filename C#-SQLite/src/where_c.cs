@@ -34,7 +34,7 @@ namespace CS_SQLite3
     *************************************************************************
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -70,7 +70,7 @@ static void WHERETRACE( string X, params object[] ap ) { }
     ** clause subexpression is separated from the others by AND operators,
     ** usually, or sometimes subexpressions separated by OR.
     **
-    ** All WhereTerms are collected into a single WhereClause structure.  
+    ** All WhereTerms are collected into a single WhereClause structure.
     ** The following identity holds:
     **
     **        WhereTerm.pWC.a[WhereTerm.idx] == WhereTerm
@@ -208,8 +208,8 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
     ** An instance of the following structure keeps track of a mapping
     ** between VDBE cursor numbers and bits of the bitmasks in WhereTerm.
     **
-    ** The VDBE cursor numbers are small integers contained in 
-    ** SrcList_item.iCursor and Expr.iTable fields.  For any given WHERE 
+    ** The VDBE cursor numbers are small integers contained in
+    ** SrcList_item.iCursor and Expr.iTable fields.  For any given WHERE
     ** clause, the cursor numbers might not begin with 0 and they might
     ** contain gaps in the numbering sequence.  But we want to make maximum
     ** use of the bits in our bitmasks.  This structure provides a mapping
@@ -356,7 +356,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
     static void whereOrInfoDelete( sqlite3 db, WhereOrInfo p )
     {
       whereClauseClear( p.wc );
-      sqlite3DbFree( db, p );
+      //sqlite3DbFree( db, p );
     }
 
     /*
@@ -365,7 +365,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
     static void whereAndInfoDelete( sqlite3 db, WhereAndInfo p )
     {
       whereClauseClear( p.wc );
-      sqlite3DbFree( db, p );
+      //sqlite3DbFree( db, p );
     }
 
     /*
@@ -395,7 +395,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
       }
       if ( pWC.a != pWC.aStatic )
       {
-        sqlite3DbFree( db, ref pWC.a );
+        //sqlite3DbFree( db, ref pWC.a );
       }
     }
 
@@ -437,7 +437,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
         //}
         //memcpy(pWC.a, pOld, sizeof(pWC.a[0])*pWC.nTerm);
         //if( pOld!=pWC.aStatic ){
-        //  sqlite3DbFree(db, pOld);
+        //  //sqlite3DbFree(db, pOld);
         //}
         //pWC.nSlot = sqlite3DbMallocSize(db, pWC.a)/sizeof(pWC.a[0]);
         pWC.nSlot = pWC.a.Length - 1;
@@ -610,9 +610,9 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
     **
     ** If a collation sequence is Debug.Associated with either the left or right
     ** side of the comparison, it remains Debug.Associated with the same side after
-    ** the commutation. So "Y collate NOCASE op X" becomes 
+    ** the commutation. So "Y collate NOCASE op X" becomes
     ** "X collate NOCASE op Y". This is because any collation sequence on
-    ** the left hand side of a comparison overrides any collation sequence 
+    ** the left hand side of a comparison overrides any collation sequence
     ** attached to the right. For the same reason the EP_ExpCollate flag
     ** is not commuted.
     */
@@ -731,7 +731,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
     //static void exprAnalyze(SrcList*, WhereClause*, int);
 
     /*
-    ** Call exprAnalyze on all terms in a WHERE clause.  
+    ** Call exprAnalyze on all terms in a WHERE clause.
     **
     **
     */
@@ -754,7 +754,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
 ** so and false if not.
 **
 ** In order for the operator to be optimizible, the RHS must be a string
-** literal that does not begin with a wildcard.  
+** literal that does not begin with a wildcard.
 */
     static int isLikeOrGlob(
     Parse pParse,         /* Parsing and code generating context */
@@ -906,10 +906,10 @@ return 1;
 **     WhereTerm.u.pOrInfo.indexable  |=  the cursor number for table T
 **
 ** A subterm is "indexable" if it is of the form
-** "T.C <op> <expr>" where C is any column of table T and 
+** "T.C <op> <expr>" where C is any column of table T and
 ** <op> is one of "=", "<", "<=", ">", ">=", "IS NULL", or "IN".
 ** A subterm is also indexable if it is an AND of two or more
-** subsubterms at least one of which is indexable.  Indexable AND 
+** subsubterms at least one of which is indexable.  Indexable AND
 ** subterms have their eOperator set to WO_AND and they have
 ** u.pAndInfo set to a dynamically allocated WhereAndTerm object.
 **
@@ -969,7 +969,7 @@ return 1;
       whereClauseInit( pOrWc, pWC.pParse, pMaskSet );
       whereSplit( pOrWc, pExpr, TK_OR );
       exprAnalyzeAll( pSrc, pOrWc );
-      if ( db.mallocFailed != 0 ) return;
+//      if ( db.mallocFailed != 0 ) return;
       Debug.Assert( pOrWc.nTerm >= 2 );
 
       /*
@@ -1000,8 +1000,8 @@ return 1;
             whereClauseInit( pAndWC, pWC.pParse, pMaskSet );
             whereSplit( pAndWC, pOrTerm.pExpr, TK_AND );
             exprAnalyzeAll( pSrc, pAndWC );
-            testcase( db.mallocFailed );
-            if ( 0 == db.mallocFailed )
+            //testcase( db.mallocFailed );
+            ////if ( 0 == db.mallocFailed )
             {
               for ( j = 0 ; j < pAndWC.nTerm ; j++ )//, pAndTerm++ )
               {
@@ -1102,7 +1102,7 @@ return 1;
             {
               /* This term must be of the form t1.a==t2.b where t2 is in the
               ** chngToIN set but t1 is not.  This term will be either preceeded
-              ** or follwed by an inverted copy (t2.b==t1.a).  Skip this term 
+              ** or follwed by an inverted copy (t2.b==t1.a).  Skip this term
               ** and use its inversion. */
               testcase( pOrTerm.wtFlags & TERM_COPIED );
               testcase( pOrTerm.wtFlags & TERM_VIRTUAL );
@@ -1161,7 +1161,7 @@ return 1;
         }
 
         /* At this point, okToChngToIN is true if original pTerm satisfies
-        ** case 1.  In that case, construct a new virtual term that is 
+        ** case 1.  In that case, construct a new virtual term that is
         ** pTerm converted into an IN operator.
         */
         if ( okToChngToIN != 0 )
@@ -1246,10 +1246,10 @@ return 1;
       Parse pParse = pWC.pParse;     /* Parsing context */
       sqlite3 db = pParse.db;        /* Data_base connection */
 
-      if ( db.mallocFailed != 0 )
-      {
-        return;
-      }
+      //if ( db.mallocFailed != 0 )
+      //{
+      //  return;
+      //}
       pTerm = pWC.a[idxTerm];
       pMaskSet = pWC.pMaskSet;
       pExpr = pTerm.pExpr;
@@ -1305,11 +1305,11 @@ return 1;
           {
             int idxNew;
             pDup = sqlite3ExprDup( db, pExpr, 0 );
-            if ( db.mallocFailed != 0 )
-            {
-              sqlite3ExprDelete( db, ref pDup );
-              return;
-            }
+            //if ( db.mallocFailed != 0 )
+            //{
+            //  sqlite3ExprDelete( db, ref pDup );
+            //  return;
+            //}
             idxNew = whereClauseInsert( pWC, pDup, TERM_VIRTUAL | TERM_DYNAMIC );
             if ( idxNew == 0 ) return;
             pNew = pWC.a[idxNew];
@@ -1409,7 +1409,7 @@ return 1;
         if ( pStr1 != null ) pStr1.u.zToken = pStr1.u.zToken.Substring( 0, nPattern );
 
         pStr2 = sqlite3ExprDup( db, pStr1, 0 );
-        if ( 0 == db.mallocFailed )
+        ////if ( 0 == db.mallocFailed )
         {
           int c, pC;    /* Last character before the first wildcard */
           pC = pStr2.u.zToken[nPattern - 1];// (u8*)&pStr2->token.z[nPattern-1];
@@ -1418,7 +1418,7 @@ return 1;
           {
             /* The point is to increment the last character before the first
             ** wildcard.  But if we increment '@', that will push it into the
-            ** alphabetic range where case conversions will mess up the 
+            ** alphabetic range where case conversions will mess up the
             ** inequality.  To avoid this, make sure to also run the full
             ** LIKE on all candidate expressions by clearing the isComplete flag
             */
@@ -1466,7 +1466,7 @@ prereqColumn = exprTableUsage( pMaskSet, pLeft );
 if ( ( prereqExpr & prereqColumn ) == null )
 {
 Expr pNewExpr;
-pNewExpr = sqlite3PExpr(pParse, TK_MATCH, 
+pNewExpr = sqlite3PExpr(pParse, TK_MATCH,
 0, sqlite3ExprDup(db, pRight, 0), 0);
 idxNew = whereClauseInsert( pWC, pNewExpr, TERM_VIRTUAL | TERM_DYNAMIC );
 testcase( idxNew == 0 );
@@ -1644,7 +1644,7 @@ pNewTerm.prereqAll = pTerm.prereqAll;
         {
           /* If the indexed column is the primary key and everything matches
           ** so far and none of the ORDER BY terms to the right reference other
-          ** tables in the join, then we are Debug.Assured that the index can be used 
+          ** tables in the join, then we are Debug.Assured that the index can be used
           ** to sort because the primary key is unique and so none of the other
           ** columns will make any difference
           */
@@ -1765,15 +1765,15 @@ sqlite3DebugPrintf( "  estimatedCost=%g\n", p.estimatedCost );
     //#define TRACE_IDX_OUTPUTS(A)
 #endif
 
-    /* 
-** Required because bestIndex() is called by bestOrClauseIndex() 
+    /*
+** Required because bestIndex() is called by bestOrClauseIndex()
 */
     //static void bestIndex(
     //Parse*, WhereClause*, struct SrcList_item*, Bitmask, ExprList*, WhereCost*);
 
     /*
-    ** This routine attempts to find an scanning strategy that can be used 
-    ** to optimize an 'OR' expression that is part of a WHERE clause. 
+    ** This routine attempts to find an scanning strategy that can be used
+    ** to optimize an 'OR' expression that is part of a WHERE clause.
     **
     ** The table associated with FROM clause term pSrc may be either a
     ** regular B-Tree table or a virtual table.
@@ -1843,7 +1843,7 @@ sqlite3DebugPrintf( "  estimatedCost=%g\n", p.estimatedCost );
             if ( rTotal >= pCost.rCost ) break;
           }
 
-          /* If there is an ORDER BY clause, increase the scan cost to account 
+          /* If there is an ORDER BY clause, increase the scan cost to account
           ** for the cost of the sort. */
           if ( pOrderBy != null )
           {
@@ -1873,12 +1873,12 @@ sqlite3DebugPrintf( "  estimatedCost=%g\n", p.estimatedCost );
 
 #if !SQLITE_OMIT_VIRTUALTABLE
 /*
-** Allocate and populate an sqlite3_index_info structure. It is the 
+** Allocate and populate an sqlite3_index_info structure. It is the
 ** responsibility of the caller to eventually release the structure
-** by passing the pointer returned by this function to sqlite3_free().
+** by passing the pointer returned by this function to //sqlite3_free().
 */
 static sqlite3_index_info *allocateIndexInfo(
-Parse *pParse, 
+Parse *pParse,
 WhereClause *pWC,
 struct SrcList_item *pSrc,
 ExprList *pOrderBy
@@ -1905,7 +1905,7 @@ if( pTerm.eOperator & (WO_IN|WO_ISNULL) ) continue;
 nTerm++;
 }
 
-/* If the ORDER BY clause contains only columns in the current 
+/* If the ORDER BY clause contains only columns in the current
 ** virtual table then allocate space for the aOrderBy part of
 ** the sqlite3_index_info structure.
 */
@@ -2012,12 +2012,12 @@ sqlite3ErrorMsg(pParse, "%s", sqlite3ErrStr(rc));
 sqlite3ErrorMsg(pParse, "%s", pVtab.zErrMsg);
 }
 }
-sqlite3DbFree(pParse.db, pVtab.zErrMsg);
+//sqlite3DbFree(pParse.db, pVtab.zErrMsg);
 pVtab.zErrMsg = 0;
 
 for(i=0; i<p.nConstraint; i++){
 if( !p.aConstraint[i].usable && p.aConstraintUsage[i].argvIndex>0 ){
-sqlite3ErrorMsg(pParse, 
+sqlite3ErrorMsg(pParse,
 "table %s: xBestIndex returned an invalid plan", pTab.zName);
 }
 }
@@ -2038,7 +2038,7 @@ return pParse.nErr;
 ** same virtual table.  The sqlite3_index_info structure is created
 ** and initialized on the first invocation and reused on all subsequent
 ** invocations.  The sqlite3_index_info structure is also used when
-** code is generated to access the virtual table.  The whereInfoDelete() 
+** code is generated to access the virtual table.  The whereInfoDelete()
 ** routine takes care of freeing the sqlite3_index_info structure after
 ** everybody has finished with it.
 */
@@ -2059,7 +2059,7 @@ WhereTerm *pTerm;
 int i, j;
 int nOrderBy;
 
-/* Make sure wsFlags is initialized to some sane value. Otherwise, if the 
+/* Make sure wsFlags is initialized to some sane value. Otherwise, if the
 ** malloc in allocateIndexInfo() fails and this function returns leaving
 ** wsFlags in an uninitialized state, the caller may behave unpredictably.
 */
@@ -2086,12 +2086,12 @@ return;
 
 /* The module name must be defined. Also, by this point there must
 ** be a pointer to an sqlite3_vtab structure. Otherwise
-** sqlite3ViewGetColumnNames() would have picked up the error. 
+** sqlite3ViewGetColumnNames() would have picked up the error.
 */
 Debug.Assert( pTab.azModuleArg && pTab.azModuleArg[0] );
 Debug.Assert( pTab.pVtab );
 
-/* Set the aConstraint[].usable fields and initialize all 
+/* Set the aConstraint[].usable fields and initialize all
 ** output variables to zero.
 **
 ** aConstraint[].usable is true for constraints where the right-hand
@@ -2100,7 +2100,7 @@ Debug.Assert( pTab.pVtab );
 **
 **           column = expr
 **
-** and we are evaluating a join, then the constraint on column is 
+** and we are evaluating a join, then the constraint on column is
 ** only valid if all tables referenced in expr occur to the left
 ** of the table containing column.
 **
@@ -2121,7 +2121,7 @@ pUsage[i] = new sqlite3_index_constraint_usage();
 }
 // memset(pUsage, 0, sizeof(pUsage[0])*pIdxInfo.nConstraint);
 if( pIdxInfo.needToFreeIdxStr ){
-sqlite3_free(pIdxInfo.idxStr);
+//sqlite3_free(pIdxInfo.idxStr);
 }
 pIdxInfo.idxStr = 0;
 pIdxInfo.idxNum = 0;
@@ -2141,8 +2141,8 @@ return;
 /* The cost is not allowed to be larger than SQLITE_BIG_DBL (the
 ** inital value of lowestCost in this loop. If it is, then the
 ** (cost<lowestCost) test below will never be true.
-** 
-** Use "(double)2" instead of "2.0" in case OMIT_FLOATING_POINT 
+**
+** Use "(double)2" instead of "2.0" in case OMIT_FLOATING_POINT
 ** is defined.
 */
 if( (SQLITE_BIG_DBL/((double)2))<pIdxInfo.estimatedCost ){
@@ -2158,7 +2158,7 @@ pCost.plan.nEq = 0;
 pIdxInfo.nOrderBy = nOrderBy;
 
 /* Try to find a more efficient access pattern by using multiple indexes
-** to optimize an OR expression within the WHERE clause. 
+** to optimize an OR expression within the WHERE clause.
 */
 bestOrClauseIndex(pParse, pWC, pSrc, notReady, pOrderBy, pCost);
 }
@@ -2182,13 +2182,13 @@ bestOrClauseIndex(pParse, pWC, pSrc, notReady, pOrderBy, pCost);
 **       index and in the main table.
 **
 ** If there was an INDEXED BY clause (pSrc.pIndex) attached to the table in
-** the SQL statement, then this function only considers plans using the 
+** the SQL statement, then this function only considers plans using the
 ** named index. If no such plan is found, then the returned cost is
-** SQLITE_BIG_DBL. If a plan is found that uses the named index, 
+** SQLITE_BIG_DBL. If a plan is found that uses the named index,
 ** then the cost is calculated in the usual way.
 **
-** If a NOT INDEXED clause (pSrc.notIndexed!=0) was attached to the table 
-** in the SELECT statement, then no indexes are considered. However, the 
+** If a NOT INDEXED clause (pSrc.notIndexed!=0) was attached to the table
+** in the SELECT statement, then no indexes are considered. However, the
 ** selected plan may still take advantage of the tables built-in rowid
 ** index.
 */
@@ -2381,7 +2381,7 @@ bestOrClauseIndex(pParse, pWC, pSrc, notReady, pOrderBy, pCost);
 
         /* Count the number of columns in the index that are satisfied
 ** by x=EXPR or x IS NULL constraints or x IN (...) constraints.
-** For a term of the form x=EXPR or x IS NULL we only have to do 
+** For a term of the form x=EXPR or x IS NULL we only have to do
 ** a single binary search.  But for x IN (...) we have to do a
 ** number of binary searched
 ** equal to the number of entries on the RHS of the IN operator.
@@ -2551,7 +2551,7 @@ bestOrClauseIndex(pParse, pWC, pSrc, notReady, pOrderBy, pCost);
 
     /*
     ** Find the query plan for accessing table pSrc.pTab. Write the
-    ** best query plan and its cost into the WhereCost object supplied 
+    ** best query plan and its cost into the WhereCost object supplied
     ** as the last parameter. This function may calculate the cost of
     ** both real and virtual table scans.
     */
@@ -2570,9 +2570,9 @@ if ( IsVirtual( pSrc.pTab ) )
 sqlite3_index_info p = null;
 bestVirtualIndex(pParse, pWC, pSrc, notReady, pOrderBy, pCost, p);
 if( p.needToFreeIdxStr !=0){
-sqlite3_free(ref p.idxStr);
+//sqlite3_free(ref p.idxStr);
 }
-sqlite3DbFree(pParse.db, p);
+//sqlite3DbFree(pParse.db, p);
 }
 else
 #endif
@@ -2641,7 +2641,7 @@ else
 
     /*
     ** Generate code for a single equality term of the WHERE clause.  An equality
-    ** term can be either X=expr or X IN (...).   pTerm is the term to be 
+    ** term can be either X=expr or X IN (...).   pTerm is the term to be
     ** coded.
     **
     ** The current value for the constraint is left in register iReg.
@@ -2726,7 +2726,7 @@ else
     ** For example, consider table t1(a,b,c,d,e,f) with index i1(a,b,c).
     ** Suppose the WHERE clause is this:  a==5 AND b IN (1,2,3) AND c>5 AND c<10
     ** The index has as many as three equality constraints, but in this
-    ** example, the third "c" value is an inequality.  So only two 
+    ** example, the third "c" value is an inequality.  So only two
     ** constraints are coded.  This routine will generate code to evaluate
     ** a==5 and b IN (1,2,3).  The current values for a and b will be stored
     ** in consecutive registers and the index of the first register is returned.
@@ -2856,7 +2856,7 @@ else
       ** initialize a memory cell that records if this table matches any
       ** row of the left table of the join.
       */
-      if ( pLevel.iFrom > 0 && ( pTabItem.jointype & JT_LEFT ) != 0 )// Check value of pTabItem[0].jointype 
+      if ( pLevel.iFrom > 0 && ( pTabItem.jointype & JT_LEFT ) != 0 )// Check value of pTabItem[0].jointype
       {
         pLevel.iLeftJoin = ++pParse.nMem;
         sqlite3VdbeAddOp2( v, OP_Integer, 0, pLevel.iLeftJoin );
@@ -2960,7 +2960,7 @@ else
           Expr pX;             /* The expression that defines the start bound */
           int r1, rTemp = 0;        /* Registers for holding the start boundary */
 
-          /* The following constant maps TK_xx codes into corresponding 
+          /* The following constant maps TK_xx codes into corresponding
           ** seek opcodes.  It depends on a particular ordering of TK_xx
           */
           u8[] aMoveOp = new u8[]{
@@ -3025,14 +3025,14 @@ else
       {
         /* Case 3: A scan using an index.
         **
-        **         The WHERE clause may contain zero or more equality 
+        **         The WHERE clause may contain zero or more equality
         **         terms ("==" or "IN" operators) that refer to the N
         **         left-most columns of the index. It may also contain
         **         inequality constraints (>, <, >= or <=) on the indexed
-        **         column that immediately follows the N equalities. Only 
+        **         column that immediately follows the N equalities. Only
         **         the right-most column can be an inequality - the rest must
-        **         use the "==" and "IN" operators. For example, if the 
-        **         index is on (x,y,z), then the following clauses are all 
+        **         use the "==" and "IN" operators. For example, if the
+        **         index is on (x,y,z), then the following clauses are all
         **         optimized:
         **
         **            x=5
@@ -3088,8 +3088,8 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
         iIdxCur = pLevel.iIdxCur;
         k = pIdx.aiColumn[nEq];     /* Column for inequality constraints */
 
-        /* If this loop satisfies a sort order (pOrderBy) request that 
-        ** was pDebug.Assed to this function to implement a "SELECT min(x) ..." 
+        /* If this loop satisfies a sort order (pOrderBy) request that
+        ** was pDebug.Assed to this function to implement a "SELECT min(x) ..."
         ** query, then the caller will only allow the loop to run for
         ** a single iteration. This means that the first row returned
         ** should not have a NULL value stored in 'x'. If column 'x' is
@@ -3107,8 +3107,8 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
           nExtraReg = 1;
         }
 
-        /* Find any inequality constraint terms for the start and end 
-        ** of the range. 
+        /* Find any inequality constraint terms for the start and end
+        ** of the range.
         */
         if ( ( pLevel.plan.wsFlags & WHERE_TOP_LIMIT ) != 0 )
         {
@@ -3130,7 +3130,7 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
 
 
         /* If we are doing a reverse order scan on an ascending index, or
-        ** a forward order scan on a descending index, interchange the 
+        ** a forward order scan on a descending index, interchange the
         ** start and end terms (pRangeStart and pRangeEnd).
         */
         if ( bRev == ( ( pIdx.aSortOrder[nEq] == SQLITE_SO_ASC ) ? 1 : 0 ) )
@@ -3226,7 +3226,7 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
           sqlite3VdbeAddOp2( v, OP_Seek, iCur, iRowidReg );  /* Deferred seek */
         }
 
-        /* Record the instruction used to terminate the loop. Disable 
+        /* Record the instruction used to terminate the loop. Disable
         ** WHERE clause terms made redundant by the index range scan.
         */
         pLevel.op = (u8)( bRev != 0 ? OP_Prev : OP_Next );
@@ -3297,14 +3297,14 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
           oneTab.nAlloc = 1;
           oneTab.a = new SrcList_item[1];
           oneTab.a[0] = pTabItem;
-          /* Initialize the rowset register to contain NULL. An SQL NULL is 
+          /* Initialize the rowset register to contain NULL. An SQL NULL is
           ** equivalent to an empty rowset.
           **
-          ** Also initialize regReturn to contain the address of the instruction 
+          ** Also initialize regReturn to contain the address of the instruction
           ** immediately following the OP_Return at the bottom of the loop. This
           ** is required in a few obscure LEFT JOIN cases where control jumps
-          ** over the top of the loop into the body of it. In this case the 
-          ** correct response for the end-of-loop code (the OP_Return) is to 
+          ** over the top of the loop into the body of it. In this case the
+          ** correct response for the end-of-loop code (the OP_Return) is to
           ** fall through to the next instruction, just as an OP_Next does if
           ** called on an uninitialized cursor.
           */
@@ -3397,7 +3397,7 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
       }
 
       /* For a LEFT OUTER JOIN, generate code that will record the fact that
-      ** at least one row of the right table has matched the left table.  
+      ** at least one row of the right table has matched the left table.
       */
       if ( pLevel.iLeftJoin != 0 )
       {
@@ -3453,13 +3453,13 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
             /* Debug.Assert( pInfo.needToFreeIdxStr==0 || db.mallocFailed ); */
             if ( pInfo.needToFreeIdxStr != 0 )
             {
-              sqlite3_free( ref pInfo.idxStr );
+              //sqlite3_free( ref pInfo.idxStr );
             }
-            sqlite3DbFree( db, pInfo );
+            //sqlite3DbFree( db, pInfo );
           }
         }
         whereClauseClear( pWInfo.pWC );
-        sqlite3DbFree( db, pWInfo );
+        //sqlite3DbFree( db, pWInfo );
       }
     }
 
@@ -3574,7 +3574,7 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
       sqlite3 db;                /* Data_base connection */
 
       /* The number of tables in the FROM clause is limited by the number of
-      ** bits in a Bitmask 
+      ** bits in a Bitmask
       */
       if ( pTabList.nSrc > BMS )
       {
@@ -3598,10 +3598,10 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
       //    sizeof( WhereMaskSet )
       //);
       pWInfo.a = new WhereLevel[pTabList.nSrc];
-      if ( db.mallocFailed != 0 )
-      {
-        goto whereBeginError;
-      }
+      //if ( db.mallocFailed != 0 )
+      //{
+      //  goto whereBeginError;
+      //}
       pWInfo.nLevel = pTabList.nSrc;
       pWInfo.pParse = pParse;
       pWInfo.pTabList = pTabList;
@@ -3639,8 +3639,8 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
       ** for all tables to the left of a left join is important.  Ticket #3015.
       **
       ** Configure the WhereClause.vmask variable so that bits that correspond
-      ** to virtual table cursors are set. This is used to selectively disable 
-      ** the OR-to-IN transformation in exprAnalyzeOrTerm(). It is not helpful 
+      ** to virtual table cursors are set. This is used to selectively disable
+      ** the OR-to-IN transformation in exprAnalyzeOrTerm(). It is not helpful
       ** with virtual tables.
       */
       Debug.Assert( pWC.vmask == 0 && pMaskSet.n == 0 );
@@ -3672,10 +3672,10 @@ pWC.vmask |= ( (Bitmask)1 << i );
 ** and work forward so that the added virtual terms are never processed.
 */
       exprAnalyzeAll( pTabList, pWC );
-      if ( db.mallocFailed != 0 )
-      {
-        goto whereBeginError;
-      }
+      //if ( db.mallocFailed != 0 )
+      //{
+      //  goto whereBeginError;
+      //}
 
       /* Chose the best index to use for each table in the FROM clause.
       **
@@ -3733,7 +3733,7 @@ pWC.vmask |= ( (Bitmask)1 << i );
 if( IsVirtual(pTabItem.pTab) ){
 sqlite3_index_info **pp = &pWInfo.a[j].pIdxInfo;
 bestVirtualIndex(pParse, pWC, pTabItem, notReady, pOrderBy, &sCost, pp);
-}else 
+}else
 #endif
           {
             bestBtreeIndex( pParse, pWC, pTabItem, notReady, pOrderBy, ref sCost );
@@ -3794,7 +3794,7 @@ bestVirtualIndex(pParse, pWC, pTabItem, notReady, pOrderBy, &sCost, pp);
 #if (SQLITE_TEST) && (SQLITE_DEBUG)
       WHERETRACE( "*** Optimizer Finished ***\n" );
 #endif
-      if ( pParse.nErr != 0 || db.mallocFailed != 0 )
+      if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
         goto whereBeginError;
       }
@@ -3998,7 +3998,7 @@ whereBeginError:
     }
 
     /*
-    ** Generate the end of the WHERE loop.  See comments on 
+    ** Generate the end of the WHERE loop.  See comments on
     ** sqlite3WhereBegin() for additional information.
     */
     static void sqlite3WhereEnd( WhereInfo pWInfo )
@@ -4034,7 +4034,7 @@ whereBeginError:
             sqlite3VdbeAddOp2( v, OP_Next, pIn.iCur, pIn.addrInTop );
             sqlite3VdbeJumpHere( v, pIn.addrInTop - 1 );
           }
-          sqlite3DbFree( db, pLevel.u._in.aInLoop );
+          //sqlite3DbFree( db, pLevel.u._in.aInLoop );
         }
         sqlite3VdbeResolveLabel( v, pLevel.addrBrk );
         if ( pLevel.iLeftJoin != 0 )
@@ -4090,14 +4090,14 @@ whereBeginError:
         ** as the vdbe level waits until the table is read before actually
         ** seeking the table cursor to the record corresponding to the current
         ** position in the index.
-        ** 
+        **
         ** Calls to the code generator in between sqlite3WhereBegin and
         ** sqlite3WhereEnd will have created code that references the table
         ** directly.  This loop scans all that code looking for opcodes
         ** that reference the table and converts them into opcodes that
         ** reference the index.
         */
-        if ( ( pLevel.plan.wsFlags & WHERE_INDEXED ) != 0 && 0 == db.mallocFailed )
+        if ( ( pLevel.plan.wsFlags & WHERE_INDEXED ) != 0 )///* && 0 == db.mallocFailed */ )
         {
           int k, j, last;
           VdbeOp pOp;

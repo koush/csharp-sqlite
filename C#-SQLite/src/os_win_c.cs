@@ -38,7 +38,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -51,7 +51,7 @@ namespace CS_SQLite3
 ** A Note About Memory Allocation:
 **
 ** This driver uses malloc()/free() directly rather than going through
-** the SQLite-wrappers sqlite3Malloc()/sqlite3DbFree(db,ref  ).  Those wrappers
+** the SQLite-wrappers sqlite3Malloc()///sqlite3DbFree(db,ref  ).  Those wrappers
 ** are designed for use on embedded systems where memory is scarce and
 ** malloc failures happen frequently.  Win32 does not typically run on
 ** embedded systems, and when it does the developers normally have bigger
@@ -76,14 +76,14 @@ namespace CS_SQLite3
     //#include <winbase.h>
 
 #if __CYGWIN__
-/# include <sys/cygwin.h>
+//# include <sys/cygwin.h>
 #endif
 
     /*
 ** Macros used to determine whether or not to use threads.
 */
 #if THREADSAFE
-/# define SQLITE_W32_THREADS 1
+//# define SQLITE_W32_THREADS 1
 #endif
 
     /*
@@ -95,7 +95,7 @@ namespace CS_SQLite3
     ** Some microsoft compilers lack this definition.
     */
 #if !INVALID_FILE_ATTRIBUTES
-    //# define INVALID_FILE_ATTRIBUTES ((DWORD)-1) 
+    //# define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
     const int INVALID_FILE_ATTRIBUTES = -1;
 #endif
 
@@ -104,8 +104,8 @@ namespace CS_SQLite3
 ** reduced API.
 */
 #if SQLITE_OS_WINCE
-/# define AreFileApisANSI() 1
-/# define GetDiskFreeSpaceW() 0
+//# define AreFileApisANSI() 1
+//# define GetDiskFreeSpaceW() 0
 #endif
 
     /*
@@ -136,7 +136,7 @@ BOOL bExclusive;    /* Indicates an exclusive lock has been obtained */
       public DWORD sectorSize;       /* Sector size of the device file is on */
 #if SQLITE_OS_WINCE
 WCHAR *zDeleteOnClose;  /* Name of file to delete when closing */
-HANDLE hMutex;          /* Mutex used to control access to shared lock */  
+HANDLE hMutex;          /* Mutex used to control access to shared lock */
 HANDLE hShared;         /* Shared memory segment used for locking */
 winceLock local;        /* Locks obtained by this instance of sqlite3_file */
 winceLock *shared;      /* Global shared lock memory for the file  */
@@ -181,7 +181,7 @@ static int sqlite3_os_type = 0;
 ** the LockFileEx() API.
 */
 #if SQLITE_OS_WINCE
-/# define isNT()  (1)
+//# define isNT()  (1)
 #else
     static bool isNT()
     {
@@ -198,7 +198,7 @@ static int sqlite3_os_type = 0;
 #endif // * SQLITE_OS_WINCE */
 
     /*
-** Convert a UTF-8 string to microsoft unicode (UTF-16?). 
+** Convert a UTF-8 string to microsoft unicode (UTF-16?).
 **
 ** Space to hold the returned string is obtained from malloc.
 */
@@ -244,7 +244,7 @@ static int sqlite3_os_type = 0;
     /*
     ** Convert an ansi string to microsoft unicode, based on the
     ** current codepage settings for file apis.
-    ** 
+    **
     ** Space to hold the returned string is obtained
     ** from malloc.
     */
@@ -310,7 +310,7 @@ static int sqlite3_os_type = 0;
     //}
 
     /*
-    ** Convert UTF-8 to multibyte character string.  Space to hold the 
+    ** Convert UTF-8 to multibyte character string.  Space to hold the
     ** returned string is obtained from malloc().
     */
     //static char *utf8ToMbcs(string zFilename){
@@ -334,7 +334,7 @@ static int sqlite3_os_type = 0;
 ** WindowsCE does not have a localtime() function.  So create a
 ** substitute.
 */
-/#include <time.h>
+//#include <time.h>
 struct tm *__cdecl localtime(const time_t *t)
 {
 static struct tm y;
@@ -358,13 +358,13 @@ return &y;
 }
 
 /* This will never be called, but defined to make the code compile */
-/#define GetTempPathA(a,b)
+//#define GetTempPathA(a,b)
 
-/#define LockFile(a,b,c,d,e)       winceLockFile(&a, b, c, d, e)
-/#define UnlockFile(a,b,c,d,e)     winceUnlockFile(&a, b, c, d, e)
-/#define LockFileEx(a,b,c,d,e,f)   winceLockFileEx(&a, b, c, d, e, f)
+//#define LockFile(a,b,c,d,e)       winceLockFile(&a, b, c, d, e)
+//#define UnlockFile(a,b,c,d,e)     winceUnlockFile(&a, b, c, d, e)
+//#define LockFileEx(a,b,c,d,e,f)   winceLockFileEx(&a, b, c, d, e, f)
 
-/#define HANDLE_TO_WINFILE(a) (sqlite3_file*)&((char*)a)[-offsetof(sqlite3_file,h)]
+//#define HANDLE_TO_WINFILE(a) (sqlite3_file*)&((char*)a)[-offsetof(sqlite3_file,h)]
 
 /*
 ** Acquire a lock on the handle h
@@ -378,7 +378,7 @@ dwErr = WaitForSingleObject(h, INFINITE);
 /*
 ** Release a lock acquired by winceMutexAcquire()
 */
-/#define winceMutexRelease(h) ReleaseMutex(h)
+//#define winceMutexRelease(h) ReleaseMutex(h)
 
 /*
 ** Create the mutex and shared memory used for locking in the file
@@ -410,16 +410,16 @@ return FALSE;
 /* Acquire the mutex before continuing */
 winceMutexAcquire(pFile.hMutex);
 
-/* Since the names of named mutexes, semaphores, file mappings etc are 
+/* Since the names of named mutexes, semaphores, file mappings etc are
 ** case-sensitive, take advantage of that by uppercasing the mutex name
 ** and using that as the shared filemapping name.
 */
 CharUpperW(zName);
 pFile.hShared = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL,
 PAGE_READWRITE, 0, winceLock.Length,
-zName);  
+zName);
 
-/* Set a flag that indicates we're the first to create the memory so it 
+/* Set a flag that indicates we're the first to create the memory so it
 ** must be zero-initialized */
 if (GetLastError() == ERROR_ALREADY_EXISTS){
 bInit = FALSE;
@@ -429,7 +429,7 @@ free(zName);
 
 /* If we succeeded in making the shared memory handle, map it. */
 if (pFile.hShared){
-pFile.shared = (winceLock*)MapViewOfFile(pFile.hShared, 
+pFile.shared = (winceLock*)MapViewOfFile(pFile.hShared,
 FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, winceLock).Length;
 /* If mapping failed, close the shared memory handle and erase it */
 if (!pFile.shared){
@@ -484,13 +484,13 @@ UnmapViewOfFile(pFile.shared);
 CloseHandle(pFile.hShared);
 
 /* Done with the mutex */
-winceMutexRelease(pFile.hMutex);    
+winceMutexRelease(pFile.hMutex);
 CloseHandle(pFile.hMutex);
 pFile.hMutex = NULL;
 }
 }
 
-/* 
+/*
 ** An implementation of the LockFile() API of windows for wince
 */
 static BOOL winceLockFile(
@@ -668,13 +668,13 @@ return FALSE;
         //  if (!rc && ++cnt < MX_CLOSE_ATTEMPT) Thread.Sleep(100); //, 1) );
       } while ( !rc && ++cnt < MX_CLOSE_ATTEMPT ); //, 1) );
 #if SQLITE_OS_WINCE
-/#define WINCE_DELETION_ATTEMPTS 3
+//#define WINCE_DELETION_ATTEMPTS 3
 winceDestroyLock(pFile);
 if( pFile.zDeleteOnClose ){
 int cnt = 0;
 while(
 DeleteFileW(pFile.zDeleteOnClose)==0
-&& GetFileAttributesW(pFile.zDeleteOnClose)!=0xffffffff 
+&& GetFileAttributesW(pFile.zDeleteOnClose)!=0xffffffff
 && cnt++ < WINCE_DELETION_ATTEMPTS
 ){
 Sleep(100);  /* Wait a little before trying again */
@@ -968,7 +968,7 @@ return SQLITE_OK;
         //  res = 0;
         //}
       }
-      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
       */
 #if !SQLITE_OS_WINCE
       //else
@@ -1003,7 +1003,7 @@ return SQLITE_OK;
           res = 0;
         }
       }
-      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
       */
 #if !SQLITE_OS_WINCE
       else
@@ -1374,7 +1374,7 @@ return SQLITE_OK;
       //if (isNT())
       //{
       //  zConverted = utf8ToUnicode(zFilename);
-      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
       */
 #if !SQLITE_OS_WINCE
       //}
@@ -1413,7 +1413,7 @@ return SQLITE_OK;
       //  }else{
       //    return SQLITE_NOMEM;
       //  }
-      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
       ** Since the ASCII version of these Windows API do not exist for WINCE,
       ** it's important to not reference them for WINCE builds.
       */
@@ -1519,8 +1519,8 @@ int isTemp = 0;
       Debug.Assert( pFile != null );
       UNUSED_PARAMETER( pVfs );
 
-      /* If the second argument to this function is NULL, generate a 
-      ** temporary file name to use 
+      /* If the second argument to this function is NULL, generate a
+      ** temporary file name to use
       */
       if ( String.IsNullOrEmpty( zUtf8Name ) )
       {
@@ -1547,8 +1547,8 @@ int isTemp = 0;
       {
         dwDesiredAccess = FileAccess.Read; // GENERIC_READ;
       }
-      /* SQLITE_OPEN_EXCLUSIVE is used to make sure that a new file is 
-      ** created. SQLite doesn't use it to indicate "exclusive access" 
+      /* SQLITE_OPEN_EXCLUSIVE is used to make sure that a new file is
+      ** created. SQLite doesn't use it to indicate "exclusive access"
       ** as it is usually understood.
       */
       Debug.Assert( 0 == ( flags & SQLITE_OPEN_EXCLUSIVE ) || ( flags & SQLITE_OPEN_CREATE ) != 0 );
@@ -1609,7 +1609,7 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
         catch ( Exception e )
         { }
 
-        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
         ** Since the ASCII version of these Windows API do not exist for WINCE,
         ** it's important to not reference them for WINCE builds.
         */
@@ -1736,7 +1736,7 @@ pFile.zDeleteOnClose = zConverted;
             Thread.Sleep( 100 );
           }
         } while ( rc != SQLITE_OK && ++cnt < MX_DELETION_ATTEMPTS );
-        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
         ** Since the ASCII version of these Windows API do not exist for WINCE,
         ** it's important to not reference them for WINCE builds.
         */
@@ -1824,7 +1824,7 @@ pFile.zDeleteOnClose = zConverted;
           catch ( IOException e ) { attr = FileAttributes.ReadOnly; }
         }
       }
-      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
       ** Since the ASCII version of these Windows API do not exist for WINCE,
       ** it's important to not reference them for WINCE builds.
       */
@@ -1906,7 +1906,7 @@ return SQLITE_OK;
         catch ( IOException e )
         { zOut = zRelative; }
         // will happen on exit; was   free(zTemp);
-        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+        /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
         ** Since the ASCII version of these Windows API do not exist for WINCE,
         ** it's important to not reference them for WINCE builds.
         */
@@ -2044,7 +2044,7 @@ return SQLITE_OK;
     //  }
     //  if( isNT() ){
     //    h = LoadLibraryW((WCHAR*)zConverted);
-    /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+    /* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed.
     ** Since the ASCII version of these Windows API do not exist for WINCE,
     ** it's important to not reference them for WINCE builds.
     */
@@ -2181,8 +2181,8 @@ n += sizeof( long );
     static int winCurrentTime( sqlite3_vfs pVfs, ref double prNow )
     {
       FILETIME ft = new FILETIME();
-      /* FILETIME structure is a 64-bit value representing the number of 
-      100-nanosecond intervals since January 1, 1601 (= JD 2305813.5). 
+      /* FILETIME structure is a 64-bit value representing the number of
+      100-nanosecond intervals since January 1, 1601 (= JD 2305813.5).
       */
       sqlite3_int64 timeW;   /* Whole days */
       sqlite3_int64 timeF;   /* Fractional Days */

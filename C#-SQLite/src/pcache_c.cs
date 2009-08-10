@@ -29,7 +29,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -190,7 +190,7 @@ expensive_assert( pcacheCheckSynced(p) );
 
     /*************************************************** General Interfaces ******
     **
-    ** Initialize and shutdown the page cache subsystem. Neither of these 
+    ** Initialize and shutdown the page cache subsystem. Neither of these
     ** functions are threadsafe.
     */
     static int sqlite3PcacheInitialize()
@@ -216,8 +216,8 @@ expensive_assert( pcacheCheckSynced(p) );
 
     /*
     ** Create a new PCache object. Storage space to hold the object
-    ** has already been allocated and is passed in as the p pointer. 
-    ** The caller discovers how much space needs to be allocated by 
+    ** has already been allocated and is passed in as the p pointer.
+    ** The caller discovers how much space needs to be allocated by
     ** calling sqlite3PcacheSize().
     */
     static void sqlite3PcacheOpen(
@@ -300,9 +300,9 @@ expensive_assert( pcacheCheckSynced(p) );
       {
         PgHdr pPg;
 
-        /* Find a dirty page to write-out and recycle. First try to find a 
+        /* Find a dirty page to write-out and recycle. First try to find a
         ** page that does not require a journal-sync (one with PGHDR_NEED_SYNC
-        ** cleared), but if that is not possible settle for any other 
+        ** cleared), but if that is not possible settle for any other
         ** unreferenced dirty page.
         */
 #if SQLITE_ENABLE_EXPENSIVE_ASSERT
@@ -470,7 +470,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
     }
 
     /*
-    ** Change the page number of page p to newPgno. 
+    ** Change the page number of page p to newPgno.
     */
     static void sqlite3PcacheMove( PgHdr p, Pgno newPgno )
     {
@@ -530,7 +530,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
       }
     }
 
-    /* 
+    /*
     ** Discard the contents of the cache.
     */
     static void sqlite3PcacheClear( PCache pCache )
@@ -628,7 +628,7 @@ N_SORT_BUCKET
 #endif
  - 1 )
         {
-          /* Coverage: To get here, there need to be 2^(N_SORT_BUCKET) 
+          /* Coverage: To get here, there need to be 2^(N_SORT_BUCKET)
           ** elements in the input list. This is possible, but impractical.
           ** Testing this line is the point of global variable
           ** sqlite3_pager_n_sort_bucket.
@@ -663,7 +663,7 @@ N_SORT_BUCKET
       return pcacheSortDirtyList( pCache.pDirty );
     }
 
-    /* 
+    /*
     ** Return the total number of referenced pages held by the cache.
     */
     static int sqlite3PcacheRefCount( PCache pCache )
@@ -679,7 +679,7 @@ N_SORT_BUCKET
       return p.nRef;
     }
 
-    /* 
+    /*
     ** Return the total number of pages in the cache.
     */
     static int sqlite3PcachePagecount( PCache pCache )

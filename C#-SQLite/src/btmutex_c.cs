@@ -20,7 +20,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -265,7 +265,7 @@ return 1;
 #endif //* NDEBUG */
 
 /*
-** Add a new Btree pointer to a BtreeMutexArray. 
+** Add a new Btree pointer to a BtreeMutexArray.
 ** if the pointer can possibly be shared with
 ** another database connection.
 **

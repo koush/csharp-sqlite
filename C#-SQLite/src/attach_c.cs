@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -147,7 +147,7 @@ namespace CS_SQLite3
       //  aNew = sqlite3DbMallocRaw(db, sizeof(db.aDb[0])*3 );
       //  if( aNew==0 ) return;
       //  memcpy(aNew, db.aDb, sizeof(db.aDb[0])*2);
-      //}else {  
+      //}else {
       if ( db.aDb.Length <= db.nDb ) Array.Resize( ref db.aDb, db.nDb + 1 );//aNew = sqlite3DbRealloc(db, db.aDb, sizeof(db.aDb[0])*(db.nDb+1) );
       if ( db.aDb == null ) return;   // if( aNew==0 ) return;
       //}
@@ -220,7 +220,7 @@ break;
 #endif
 
       /* If the file was opened successfully, read the schema for the new database.
-** If this fails, or if opening the file failed, then close the file and 
+** If this fails, or if opening the file failed, then close the file and
 ** remove the entry from the db.aDb[] array. i.e. put everything back the way
 ** we found it.
 */
@@ -246,8 +246,8 @@ break;
         db.nDb = iDb;
         if ( rc == SQLITE_NOMEM || rc == SQLITE_IOERR_NOMEM )
         {
-          db.mallocFailed = 1;
-          sqlite3DbFree( db, zErrDyn );
+  ////        db.mallocFailed = 1;
+          //sqlite3DbFree( db, zErrDyn );
           zErrDyn = sqlite3MPrintf( db, "out of memory" );
         }
         else if ( zErrDyn == "" )
@@ -264,7 +264,7 @@ attach_error:
       if ( zErrDyn != "" )
       {
         sqlite3_result_error( context, zErrDyn, -1 );
-        sqlite3DbFree( db, ref zErrDyn );
+        //sqlite3DbFree( db, ref zErrDyn );
       }
       if ( rc != 0 ) sqlite3_result_error_code( context, rc );
     }
@@ -383,7 +383,7 @@ goto attach_end;
       sqlite3ExprCode( pParse, pDbname, regArgs + 1 );
       sqlite3ExprCode( pParse, pKey, regArgs + 2 );
 
-      Debug.Assert( v != null || db.mallocFailed != 0 );
+      Debug.Assert( v != null /*|| db.mallocFailed != 0 */ );
       if ( v != null )
       {
         sqlite3VdbeAddOp3( v, OP_Function, 0, regArgs + 3 - pFunc.nArg, regArgs + 3 );

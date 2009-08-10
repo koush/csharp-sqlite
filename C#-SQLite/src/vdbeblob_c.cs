@@ -24,7 +24,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -64,7 +64,7 @@ sqlite3 db;            /* The associated database */
 //  int nAttempt = 0;
 //  int iCol;               /* Index of zColumn in row-record */
 
-//  /* This VDBE program seeks a btree cursor to the identified 
+//  /* This VDBE program seeks a btree cursor to the identified
 //  ** db/table/row entry. The reason for using a vdbe program instead
 //  ** of writing code to use the b-tree layer directly is that the
 //  ** vdbe program will take advantage of the various transaction,
@@ -72,11 +72,11 @@ sqlite3 db;            /* The associated database */
 //  **
 //  ** After seeking the cursor, the vdbe executes an OP_ResultRow.
 //  ** Code external to the Vdbe then "borrows" the b-tree cursor and
-//  ** uses it to implement the blob_read(), blob_write() and 
+//  ** uses it to implement the blob_read(), blob_write() and
 //  ** blob_bytes() functions.
 //  **
 //  ** The sqlite3_blob_close() function finalizes the vdbe program,
-//  ** which closes the b-tree cursor and (possibly) commits the 
+//  ** which closes the b-tree cursor and (possibly) commits the
 //  ** transaction.
 //  */
 //  static const VdbeOpList openBlob[] = {
@@ -131,7 +131,7 @@ sqlite3 db;            /* The associated database */
 //      if( sParse.zErrMsg ){
 //        sqlite3_snprintf(sizeof(zErr), zErr, "%s", sParse.zErrMsg);
 //      }
-//      sqlite3DbFree(db,sParse.zErrMsg);
+//      //sqlite3DbFree(db,sParse.zErrMsg);
 //      rc = SQLITE_ERROR;
 //      (void)sqlite3SafetyOff(db);
 //      sqlite3BtreeLeaveAll(db);
@@ -187,10 +187,10 @@ sqlite3 db;            /* The associated database */
 //      sqlite3VdbeChangeP2(v, 1, pTab.pSchema.schema_cookie);
 
 //      /* Make sure a mutex is held on the table to be accessed */
-//      sqlite3VdbeUsesBtree(v, iDb); 
+//      sqlite3VdbeUsesBtree(v, iDb);
 
-//      /* Remove either the OP_OpenWrite or OpenRead. Set the P2 
-//      ** parameter of the other to pTab.tnum. 
+//      /* Remove either the OP_OpenWrite or OpenRead. Set the P2
+//      ** parameter of the other to pTab.tnum.
 //      */
 //  sqlite3VdbeChangeToNoop(v, (flags ? 2 : 3), 1);
 //  sqlite3VdbeChangeP2(v, (flags ? 3 : 2), pTab->tnum);
@@ -200,7 +200,7 @@ sqlite3 db;            /* The associated database */
 //  ** think that the table has one more column than it really
 //  ** does. An OP_Column to retrieve this imaginary column will
 //  ** always return an SQL NULL. This is useful because it means
-//  ** we can invoke OP_Column to fill in the vdbe cursors type 
+//  ** we can invoke OP_Column to fill in the vdbe cursors type
 //  ** and offset cache without causing any IO.
 //  */
 //  sqlite3VdbeChangeP4(v, flags ? 3 : 2, SQLITE_INT_TO_PTR(pTab->nCol+1), P4_INT32);
@@ -243,7 +243,7 @@ sqlite3 db;            /* The associated database */
 //    }
 //    pBlob = (Incrblob *)sqlite3DbMallocZero(db, sizeof(Incrblob));
 //    if( db.mallocFailed !=0{
-//      sqlite3DbFree(db,pBlob);
+//      //sqlite3DbFree(db,pBlob);
 //      goto blob_open_out;
 //    }
 //    pBlob.flags = flags;
@@ -285,7 +285,7 @@ sqlite3 db;            /* The associated database */
 //  db = p->db;
 //  sqlite3_mutex_enter(db->mutex);
 //  rc = sqlite3_finalize(p->pStmt);
-//  sqlite3DbFree(db, p);
+//  //sqlite3DbFree(db, p);
 //  sqlite3_mutex_leave(db->mutex);
 //  return rc;
 //}
@@ -294,16 +294,16 @@ sqlite3 db;            /* The associated database */
 ** Perform a read or write operation on a blob
 */
 //static int blobReadWrite(
-//  sqlite3_blob pBlob, 
-//  void *z, 
-//  int n, 
-//  int iOffset, 
+//  sqlite3_blob pBlob,
+//  void *z,
+//  int n,
+//  int iOffset,
 //  int (*xCall)(BtCursor*, u32, u32, void*)
 //){
 //  int rc;
 //  Incrblob p = (Incrblob *)pBlob;
 //  Vdbe *v;
-//  sqlite3 db = p.db;  
+//  sqlite3 db = p.db;
 
 //  sqlite3_mutex_enter(db.mutex);
 //    v = (Vdbe*)p->pStmt;

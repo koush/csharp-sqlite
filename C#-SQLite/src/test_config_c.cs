@@ -20,10 +20,10 @@ namespace CS_SQLite3
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** 
+    **
     ** This file contains code used for testing the SQLite system.
     ** None of the code in this file goes into a deliverable build.
-    ** 
+    **
     ** The focus of this file is providing the TCL testing layer
     ** access to compile-time constants.
     **
@@ -31,7 +31,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -59,6 +59,10 @@ namespace CS_SQLite3
     */
     static void set_options( Tcl_Interp interp )
     {
+
+      TCL.Tcl_SetVar2(interp, "sqlite_options", "malloc", "0", TCL.TCL_GLOBAL_ONLY);
+
+
 
 #if SQLITE_32BIT_ROWID
 TCL.Tcl_SetVar2( interp, "sqlite_options", "rowid32", "1", TCL.TCL_GLOBAL_ONLY );
@@ -417,7 +421,7 @@ Tcl_SetVar2(interp, "sqlite_options", "schema_version", "0", TCL.TCL_GLOBAL_ONLY
 
 #if !(SQLITE_ENABLE_LOCKING_STYLE)
 #  if (__APPLE__)
-/#    define SQLITE_ENABLE_LOCKING_STYLE 1
+//#    define SQLITE_ENABLE_LOCKING_STYLE 1
 #  else
       //#    define SQLITE_ENABLE_LOCKING_STYLE 0
 #  endif

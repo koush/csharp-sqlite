@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -45,7 +45,7 @@ namespace CS_SQLite3
     ** Return the 'affinity' of the expression pExpr if any.
     **
     ** If pExpr is a column, a reference to a column via an 'AS' alias,
-    ** or a sub-select with a column as the return value, then the 
+    ** or a sub-select with a column as the return value, then the
     ** affinity of that column is returned. Otherwise, 0x00 is returned,
     ** indicating no affinity for the expression.
     **
@@ -108,7 +108,7 @@ namespace CS_SQLite3
           pExpr.flags |= EP_ExpCollate;
         }
       }
-      sqlite3DbFree( db, ref zColl );
+      //sqlite3DbFree( db, ref zColl );
       return pExpr;
     }
 
@@ -413,10 +413,10 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Set the Expr.nHeight variable in the structure passed as an 
-    ** argument. An expression with no children, Expr.x.pList or 
+    ** Set the Expr.nHeight variable in the structure passed as an
+    ** argument. An expression with no children, Expr.x.pList or
     ** Expr.x.pSelect member has a height of 1. Any other expression
-    ** has a height equal to the maximum height of any other 
+    ** has a height equal to the maximum height of any other
     ** referenced Expr plus one.
     */
     static void exprSetHeight( Expr p )
@@ -457,7 +457,7 @@ namespace CS_SQLite3
       return nHeight;
     }
 #else
-/#define exprSetHeight(y)
+//#define exprSetHeight(y)
 #endif //* SQLITE_MAX_EXPR_DEPTH>0 */
 
     /*
@@ -567,7 +567,7 @@ sqlite3Dequote(ref pNew.u._zToken);
     {
       if ( pRoot == null )
       {
-        Debug.Assert( db.mallocFailed != 0 );
+        //Debug.Assert( db.mallocFailed != 0 );
         sqlite3ExprDelete( db, ref pLeft );
         sqlite3ExprDelete( db, ref pRight );
       }
@@ -721,7 +721,7 @@ sqlite3Dequote(ref pNew.u._zToken);
 
     /*
     ** Assign a variable number to an expression that encodes a wildcard
-    ** in the original SQL statement.  
+    ** in the original SQL statement.
     **
     ** Wildcards consisting of a single "?" are assigned the next sequential
     ** variable number.
@@ -803,7 +803,7 @@ sqlite3Dequote(ref pNew.u._zToken);
             //  pParse.nVarExprAlloc*sizeof(pParse.apVarExpr[0])
             //);
           }
-          if ( 0 == db.mallocFailed )
+          //if ( 0 == db.mallocFailed )
           {
             Debug.Assert( pParse.apVarExpr != null );
             pParse.apVarExpr[pParse.nVarExpr++] = pExpr;
@@ -830,9 +830,9 @@ sqlite3Dequote(ref pNew.u._zToken);
         if ( !ExprHasProperty( p, EP_Reduced ) && ( p.flags2 & EP2_MallocedToken ) != 0 )
         {
 #if DEBUG_CLASS_EXPR || DEBUG_CLASS_ALL
-sqlite3DbFree( db, ref p.u._zToken );
+//sqlite3DbFree( db, ref p.u._zToken );
 #else
-          sqlite3DbFree( db, ref p.u.zToken );
+          //sqlite3DbFree( db, ref p.u.zToken );
 #endif
         }
         if ( ExprHasProperty( p, EP_xIsSelect ) )
@@ -855,12 +855,12 @@ sqlite3DbFree( db, ref p.u._zToken );
       sqlite3ExprClear( db, p );
       if ( !ExprHasProperty( p, EP_Static ) )
       {
-        sqlite3DbFree( db, ref p );
+        //sqlite3DbFree( db, ref p );
       }
     }
 
     /*
-    ** Return the number of bytes allocated for the expression structure 
+    ** Return the number of bytes allocated for the expression structure
     ** passed as the first argument. This is always one of EXPR_FULLSIZE,
     ** EXPR_REDUCEDSIZE or EXPR_TOKENONLYSIZE.
     */
@@ -876,14 +876,14 @@ sqlite3DbFree( db, ref p.u._zToken );
     ** to store a copy of an expression or expression tree.  They differ in
     ** how much of the tree is measured.
     **
-    **     dupedExprStructSize()     Size of only the Expr structure 
+    **     dupedExprStructSize()     Size of only the Expr structure
     **     dupedExprNodeSize()       Size of Expr + space for token
     **     dupedExprSize()           Expr + token + subtree components
     **
     ***************************************************************************
     **
-    ** The dupedExprStructSize() function returns two values OR-ed together:  
-    ** (1) the space required for a copy of the Expr structure only and 
+    ** The dupedExprStructSize() function returns two values OR-ed together:
+    ** (1) the space required for a copy of the Expr structure only and
     ** (2) the EP_xxx flags that indicate what the structure size should be.
     ** The return values is always one of:
     **
@@ -932,7 +932,7 @@ sqlite3DbFree( db, ref p.u._zToken );
     }
 
     /*
-    ** This function returns the space in bytes required to store the copy 
+    ** This function returns the space in bytes required to store the copy
     ** of the Expr structure and a copy of the Expr.u.zToken string (if that
     ** string is defined.)
     */
@@ -947,16 +947,16 @@ sqlite3DbFree( db, ref p.u._zToken );
     }
 
     /*
-    ** Return the number of bytes required to create a duplicate of the 
+    ** Return the number of bytes required to create a duplicate of the
     ** expression passed as the first argument. The second argument is a
     ** mask containing EXPRDUP_XXX flags.
     **
     ** The value returned includes space to create a copy of the Expr struct
     ** itself and the buffer referred to by Expr.u.zToken, if any.
     **
-    ** If the EXPRDUP_REDUCE flag is set, then the return value includes 
-    ** space to duplicate all Expr nodes in the tree formed by Expr.pLeft 
-    ** and Expr.pRight variables (but not for any structures pointed to or 
+    ** If the EXPRDUP_REDUCE flag is set, then the return value includes
+    ** space to duplicate all Expr nodes in the tree formed by Expr.pLeft
+    ** and Expr.pRight variables (but not for any structures pointed to or
     ** descended from the Expr.x.pList or Expr.x.pSelect variables).
     */
     static int dupedExprSize( Expr p, int flags )
@@ -974,8 +974,8 @@ sqlite3DbFree( db, ref p.u._zToken );
     }
 
     /*
-    ** This function is similar to sqlite3ExprDup(), except that if pzBuffer 
-    ** is not NULL then *pzBuffer is assumed to point to a buffer large enough 
+    ** This function is similar to sqlite3ExprDup(), except that if pzBuffer
+    ** is not NULL then *pzBuffer is assumed to point to a buffer large enough
     ** to store the copy of expression p, the copies of p->u.zToken
     ** (if applicable), and the copies of the p->pLeft and p->pRight expressions,
     ** if any. Before returning, *pzBuffer is set to the first byte passed the
@@ -1094,7 +1094,7 @@ sqlite3DbFree( db, ref p.u._zToken );
     ** without effecting the originals.
     **
     ** The expression list, ID, and source lists return by sqlite3ExprListDup(),
-    ** sqlite3IdListDup(), and sqlite3SrcListDup() can not be further expanded 
+    ** sqlite3IdListDup(), and sqlite3SrcListDup() can not be further expanded
     ** by subsequent calls to sqlite*ListAppend() routines.
     **
     ** Any tables that the SrcList might point to are not duplicated.
@@ -1123,9 +1123,9 @@ sqlite3DbFree( db, ref p.u._zToken );
       pNew.nExpr = pNew.nAlloc = p.nExpr;
       pNew.a = new ExprList_item[p.nExpr];//sqlite3DbMallocRaw(db,  p.nExpr*sizeof(p.a[0]) );
       //if( pItem==null ){
-      //  sqlite3DbFree(db,ref pNew);
+      //  //sqlite3DbFree(db,ref pNew);
       //  return null;
-      //} 
+      //}
       //pOldItem = p.a;
       for ( i = 0 ; i < p.nExpr ; i++ )
       {//pItem++, pOldItem++){
@@ -1145,7 +1145,7 @@ sqlite3DbFree( db, ref p.u._zToken );
 
     /*
     ** If cursors, triggers, views and subqueries are all omitted from
-    ** the build, then none of the following routines, except for 
+    ** the build, then none of the following routines, except for
     ** sqlite3SelectDup(), can be called. sqlite3SelectDup() is sometimes
     ** called with a NULL argument.
     */
@@ -1200,7 +1200,7 @@ sqlite3DbFree( db, ref p.u._zToken );
       pNew.a = new IdList_item[p.nId];//sqlite3DbMallocRaw(db, p.nId*sizeof(p.a[0]) );
       if ( pNew.a == null )
       {
-        sqlite3DbFree( db, ref pNew );
+        //sqlite3DbFree( db, ref pNew );
         return null;
       }
       for ( i = 0 ; i < p.nId ; i++ )
@@ -1319,7 +1319,7 @@ no_mem:
     int dequote            /* True to cause the name to be dequoted */
     )
     {
-      Debug.Assert( pList != null || pParse.db.mallocFailed != 0 );
+      Debug.Assert( pList != null /* || pParse.db.mallocFailed != 0 */ );
       if ( pList != null )
       {
         ExprList_item pItem;
@@ -1346,13 +1346,13 @@ no_mem:
     )
     {
       sqlite3 db = pParse.db;
-      Debug.Assert( pList != null || db.mallocFailed != 0 );
+      Debug.Assert( pList != null /*|| db.mallocFailed != 0 */ );
       if ( pList != null )
       {
         ExprList_item pItem = pList.a[pList.nExpr - 1];
         Debug.Assert( pList.nExpr > 0 );
-        Debug.Assert( db.mallocFailed != 0 || pItem.pExpr == pSpan.pExpr );
-        sqlite3DbFree( db, pItem.zSpan );
+        Debug.Assert( /* db.mallocFailed != 0 || */ pItem.pExpr == pSpan.pExpr );
+        //sqlite3DbFree( db, pItem.zSpan );
         pItem.zSpan = pSpan.zStart.Substring( 0, pSpan.zStart.Length <= pSpan.zEnd.Length ? pSpan.zStart.Length : pSpan.zStart.Length - pSpan.zEnd.Length );// sqlite3DbStrNDup( db, pSpan.zStart,
         //(int)( pSpan.zEnd- pSpan.zStart) );
       }
@@ -1393,12 +1393,12 @@ no_mem:
         if ( ( pItem = pList.a[i] ) != null )
         {
           sqlite3ExprDelete( db, ref pItem.pExpr );
-          sqlite3DbFree( db, ref pItem.zName );
-          sqlite3DbFree( db, ref pItem.zSpan );
+          //sqlite3DbFree( db, ref pItem.zName );
+          //sqlite3DbFree( db, ref pItem.zSpan );
         }
       }
-      sqlite3DbFree( db, ref pList.a );
-      sqlite3DbFree( db, ref pList );
+      //sqlite3DbFree( db, ref pList.a );
+      //sqlite3DbFree( db, ref pList );
     }
 
     /*
@@ -1618,7 +1618,7 @@ no_mem:
 ** either to test for membership of the (...) set or to iterate through
 ** its members, skipping duplicates.
 **
-** The index of the cursor opened on the b-tree (database table, database index 
+** The index of the cursor opened on the b-tree (database table, database index
 ** or ephermal table) is stored in pX->iTable before this function returns.
 ** The returned value of this function indicates the b-tree type, as follows:
 **
@@ -1638,13 +1638,13 @@ no_mem:
 ** to be unique - either because it is an INTEGER PRIMARY KEY or it
 ** has a UNIQUE constraint or UNIQUE index.
 **
-** If the prNotFound parameter is not 0, then the b-tree will be used 
-** for fast set membership tests. In this case an epheremal table must 
-** be used unless <column> is an INTEGER PRIMARY KEY or an index can 
+** If the prNotFound parameter is not 0, then the b-tree will be used
+** for fast set membership tests. In this case an epheremal table must
+** be used unless <column> is an INTEGER PRIMARY KEY or an index can
 ** be found with <column> as its left-most column.
 **
 ** When the b-tree is being used for membership tests, the calling function
-** needs to know whether or not the structure contains an SQL NULL 
+** needs to know whether or not the structure contains an SQL NULL
 ** value in order to correctly evaluate expressions like "X IN (Y, Z)".
 ** If there is a chance that the b-tree might contain a NULL value at
 ** runtime, then a register is allocated and the register number written
@@ -1675,7 +1675,7 @@ no_mem:
       bool mustBeUnique = ( prNotFound != 0 );   /* True if RHS must be unique */
 
       /* Check to see if an existing table or index can be used to
-      ** satisfy the query.  This is preferable to generating a new 
+      ** satisfy the query.  This is preferable to generating a new
       ** ephemeral table.
       */
       p = ( ExprHasProperty( pX, EP_xIsSelect ) ? pX.x.pSelect : null );
@@ -1715,12 +1715,12 @@ no_mem:
         else
         {
           Index pIdx;                         /* Iterator variable */
-          /* The collation sequence used by the comparison. If an index is to 
+          /* The collation sequence used by the comparison. If an index is to
           ** be used in place of a temp.table, it must be ordered according
           ** to this collation sequence. */
           CollSeq pReq = sqlite3BinaryCompareCollSeq( pParse, pX.pLeft, pExpr );
 
-          /* Check that the affinity that will be used to perform the 
+          /* Check that the affinity that will be used to perform the
           ** comparison is the same as the affinity of the column. If
           ** it is not, it is not possible to use any index.
           */
@@ -1770,7 +1770,7 @@ no_mem:
         */
         int rMayHaveNull = 0;
         eType = IN_INDEX_EPH;
-        if ( prNotFound != -1 )  // Klude to show prNotFound not available 
+        if ( prNotFound != -1 )  // Klude to show prNotFound not available
         {
           prNotFound = rMayHaveNull = ++pParse.nMem;
         }
@@ -1847,7 +1847,7 @@ no_mem:
         int mem = ++pParse.nMem;
         sqlite3VdbeAddOp1( v, OP_If, mem );
         testAddr = sqlite3VdbeAddOp2( v, OP_Integer, 1, mem );
-        Debug.Assert( testAddr > 0 || pParse.db.mallocFailed != 0 );
+        Debug.Assert( testAddr > 0 /* || pParse.db.mallocFailed != 0 */ );
       }
 
       switch ( pExpr.op )
@@ -1867,7 +1867,7 @@ no_mem:
             affinity = sqlite3ExprAffinity( pLeft );
 
             /* Whether this is an 'x IN(SELECT...)' or an 'x IN(<exprlist>)'
-            ** expression it is handled the same way. A virtual table is 
+            ** expression it is handled the same way. A virtual table is
             ** filled with single-field index keys representing the results
             ** from the SELECT or the <exprlist>.
             **
@@ -2047,7 +2047,7 @@ no_mem:
     ** Generate an instruction that will put the floating point
     ** value described by z[0..n-1] into register iMem.
     **
-    ** The z[] string will probably not be zero-terminated.  But the 
+    ** The z[] string will probably not be zero-terminated.  But the
     ** z[n] character is guaranteed to be something that does not look
     ** like the continuation of the number.
     */
@@ -2075,7 +2075,7 @@ no_mem:
     ** Generate an instruction that will put the integer describe by
     ** text z[0..n-1] into register iMem.
     **
-    ** The z[] string will probably not be zero-terminated.  But the 
+    ** The z[] string will probably not be zero-terminated.  But the
     ** z[n] character is guaranteed to be something that does not look
     ** like the continuation of the number.
     */
@@ -2098,7 +2098,7 @@ no_mem:
           sqlite3Atoi64( negFlag ? "-" + z : z, ref value );
           //if ( negFlag ) value = -value;
           //zV = dup8bytes( v, (char*)&value );
-          //sqlite3VdbeAddOp4( v, OP_Int64, 0, iMem, 0, zV, P4_INT64 ); 
+          //sqlite3VdbeAddOp4( v, OP_Int64, 0, iMem, 0, zV, P4_INT64 );
           sqlite3VdbeAddOp4( v, OP_Int64, 0, iMem, 0, value, P4_INT64 );
         }
         else
@@ -2424,7 +2424,7 @@ no_mem:
       VdbeOp pOp;
       Vdbe v;
 
-      Debug.Assert( pParse.db.mallocFailed == 0 );
+      //Debug.Assert( pParse.db.mallocFailed == 0 );
       v = pParse.pVdbe;
       Debug.Assert( v != null );
       pOp = sqlite3VdbeGetOp( v, -1 );
@@ -2446,7 +2446,7 @@ no_mem:
     ** same order that it is executed.
     **
     ** Aliases are numbered starting with 1.  So iAlias is in the range
-    ** of 1 to pParse.nAlias inclusive.  
+    ** of 1 to pParse.nAlias inclusive.
     **
     ** pParse.aAlias[iAlias-1] records the register number where the value
     ** of the iAlias-th alias is stored.  If zero, that means that the
@@ -2513,7 +2513,7 @@ return iReg;
       Debug.Assert( target > 0 && target <= pParse.nMem );
       if ( v == null )
       {
-        Debug.Assert( pParse.db.mallocFailed != 0 );
+        //Debug.Assert( pParse.db.mallocFailed != 0 );
         return 0;
       }
 
@@ -2856,7 +2856,7 @@ return iReg;
 ** see if it is a column in a virtual table.  This is done because
 ** the left operand of infix functions (the operand we want to
 ** control overloading) ends up as the second argument to the
-** function.  The expression "A glob B" is equivalent to 
+** function.  The expression "A glob B" is equivalent to
 ** "glob(B,A).  We want to use the A in "A glob B" to test
 ** for function overloading.  But we use the B term in "glob(B,A)".
 */
@@ -2954,15 +2954,15 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
               sqlite3VdbeAddOp2( v, OP_Integer, 1, target );
               j5 = sqlite3VdbeAddOp3( v, OP_Found, pExpr.iTable, 0, r2 );
 
-              /* If the set membership test fails, then the result of the 
+              /* If the set membership test fails, then the result of the
               ** "x IN (...)" expression must be either 0 or NULL. If the set
-              ** contains no NULL values, then the result is 0. If the set 
+              ** contains no NULL values, then the result is 0. If the set
               ** contains one or more NULL values, then the result of the
               ** expression is also NULL.
               */
               if ( rNotFound == 0 )
               {
-                /* This branch runs if it is known at compile time (now) that 
+                /* This branch runs if it is known at compile time (now) that
                 ** the set contains no NULL values. This happens as the result
                 ** of a "NOT NULL" constraint in the database schema. No need
                 ** to test the data structure at runtime in this case.
@@ -2975,7 +2975,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
                 ** or 0 (an integer value). If the data structure contains one
                 ** or more NULLs, then set rNotFound to NULL. Otherwise, set it
                 ** to 0. If register rMayHaveNull is already set to some value
-                ** other than NULL, then the test has already been run and 
+                ** other than NULL, then the test has already been run and
                 ** rNotFound is already populated.
                 */
                 byte[] nullRecord = { 0x02, 0x00 };
@@ -3133,7 +3133,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
               sqlite3VdbeAddOp2( v, OP_Null, 0, target );
             }
 #if !NDEBUG
-            Debug.Assert( db.mallocFailed != 0 || pParse.nErr > 0
+            Debug.Assert( /* db.mallocFailed != 0 || */ pParse.nErr > 0
             || pParse.iCacheLevel == iCacheLevel );
 #endif
             sqlite3VdbeResolveLabel( v, endLabel );
@@ -3211,7 +3211,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
 
       Debug.Assert( target > 0 && target <= pParse.nMem );
       inReg = sqlite3ExprCodeTarget( pParse, pExpr, target );
-      Debug.Assert( pParse.pVdbe != null || pParse.db.mallocFailed != 0 );
+      Debug.Assert( pParse.pVdbe != null /* || pParse.db.mallocFailed != 0 */ );
       if ( inReg != target && pParse.pVdbe != null )
       {
         sqlite3VdbeAddOp2( pParse.pVdbe, OP_SCopy, inReg, target );
@@ -3227,7 +3227,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
     ** and modify the expression so that the next time it is evaluated,
     ** the result is a copy of the cache register.
     **
-    ** This routine is used for expressions that are used multiple 
+    ** This routine is used for expressions that are used multiple
     ** times.  They are evaluated once and the results of the expression
     ** are reused.
     */
@@ -3260,12 +3260,12 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
     **
     **    *  Any expression that evaluates to two or more opcodes.
     **
-    **    *  Any OP_Integer, OP_Real, OP_String, OP_Blob, OP_Null, 
-    **       or OP_Variable that does not need to be placed in a 
+    **    *  Any OP_Integer, OP_Real, OP_String, OP_Blob, OP_Null,
+    **       or OP_Variable that does not need to be placed in a
     **       specific register.
     **
     ** There is no point in factoring out single-instruction constant
-    ** expressions that need to be placed in a particular register.  
+    ** expressions that need to be placed in a particular register.
     ** We could factor them out, but then we would end up adding an
     ** OP_SCopy instruction to move the value into the correct register
     ** later.  We might as well just use the original instruction and
@@ -3342,7 +3342,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
           {
             /* The arguments to a function have a fixed destination.
             ** Mark them this way to avoid generated unneeded OP_SCopy
-            ** instructions. 
+            ** instructions.
             */
             ExprList pList = pExpr.x.pList;
             Debug.Assert( !ExprHasProperty( pExpr, EP_xIsSelect ) );
@@ -3420,7 +3420,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
         {
           sqlite3ExprCode( pParse, pItem.pExpr, target + i );
         }
-        if ( doHardCopy && 0 == pParse.db.mallocFailed )
+        if ( doHardCopy /* && 0 == pParse.db.mallocFailed */ )
         {
           sqlite3ExprHardCopy( pParse, target, n );
         }
@@ -3524,7 +3524,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
           {
             /*    x BETWEEN y AND z
             **
-            ** Is equivalent to 
+            ** Is equivalent to
             **
             **    x>=y AND x<=z
             **
@@ -3680,7 +3680,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
           {
             /*    x BETWEEN y AND z
             **
-            ** Is equivalent to 
+            ** Is equivalent to
             **
             **    x>=y AND x<=z
             **
@@ -3859,7 +3859,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
                 if ( pExpr.iTable == pItem.iCursor )
                 {
                   /* If we reach this point, it means that pExpr refers to a table
-                  ** that is in the FROM clause of the aggregate query.  
+                  ** that is in the FROM clause of the aggregate query.
                   **
                   ** Make an entry for the column in pAggInfo.aCol[] if there
                   ** is not an entry there already.
@@ -3930,7 +3930,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
             ** to be ignored */
             if ( pNC.nDepth == 0 )
             {
-              /* Check to see if pExpr is a duplicate of another aggregate 
+              /* Check to see if pExpr is a duplicate of another aggregate
               ** function that is already in the pAggInfo structure
               */
               AggInfo_func pItem;// = pAggInfo.aFunc;

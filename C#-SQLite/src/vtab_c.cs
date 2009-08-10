@@ -23,7 +23,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -61,7 +61,7 @@ pDel = (Module *)sqlite3HashInsert(&db->aModule, zCopy, nName, (void*)pMod);
 if( pDel && pDel->xDestroy ){
 pDel->xDestroy(pDel->pAux);
 }
-sqlite3DbFree(db, pDel);
+//sqlite3DbFree(db, pDel);
 if( pDel==pMod ){
 db->mallocFailed = 1;
 }
@@ -103,7 +103,7 @@ return createModule(db, zName, pModule, pAux, xDestroy);
 /*
 ** Lock the virtual table so that it cannot be disconnected.
 ** Locks nest.  Every lock should have a corresponding unlock.
-** If an unlock is omitted, resources leaks will occur.  
+** If an unlock is omitted, resources leaks will occur.
 **
 ** If a disconnect is attempted while a virtual table is locked,
 ** the disconnect is deferred until all locks have been removed.
@@ -130,7 +130,7 @@ if( db->magic==SQLITE_MAGIC_BUSY ){
 (void)sqlite3SafetyOff(db);
 pVtab->pModule->xDisconnect(pVtab);
 (void)sqlite3SafetyOn(db);
-} else 
+} else
 #endif
 {
 pVtab->pModule->xDisconnect(pVtab);
@@ -155,9 +155,9 @@ p->pVtab = 0;
 if( p->azModuleArg ){
 int i;
 for(i=0; i<p->nModuleArg; i++){
-sqlite3DbFree(db, p->azModuleArg[i]);
+//sqlite3DbFree(db, p->azModuleArg[i]);
 }
-sqlite3DbFree(db, p->azModuleArg);
+//sqlite3DbFree(db, p->azModuleArg);
 }
 }
 
@@ -175,10 +175,10 @@ azModuleArg = sqlite3DbRealloc(db, pTable->azModuleArg, nBytes);
 if( azModuleArg==0 ){
 int j;
 for(j=0; j<i; j++){
-sqlite3DbFree(db, pTable->azModuleArg[j]);
+//sqlite3DbFree(db, pTable->azModuleArg[j]);
 }
-sqlite3DbFree(db, zArg);
-sqlite3DbFree(db, pTable->azModuleArg);
+//sqlite3DbFree(db, zArg);
+//sqlite3DbFree(db, pTable->azModuleArg);
 pTable->nModuleArg = 0;
 }else{
 azModuleArg[i] = zArg;
@@ -230,7 +230,7 @@ pParse->sNameToken.n = (int)(&pModuleName->z[pModuleName->n] - pName1->z);
 ** The second call, to obtain permission to create the table, is made now.
 */
 if( pTable->azModuleArg ){
-sqlite3AuthCheck(pParse, SQLITE_CREATE_VTABLE, pTable->zName, 
+sqlite3AuthCheck(pParse, SQLITE_CREATE_VTABLE, pTable->zName,
 pTable->azModuleArg[0], pParse->db->aDb[iDb].zName);
 }
 #endif
@@ -291,9 +291,9 @@ pParse->sNameToken.n = (int)(pEnd->z - pParse->sNameToken.z) + pEnd->n;
 }
 zStmt = sqlite3MPrintf(db, "CREATE VIRTUAL TABLE %T", &pParse->sNameToken);
 
-/* A slot for the record has already been allocated in the 
+/* A slot for the record has already been allocated in the
 ** SQLITE_MASTER table.  We just need to update that slot with all
-** the information we've collected.  
+** the information we've collected.
 **
 ** The VM register number pParse->regRowid holds the rowid of an
 ** entry in the sqlite_master table tht was created for this vtab
@@ -310,14 +310,14 @@ pTab->zName,
 zStmt,
 pParse->regRowid
 );
-sqlite3DbFree(db, zStmt);
+//sqlite3DbFree(db, zStmt);
 v = sqlite3GetVdbe(pParse);
 sqlite3ChangeCookie(pParse, iDb);
 
 sqlite3VdbeAddOp2(v, OP_Expire, 0, 0);
 zWhere = sqlite3MPrintf(db, "name='%q'", pTab->zName);
 sqlite3VdbeAddOp4(v, OP_ParseSchema, iDb, 1, 0, zWhere, P4_DYNAMIC);
-sqlite3VdbeAddOp4(v, OP_VCreate, iDb, 0, 0, 
+sqlite3VdbeAddOp4(v, OP_VCreate, iDb, 0, 0,
    pTab->zName, sqlite3Strlen30(pTab->zName) + 1);
 }
 
@@ -372,7 +372,7 @@ pArg->n = (int)(&p->z[p->n] - pArg->z);
 ** to this procedure.
 */
 static int vtabCallConstructor(
-sqlite3 *db, 
+sqlite3 *db,
 Table *pTab,
 Module *pMod,
 int (*xConstruct)(sqlite3*,void*,int,const char*const*,sqlite3_vtab**,char**),
@@ -412,18 +412,18 @@ if( zErr==0 ){
 *pzErr = sqlite3MPrintf(db, "vtable constructor failed: %s", zModuleName);
 }else {
 *pzErr = sqlite3MPrintf(db, "%s", zErr);
-sqlite3DbFree(db, zErr);
+//sqlite3DbFree(db, zErr);
 }
 }else if( db->pVTab ){
 const char *zFormat = "vtable constructor did not declare schema: %s";
 *pzErr = sqlite3MPrintf(db, zFormat, pTab->zName);
 rc = SQLITE_ERROR;
-} 
+}
 if( rc==SQLITE_OK ){
 rc = rc2;
 }
 db->pVTab = 0;
-sqlite3DbFree(db, zModuleName);
+//sqlite3DbFree(db, zModuleName);
 
 /* If everything went according to plan, loop through the columns
 ** of the table to see if any of them contain the token "hidden".
@@ -467,7 +467,7 @@ return rc;
 
 /*
 ** This function is invoked by the parser to call the xConnect() method
-** of the virtual table pTab. If an error occurs, an error code is returned 
+** of the virtual table pTab. If an error occurs, an error code is returned
 ** and an error left in pParse.
 **
 ** This call is a no-op if table pTab is not a virtual table.
@@ -493,7 +493,7 @@ rc = vtabCallConstructor(db, pTab, pMod, pMod->pModule->xConnect, &zErr);
 if( rc!=SQLITE_OK ){
 sqlite3ErrorMsg(pParse, "%s", zErr);
 }
-sqlite3DbFree(db, zErr);
+//sqlite3DbFree(db, zErr);
 }
 
 return rc;
@@ -525,11 +525,11 @@ return SQLITE_OK;
 
 /*
 ** This function is invoked by the vdbe to call the xCreate method
-** of the virtual table named zTab in database iDb. 
+** of the virtual table named zTab in database iDb.
 **
 ** If an error occurs, *pzErr is set to point an an English language
 ** description of the error and an SQLITE_XXX error code is returned.
-** In this case the caller must call sqlite3DbFree(db, ) on *pzErr.
+** In this case the caller must call //sqlite3DbFree(db, ) on *pzErr.
 */
 int sqlite3VtabCallCreate(sqlite3 *db, int iDb, const char *zTab, char **pzErr){
 int rc = SQLITE_OK;
@@ -542,8 +542,8 @@ assert(pTab && (pTab->tabFlags & TF_Virtual)!=0 && !pTab->pVtab);
 pMod = pTab->pMod;
 zModule = pTab->azModuleArg[0];
 
-/* If the module has been registered and includes a Create method, 
-** invoke it now. If the module has not been registered, return an 
+/* If the module has been registered and includes a Create method,
+** invoke it now. If the module has not been registered, return an
 ** error. Otherwise, do nothing.
 */
 if( !pMod ){
@@ -590,10 +590,10 @@ rc = SQLITE_NOMEM;
 pParse->declareVtab = 1;
 pParse->db = db;
 
-if( 
-SQLITE_OK == sqlite3RunParser(pParse, zCreateTable, &zErr) && 
-pParse->pNewTable && 
-!pParse->pNewTable->pSelect && 
+if(
+SQLITE_OK == sqlite3RunParser(pParse, zCreateTable, &zErr) &&
+pParse->pNewTable &&
+!pParse->pNewTable->pSelect &&
 (pParse->pNewTable->tabFlags & TF_Virtual)==0
 ){
 pTab->aCol = pParse->pNewTable->aCol;
@@ -603,7 +603,7 @@ pParse->pNewTable->aCol = 0;
 db->pVTab = 0;
 } else {
 sqlite3Error(db, SQLITE_ERROR, zErr);
-sqlite3DbFree(db, zErr);
+//sqlite3DbFree(db, zErr);
 rc = SQLITE_ERROR;
 }
 pParse->declareVtab = 0;
@@ -612,7 +612,7 @@ if( pParse->pVdbe ){
 sqlite3VdbeFinalize(pParse->pVdbe);
 }
 sqlite3DeleteTable(pParse->pNewTable);
-sqlite3StackFree(db, pParse);
+//sqlite3StackFree(db, pParse);
 }
 
 assert( (rc&0xff)==rc );
@@ -660,7 +660,7 @@ return rc;
 ** called is identified by the second argument, "offset", which is
 ** the offset of the method to call in the sqlite3_module structure.
 **
-** The array is cleared after invoking the callbacks. 
+** The array is cleared after invoking the callbacks.
 */
 static void callFinaliser(sqlite3 *db, int offset){
 int i;
@@ -674,7 +674,7 @@ x = *(int (**)(sqlite3_vtab *))((char *)pVtab->pModule + offset);
 if( x ) x(pVtab);
 sqlite3VtabUnlock(db, pVtab);
 }
-sqlite3DbFree(db, db->aVTrans);
+//sqlite3DbFree(db, db->aVTrans);
 db->nVTrans = 0;
 db->aVTrans = 0;
 }
@@ -685,8 +685,8 @@ db->aVTrans = 0;
 ** array. Return the error code for the first error that occurs, or
 ** SQLITE_OK if all xSync operations are successful.
 **
-** Set *pzErrmsg to point to a buffer that should be released using 
-** sqlite3DbFree() containing an error message, if one is available.
+** Set *pzErrmsg to point to a buffer that should be released using
+** //sqlite3DbFree() containing an error message, if one is available.
 */
 int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
 int i;
@@ -703,7 +703,7 @@ assert( pVtab!=0 );
 x = pVtab->pModule->xSync;
 if( x ){
 rc = x(pVtab);
-sqlite3DbFree(db, *pzErrmsg);
+//sqlite3DbFree(db, *pzErrmsg);
 *pzErrmsg = pVtab->zErrMsg;
 pVtab->zErrMsg = 0;
 }
@@ -718,7 +718,7 @@ return rc;
 }
 
 /*
-** Invoke the xRollback method of all virtual tables in the 
+** Invoke the xRollback method of all virtual tables in the
 ** sqlite3.aVTrans array. Then clear the array itself.
 */
 int sqlite3VtabRollback(sqlite3 *db){
@@ -727,7 +727,7 @@ return SQLITE_OK;
 }
 
 /*
-** Invoke the xCommit method of all virtual tables in the 
+** Invoke the xCommit method of all virtual tables in the
 ** sqlite3.aVTrans array. Then clear the array itself.
 */
 int sqlite3VtabCommit(sqlite3 *db){
@@ -749,7 +749,7 @@ const sqlite3_module *pModule;
 
 /* Special case: If db->aVTrans is NULL and db->nVTrans is greater
 ** than zero, then this function is being called from within a
-** virtual module xSync() callback. It is illegal to write to 
+** virtual module xSync() callback. It is illegal to write to
 ** virtual module tables in this case, so return SQLITE_LOCKED.
 */
 if( sqlite3VtabInSync(db) ){
@@ -757,7 +757,7 @@ return SQLITE_LOCKED;
 }
 if( !pVtab ){
 return SQLITE_OK;
-} 
+}
 pModule = pVtab->pModule;
 
 if( pModule->xBegin ){
@@ -789,7 +789,7 @@ return rc;
 ** This routine is used to allow virtual table implementations to
 ** overload MATCH, LIKE, GLOB, and REGEXP operators.
 **
-** Return either the pDef argument (indicating no change) or a 
+** Return either the pDef argument (indicating no change) or a
 ** new FuncDef structure that is marked as ephemeral using the
 ** SQLITE_FUNC_EPHEM flag.
 */
@@ -823,7 +823,7 @@ pMod = (sqlite3_module *)pVtab->pModule;
 if( pMod->xFindFunction==0 ) return pDef;
 
 /* Call the xFindFunction method on the virtual table implementation
-** to see if the implementation wants to overload this function 
+** to see if the implementation wants to overload this function
 */
 zLowerName = sqlite3DbStrDup(db, pDef->zName);
 if( zLowerName ){
@@ -831,7 +831,7 @@ for(z=(unsigned char*)zLowerName; *z; z++){
 *z = sqlite3UpperToLower[*z];
 }
 rc = pMod->xFindFunction(pVtab, nArg, zLowerName, &xFunc, &pArg);
-sqlite3DbFree(db, zLowerName);
+//sqlite3DbFree(db, zLowerName);
 }
 if( rc==0 ){
 return pDef;

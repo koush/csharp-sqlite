@@ -167,6 +167,7 @@ proc bitvec_malloc_test {label failcnt n program} {
   }] -1
 }
 
+ifcapable malloc {
 # Make sure malloc failures are handled sanily.
 #
 unset -nocomplain n
@@ -191,5 +192,6 @@ for {set n 1} {$go} {incr n} {
   bitvec_malloc_test bitvec-3.3.$n $n 50000 {1 50000 1 1 0}
 }
 
+}
 finish_test
 return

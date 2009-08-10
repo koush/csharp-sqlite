@@ -37,7 +37,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -595,7 +595,7 @@ namespace CS_SQLite3
       }
       pBt = (Btree)sqlite3TestTextToPtr( interp, argv[1].ToString() );
 
-      /* Normally in this file, with a b-tree handle opened using the 
+      /* Normally in this file, with a b-tree handle opened using the
       ** [btree_open] command it is safe to call sqlite3BtreeEnter() directly.
       ** But this function is sometimes called with a btree handle obtained
       ** from an open SQLite connection (using [btree_from_db]). In this case
@@ -665,10 +665,10 @@ namespace CS_SQLite3
 #else
 //  zResult = 0;
 #endif
-    //  sqlite3DbFree(db,(void*)aRoot);
+    //  //sqlite3DbFree(db,(void*)aRoot);
     //  if( zResult ){
     //   TCL.Tcl_AppendResult(interp, zResult);
-    //    sqlite3DbFree(db,zResult); 
+    //    //sqlite3DbFree(db,zResult);
     //  }
     //  return TCL.TCL_OK;
     //}
@@ -822,7 +822,7 @@ namespace CS_SQLite3
     //    }
     //    rc = sqlite3BtreeMovetoUnpacked(pCur, 0, iKey, 0, res);
     //  }else{
-    //    rc = sqlite3BtreeMoveto(pCur, argv[2], strlen(argv[2]), 0, res);  
+    //    rc = sqlite3BtreeMoveto(pCur, argv[2], strlen(argv[2]), 0, res);
     //  }
     //  sqlite3BtreeLeave(pCur.pBtree);
     //  if( rc !=0){
@@ -1174,7 +1174,7 @@ namespace CS_SQLite3
     //    }
     //    zBuf[n] = 0;
     //   TCL.Tcl_AppendResult(interp, zBuf);
-    //    sqlite3DbFree(db,zBuf);
+    //    //sqlite3DbFree(db,zBuf);
     //  }
     //  sqlite3BtreeLeave(pCur.pBtree);
     //  return SQLITE_OK;
@@ -1213,12 +1213,12 @@ namespace CS_SQLite3
     //  sqlite3BtreeLeave(pCur.pBtree);
     //  if( rc !=0){
     //   TCL.Tcl_AppendResult(interp, errorName(rc), null);;
-    //    sqlite3DbFree(db,zBuf);
+    //    //sqlite3DbFree(db,zBuf);
     //    return TCL.TCL_ERROR;
     //  }
     //  zBuf[n] = 0;
     // TCL.Tcl_AppendResult(interp, zBuf);
-    //  sqlite3DbFree(db,zBuf);
+    //  //sqlite3DbFree(db,zBuf);
     //  return SQLITE_OK;
     //}
 
@@ -1254,7 +1254,7 @@ namespace CS_SQLite3
     //  if( zBuf && amt>=n ){
     //    Debug.Assert( nKey<sizeof(zStatic) );
     //    if( n>0 ) nKey = n;
-    //    memcpy(zStatic, zBuf, (int)nKey); 
+    //    memcpy(zStatic, zBuf, (int)nKey);
     //    zStatic[nKey] = 0;
     //   TCL.Tcl_AppendResult(interp, zStatic);
     //  }
@@ -1294,7 +1294,7 @@ namespace CS_SQLite3
     //  if( zBuf && amt>=n ){
     //    Debug.Assert( nData<sizeof(zStatic) );
     //    if( n>0 ) nData = n;
-    //    memcpy(zStatic, zBuf, (int)nData); 
+    //    memcpy(zStatic, zBuf, (int)nData);
     //    zStatic[nData] = 0;
     //   TCL.Tcl_AppendResult(interp, zStatic);
     //  }
@@ -1438,7 +1438,7 @@ namespace CS_SQLite3
     // TCL.Tcl_DString str;
 
     //  if( argc!=3 ){
-    //   TCL.Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0].ToString(), 
+    //   TCL.Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0].ToString(),
     //                    " BTREE CURSOR", 0);
     //    return TCL.TCL_ERROR;
     //  }

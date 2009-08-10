@@ -23,11 +23,11 @@ namespace CS_SQLite3
     ** This is the implementation of generic hash-tables
     ** used in SQLite.
     **
-    ** $Id: hash.c,v 1.38 2009/05/09 23:29:12 drh Exp 
+    ** $Id: hash.c,v 1.38 2009/05/09 23:29:12 drh Exp
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -60,13 +60,13 @@ namespace CS_SQLite3
       Debug.Assert( pH != null );
       elem = pH.first;
       pH.first = null;
-      sqlite3_free( ref  pH.ht );
+      //sqlite3_free( ref  pH.ht );
       pH.ht = null;
       pH.htsize = 0;
       while ( elem != null )
       {
         HashElem next_elem = elem.next;
-        //sqlite3_free(ref  elem );
+        ////sqlite3_free(ref  elem );
         elem = next_elem;
       }
       pH.count = 0;
@@ -155,7 +155,7 @@ if( new_size==pH->htsize ) return false;
       sqlite3EndBenignMalloc();
 
       if ( new_ht == null ) return false;
-      sqlite3_free( ref  pH.ht );
+      //sqlite3_free( ref  pH.ht );
       pH.ht = new_ht;
       // pH.htsize = new_size = sqlite3MallocSize(new_ht)/sizeof(struct _ht);
       //memset(new_ht, 0, new_size*sizeof(struct _ht));
@@ -238,7 +238,7 @@ if( new_size==pH->htsize ) return false;
         pEntry.count--;
         Debug.Assert( pEntry.count >= 0 );
       }
-      sqlite3_free( ref  elem );
+      //sqlite3_free( ref  elem );
       pH.count--;
       if ( pH.count <= 0 )
       {

@@ -104,7 +104,7 @@ int main(int argc, char **argv){
     char *zJournal = sqlite3_mprintf("%s-journal", DB_FILE);
     unlink(DB_FILE);
     unlink(zJournal);
-    sqlite3_free(zJournal);
+    //sqlite3_free(zJournal);
   }  
   sqlite3_open(DB_FILE, &db);
   if( db==0 ){

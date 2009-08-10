@@ -1,10 +1,7 @@
 =================================================================================================
-$Header$ 
+$Header$
 =================================================================================================
-This file contains
 
+Project Descriptions -- See the Wiki Projects for details
 
-
-
-
-( This Page Unintentionally left blank )
+Please read HowToCompile for instruction on settings and compiler options

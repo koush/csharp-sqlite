@@ -35,28 +35,28 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
     **
     ** OVERVIEW:
     **
-    **   This file contains some example code demonstrating how the SQLite 
-    **   vfs feature can be used to have SQLite operate directly on an 
+    **   This file contains some example code demonstrating how the SQLite
+    **   vfs feature can be used to have SQLite operate directly on an
     **   embedded media, without using an intermediate file system.
     **
     **   Because this is only a demo designed to run on a workstation, the
     **   underlying media is simulated using a regular file-system file. The
     **   size of the file is fixed when it is first created (default size 10 MB).
     **   From SQLite's point of view, this space is used to store a single
-    **   database file and the journal file. 
+    **   database file and the journal file.
     **
-    **   Any statement journal created is stored in volatile memory obtained 
-    **   from sqlite3_malloc(). Any attempt to create a temporary database file 
+    **   Any statement journal created is stored in volatile memory obtained
+    **   from sqlite3_malloc(). Any attempt to create a temporary database file
     **   will fail (SQLITE_IOERR). To prevent SQLite from attempting this,
-    **   it should be configured to store all temporary database files in 
-    **   main memory (see pragma "temp_store" or the SQLITE_TEMP_STORE compile 
+    **   it should be configured to store all temporary database files in
+    **   main memory (see pragma "temp_store" or the SQLITE_TEMP_STORE compile
     **   time option).
     **
     ** ASSUMPTIONS:
@@ -74,7 +74,7 @@ namespace CS_SQLite3
     ** FILE FORMAT:
     **
     **   The basic principle is that the "database file" is stored at the
-    **   beginning of the 10 MB blob and grows in a forward direction. The 
+    **   beginning of the 10 MB blob and grows in a forward direction. The
     **   "journal file" is stored at the end of the 10MB blob and grows
     **   in the reverse direction. If, during a transaction, insufficient
     **   space is available to expand either the journal or database file,
@@ -89,14 +89,14 @@ namespace CS_SQLite3
     **   size of the "database file". It is updated as part of the sync()
     **   operation. On startup, it can only be trusted if no journal file
     **   exists. If a journal-file does exist, then it stores the real size
-    **   of the database region. The second and subsequent blocks store the 
+    **   of the database region. The second and subsequent blocks store the
     **   actual database content.
     **
-    **   The size of the "journal file" is not stored persistently in the 
+    **   The size of the "journal file" is not stored persistently in the
     **   file. When the system is running, the size of the journal file is
     **   stored in volatile memory. When recovering from a crash, this vfs
     **   reports a very large size for the journal file. The normal journal
-    **   header and checksum mechanisms serve to prevent SQLite from 
+    **   header and checksum mechanisms serve to prevent SQLite from
     **   processing any data that lies past the logical end of the journal.
     **
     **   When SQLite calls OsDelete() to delete the journal file, the final
@@ -229,7 +229,7 @@ namespace CS_SQLite3
     //    fsRandomness,                               /* xRandomness */
     //    fsSleep,                                    /* xSleep */
     //    fsCurrentTime                               /* xCurrentTime */
-    //  }, 
+    //  },
     //  0,                                            /* pFileList */
     //  0                                             /* pParent */
     //};
@@ -277,7 +277,7 @@ namespace CS_SQLite3
     */
     //static int tmpClose(sqlite3_file *pFile){
     //  tmp_file *pTmp = (tmp_file *)pFile;
-    //  sqlite3_free(pTmp->zAlloc);
+    //  //sqlite3_free(pTmp->zAlloc);
     //  return SQLITE_OK;
     //}
 
@@ -285,9 +285,9 @@ namespace CS_SQLite3
     ** Read data from a tmp-file.
     */
     //static int tmpRead(
-    //  sqlite3_file *pFile, 
-    //  void *zBuf, 
-    //  int iAmt, 
+    //  sqlite3_file *pFile,
+    //  void *zBuf,
+    //  int iAmt,
     //  sqlite_int64 iOfst
     //){
     //  tmp_file *pTmp = (tmp_file *)pFile;
@@ -302,9 +302,9 @@ namespace CS_SQLite3
     ** Write data to a tmp-file.
     */
     //static int tmpWrite(
-    //  sqlite3_file *pFile, 
-    //  const void *zBuf, 
-    //  int iAmt, 
+    //  sqlite3_file *pFile,
+    //  const void *zBuf,
+    //  int iAmt,
     //  sqlite_int64 iOfst
     //){
     //  tmp_file *pTmp = (tmp_file *)pFile;
@@ -409,7 +409,7 @@ namespace CS_SQLite3
     //      pReal->pNext->ppThis = pReal->ppThis;
     //    }
     //    rc = pReal->pFile->pMethods->xClose(pReal->pFile);
-    //    sqlite3_free(pReal);
+    //    //sqlite3_free(pReal);
     //  }
 
     //  return rc;
@@ -419,9 +419,9 @@ namespace CS_SQLite3
     ** Read data from an fs-file.
     */
     //static int fsRead(
-    //  sqlite3_file *pFile, 
-    //  void *zBuf, 
-    //  int iAmt, 
+    //  sqlite3_file *pFile,
+    //  void *zBuf,
+    //  int iAmt,
     //  sqlite_int64 iOfst
     //){
     //  int rc = SQLITE_OK;
@@ -458,9 +458,9 @@ namespace CS_SQLite3
     ** Write data to an fs-file.
     */
     //static int fsWrite(
-    //  sqlite3_file *pFile, 
-    //  const void *zBuf, 
-    //  int iAmt, 
+    //  sqlite3_file *pFile,
+    //  const void *zBuf,
+    //  int iAmt,
     //  sqlite_int64 iOfst
     //){
     //  int rc = SQLITE_OK;
@@ -628,7 +628,7 @@ namespace CS_SQLite3
 
     //  assert(strlen("-journal")==8);
     //  nName = strlen(zName)-((eType==JOURNAL_FILE)?8:0);
-    //  pReal=pFsVfs->pFileList; 
+    //  pReal=pFsVfs->pFileList;
     //  for(; pReal && strncmp(pReal->zName, zName, nName); pReal=pReal->pNext);
 
     //  if( !pReal ){
@@ -692,7 +692,7 @@ namespace CS_SQLite3
     //      if( pReal->pFile->pMethods ){
     //        pReal->pFile->pMethods->xClose(pReal->pFile);
     //      }
-    //      sqlite3_free(pReal);
+    //      //sqlite3_free(pReal);
     //    }
     //  }
     //  return rc;
@@ -713,7 +713,7 @@ namespace CS_SQLite3
     //  assert(strlen("-journal")==8);
     //  assert(strcmp("-journal", &zPath[nName])==0);
 
-    //  pReal = pFsVfs->pFileList; 
+    //  pReal = pFsVfs->pFileList;
     //  for(; pReal && strncmp(pReal->zName, zPath, nName); pReal=pReal->pNext);
     //  if( pReal ){
     //    pF = pReal->pFile;
@@ -730,9 +730,9 @@ namespace CS_SQLite3
     ** is available, or false otherwise.
     */
     //static int fsAccess(
-    //  sqlite3_vfs *pVfs, 
-    //  const char *zPath, 
-    //  int flags, 
+    //  sqlite3_vfs *pVfs,
+    //  const char *zPath,
+    //  int flags,
     //  int *pResOut
     //){
     //  fs_vfs_t *pFsVfs = (fs_vfs_t *)pVfs;
@@ -751,7 +751,7 @@ namespace CS_SQLite3
     //    isJournal = 1;
     //  }
 
-    //  pReal = pFsVfs->pFileList; 
+    //  pReal = pFsVfs->pFileList;
     //  for(; pReal && strncmp(pReal->zName, zPath, nName); pReal=pReal->pNext);
 
     //  *pResOut = (pReal && (!isJournal || pReal->nJournal>0));
@@ -783,7 +783,7 @@ namespace CS_SQLite3
 
     /*
     ** Populate the buffer zErrMsg (size nByte bytes) with a human readable
-    ** utf-8 string describing the most recent error encountered associated 
+    ** utf-8 string describing the most recent error encountered associated
     ** with dynamic libraries.
     */
     //static void fsDlError(sqlite3_vfs *pVfs, int nByte, char *zErrMsg){
@@ -808,7 +808,7 @@ namespace CS_SQLite3
     //}
 
     /*
-    ** Populate the buffer pointed to by zBufOut with nByte bytes of 
+    ** Populate the buffer pointed to by zBufOut with nByte bytes of
     ** random data.
     */
     //static int fsRandomness(sqlite3_vfs *pVfs, int nByte, char *zBufOut){
@@ -817,7 +817,7 @@ namespace CS_SQLite3
     //}
 
     /*
-    ** Sleep for nMicro microseconds. Return the number of microseconds 
+    ** Sleep for nMicro microseconds. Return the number of microseconds
     ** actually slept.
     */
     //static int fsSleep(sqlite3_vfs *pVfs, int nMicro){

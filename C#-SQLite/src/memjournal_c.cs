@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -222,7 +222,7 @@ namespace CS_SQLite3
       {
         FileChunk pTmp = pChunk;
         pChunk = pChunk.pNext;
-        sqlite3_free( ref pTmp );
+        //sqlite3_free( ref pTmp );
       }
       sqlite3MemJournalOpen( pJfd );
       return SQLITE_OK;
@@ -282,7 +282,7 @@ namespace CS_SQLite3
     null                         /* xDeviceCharacteristics */
     );
 
-    /* 
+    /*
     ** Open a journal file.
     */
     static void sqlite3MemJournalOpen( sqlite3_file pJfd )
@@ -296,15 +296,15 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Return true if the file-handle passed as an argument is 
-    ** an in-memory journal 
+    ** Return true if the file-handle passed as an argument is
+    ** an in-memory journal
     */
     static bool sqlite3IsMemJournal( sqlite3_file pJfd )
     {
       return pJfd.pMethods == MemJournalMethods;
     }
 
-    /* 
+    /*
     ** Return the number of bytes required to store a MemJournal that uses vfs
     ** pVfs to create the underlying on-disk files.
     */

@@ -29,7 +29,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -82,7 +82,7 @@ namespace CS_SQLite3
     **   (1) NORMAL    We are in the middle of statement which ends with a single
     **                 semicolon.
     **
-    **   (2) EXPLAIN   The keyword EXPLAIN has been seen at the beginning of 
+    **   (2) EXPLAIN   The keyword EXPLAIN has been seen at the beginning of
     **                 a statement.
     **
     **   (3) CREATE    The keyword CREATE has been seen at the beginning of a

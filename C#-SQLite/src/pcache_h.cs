@@ -22,13 +22,13 @@ namespace CS_SQLite3
     **
     *************************************************************************
     ** This header file defines the interface that the sqlite page cache
-    ** subsystem. 
+    ** subsystem.
     **
     ** @(#) $Id: pcache.h,v 1.19 2009/01/20 17:06:27 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -136,7 +136,7 @@ this.pageHash=0;
     //int sqlite3PcacheSize(void);
 
     /* One release per successful fetch.  Page is pinned until released.
-    ** Reference counted. 
+    ** Reference counted.
     */
     //int sqlite3PcacheFetch(PCache*, Pgno, int createFlag, PgHdr**);
     //void sqlite3PcacheRelease(PgHdr*);
@@ -178,7 +178,7 @@ this.pageHash=0;
 
 #if SQLITE_CHECK_PAGES
 /* Iterate through all dirty pages currently stored in the cache. This
-** interface is only available if SQLITE_CHECK_PAGES is defined when the 
+** interface is only available if SQLITE_CHECK_PAGES is defined when the
 ** library is built.
 */
 

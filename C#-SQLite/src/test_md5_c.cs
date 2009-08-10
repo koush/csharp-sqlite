@@ -37,7 +37,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -285,7 +285,7 @@ namespace CS_SQLite3
     }
 
     /*
-    * Final wrapup - pad to 64-byte boundary with the bit pattern 
+    * Final wrapup - pad to 64-byte boundary with the bit pattern
     * 1 0* (64-bit count of bits processed, MSB-first)
     */
 
@@ -360,7 +360,7 @@ namespace CS_SQLite3
 
     /*
     ** A TCL command for md5.  The argument is the text to be hashed.  The
-    ** Result is the hash in base64.  
+    ** Result is the hash in base64.
     */
     static int md5_cmd( object cd, Tcl_Interp interp, int argc, Tcl_Obj[] argv )
     {
@@ -406,7 +406,7 @@ namespace CS_SQLite3
         "\" for reading", 0 );
         return TCL.TCL_ERROR;
       }
-      Debugger.Break(); // TODO 
+      Debugger.Break(); // TODO
       //MD5Init( ctx );
       //for(;;){
       //  int n;

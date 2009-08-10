@@ -26,7 +26,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -34,6 +34,7 @@ namespace CS_SQLite3
     //#include "sqliteInt.h"
     //#include <stdarg.h>
 
+#if FALSE
     /*
     ** This routine runs when the memory allocator sees that the
     ** total memory allocation is about to exceed the soft heap
@@ -50,7 +51,7 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Set the soft heap-size limit for the library. Passing a zero or 
+    ** Set the soft heap-size limit for the library. Passing a zero or
     ** negative value indicates no limit.
     */
     static void sqlite3_soft_heap_limit( int n )
@@ -277,7 +278,7 @@ return nRet;
 
 
     /*
-** Trigger the alarm 
+** Trigger the alarm
 */
     static void sqlite3MallocAlarm( int nByte )
     {
@@ -418,7 +419,7 @@ return nRet;
         }
         else
         {
-          Debugger.Break(); // TODO -- 
+          Debugger.Break(); // TODO --
           //int i;
           //i = mem0.aScratchFree[--mem0.nScratchFree];
           //i *=  sqlite3GlobalConfig.szScratch;
@@ -453,8 +454,8 @@ scratch_overflow:
 #endif
       return p;
     }
-    static void sqlite3ScratchFree( ref byte[][] p ) { p = null; }
-    static void sqlite3ScratchFree( ref byte[] p )
+    static void //sqlite3ScratchFree( ref byte[][] p ) { p = null; }
+    static void //sqlite3ScratchFree( ref byte[] p )
     {
       if ( p != null )
       {
@@ -541,13 +542,13 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
     ** Free memory previously obtained from sqlite3Malloc().
     */
     // -- overloads ---------------------------------------
-    static void sqlite3_free( ref string x )
+    static void //sqlite3_free( ref string x )
     { x = null; }
 
-    static void sqlite3_free<T>( ref T x ) where T : class
+    static void //sqlite3_free<T>( ref T x ) where T : class
     { x = null; }
 
-    static void sqlite3_free( ref byte[] p )
+    static void //sqlite3_free( ref byte[] p )
     {
       if ( p == null ) return;
       if ( sqlite3GlobalConfig.bMemstat )
@@ -567,32 +568,32 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
     ** connection.
     */
     // -- overloads ---------------------------------------
-    static void sqlite3DbFree( sqlite3 db, ref string x )
+    static void //sqlite3DbFree( sqlite3 db, ref string x )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       x = null;
     }
-    static void sqlite3DbFree( sqlite3 db, ref byte[] x )
+    static void //sqlite3DbFree( sqlite3 db, ref byte[] x )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       x = null;
     }
-    static void sqlite3DbFree( sqlite3 db, ref int[] x )
+    static void //sqlite3DbFree( sqlite3 db, ref int[] x )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       x = null;
     }
-    static void sqlite3DbFree( sqlite3 db, ref StringBuilder x )
+    static void //sqlite3DbFree( sqlite3 db, ref StringBuilder x )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       x = null;
     }
-    static void sqlite3DbFree<T>( sqlite3 db, ref T p ) where T : class
+    static void //sqlite3DbFree<T>( sqlite3 db, ref T p ) where T : class
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       p = null;
     }
-    static void sqlite3DbFree( sqlite3 db, object p )
+    static void //sqlite3DbFree( sqlite3 db, object p )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       if ( isLookaside( db, p ) )
@@ -604,7 +605,7 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
       }
       else
       {
-        sqlite3_free( ref p );
+        //sqlite3_free( ref p );
       }
     }
 
@@ -621,7 +622,7 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
       }
       if ( nBytes <= 0 )
       {
-        sqlite3_free( ref  pOld );
+        //sqlite3_free( ref  pOld );
         return null;
       }
       if ( nBytes >= 0x7fffff00 )
@@ -754,7 +755,7 @@ return (void*)pBuf;
       p = sqlite3Malloc( n );
       if ( null == p && db != null )
       {
-        db.mallocFailed = 1;
+////        db.mallocFailed = 1;
       }
       return p;
     }
@@ -780,12 +781,12 @@ return (void*)pBuf;
       //      pNew = sqlite3DbMallocRaw(db, n);
       //      if( pNew ){
       //        memcpy(pNew, p, db.lookaside.sz);
-      //        sqlite3DbFree(db, p);
+      //        //sqlite3DbFree(db, p);
       //      }
       //    }else{
       //      pNew = sqlite3_realloc(p, n);
       //      if( null==pNew ){
-      //        db.mallocFailed = 1;
+      //////        db.mallocFailed = 1;
       //      }
       //    }
       //  }
@@ -800,15 +801,15 @@ return (void*)pBuf;
     //  object pNew;
     //  pNew = "";//sqlite3DbRealloc(db, p, n);
     //      if( pNew ==null){
-    //        sqlite3DbFree(db,ref  p);
+    //        //sqlite3DbFree(db,ref  p);
     //      }
     //      return pNew;
     //    }
 
     /*
-    ** Make a copy of a string in memory obtained from sqliteMalloc(). These 
+    ** Make a copy of a string in memory obtained from sqliteMalloc(). These
     ** functions call sqlite3MallocRaw() directly instead of sqliteMalloc(). This
-    ** is because when memory debugging is turned on, these two functions are 
+    ** is because when memory debugging is turned on, these two functions are
     ** called via macros that record the current file and line number in the
     ** ThreadData structure.
     */
@@ -840,6 +841,7 @@ return (void*)pBuf;
     //  return zNew;
     //}
 
+#endif
     /*
     ** Create a string from the zFromat argument and the va_list that follows.
     ** Store the string in memory obtained from sqliteMalloc() and make pz
@@ -862,19 +864,18 @@ return (void*)pBuf;
       va_start( ap, zFormat );
       z = sqlite3VMPrintf( db, zFormat, ap );
       va_end( ap );
-      sqlite3DbFree( db, ref pz );
+      //sqlite3DbFree( db, ref pz );
       pz = z;
     }
 
-
     /*
-    ** This function must be called before exiting any API function (i.e. 
+    ** This function must be called before exiting any API function (i.e.
     ** returning control to the user) that has called sqlite3_malloc or
     ** sqlite3_realloc.
     **
     ** The returned value is normally a copy of the second argument to this
     ** function. However, if a malloc() failure has occurred since the previous
-    ** invocation SQLITE_NOMEM is returned instead. 
+    ** invocation SQLITE_NOMEM is returned instead.
     **
     ** If the first argument, db, is not NULL and a malloc() error has occurred,
     ** then the connection error-code (the value returned by sqlite3_errcode())
@@ -889,14 +890,14 @@ return (void*)pBuf;
     static int sqlite3ApiExit( sqlite3 db, int rc )
     {
       /* If the db handle is not NULL, then we must hold the connection handle
-      ** mutex here. Otherwise the read (and possible write) of db.mallocFailed 
+      ** mutex here. Otherwise the read (and possible write) of db.mallocFailed
       ** is unsafe, as is the call to sqlite3Error().
       */
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      if ( db != null && db.mallocFailed != 0 || rc == SQLITE_IOERR_NOMEM )
+      if ( /*db != null && db.mallocFailed != 0 || */ rc == SQLITE_IOERR_NOMEM )
       {
         sqlite3Error( db, SQLITE_NOMEM, "" );
-        db.mallocFailed = 0;
+        //db.mallocFailed = 0;
         rc = SQLITE_NOMEM;
       }
       return rc & ( db != null ? db.errMask : 0xff );

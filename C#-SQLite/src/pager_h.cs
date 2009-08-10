@@ -23,7 +23,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -33,8 +33,8 @@ namespace CS_SQLite3
     //#define _PAGER_H_
 
     /*
-    ** Default maximum size for persistent journal files. A negative 
-    ** value means no limit. This value may be overridden using the 
+    ** Default maximum size for persistent journal files. A negative
+    ** value means no limit. This value may be overridden using the
     ** sqlite3PagerJournalSizeLimit() API. See also "PRAGMA journal_size_limit".
     */
 #if !SQLITE_DEFAULT_JOURNAL_SIZE_LIMIT
@@ -60,9 +60,9 @@ namespace CS_SQLite3
     /*
     ** Page number PAGER_MJ_PGNO is never used in an SQLite database (it is
     ** reserved for working around a windows/posix incompatibility). It is
-    ** used in the journal to signify that the remainder of the journal file 
+    ** used in the journal to signify that the remainder of the journal file
     ** is devoted to storing a master journal name - there are no more pages to
-    ** roll back. See comments for function writeMasterJournal() in pager.c 
+    ** roll back. See comments for function writeMasterJournal() in pager.c
     ** for details.
     */
     //#define PAGER_MJ_PGNO(x) ((Pgno)((PENDING_BYTE/((x)->pageSize))+1))
@@ -105,7 +105,7 @@ namespace CS_SQLite3
 
     /*
     ** The remainder of this file contains the declarations of the functions
-    ** that make up the Pager sub-system API. See source code comments for 
+    ** that make up the Pager sub-system API. See source code comments for
     ** a detailed description of each routine.
     */
     /* Open and close a Pager connection. */
@@ -137,8 +137,8 @@ namespace CS_SQLite3
     //void sqlite3PagerDontWrite(DbPage*);
     //int sqlite3PagerMovepage(Pager*,DbPage*,Pgno,int);
     //int sqlite3PagerPageRefcount(DbPage*);
-    //void *sqlite3PagerGetData(DbPage *); 
-    //void *sqlite3PagerGetExtra(DbPage *); 
+    //void *sqlite3PagerGetData(DbPage *);
+    //void *sqlite3PagerGetExtra(DbPage *);
 
     /* Functions used to manage pager transactions and savepoints. */
     //int sqlite3PagerPagecount(Pager*, int*);

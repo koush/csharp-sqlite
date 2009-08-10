@@ -26,7 +26,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -41,9 +41,9 @@ namespace CS_SQLite3
 
 
     /*
-** This function is used by SQL generated to implement the 
+** This function is used by SQL generated to implement the
 ** ALTER TABLE command. The first argument is the text of a CREATE TABLE or
-** CREATE INDEX command. The second is a table name. The table name in 
+** CREATE INDEX command. The second is a table name. The table name in
 ** the CREATE TABLE or CREATE INDEX statement is replaced with the third
 ** argument and the result returned. Examples:
 **
@@ -74,7 +74,7 @@ namespace CS_SQLite3
 
       UNUSED_PARAMETER( NotUsed );
 
-      /* The principle used to locate the table name in the CREATE TABLE 
+      /* The principle used to locate the table name in the CREATE TABLE
       ** statement is that the table name is the first non-space token that
       ** is immediately followed by a TK_LP or TK_USING token.
       */
@@ -113,9 +113,9 @@ namespace CS_SQLite3
 
 #if !SQLITE_OMIT_TRIGGER
     /* This function is used by SQL generated to implement the
-** ALTER TABLE command. The first argument is the text of a CREATE TRIGGER 
-** statement. The second is a table name. The table name in the CREATE 
-** TRIGGER statement is replaced with the third argument and the result 
+** ALTER TABLE command. The first argument is the text of a CREATE TRIGGER
+** statement. The second is a table name. The table name in the CREATE
+** TRIGGER statement is replaced with the third argument and the result
 ** returned. This is analagous to renameTableFunc() above, except for CREATE
 ** TRIGGER, not CREATE INDEX and CREATE TABLE.
 */
@@ -140,7 +140,7 @@ namespace CS_SQLite3
 
       UNUSED_PARAMETER( NotUsed );
 
-      /* The principle used to locate the table name in the CREATE TRIGGER 
+      /* The principle used to locate the table name in the CREATE TRIGGER
       ** statement is that the table name is the first token that is immediatedly
       ** preceded by either TK_ON or TK_DOT and immediatedly followed by one
       ** of TK_WHEN, TK_BEGIN or TK_FOR.
@@ -172,12 +172,12 @@ namespace CS_SQLite3
           Debug.Assert( len > 0 );
 
           /* Variable 'dist' stores the number of tokens read since the most
-          ** recent TK_DOT or TK_ON. This means that when a WHEN, FOR or BEGIN 
+          ** recent TK_DOT or TK_ON. This means that when a WHEN, FOR or BEGIN
           ** token is read and 'dist' equals 2, the condition stated above
           ** to be met.
           **
           ** Note that ON cannot be a database, table or column name, so
-          ** there is no need to worry about syntax like 
+          ** there is no need to worry about syntax like
           ** "CREATE TRIGGER ... ON ON.ON BEGIN ..." etc.
           */
           dist++;
@@ -213,7 +213,7 @@ namespace CS_SQLite3
     /*
     ** Generate the text of a WHERE expression which can be used to select all
     ** temporary triggers on table pTab from the sqlite_temp_master table. If
-    ** table pTab has no temporary triggers, or is itself stored in the 
+    ** table pTab has no temporary triggers, or is itself stored in the
     ** temporary database, NULL is returned.
     */
     static string whereTempTriggers( Parse pParse, Table pTab )
@@ -223,9 +223,9 @@ namespace CS_SQLite3
       string tmp = "";
       Schema pTempSchema = pParse.db.aDb[1].pSchema; /* Temp db schema */
 
-      /* If the table is not located in the temp.db (in which case NULL is 
+      /* If the table is not located in the temp.db (in which case NULL is
       ** returned, loop through the tables list of triggers. For each trigger
-      ** that is not part of the temp.db schema, add a clause to the WHERE 
+      ** that is not part of the temp.db schema, add a clause to the WHERE
       ** expression being built up in zWhere.
       */
       if ( pTab.pSchema != pTempSchema )
@@ -243,7 +243,7 @@ namespace CS_SQLite3
             {
               tmp = zWhere;
               zWhere = sqlite3MPrintf( db, "%s OR name=%Q", zWhere, pTrig.name );
-              sqlite3DbFree( db, ref tmp );
+              //sqlite3DbFree( db, ref tmp );
             }
           }
         }
@@ -256,7 +256,7 @@ namespace CS_SQLite3
     ** pTab from the database, including triggers and temporary triggers.
     ** Argument zName is the name of the table in the database schema at
     ** the time the generated code is executed. This can be different from
-    ** pTab.zName if this function is being called to code part of an 
+    ** pTab.zName if this function is being called to code part of an
     ** "ALTER TABLE RENAME TO" statement.
     */
     static void reloadTableSchema( Parse pParse, Table pTab, string zName )
@@ -293,8 +293,8 @@ namespace CS_SQLite3
       sqlite3VdbeAddOp4( v, OP_ParseSchema, iDb, 0, 0, zWhere, P4_DYNAMIC );
 
 #if !SQLITE_OMIT_TRIGGER
-      /* Now, if the table is not stored in the temp database, reload any temp 
-** triggers. Don't use IN(...) in case SQLITE_OMIT_SUBQUERY is defined. 
+      /* Now, if the table is not stored in the temp database, reload any temp
+** triggers. Don't use IN(...) in case SQLITE_OMIT_SUBQUERY is defined.
 */
       if ( ( zWhere = whereTempTriggers( pParse, pTab ) ) != "" )
       {
@@ -304,8 +304,8 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Generate code to implement the "ALTER TABLE xxx RENAME TO yyy" 
-    ** command. 
+    ** Generate code to implement the "ALTER TABLE xxx RENAME TO yyy"
+    ** command.
     */
     static void sqlite3AlterRenameTable(
     Parse pParse,             /* Parser context. */
@@ -326,7 +326,7 @@ namespace CS_SQLite3
 #endif
       int isVirtualRename = 0;  /* True if this is a v-table with an xRename() */
 
-      if ( NEVER( db.mallocFailed != 0 ) ) goto exit_rename_table;
+      //if ( NEVER( db.mallocFailed != 0 ) ) goto exit_rename_table;
       Debug.Assert( pSrc.nSrc == 1 );
       Debug.Assert( sqlite3BtreeHoldsAllMutexes( pParse.db ) );
       pTab = sqlite3LocateTable( pParse, 0, pSrc.a[0].zName, pSrc.a[0].zDatabase );
@@ -388,7 +388,7 @@ if ( IsVirtual( pTab ) && pTab.pMod.pModule.xRename!=null )
 isVirtualRename = 1;
 }
 #endif
-      /* Begin a transaction and code the VerifyCookie for database iDb. 
+      /* Begin a transaction and code the VerifyCookie for database iDb.
 ** Then modify the schema cookie (since the ALTER TABLE modifies the
 ** schema). Open a statement transaction if the table is a virtual
 ** table.
@@ -445,7 +445,7 @@ sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pTab.pVtab, P4_VTAB );
       );
 
 #if !SQLITE_OMIT_AUTOINCREMENT
-      /* If the sqlite_sequence table exists in this database, then update 
+      /* If the sqlite_sequence table exists in this database, then update
 ** it with the new table name.
 */
       if ( sqlite3FindTable( db, "sqlite_sequence", zDb ) != null )
@@ -469,7 +469,7 @@ sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pTab.pVtab, P4_VTAB );
         "sql = sqlite_rename_trigger(sql, %Q), " +
         "tbl_name = %Q " +
         "WHERE %s;", zName, zName, zWhere );
-        sqlite3DbFree( db, ref zWhere );
+        //sqlite3DbFree( db, ref zWhere );
       }
 #endif
 
@@ -478,7 +478,7 @@ sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pTab.pVtab, P4_VTAB );
 
 exit_rename_table:
       sqlite3SrcListDelete( db, ref pSrc );
-      sqlite3DbFree( db, ref zName );
+      //sqlite3DbFree( db, ref zName );
     }
 
     /*
@@ -529,7 +529,7 @@ exit_rename_table:
       sqlite3 db;              /* The database connection; */
 
       db = pParse.db;
-      if ( pParse.nErr != 0 || db.mallocFailed != 0 ) return;
+      if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ ) return;
       pNew = pParse.pNewTable;
       Debug.Assert( pNew != null );
       Debug.Assert( sqlite3BtreeHoldsAllMutexes( db ) );
@@ -548,7 +548,7 @@ return;
 }
 #endif
 
-      /* If the default value for the new column was specified with a 
+      /* If the default value for the new column was specified with a
 ** literal NULL, then set pDflt to 0. This simplifies checking
 ** for an SQL NULL default below.
 */
@@ -586,7 +586,7 @@ return;
         sqlite3_value pVal = null;
         if ( sqlite3ValueFromExpr( db, pDflt, SQLITE_UTF8, SQLITE_AFF_NONE, ref pVal ) != 0 )
         {
-          db.mallocFailed = 1;
+  //        db.mallocFailed = 1;
           return;
         }
         if ( pVal == null )
@@ -612,7 +612,7 @@ return;
         zDb, SCHEMA_TABLE( iDb ), pNew.addColOffset, zCol, pNew.addColOffset + 1,
         zTab
         );
-        sqlite3DbFree( db, ref zCol );
+        //sqlite3DbFree( db, ref zCol );
       }
 
       /* If the default value of the new column is NULL, then set the file
@@ -627,14 +627,14 @@ return;
 
     /*
     ** This function is called by the parser after the table-name in
-    ** an "ALTER TABLE <table-name> ADD" statement is parsed. Argument 
+    ** an "ALTER TABLE <table-name> ADD" statement is parsed. Argument
     ** pSrc is the full-name of the table being altered.
     **
     ** This routine makes a (partial) copy of the Table structure
     ** for the table being altered and sets Parse.pNewTable to point
     ** to it. Routines called by the parser as the column definition
-    ** is parsed (i.e. sqlite3AddColumn()) add the new Column data to 
-    ** the copy. The copy of the Table structure is deleted by tokenize.c 
+    ** is parsed (i.e. sqlite3AddColumn()) add the new Column data to
+    ** the copy. The copy of the Table structure is deleted by tokenize.c
     ** after parsing is finished.
     **
     ** Routine sqlite3AlterFinishAddColumn() will be called to complete
@@ -653,7 +653,7 @@ return;
       /* Look up the table being altered. */
       Debug.Assert( pParse.pNewTable == null );
       Debug.Assert( sqlite3BtreeHoldsAllMutexes( db ) );
-      if ( db.mallocFailed != 0 ) goto exit_begin_add_column;
+//      if ( db.mallocFailed != 0 ) goto exit_begin_add_column;
       pTab = sqlite3LocateTable( pParse, 0, pSrc.a[0].zName, pSrc.a[0].zDatabase );
       if ( pTab == null ) goto exit_begin_add_column;
 
@@ -693,7 +693,7 @@ return;
       pNew.zName = sqlite3MPrintf( db, "sqlite_altertab_%s", pTab.zName );
       if ( pNew.aCol == null || pNew.zName == null )
       {
-        db.mallocFailed = 1;
+//        db.mallocFailed = 1;
         goto exit_begin_add_column;
       }
       // memcpy( pNew.aCol, pTab.aCol, sizeof(Column) * pNew.nCol );

@@ -26,14 +26,14 @@ namespace CS_SQLite3
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** This file contains the implementation of the sqlite3_backup_XXX() 
+    ** This file contains the implementation of the sqlite3_backup_XXX()
     ** API functions and the related features.
     **
     ** $Id: backup.c,v 1.17 2009/06/03 11:25:07 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -79,15 +79,15 @@ namespace CS_SQLite3
     **   Once it has been created using backup_init(), a single sqlite3_backup
     **   structure may be accessed via two groups of thread-safe entry points:
     **
-    **     * Via the sqlite3_backup_XXX() API function backup_step() and 
+    **     * Via the sqlite3_backup_XXX() API function backup_step() and
     **       backup_finish(). Both these functions obtain the source database
-    **       handle mutex and the mutex associated with the source BtShared 
+    **       handle mutex and the mutex associated with the source BtShared
     **       structure, in that order.
     **
     **     * Via the BackupUpdate() and BackupRestart() functions, which are
     **       invoked by the pager layer to report various state changes in
     **       the page cache associated with the source database. The mutex
-    **       associated with the source database BtShared structure will always 
+    **       associated with the source database BtShared structure will always
     **       be held when either of these functions are invoked.
     **
     **   The other sqlite3_backup_XXX() API functions, backup_remaining() and
@@ -108,8 +108,8 @@ namespace CS_SQLite3
     ** in connection handle pDb. If such a database cannot be found, return
     ** a NULL pointer and write an error message to pErrorDb.
     **
-    ** If the "temp" database is requested, it may need to be opened by this 
-    ** function. If an error occurs while doing so, return 0 and write an 
+    ** If the "temp" database is requested, it may need to be opened by this
+    ** function. If an error occurs while doing so, return 0 and write an
     ** error message to pErrorDb.
     */
     static Btree findBtree( sqlite3 pErrorDb, sqlite3 pDb, string zDb )
@@ -135,7 +135,7 @@ namespace CS_SQLite3
             sqlite3Error( pErrorDb, pParse.rc, "%s", pParse.zErrMsg );
             rc = SQLITE_ERROR;
           }
-          sqlite3StackFree( pErrorDb, pParse );
+          //sqlite3StackFree( pErrorDb, pParse );
         }
         if ( rc != 0 )
         {
@@ -214,7 +214,7 @@ namespace CS_SQLite3
           ** already been written into the pDestDb handle. All that is left
           ** to do here is free the sqlite3_backup structure.
           */
-          sqlite3_free( ref p );
+          //sqlite3_free( ref p );
           p = null;
         }
       }
@@ -230,7 +230,7 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Argument rc is an SQLite error code. Return true if this error is 
+    ** Argument rc is an SQLite error code. Return true if this error is
     ** considered fatal if encountered during a backup operation. All errors
     ** are considered fatal except for SQLITE_BUSY and SQLITE_LOCKED.
     */
@@ -240,8 +240,8 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Parameter zSrcData points to a buffer containing the data for 
-    ** page iSrcPg from the source database. Copy this data into the 
+    ** Parameter zSrcData points to a buffer containing the data for
+    ** page iSrcPg from the source database. Copy this data into the
     ** destination database.
     */
     static int backupOnePage( sqlite3_backup p, Pgno iSrcPg, byte[] zSrcData )
@@ -261,14 +261,14 @@ namespace CS_SQLite3
       Debug.Assert( zSrcData != null );
 
       /* Catch the case where the destination is an in-memory database and the
-      ** page sizes of the source and destination differ. 
+      ** page sizes of the source and destination differ.
       */
       if ( nSrcPgsz != nDestPgsz && sqlite3PagerIsMemdb( sqlite3BtreePager( p.pDest ) ) )
       {
         rc = SQLITE_READONLY;
       }
 
-      /* This loop runs once for each destination page spanned by the source 
+      /* This loop runs once for each destination page spanned by the source
       ** page. For each iteration, variable iOff is set to the byte offset
       ** of the destination page.
       */
@@ -289,7 +289,7 @@ namespace CS_SQLite3
           ** Then clear the Btree layer MemPage.isInit flag. Both this module
           ** and the pager code use this trick (clearing the first byte
           ** of the page 'extra' space to invalidate the Btree layers
-          ** cached parse of the page). MemPage.isInit is marked 
+          ** cached parse of the page). MemPage.isInit is marked
           ** "MUST BE FIRST" for this purpose.
           */
           Buffer.BlockCopy( zSrcData, (int)( iOff % nSrcPgsz ), zDestData, (int)( iOff % nDestPgsz ), nCopy );// memcpy( zOut, zIn, nCopy );
@@ -306,7 +306,7 @@ namespace CS_SQLite3
     ** exactly iSize bytes. If pFile is not larger than iSize bytes, then
     ** this function is a no-op.
     **
-    ** Return SQLITE_OK if everything is successful, or an SQLite error 
+    ** Return SQLITE_OK if everything is successful, or an SQLite error
     ** code if an error occurs.
     */
     static int backupTruncateFile( sqlite3_file pFile, int iSize )
@@ -443,12 +443,12 @@ namespace CS_SQLite3
 
           /* Set nDestTruncate to the final number of pages in the destination
           ** database. The complication here is that the destination page
-          ** size may be different to the source page size. 
+          ** size may be different to the source page size.
           **
-          ** If the source page size is smaller than the destination page size, 
+          ** If the source page size is smaller than the destination page size,
           ** round up. In this case the call to sqlite3OsTruncate() below will
           ** fix the size of the file. However it is important to call
-          ** sqlite3PagerTruncateImage() here so that any pages in the 
+          ** sqlite3PagerTruncateImage() here so that any pages in the
           ** destination file that lie beyond the nDestTruncate page mark are
           ** journalled by PagerCommitPhaseOne() before they are destroyed
           ** by the file truncation.
@@ -475,7 +475,7 @@ namespace CS_SQLite3
             **
             **   * The destination may need to be truncated, and
             **
-            **   * Data stored on the pages immediately following the 
+            **   * Data stored on the pages immediately following the
             **     pending-byte page in the source database may need to be
             **     copied into the destination database.
             */
@@ -542,8 +542,8 @@ namespace CS_SQLite3
           rc2 |= sqlite3BtreeCommitPhaseTwo( p.pSrc );
           Debug.Assert( rc2 == SQLITE_OK );
 #else
-sqlite3BtreeCommitPhaseOne(p.pSrc, null); 
-sqlite3BtreeCommitPhaseTwo(p.pSrc);   
+sqlite3BtreeCommitPhaseOne(p.pSrc, null);
+sqlite3BtreeCommitPhaseTwo(p.pSrc);
 #endif
         }
 
@@ -607,7 +607,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
       sqlite3BtreeLeave( p.pSrc );
       if ( p.pDestDb != null )
       {
-        sqlite3_free( ref p );
+        //sqlite3_free( ref p );
       }
       sqlite3_mutex_leave( mutex );
       return rc;
@@ -623,7 +623,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
     }
 
     /*
-    ** Return the total number of pages in the source database as of the most 
+    ** Return the total number of pages in the source database as of the most
     ** recent call to sqlite3_backup_step().
     */
     static int sqlite3_backup_pagecount( sqlite3_backup p )
@@ -633,7 +633,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
 
     /*
     ** This function is called after the contents of page iPage of the
-    ** source database have been modified. If page iPage has already been 
+    ** source database have been modified. If page iPage has already been
     ** copied into the destination database, then the data written to the
     ** destination is now invalidated. The destination copy of iPage needs
     ** to be updated with the new data before the backup operation is
@@ -669,7 +669,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
     ** Restart the backup process. This is called when the pager layer
     ** detects that the database has been modified by an external database
     ** connection. In this case there is no way of knowing which of the
-    ** pages that have been copied into the destination database are still 
+    ** pages that have been copied into the destination database are still
     ** valid and which are not, so the entire process needs to be restarted.
     **
     ** It is assumed that the mutex associated with the BtShared object
@@ -691,8 +691,8 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
 ** Copy the complete content of pBtFrom into pBtTo.  A transaction
 ** must be active for both files.
 **
-** The size of file pTo may be reduced by this operation. If anything 
-** goes wrong, the transaction on pTo is rolled back. If successful, the 
+** The size of file pTo may be reduced by this operation. If anything
+** goes wrong, the transaction on pTo is rolled back. If successful, the
 ** transaction is committed before returning.
 */
     static int sqlite3BtreeCopyFile( Btree pTo, Btree pFrom )
@@ -715,9 +715,9 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
 
       /* 0x7FFFFFFF is the hard limit for the number of pages in a database
       ** file. By passing this as the number of pages to copy to
-      ** sqlite3_backup_step(), we can guarantee that the copy finishes 
+      ** sqlite3_backup_step(), we can guarantee that the copy finishes
       ** within a single call (unless an error occurs). The Debug.Assert() statement
-      ** checks this assumption - (p.rc) should be set to either SQLITE_DONE 
+      ** checks this assumption - (p.rc) should be set to either SQLITE_DONE
       ** or an error code.
       */
       sqlite3_backup_step( b, 0x7FFFFFFF );

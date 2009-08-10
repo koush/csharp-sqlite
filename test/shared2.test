@@ -158,7 +158,7 @@ do_test shared2-5.1 {
   sqlite3 db2 test.db
   execsql { CREATE TABLE t2(a, b, c) }
   
-  # The following statement would crash when attempting to sqlite3_free()
+  # The following statement would crash when attempting to //sqlite3_free()
   # a pointer allocated from a lookaside buffer.
   execsql { CREATE INDEX i1 ON t2(a) } db2
 } {}

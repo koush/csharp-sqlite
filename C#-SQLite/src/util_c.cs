@@ -38,7 +38,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -82,15 +82,15 @@ dummy += x;
 **
 **      This option [-ffast-math] should never be turned on by any
 **      -O option since it can result in incorrect output for programs
-**      which depend on an exact implementation of IEEE or ISO 
+**      which depend on an exact implementation of IEEE or ISO
 **      rules/specifications for math functions.
 **
 ** Under MSVC, this NaN test may fail if compiled with a floating-
-** point precision mode other than /fp:precise.  From the MSDN 
+** point precision mode other than /fp:precise.  From the MSDN
 ** documentation:
 **
-**      The compiler [with /fp:precise] will properly handle comparisons 
-**      involving NaN. For example, x != x evaluates to true if x is NaN 
+**      The compiler [with /fp:precise] will properly handle comparisons
+**      involving NaN. For example, x != x evaluates to true if x is NaN
 **      ...
 */
 #if __FAST_MATH__
@@ -204,7 +204,7 @@ rc = isnan(x);
       //va_list ap;
       sqlite3 db = pParse.db;
       pParse.nErr++;
-      sqlite3DbFree( db, ref pParse.zErrMsg );
+      //sqlite3DbFree( db, ref pParse.zErrMsg );
       va_start( ap, zFormat );
       pParse.zErrMsg = sqlite3VMPrintf( db, zFormat, ap );
       va_end( ap );
@@ -216,7 +216,7 @@ rc = isnan(x);
     */
     static void sqlite3ErrorClear( Parse pParse )
     {
-      sqlite3DbFree( pParse.db, ref  pParse.zErrMsg );
+      //sqlite3DbFree( pParse.db, ref  pParse.zErrMsg );
       pParse.nErr = 0;
     }
 
@@ -1031,8 +1031,8 @@ return sqlite3Atoi64(z, pResult);
     ** If the varint stored in p[0] is larger than can fit in a 32-bit unsigned
     ** integer, then set *v to 0xffffffff.
     **
-    ** A MACRO version, getVarint32, is provided which inlines the 
-    ** single-byte case.  All code should use the MACRO version as 
+    ** A MACRO version, getVarint32, is provided which inlines the
+    ** single-byte case.  All code should use the MACRO version as
     ** this function assumes the single-byte case has already been handled.
     */
     static u8 sqlite3GetVarint32( byte[] p, ref int v )
@@ -1304,10 +1304,10 @@ h += 9*(1&~(h>>4));
 ** open and is not being used by another thread.  By changing the value
 ** to SQLITE_MAGIC_BUSY we indicate that the connection is in use.
 ** sqlite3SafetyOff() below will change the value back to SQLITE_MAGIC_OPEN
-** when the API exits. 
+** when the API exits.
 **
 ** This routine is a attempt to detect if two threads use the
-** same sqlite* pointer at the same time.  There is a race 
+** same sqlite* pointer at the same time.  There is a race
 ** condition so it is possible that the error is not detected.
 ** But usually the problem will be seen.  The result will be an
 ** error which can be used to debug the application that is

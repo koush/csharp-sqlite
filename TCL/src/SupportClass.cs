@@ -1,11 +1,11 @@
 //
 // In order to convert some functionality to Visual C#, the Java Language Conversion Assistant
-// creates "support classes" that duplicate the original functionality.  
+// creates "support classes" that duplicate the original functionality.
 //
-// Support classes replicate the functionality of the original code, but in some cases they are 
-// substantially different architecturally. Although every effort is made to preserve the 
-// original architecture of the application in the converted project, the user should be aware that 
-// the primary goal of these support classes is to replicate functionality, and that at times 
+// Support classes replicate the functionality of the original code, but in some cases they are
+// substantially different architecturally. Although every effort is made to preserve the
+// original architecture of the application in the converted project, the user should be aware that
+// the primary goal of these support classes is to replicate functionality, and that at times
 // the architecture of the resulting solution may differ somewhat.
 //
 // Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
@@ -16,13 +16,13 @@ using System.Collections;
 
 
 	/// <summary>
-	/// This interface should be implemented by any class whose instances are intended 
+	/// This interface should be implemented by any class whose instances are intended
 	/// to be executed by a thread.
 	/// </summary>
 	public interface IThreadRunnable
 	{
 		/// <summary>
-		/// This method has to be implemented in order that starting of the thread causes the object's 
+		/// This method has to be implemented in order that starting of the thread causes the object's
 		/// run method to be called in that separately executing thread.
 		/// </summary>
 		void Run();
@@ -42,7 +42,7 @@ public class SupportClass
 		/// The instance of System.Threading.Thread
 		/// </summary>
 		private System.Threading.Thread threadField;
-	      
+
 		/// <summary>
 		/// Initializes a new instance of the ThreadClass class
 		/// </summary>
@@ -50,7 +50,7 @@ public class SupportClass
 		{
 			threadField = new System.Threading.Thread(new System.Threading.ThreadStart(Run));
 		}
-	 
+
 		/// <summary>
 		/// Initializes a new instance of the Thread class.
 		/// </summary>
@@ -60,7 +60,7 @@ public class SupportClass
 			threadField = new System.Threading.Thread(new System.Threading.ThreadStart(Run));
 			this.Name = Name;
 		}
-	      
+
 		/// <summary>
 		/// Initializes a new instance of the Thread class.
 		/// </summary>
@@ -69,7 +69,7 @@ public class SupportClass
 		{
 			threadField = new System.Threading.Thread(Start);
 		}
-	 
+
 		/// <summary>
 		/// Initializes a new instance of the Thread class.
 		/// </summary>
@@ -80,14 +80,14 @@ public class SupportClass
 			threadField = new System.Threading.Thread(Start);
 			this.Name = Name;
 		}
-	      
+
 		/// <summary>
 		/// This method has no functionality unless the method is overridden
 		/// </summary>
 		public virtual void Run()
 		{
 		}
-	      
+
 		/// <summary>
 		/// Causes the operating system to change the state of the current thread instance to ThreadState.Running
 		/// </summary>
@@ -95,7 +95,7 @@ public class SupportClass
 		{
 			threadField.Start();
 		}
-	      
+
 		/// <summary>
 		/// Interrupts a thread that is in the WaitSleepJoin thread state
 		/// </summary>
@@ -103,7 +103,7 @@ public class SupportClass
 		{
 			threadField.Interrupt();
 		}
-	      
+
 		/// <summary>
 		/// Gets the current thread instance
 		/// </summary>
@@ -118,7 +118,7 @@ public class SupportClass
 				threadField = value;
 			}
 		}
-	      
+
 		/// <summary>
 		/// Gets or sets the name of the thread
 		/// </summary>
@@ -131,10 +131,10 @@ public class SupportClass
 			set
 			{
 				if (threadField.Name == null)
-					threadField.Name = value; 
+					threadField.Name = value;
 			}
 		}
-	      
+
 		/// <summary>
 		/// Gets or sets a value indicating the scheduling priority of a thread
 		/// </summary>
@@ -149,7 +149,7 @@ public class SupportClass
 				threadField.Priority = value;
 			}
 		}
-	      
+
 		/// <summary>
 		/// Gets a value indicating the execution status of the current thread
 		/// </summary>
@@ -160,7 +160,7 @@ public class SupportClass
 				return threadField.IsAlive;
 			}
 		}
-	      
+
 		/// <summary>
 		/// Gets or sets a value indicating whether or not a thread is a background thread.
 		/// </summary>
@@ -169,13 +169,13 @@ public class SupportClass
 			get
 			{
 				return threadField.IsBackground;
-			} 
+			}
 			set
 			{
 				threadField.IsBackground = value;
 			}
 		}
-	      
+
 		/// <summary>
 		/// Blocks the calling thread until a thread terminates
 		/// </summary>
@@ -183,7 +183,7 @@ public class SupportClass
 		{
 			threadField.Join();
 		}
-	      
+
 		/// <summary>
 		/// Blocks the calling thread until a thread terminates or the specified time elapses
 		/// </summary>
@@ -195,7 +195,7 @@ public class SupportClass
 				threadField.Join(new System.TimeSpan(MiliSeconds * 10000));
 			}
 		}
-	      
+
 		/// <summary>
 		/// Blocks the calling thread until a thread terminates or the specified time elapses
 		/// </summary>
@@ -208,7 +208,7 @@ public class SupportClass
 				threadField.Join(new System.TimeSpan(MiliSeconds * 10000 + NanoSeconds * 100));
 			}
 		}
-	      
+
 		/// <summary>
 		/// Resumes a thread that has been suspended
 		/// </summary>
@@ -216,21 +216,21 @@ public class SupportClass
 		{
 			threadField.Resume();
 		}
-	      
+
 		/// <summary>
-		/// Raises a ThreadAbortException in the thread on which it is invoked, 
-		/// to begin the process of terminating the thread. Calling this method 
+		/// Raises a ThreadAbortException in the thread on which it is invoked,
+		/// to begin the process of terminating the thread. Calling this method
 		/// usually terminates the thread
 		/// </summary>
 		public void Abort()
 		{
 			threadField.Abort();
 		}
-	      
+
 		/// <summary>
-		/// Raises a ThreadAbortException in the thread on which it is invoked, 
+		/// Raises a ThreadAbortException in the thread on which it is invoked,
 		/// to begin the process of terminating the thread while also providing
-		/// exception information about the thread termination. 
+		/// exception information about the thread termination.
 		/// Calling this method usually terminates the thread.
 		/// </summary>
 		/// <param name="stateInfo">An object that contains application-specific information, such as state, which can be used by the thread being aborted</param>
@@ -241,7 +241,7 @@ public class SupportClass
 				threadField.Abort(stateInfo);
 			}
 		}
-	      
+
 		/// <summary>
 		/// Suspends the thread, if the thread is already suspended it has no effect
 		/// </summary>
@@ -249,7 +249,7 @@ public class SupportClass
 		{
 			threadField.Suspend();
 		}
-	      
+
 		/// <summary>
 		/// Obtain a String that represents the current Object
 		/// </summary>
@@ -258,7 +258,7 @@ public class SupportClass
 		{
 			return "Thread[" + Name + "," + Priority.ToString() + "," + "" + "]";
 		}
-	     
+
 		/// <summary>
 		/// Gets the currently running thread
 		/// </summary>
@@ -278,7 +278,7 @@ public class SupportClass
 	/// </summary>
 	/// <param name="arrayList">The ArrayList instance</param>
 	/// <param name="element">The element to remove</param>
-	/// <returns>True if item is found in the ArrayList; otherwise, false</returns>  
+	/// <returns>True if item is found in the ArrayList; otherwise, false</returns>
 	public static System.Boolean VectorRemoveElement(ArrayList arrayList, Object element)
 	{
 		System.Boolean containsItem = arrayList.Contains(element);
@@ -379,7 +379,7 @@ public class SupportClass
 	/// <param name="destinationStart">Position of the destination array of chars to start storing the chars</param>
 	/// <returns>An array of chars</returns>
 	public static void GetCharsFromString(string sourceString, int sourceStart, int sourceEnd, ref char[] destinationArray, int destinationStart)
-	{	
+	{
 		int sourceCounter;
 		int destinationCounter;
 		sourceCounter = sourceStart;
@@ -408,63 +408,63 @@ public class SupportClass
 		/// Field number for get and set indicating the month.
 		/// </summary>
     public const int MONTH = 1;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the day of the month.
 		/// </summary>
     public const int DATE = 2;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the hour of the morning or afternoon.
 		/// </summary>
     public const int HOUR = 3;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the minute within the hour.
 		/// </summary>
     public const int MINUTE = 4;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the second within the minute.
 		/// </summary>
     public const int SECOND = 5;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the millisecond within the second.
 		/// </summary>
     public const int MILLISECOND = 6;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the day of the month.
 		/// </summary>
     public const int DAY_OF_MONTH = 7;
-		
+
 		/// <summary>
 		/// Field used to get or set the day of the week.
 		/// </summary>
     public const int DAY_OF_WEEK = 8;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating the hour of the day.
 		/// </summary>
     public const int HOUR_OF_DAY = 9;
-		
+
 		/// <summary>
 		/// Field number for get and set indicating whether the HOUR is before or after noon.
 		/// </summary>
     public const int AM_PM = 10;
-		
+
 		/// <summary>
-		/// Value of the AM_PM field indicating the period of the day from midnight to just 
+		/// Value of the AM_PM field indicating the period of the day from midnight to just
 		/// before noon.
 		/// </summary>
     public const int AM = 11;
-		
+
 		/// <summary>
 		/// Value of the AM_PM field indicating the period of the day from noon to just before midnight.
 		/// </summary>
     public const int PM = 12;
-		
+
 		/// <summary>
 		/// The hash table that contains the type of calendars and its properties.
 		/// </summary>
@@ -472,17 +472,17 @@ public class SupportClass
 
 		/// <summary>
 		/// Internal class that inherits from HashTable to manage the different calendars.
-		/// This structure will contain an instance of System.Globalization.Calendar that represents 
-		/// a type of calendar and its properties (represented by an instance of CalendarProperties 
+		/// This structure will contain an instance of System.Globalization.Calendar that represents
+		/// a type of calendar and its properties (represented by an instance of CalendarProperties
 		/// class).
 		/// </summary>
-		public class CalendarHashTable:Hashtable 
+		public class CalendarHashTable:Hashtable
 		{
 			/// <summary>
 			/// Gets the calendar current date and time.
 			/// </summary>
 			/// <param name="calendar">The calendar to get its current date and time.</param>
-			/// <returns>A System.DateTime value that indicates the current date and time for the 
+			/// <returns>A System.DateTime value that indicates the current date and time for the
 			/// calendar given.</returns>
 			public System.DateTime GetDateTime(System.Globalization.Calendar calendar)
 			{
@@ -518,8 +518,8 @@ public class SupportClass
 
 			/// <summary>
 			/// Sets the corresponding field in an specified calendar with the value given.
-			/// If the specified calendar does not have exist in the hash table, it creates a 
-			/// new instance of the calendar with the current date and time and then assings it 
+			/// If the specified calendar does not have exist in the hash table, it creates a
+			/// new instance of the calendar with the current date and time and then assings it
 			/// the new specified value.
 			/// </summary>
 			/// <param name="calendar">The calendar to set its date or time.</param>
@@ -580,7 +580,7 @@ public class SupportClass
 
 			/// <summary>
 			/// Sets the corresponding date (day, month and year) to the calendar specified.
-			/// If the calendar does not exist in the hash table, it creates a new instance and sets 
+			/// If the calendar does not exist in the hash table, it creates a new instance and sets
 			/// its values.
 			/// </summary>
 			/// <param name="calendar">The calendar to set its date.</param>
@@ -605,9 +605,9 @@ public class SupportClass
 			}
 
 			/// <summary>
-			/// Sets the corresponding date (day, month and year) and hour (hour and minute) 
+			/// Sets the corresponding date (day, month and year) and hour (hour and minute)
 			/// to the calendar specified.
-			/// If the calendar does not exist in the hash table, it creates a new instance and sets 
+			/// If the calendar does not exist in the hash table, it creates a new instance and sets
 			/// its values.
 			/// </summary>
 			/// <param name="calendar">The calendar to set its date and time.</param>
@@ -636,9 +636,9 @@ public class SupportClass
 			}
 
 			/// <summary>
-			/// Sets the corresponding date (day, month and year) and hour (hour, minute and second) 
+			/// Sets the corresponding date (day, month and year) and hour (hour, minute and second)
 			/// to the calendar specified.
-			/// If the calendar does not exist in the hash table, it creates a new instance and sets 
+			/// If the calendar does not exist in the hash table, it creates a new instance and sets
 			/// its values.
 			/// </summary>
 			/// <param name="calendar">The calendar to set its date and time.</param>
@@ -724,7 +724,7 @@ public class SupportClass
 			/// Sets the time in the specified calendar with the long value.
 			/// </summary>
 			/// <param name="calendar">The calendar to set its date and time.</param>
-			/// <param name="milliseconds">A long value that indicates the milliseconds to be set to 
+			/// <param name="milliseconds">A long value that indicates the milliseconds to be set to
 			/// the hour for the calendar.</param>
 			public void SetTimeInMilliseconds(System.Globalization.Calendar calendar, long milliseconds)
 			{
@@ -739,7 +739,7 @@ public class SupportClass
 					this.Add(calendar, tempProps);
 				}
 			}
-				
+
 			/// <summary>
 			/// Gets what the first day of the week is; e.g., Sunday in US, Monday in France.
 			/// </summary>
@@ -815,7 +815,7 @@ public class SupportClass
 				/// The date and time of a calendar.
 				/// </summary>
 				public System.DateTime dateTime;
-				
+
 				/// <summary>
 				/// The format for the date and time in a calendar.
 				/// </summary>
@@ -835,7 +835,7 @@ public class DateTimeFormatManager
 	/// <summary>
 	/// Hashtable class to provide functionality for dateformat properties
 	/// </summary>
-	public class DateTimeFormatHashTable :Hashtable 
+	public class DateTimeFormatHashTable :Hashtable
 	{
 		/// <summary>
 		/// Sets the format for datetime.
@@ -866,7 +866,7 @@ public class DateTimeFormatManager
 			else
 				return ((DateTimeFormatProperties) this[format]).DateFormatPattern;
 		}
-		
+
 		/// <summary>
 		/// Sets the datetimeformat pattern to the giving format
 		/// </summary>
@@ -905,7 +905,7 @@ public class DateTimeFormatManager
 			public string DateFormatPattern = "d-MMM-yy";
 			public string TimeFormatPattern = "h:mm:ss tt";
 		}
-	}	
+	}
 }
 	/*******************************/
 	/// <summary>
@@ -979,7 +979,7 @@ public class DateTimeFormatManager
 	{
 		string timePattern = DateTimeFormatManager.manager.GetTimeFormatPattern(format);
 		string datePattern = DateTimeFormatManager.manager.GetDateFormatPattern(format);
-		return date.ToString(datePattern + " " + timePattern, format);            
+		return date.ToString(datePattern + " " + timePattern, format);
 	}
 
 	/*******************************/
@@ -1009,14 +1009,14 @@ public class DateTimeFormatManager
 		/// <param name="fileName">A relative or absolute path for the file to open</param>
 		/// <param name="mode">Mode to open the file in</param>
 		/// <returns>The new System.IO.FileStream</returns>
-		public static System.IO.FileStream CreateRandomAccessFile(string fileName, string mode) 
+		public static System.IO.FileStream CreateRandomAccessFile(string fileName, string mode)
 		{
 			System.IO.FileStream newFile = null;
 
 			if (mode.CompareTo("rw") == 0)
-				newFile =  new System.IO.FileStream(fileName, System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite); 
+				newFile =  new System.IO.FileStream(fileName, System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite);
 			else if (mode.CompareTo("r") == 0 )
-				newFile =  new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read); 
+				newFile =  new System.IO.FileStream(fileName, System.IO.FileMode.Open, System.IO.FileAccess.Read);
 			else
 				throw new System.ArgumentException();
 
@@ -1045,7 +1045,7 @@ public class DateTimeFormatManager
 			int length = data.Length;
 
 			while(index < length)
-				fileStream.WriteByte((byte)data[index++]);	
+				fileStream.WriteByte((byte)data[index++]);
 		}
 
 		/// <summary>
@@ -1055,7 +1055,7 @@ public class DateTimeFormatManager
 		/// <param name="fileStream">File to write to</param>
 		public static void WriteChars(string data,System.IO.FileStream fileStream)
 		{
-			WriteBytes(data, fileStream);	
+			WriteBytes(data, fileStream);
 		}
 
 		/// <summary>
@@ -1091,7 +1091,7 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	{
 		if (System.IO.Directory.Exists(file.FullName))
 			return 0;
-		else 
+		else
 			return file.Length;
 	}
 
@@ -1112,12 +1112,12 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 		int bytesRead   = sourceStream.Read(receiver, start, count);
 
 		// Returns -1 if EOF
-		if (bytesRead == 0)	
+		if (bytesRead == 0)
 			return -1;
-                
+
 		for(int i = start; i < start + bytesRead; i++)
 			target[i] = (byte)receiver[i];
-                
+
 		return bytesRead;
 	}
 
@@ -1213,7 +1213,7 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	/// </summary>
 	/// <param name="hashtable">The Hashtable instance</param>
 	/// <param name="key">The key of the element to remove</param>
-	/// <returns>The element removed</returns>  
+	/// <returns>The element removed</returns>
 	public static Object HashtableRemove(Hashtable hashtable, Object key)
 	{
 		Object element = hashtable[key];
@@ -1227,9 +1227,9 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	/// </summary>
 	/// <param name="sByteArray">The array of sbytes to convert</param>
 	/// <returns>The new array of chars</returns>
-	public static char[] ToCharArray(sbyte[] sByteArray) 
+	public static char[] ToCharArray(sbyte[] sByteArray)
 	{
-		char[] charArray = new char[sByteArray.Length];	   
+		char[] charArray = new char[sByteArray.Length];
 		sByteArray.CopyTo(charArray, 0);
 		return charArray;
 	}
@@ -1239,9 +1239,9 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	/// </summary>
 	/// <param name="byteArray">The array of bytes to convert</param>
 	/// <returns>The new array of chars</returns>
-	public static char[] ToCharArray(byte[] byteArray) 
+	public static char[] ToCharArray(byte[] byteArray)
 	{
-		char[] charArray = new char[byteArray.Length];	   
+		char[] charArray = new char[byteArray.Length];
 		byteArray.CopyTo(charArray, 0);
 		return charArray;
 	}
@@ -1264,7 +1264,7 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	/// Returns the last element of an ArrayList instance.
 	/// </summary>
 	/// <param name="arrayList">The ArrayList instance</param>
-	/// <returns>The last element of the ArrayList</returns>  
+	/// <returns>The last element of the ArrayList</returns>
 	public static Object VectorLastElement(ArrayList arrayList)
 	{
 		return arrayList[arrayList.Count - 1];
@@ -1287,7 +1287,7 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 	/// </summary>
 	/// <param name="stack">The Stack instance</param>
 	/// <param name="element">The element to add</param>
-	/// <returns>The element added</returns>  
+	/// <returns>The element added</returns>
 	public static Object StackPush(Stack stack, Object element)
 	{
 		stack.Push(element);
@@ -1305,7 +1305,7 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 		Object instance = null;
 		System.Type[] constructor = new System.Type[]{};
 		System.Reflection.ConstructorInfo[] constructors = null;
-       
+
 		constructors = classType.GetConstructors();
 
 		if (constructors.Length == 0)
@@ -1321,9 +1321,9 @@ return (System.IO.File.GetAttributes(file.FullName) & System.IO.FileAttributes.R
 					instance = classType.GetConstructor(constructor).Invoke(new System.Object[]{});
 					break;
 				}
-				else if (i == constructors.Length -1)     
+				else if (i == constructors.Length -1)
 					throw new System.MethodAccessException();
-			}                       
+			}
 		}
 		return instance;
 	}

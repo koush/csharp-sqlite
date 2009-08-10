@@ -18,7 +18,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -37,7 +37,7 @@ namespace CS_SQLite3
 ** be used to service read() and write() requests. The actual file
 ** on disk is not created or populated until either:
 **
-**   1) The in-memory representation grows too large for the allocated 
+**   1) The in-memory representation grows too large for the allocated
 **      buffer, or
 **   2) The sqlite3JournalCreate() function is called.
 */
@@ -62,7 +62,7 @@ const char *zJournal;           /* Name of the journal file */
 typedef struct JournalFile JournalFile;
 
 /*
-** If it does not already exists, create and populate the on-disk file 
+** If it does not already exists, create and populate the on-disk file
 ** for JournalFile p.
 */
 static int createFile(JournalFile p){
@@ -89,7 +89,7 @@ JournalFile p = (JournalFile *)pJfd;
 if( p.pReal ){
 sqlite3OsClose(p.pReal);
 }
-sqlite3DbFree(db,p.zBuf);
+//sqlite3DbFree(db,p.zBuf);
 return SQLITE_OK;
 }
 
@@ -202,7 +202,7 @@ jrnlFileSize,  /* xFileSize */
 0              /* xDeviceCharacteristics */
 };
 
-/* 
+/*
 ** Open a journal file.
 */
 int sqlite3JournalOpen(
@@ -241,7 +241,7 @@ return SQLITE_OK;
 return createFile((JournalFile *)p);
 }
 
-/* 
+/*
 ** Return the number of bytes required to store a JournalFile that uses vfs
 ** pVfs to create the underlying on-disk files.
 */

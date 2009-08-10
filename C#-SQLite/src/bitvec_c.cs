@@ -31,8 +31,8 @@ namespace CS_SQLite3
     ** property.  Usually only a few pages are meet either condition.
     ** So the bitmap is usually sparse and has low cardinality.
     ** But sometimes (for example when during a DROP of a large table) most
-    ** or all of the pages in a database can get journalled.  In those cases, 
-    ** the bitmap becomes dense with high cardinality.  The algorithm needs 
+    ** or all of the pages in a database can get journalled.  In those cases,
+    ** the bitmap becomes dense with high cardinality.  The algorithm needs
     ** to handle both cases well.
     **
     ** The size of the bitmap is fixed when the object is created.
@@ -52,7 +52,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -62,13 +62,13 @@ namespace CS_SQLite3
     /* Size of the Bitvec structure in bytes. */
     const int BITVEC_SZ = 512;
 
-    /* Round the union size down to the nearest pointer boundary, since that's how 
+    /* Round the union size down to the nearest pointer boundary, since that's how
     ** it will be aligned within the Bitvec struct. */
     //#define BITVEC_USIZE     (((BITVEC_SZ-(3*sizeof(u32)))/sizeof(Bitvec*))*sizeof(Bitvec*))
     const int BITVEC_USIZE = ( ( ( BITVEC_SZ - ( 3 * sizeof( u32 ) ) ) / 4 ) * 4 );
 
-    /* Type of the array "element" for the bitmap representation. 
-    ** Should be a power of 2, and ideally, evenly divide into BITVEC_USIZE. 
+    /* Type of the array "element" for the bitmap representation.
+    ** Should be a power of 2, and ideally, evenly divide into BITVEC_USIZE.
     ** Setting this to the "natural word" size of your CPU may improve
     ** performance. */
     //#define BITVEC_TELEM     u8
@@ -90,14 +90,14 @@ namespace CS_SQLite3
     //#define BITVEC_NINT      (BITVEC_USIZE/sizeof(u32))
     const int BITVEC_NINT = ( BITVEC_USIZE / sizeof( u32 ) );
 
-    /* Maximum number of entries in hash table before 
+    /* Maximum number of entries in hash table before
     ** sub-dividing and re-hashing. */
     //#define BITVEC_MXHASH    (BITVEC_NINT/2)
     const int BITVEC_MXHASH = ( BITVEC_NINT / 2 );
 
     /* Hashing function for the aHash representation.
-    ** Empirical testing showed that the *37 multiplier 
-    ** (an arbitrary prime)in the hash function provided 
+    ** Empirical testing showed that the *37 multiplier
+    ** (an arbitrary prime)in the hash function provided
     ** no fewer collisions than the no-op *1. */
     //#define BITVEC_HASH(X)   (((X)*1)%BITVEC_NINT)
     static u32 BITVEC_HASH( u32 X ) { return ( ( ( X ) * 1 ) % BITVEC_NINT ); }
@@ -152,7 +152,7 @@ namespace CS_SQLite3
 
     /*
     ** Create a new bitmap object able to handle bits between 0 and iSize,
-    ** inclusive.  Return a pointer to the new object.  Return NULL if 
+    ** inclusive.  Return a pointer to the new object.  Return NULL if
     ** malloc fails.
     */
     static Bitvec sqlite3BitvecCreate( u32 iSize )
@@ -286,7 +286,7 @@ bitvec_set_rehash:
           {
             if ( aiValues[j] != 0 ) rc |= sqlite3BitvecSet( p, aiValues[j] );
           }
-          sqlite3StackFree( null, aiValues );
+          //sqlite3StackFree( null, aiValues );
           return rc;
         }
       }
@@ -359,7 +359,7 @@ bitvec_set_end:
           sqlite3BitvecDestroy( ref p.u.apSub[i] );
         }
       }
-      sqlite3_free( ref p );
+      //sqlite3_free( ref p );
     }
 
     /*
@@ -496,8 +496,8 @@ bitvec_set_end:
 
           /* Free allocated structure */
 bitvec_end:
-      sqlite3_free( ref pTmpSpace );
-      sqlite3_free( ref pV );
+      //sqlite3_free( ref pTmpSpace );
+      //sqlite3_free( ref pV );
       sqlite3BitvecDestroy( ref pBitvec );
       return rc;
     }

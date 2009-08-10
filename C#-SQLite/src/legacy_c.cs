@@ -30,7 +30,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -147,7 +147,7 @@ namespace CS_SQLite3
                 azVals[i] = sqlite3_column_text( pStmt, i );
                 if ( azVals[i] == null && sqlite3_column_type( pStmt, i ) != SQLITE_NULL )
                 {
-                  db.mallocFailed = 1;
+          ////        db.mallocFailed = 1;
                   goto exec_out;
                 }
               }
@@ -180,13 +180,13 @@ namespace CS_SQLite3
           }
         }
 
-        sqlite3DbFree( db, ref  azCols );
+        //sqlite3DbFree( db, ref  azCols );
         azCols = null;
       }
 
 exec_out:
       if ( pStmt != null ) sqlite3VdbeFinalize( pStmt );
-      sqlite3DbFree( db, ref  azCols );
+      //sqlite3DbFree( db, ref  azCols );
 
       rc = sqlite3ApiExit( db, rc );
       if ( rc != SQLITE_OK && ALWAYS( rc == sqlite3_errcode( db ) ) && pzErrMsg != null )

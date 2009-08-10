@@ -32,7 +32,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -183,7 +183,7 @@ if( nKey ) db.nextPagesize = 0;
 
       if ( sqlite3BtreeSetPageSize( pTemp, sqlite3BtreeGetPageSize( pMain ), nRes, 0 ) != 0
       || ( !isMemDb && sqlite3BtreeSetPageSize( pTemp, db.nextPagesize, nRes, 0 ) != 0 )
-      || NEVER( db.mallocFailed != 0 )
+      //|| NEVER( db.mallocFailed != 0 )
       )
       {
         rc = SQLITE_NOMEM;

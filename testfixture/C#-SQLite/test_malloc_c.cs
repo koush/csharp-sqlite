@@ -36,7 +36,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **  C#-SQLite is an independent reimplementation of the SQLite software library 
     **
     **  $Header$
     *************************************************************************
@@ -48,7 +48,7 @@ namespace CS_SQLite3
     //#include <assert.h>
 
     /*
-    ** This structure is used to encapsulate the global state variables used
+    ** This structure is used to encapsulate the global state variables used 
     ** by malloc() fault simulation.
     */
     struct MemFault
@@ -132,7 +132,7 @@ namespace CS_SQLite3
       return p;
     }
 
-    /*
+    /* 
     ** The following method calls are passed directly through to the underlying
     ** malloc system:
     **
@@ -177,7 +177,7 @@ namespace CS_SQLite3
       memfault.nFail = 0;
       memfault.enable = ( nDelay >= 0 ) ? 1 : 0;
 
-      /* Sometimes, when running multi-threaded tests, the isBenignMode
+      /* Sometimes, when running multi-threaded tests, the isBenignMode 
       ** variable is not properly incremented/decremented so that it is
       ** 0 when not inside a benign malloc block. This doesn't affect
       ** the multi-threaded tests, as they do not use this system. But
@@ -233,7 +233,7 @@ namespace CS_SQLite3
 
     /*
     ** Add or remove the fault-simulation layer using sqlite3_config(). If
-    ** the argument is non-zero, the
+    ** the argument is non-zero, the 
     */
     static int faultsimInstall( int install )
     {
@@ -541,6 +541,7 @@ namespace CS_SQLite3
     //  return TCL.TCL_OK;
     //}
 
+#if FALSE    
     /*
     ** Usage:    sqlite3_memory_used
     **
@@ -583,6 +584,7 @@ namespace CS_SQLite3
       TCL.Tcl_NewWideIntObj( sqlite3_memory_highwater( resetFlag ? 1 : 0 ) ) );
       return TCL.TCL_OK;
     }
+#endif
 
     /*
     ** Usage:    sqlite3_memdebug_backtrace DEPTH
@@ -762,7 +764,7 @@ nMalloc = sqlite3MemdebugMallocCount();
     /*
     ** Usage:    sqlite3_memdebug_pending
     **
-    ** Return the number of malloc() calls that will succeed before a
+    ** Return the number of malloc() calls that will succeed before a 
     ** simulated failure occurs. A negative return value indicates that
     ** no malloc() failure is scheduled.
     */
@@ -815,7 +817,7 @@ sqlite3MemdebugSettitle(zTitle);
       return TCL.TCL_OK;
     }
 
-    //#define MALLOC_LOG_FRAMES 10
+    //#define MALLOC_LOG_FRAMES 10 
     //static TCL.Tcl_HashTable aMallocLog;
     //static int mallocLogEnabled = 0;
 
@@ -881,8 +883,8 @@ sqlite3MemdebugSettitle(zTitle);
     //  int iSub;
 
     //  static const char *MB_strs[] = { "start", "stop", "dump", "clear", "sync" };
-    //  enum MB_enum {
-    //      MB_LOG_START, MB_LOG_STOP, MB_LOG_DUMP, MB_LOG_CLEAR, MB_LOG_SYNC
+    //  enum MB_enum { 
+    //      MB_LOG_START, MB_LOG_STOP, MB_LOG_DUMP, MB_LOG_CLEAR, MB_LOG_SYNC 
     //  };
 
     //  if( !isInit ){
@@ -1072,7 +1074,7 @@ sqlite3MemdebugSettitle(zTitle);
     //  int highStress = 0;
     //  extern void installTestPCache(int,unsigned,unsigned,unsigned);
     //  if( objc<2 || objc>5 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv,
+    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, 
     //        "INSTALLFLAG DISCARDCHANCE PRNGSEEED HIGHSTRESS");
     //    return TCL.TCL_ERROR;
     //  }
@@ -1203,7 +1205,7 @@ sqlite3MemdebugSettitle(zTitle);
     **   sqlite3_config_heap NBYTE NMINALLOC
     */
     //static int test_config_heap(
-    //  object  clientData,
+    //  object  clientData, 
     //  Tcl_Interp interp,
     //  int objc,
     //  Tcl_Obj[] objv
@@ -1246,7 +1248,7 @@ sqlite3MemdebugSettitle(zTitle);
     ** opcodes and verify that they return errors.
     */
     //static int test_config_error(
-    //  object  clientData,
+    //  object  clientData, 
     //  Tcl_Interp interp,
     //  int objc,
     //  Tcl_Obj[] objv
@@ -1261,14 +1263,14 @@ sqlite3MemdebugSettitle(zTitle);
     //  if( objc==2 ){
     //    if( getDbPointer(interp, TCL.Tcl_GetString(objv[1]), ref db) ) return TCL.TCL_ERROR;
     //    if( sqlite3_db_config(db, 99999)!=SQLITE_ERROR ){
-    //      TCL.Tcl_AppendResult(interp,
+    //      TCL.Tcl_AppendResult(interp, 
     //            "sqlite3_db_config(db, 99999) does not return SQLITE_ERROR",
     //            (char*)0);
     //      return TCL.TCL_ERROR;
     //    }
     //  }else{
     //    if( sqlite3_config(99999)!=SQLITE_ERROR ){
-    //      TCL.Tcl_AppendResult(interp,
+    //      TCL.Tcl_AppendResult(interp, 
     //          "sqlite3_config(99999) does not return SQLITE_ERROR",
     //          (char*)0);
     //      return TCL.TCL_ERROR;
@@ -1278,7 +1280,7 @@ sqlite3MemdebugSettitle(zTitle);
     //}
 
     /*
-    ** Usage:
+    ** Usage:    
     **
     **   sqlite3_dump_memsys3  FILENAME
     **   sqlite3_dump_memsys5  FILENAME
@@ -1528,8 +1530,8 @@ new _aOp( "SQLITE_STATUS_PARSER_STACK",        SQLITE_STATUS_PARSER_STACK       
 //{ "memset",                     test_memset                   ,0 },
 //{ "memget",                     test_memget                   ,0 },
 //{ "sqlite3_memory_used",        test_memory_used              ,0 },
-new _aObjCmd( "sqlite3_memory_used",        test_memory_used      ,0        ),
-new _aObjCmd( "sqlite3_memory_highwater",   test_memory_highwater         ,0),
+//new _aObjCmd( "sqlite3_memory_used",        test_memory_used      ,0        ),
+//new _aObjCmd( "sqlite3_memory_highwater",   test_memory_highwater         ,0),
 //{ "sqlite3_memory_highwater",   test_memory_highwater         ,0 },
 //{ "sqlite3_memdebug_backtrace", test_memdebug_backtrace       ,0 },
 new _aObjCmd(  "sqlite3_memdebug_dump",      test_memdebug_dump            ,0 ),

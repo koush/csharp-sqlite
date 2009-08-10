@@ -128,12 +128,6 @@
     <Compile Include="..\C#-SQLite\src\malloc_c.cs">
       <Link>C#-SQLite\malloc_c.cs</Link>
     </Compile>
-    <Compile Include="..\C#-SQLite\src\mem0_c.cs">
-      <Link>C#-SQLite\mem0_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\mem1_c.cs">
-      <Link>C#-SQLite\mem1_c.cs</Link>
-    </Compile>
     <Compile Include="..\C#-SQLite\src\memjournal_c.cs">
       <Link>C#-SQLite\memjournal_c.cs</Link>
     </Compile>
@@ -268,9 +262,6 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\test_journal_c.cs">
       <Link>C#-SQLite\test_journal_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_malloc_c.cs">
-      <Link>C#-SQLite\test_malloc_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\test_md5_c.cs">
       <Link>C#-SQLite\test_md5_c.cs</Link>
@@ -770,6 +761,7 @@
     <Compile Include="..\TCL\src\_tcl_Conversions.cs">
       <Link>TCL\src\_tcl_Conversions.cs</Link>
     </Compile>
+    <Compile Include="C#-SQLite\test_malloc_c.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\testfixture.cs" />
   </ItemGroup>

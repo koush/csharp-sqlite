@@ -37,7 +37,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -114,7 +114,7 @@ static int debugMutexEnd(void){ return SQLITE_OK; }
 /*
 ** The sqlite3_mutex_alloc() routine allocates a new
 ** mutex and returns a pointer to it.  If it returns NULL
-** that means that a mutex could not be allocated. 
+** that means that a mutex could not be allocated.
 */
 static sqlite3_mutex *debugMutexAlloc(int id){
 static sqlite3_mutex aStatic[6];
@@ -146,7 +146,7 @@ return pNew;
 static void debugMutexFree(sqlite3_mutex *p){
 Debug.Assert( p->cnt==0 );
 Debug.Assert( p->id==SQLITE_MUTEX_FAST || p->id==SQLITE_MUTEX_RECURSIVE );
-sqlite3_free(ref p);
+//sqlite3_free(ref p);
 }
 
 /*

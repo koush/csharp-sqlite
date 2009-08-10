@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -121,7 +121,7 @@ namespace CS_SQLite3
     ** Walk the parse trees associated with all subqueries in the
     ** FROM clause of SELECT statement p.  Do not invoke the select
     ** callback on p, but do invoke it on each FROM clause subquery
-    ** and on any subqueries further down in the tree.  Return 
+    ** and on any subqueries further down in the tree.  Return
     ** WRC_Abort or WRC_Continue;
     */
     static int sqlite3WalkSelectFrom( Walker pWalker, Select p )

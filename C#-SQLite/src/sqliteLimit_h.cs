@@ -13,14 +13,14 @@ namespace CS_SQLite3
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** 
+    **
     ** This file defines various limits of what SQLite can process.
     **
     ** @(#) $Id: sqliteLimit.h,v 1.10 2009/01/10 16:15:09 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -70,9 +70,9 @@ namespace CS_SQLite3
 #endif
 
     /*
-** The maximum depth of an expression tree. This is limited to 
-** some extent by SQLITE_MAX_SQL_LENGTH. But sometime you might 
-** want to place more severe limits on the complexity of an 
+** The maximum depth of an expression tree. This is limited to
+** some extent by SQLITE_MAX_SQL_LENGTH. But sometime you might
+** want to place more severe limits on the complexity of an
 ** expression.
 **
 ** A value of 0 used to mean that the limit was not enforced.
@@ -144,8 +144,8 @@ namespace CS_SQLite3
 **
 ** If this limit is changed, then the compiled library is technically
 ** incompatible with an SQLite library compiled with a different limit. If
-** a process operating on a database with a page-size of 65536 bytes 
-** crashes, then an instance of SQLite compiled with the default page-size 
+** a process operating on a database with a page-size of 65536 bytes
+** crashes, then an instance of SQLite compiled with the default page-size
 ** limit will not be able to rollback the aborted transaction. This could
 ** lead to database corruption.
 */

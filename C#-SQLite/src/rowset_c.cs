@@ -51,7 +51,7 @@ namespace CS_SQLite3
     ** extracts the least value from the RowSet.
     **
     ** The INSERT primitive might allocate additional memory.  Memory is
-    ** allocated in chunks so most INSERTs do no allocation.  There is an 
+    ** allocated in chunks so most INSERTs do no allocation.  There is an
     ** upper bound on the size of allocated memory.  No memory is freed
     ** until DESTROY.
     **
@@ -81,7 +81,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -161,7 +161,7 @@ namespace CS_SQLite3
     **
     ** It must be the case that N is sufficient to make a Rowset.  If not
     ** an assertion fault occurs.
-    ** 
+    **
     ** If N is larger than the minimum, use the surplus as an initial
     ** allocation of entries available to be filled.
     */
@@ -193,7 +193,7 @@ namespace CS_SQLite3
       for ( pChunk = p.pChunk ; pChunk != null ; pChunk = pNextChunk )
       {
         pNextChunk = pChunk.pNextChunk;
-        sqlite3DbFree( p.db, ref pChunk );
+        //sqlite3DbFree( p.db, ref pChunk );
       }
       p.pChunk = null;
       p.nFresh = 0;
@@ -252,7 +252,7 @@ namespace CS_SQLite3
     /*
     ** Merge two lists of RowSetEntry objects.  Remove duplicates.
     **
-    ** The input lists are connected via pRight pointers and are 
+    ** The input lists are connected via pRight pointers and are
     ** assumed to each already be in sorted order.
     */
     static RowSetEntry rowSetMerge(
@@ -459,7 +459,7 @@ namespace CS_SQLite3
     ** 0 if the RowSet is already empty.
     **
     ** After this routine has been called, the sqlite3RowSetInsert()
-    ** routine may not be called again.  
+    ** routine may not be called again.
     */
     static int sqlite3RowSetNext( RowSet p, ref i64 pRowid )
     {

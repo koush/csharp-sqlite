@@ -40,7 +40,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -66,7 +66,7 @@ namespace CS_SQLite3
     ** loop over all entries of the Btree.  You can also insert new BTree
     ** entries or retrieve the key or data from the entry that the cursor
     ** is currently pointing to.
-    ** 
+    **
     ** Every cursor that the virtual machine has open is represented by an
     ** instance of the following structure.
     **
@@ -103,7 +103,7 @@ public sqlite3_vtab_cursor pVtabCursor;  /* The cursor for a virtual table */
 public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
 #endif
 
-      /* Result of last sqlite3BtreeMoveto() done by an OP_NotExists or 
+      /* Result of last sqlite3BtreeMoveto() done by an OP_NotExists or
 ** OP_IsUnique opcode on this cursor. */
       public int seekResult;
 
@@ -209,7 +209,7 @@ set { _flags = value; }
     ** If the MEM_Str flag is set then Mem.z points at a string representation.
     ** Usually this is encoded in the same unicode encoding as the main
     ** database (see below for exceptions). If the MEM_Term flag is also
-    ** set, then the string is nul terminated. The MEM_Int and MEM_Real 
+    ** set, then the string is nul terminated. The MEM_Int and MEM_Real
     ** flags may coexist with the MEM_Str flag.
     **
     ** Multiple of these values can appear in Mem.flags.  But only one
@@ -240,7 +240,7 @@ set { _flags = value; }
     //#define MEM_Static    0x0800   /* Mem.z points to a static string */
     //#define MEM_Ephem     0x1000   /* Mem.z points to an ephemeral string */
     //#define MEM_Agg       0x2000   /* Mem.z points to an agg function context */
-    //#define MEM_Zero      0x4000   /* Mem.i contains count of 0s appended to blob */    
+    //#define MEM_Zero      0x4000   /* Mem.i contains count of 0s appended to blob */
     const int MEM_Term = 0x0200;   /* String rep is nul terminated */
     const int MEM_Dyn = 0x0400;   /* Need to call sqliteFree() on Mem.z */
     const int MEM_Static = 0x0800;   /* Mem.z points to a static string */
@@ -344,7 +344,7 @@ set { _flags = value; }
     ** set to 2 for xDestroy method calls and 1 for all other methods. This
     ** variable is used for two purposes: to allow xDestroy methods to execute
     ** "DROP TABLE" statements and to prevent some nasty side effects of
-    ** malloc failure when SQLite is invoked recursively by a virtual table 
+    ** malloc failure when SQLite is invoked recursively by a virtual table
     ** method function.
     */
     public class Vdbe
@@ -458,7 +458,7 @@ set { _flags = value; }
 
 #if SQLITE_SSE
 ct.fetchId=fetchId;
-ct.lru=lru;     
+ct.lru=lru;
 #endif
 #if SQLITE_ENABLE_MEMORY_MANAGEMENT
 ct.pLruPrev=pLruPrev;

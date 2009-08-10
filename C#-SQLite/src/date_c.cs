@@ -25,7 +25,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     ** This file contains the C functions that implement date and time
-    ** functions for SQLite.  
+    ** functions for SQLite.
     **
     ** There is only one exported symbol in this file - the function
     ** sqlite3RegisterDateTimeFunctions() found at the bottom of the file.
@@ -35,7 +35,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -43,7 +43,7 @@ namespace CS_SQLite3
     ** SQLite processes all times and dates as Julian Day numbers.  The
     ** dates and times are stored as the number of days since noon
     ** in Greenwich on November 24, 4714 B.C. according to the Gregorian
-    ** calendar system. 
+    ** calendar system.
     **
     ** 1970-01-01 00:00:00 is JD 2440587.5
     ** 2000-01-01 00:00:00 is JD 2451544.5
@@ -76,14 +76,14 @@ namespace CS_SQLite3
 
     /*
 ** On recent Windows platforms, the localtime_s() function is available
-** as part of the "Secure CRT". It is essentially equivalent to 
-** localtime_r() available under most POSIX platforms, except that the 
+** as part of the "Secure CRT". It is essentially equivalent to
+** localtime_r() available under most POSIX platforms, except that the
 ** order of the parameters is reversed.
 **
 ** See http://msdn.microsoft.com/en-us/library/a442x3ye(VS.80).aspx.
 **
 ** If the user has not indicated to use localtime_r() or localtime_s()
-** already, check for an MSVC build environment that provides 
+** already, check for an MSVC build environment that provides
 ** localtime_s().
 */
 #if !(HAVE_LOCALTIME_R) && !(HAVE_LOCALTIME_S) &&      (_MSC_VER) && (_CRT_INSECURE_DEPRECATE)
@@ -428,7 +428,7 @@ zulu_time:
     ** The following are acceptable forms for the input string:
     **
     **      YYYY-MM-DD HH:MM:SS.FFF  +/-HH:MM
-    **      DDDD.DD 
+    **      DDDD.DD
     **      now
     **
     ** In the first form, the +/-HH:MM is always optional.  The fractional

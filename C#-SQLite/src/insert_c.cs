@@ -28,7 +28,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -90,7 +90,7 @@ namespace CS_SQLite3
         StringBuilder pIdx_zColAff = new StringBuilder( pIdx.nColumn + 2 );// (char *)sqlite3Malloc(pIdx->nColumn+2);
         if ( pIdx_zColAff == null )
         {
-          db.mallocFailed = 1;
+  ////        db.mallocFailed = 1;
           return;
         }
         for ( n = 0 ; n < pIdx.nColumn ; n++ )
@@ -121,7 +121,7 @@ namespace CS_SQLite3
     static void sqlite3TableAffinityStr( Vdbe v, Table pTab )
     {
       /* The first time a column affinity string for a particular table
-      ** is required, it is allocated and populated here. It is then 
+      ** is required, it is allocated and populated here. It is then
       ** stored as a member of the Table structure for subsequent use.
       **
       ** The column affinity string will eventually be deleted by
@@ -136,7 +136,7 @@ namespace CS_SQLite3
         zColAff = new StringBuilder( pTab.nCol + 1 );// (char*)sqlite3Malloc(db, pTab.nCol + 1);
         if ( zColAff == null )
         {
-          db.mallocFailed = 1;
+  ////        db.mallocFailed = 1;
           return;
         }
 
@@ -155,9 +155,9 @@ namespace CS_SQLite3
     /*
     ** Return non-zero if the table pTab in database iDb or any of its indices
     ** have been opened at any point in the VDBE program beginning at location
-    ** iStartAddr throught the end of the program.  This is used to see if 
-    ** a statement of the form  "INSERT INTO <iDb, pTab> SELECT ..." can 
-    ** run without using temporary table for the results of the SELECT. 
+    ** iStartAddr throught the end of the program.  This is used to see if
+    ** a statement of the form  "INSERT INTO <iDb, pTab> SELECT ..." can
+    ** run without using temporary table for the results of the SELECT.
     */
     static bool readsTable( Vdbe v, int iStartAddr, int iDb, Table pTab )
     {
@@ -247,7 +247,7 @@ return true;
 
     /*
     ** This routine generates code that will initialize all of the
-    ** register used by the autoincrement tracker.  
+    ** register used by the autoincrement tracker.
     */
     static void sqlite3AutoincrementBegin( Parse pParse )
     {
@@ -520,7 +520,7 @@ return true;
       db = pParse.db;
       dest = new SelectDest();// memset( &dest, 0, sizeof( dest ) );
 
-      if ( pParse.nErr != 0 || db.mallocFailed != 0 )
+      if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
         goto insert_cleanup;
       }
@@ -551,8 +551,8 @@ goto insert_cleanup;
       pTrigger = sqlite3TriggersExist( pParse, pTab, TK_INSERT, null, ref tmask );
       isView = pTab.pSelect != null;
 #else
-/# define pTrigger 0
-/# define tmask 0
+//# define pTrigger 0
+//# define tmask 0
 bool isView = false;
 #endif
 #if  SQLITE_OMIT_VIEW
@@ -562,7 +562,7 @@ isView = false;
       Debug.Assert( ( pTrigger != null && tmask != 0 ) || ( pTrigger == null && tmask == 0 ) );
 
       /* Ensure that:
-      *  (a) the table is not read-only, 
+      *  (a) the table is not read-only,
       *  (b) that if it is a view then ON INSERT triggers exist
       */
       if ( sqlite3IsReadOnly( pParse, pTab, tmask ) )
@@ -573,7 +573,7 @@ isView = false;
 
 #if !SQLITE_OMIT_VIEW
       /* If pTab is really a view, make sure it has been initialized.
-** ViewGetColumnNames() is a no-op if pTab is not a view (or virtual 
+** ViewGetColumnNames() is a no-op if pTab is not a view (or virtual
 ** module table).
 */
       if ( sqlite3ViewGetColumnNames( pParse, pTab ) != -0 )
@@ -663,7 +663,7 @@ isView = false;
         /* Resolve the expressions in the SELECT statement and execute it. */
         rc = sqlite3Select( pParse, pSelect, ref dest );
         Debug.Assert( pParse.nErr == 0 || rc != 0 );
-        if ( rc != 0 || NEVER( pParse.nErr != 0 ) || db.mallocFailed != 0 )
+        if ( rc != 0 || NEVER( pParse.nErr != 0 ) /*|| db.mallocFailed != 0 */ )
         {
           goto insert_cleanup;
         }
@@ -686,7 +686,7 @@ isView = false;
         ** the destination table (template 3).
         **
         ** A temp table must be used if the table being updated is also one
-        ** of the tables being read by the SELECT statement.  Also use a 
+        ** of the tables being read by the SELECT statement.  Also use a
         ** temp table in the case of row triggers.
         */
         if ( pTrigger != null || readsTable( v, addrSelect, iDb, pTab ) )
@@ -771,7 +771,7 @@ isView = false;
       }
 
       /* If the INSERT statement included an IDLIST term, then make sure
-      ** all elements of the IDLIST really are columns of the table and 
+      ** all elements of the IDLIST really are columns of the table and
       ** remember the column indices.
       **
       ** If the table has an INTEGER PRIMARY KEY column and that column
@@ -1006,7 +1006,7 @@ isView = false;
       /* Push the record number for the new entry onto the stack.  The
 ** record number is a randomly generate integer created by NewRowid
 ** except when the table has an INTEGER PRIMARY KEY column, in which
-** case the record number is the same as that column. 
+** case the record number is the same as that column.
 */
       if ( !isView )
       {
@@ -1206,7 +1206,7 @@ insert_end:
       }
 
       /*
-      ** Return the number of rows inserted. If this routine is 
+      ** Return the number of rows inserted. If this routine is
       ** generating code because of a call to sqlite3NestedParse(), do not
       ** invoke the callback function.
       */
@@ -1222,7 +1222,7 @@ insert_cleanup:
       sqlite3ExprListDelete( db, ref pList );
       sqlite3SelectDelete( db, ref pSelect );
       sqlite3IdListDelete( db, ref pColumn );
-      sqlite3DbFree( db, ref aRegIdx );
+      //sqlite3DbFree( db, ref aRegIdx );
     }
 
     /*
@@ -1559,7 +1559,7 @@ insert_cleanup:
               pIdx.nColumn > 1 ? " are not unique" : " is not unique", -1 );
               zErr = sqlite3StrAccumFinish( errMsg );
               sqlite3VdbeAddOp4( v, OP_Halt, SQLITE_CONSTRAINT, onError, 0, zErr, 0 );
-              sqlite3DbFree( errMsg.db, zErr );
+              //sqlite3DbFree( errMsg.db, zErr );
               break;
             }
           case OE_Ignore:

@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -560,7 +560,7 @@ namespace CS_SQLite3
     //  if( Tcl_GetInt(interp, argv[1], n) ) return TCL.TCL_ERROR;
 
     //  pVfs = sqlite3_vfs_find(0);
-    //  rc = sqlite3OsOpenMalloc(pVfs, argv[2], fd, 
+    //  rc = sqlite3OsOpenMalloc(pVfs, argv[2], fd,
     //      (SQLITE_OPEN_CREATE|SQLITE_OPEN_READWRITE|SQLITE_OPEN_MAIN_DB), 0
     //  );
     //  if( rc !=0){

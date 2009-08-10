@@ -23,7 +23,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -51,7 +51,7 @@ namespace CS_SQLite3
     ** element pointed to plus the next _ht.count-1 elements in the list.
     **
     ** Hash.htsize and Hash.ht may be zero.  In that case lookup is done
-    ** by a linear search of the global list.  For small tables, the 
+    ** by a linear search of the global list.  For small tables, the
     ** Hash.ht table is never allocated because if there are few elements
     ** in the table, it is faster to do a linear search than to manage
     ** the hash table.
@@ -80,7 +80,7 @@ namespace CS_SQLite3
       }
     };
 
-    /* Each element in the hash table is an instance of the following 
+    /* Each element in the hash table is an instance of the following
     ** structure.  All elements are stored on a single doubly-linked list.
     **
     ** Again, this structure is intended to be opaque, but it can't really

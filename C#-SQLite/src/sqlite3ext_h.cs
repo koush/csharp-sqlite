@@ -16,14 +16,14 @@ namespace CS_SQLite3
     ** This header file defines the SQLite interface for use by
     ** shared libraries that want to be imported as extensions into
     ** an SQLite instance.  Shared libraries that intend to be loaded
-    ** as extensions by SQLite should #include this file instead of 
+    ** as extensions by SQLite should #include this file instead of
     ** sqlite3.h.
     **
     ** @(#) $Id: sqlite3ext.h,v 1.25 2008/10/12 00:27:54 shane Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -285,8 +285,8 @@ namespace CS_SQLite3
     /#define sqlite3_expired                sqlite3_api->expired
 #endif
     //#define sqlite3_finalize               sqlite3_api->finalize
-    //#define sqlite3_free                   sqlite3_api->free
-    //#define sqlite3_free_table             sqlite3_api->free_table
+    //#define //sqlite3_free                   sqlite3_api->free
+    //#define //sqlite3_free_table             sqlite3_api->free_table
     //#define sqlite3_get_autocommit         sqlite3_api->get_autocommit
     //#define sqlite3_get_auxdata            sqlite3_api->get_auxdata
     //#define sqlite3_get_table              sqlite3_api->get_table

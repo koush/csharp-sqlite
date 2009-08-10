@@ -2353,72 +2353,46 @@ END_TIMER;
     }
 
     /*
-    ** Return a pathname which is the user's home directory.  A
-    ** 0 return indicates an error of some kind.  Space to hold the
-    ** resulting string is obtained from malloc().  The calling
-    ** function should free the result.
+    ** Return a pathname which is the user's home directory
     */
     static string find_home_dir()
     {
-      string home_dir = "";
+	    int p = (int) Environment.OSVersion.Platform;
 
-#if !(_WIN32) && !(WIN32) && !(__OS2__) && !(_WIN32_WCE) && !(__RTP__) && !(_WRS_KERNEL)
-struct passwd *pwent;
-uid_t uid = getuid();
-if( (pwent=getpwuid(uid)) != null;) {
-home_dir = pwent.pw_dir;
-}
-#endif
+	    // If running on Unix
+	    if ((p == 4) || (p == 6) || (p == 128))
+		    return Environment.GetFolderPath (Environment.SpecialFolder.Personal);
 
-#if (_WIN32_WCE)
-/* Windows CE (arm-wince-mingw32ce-gcc) does not provide getenv()
-*/
-home_dir = strdup("/");
-#else
+	    string home_dir;
 
-#if (_WIN32) || (WIN32) || (__OS2__)
-      if ( "" == home_dir )
-      {
-        home_dir = getenv( "USERPROFILE" );
-      }
-#endif
+	    home_dir = getenv( "USERPROFILE" );
+	    if ( "" == home_dir )
+	    {
+		    home_dir = getenv( "HOME" );
+	    }
 
-      if ( "" == home_dir )
-      {
-        home_dir = getenv( "HOME" );
-      }
+	    if ( "" == home_dir )
+	    {
+		    string zDrive, zPath;
+		    int n;
+		    zDrive = getenv( "HOMEDRIVE" );
+		    zPath = getenv( "HOMEPATH" );
+		    if ( zDrive != "" && zPath != "" )
+		    {
+			    n = strlen30( zDrive ) + strlen30( zPath ) + 1;
+			    home_dir = "";// malloc( n );
+			    //if ( home_dir == null ) return "";
+			    csSQLite.sqlite3_snprintf( n, ref home_dir, "%s%s", zDrive, zPath );
+			    return home_dir;
+		    }
+		    home_dir = "c:\\";
+	    }
 
-#if (_WIN32) || (WIN32) || (__OS2__)
-      if ( "" == home_dir )
-      {
-        string zDrive, zPath;
-        int n;
-        zDrive = getenv( "HOMEDRIVE" );
-        zPath = getenv( "HOMEPATH" );
-        if ( zDrive != "" && zPath != "" )
-        {
-          n = strlen30( zDrive ) + strlen30( zPath ) + 1;
-          home_dir = "";// malloc( n );
-          //if ( home_dir == null ) return "";
-          csSQLite.sqlite3_snprintf( n, ref home_dir, "%s%s", zDrive, zPath );
-          return home_dir;
-        }
-        home_dir = "c:\\";
-      }
-#endif
+	    if ( home_dir == "" )
+		    home_dir = "\\";
 
-#endif //* !_WIN32_WCE */
-
-      if ( home_dir != "" )
-      {
-        int n = strlen30( home_dir );
-        //string z = malloc( n );
-        //if ( z != null ) memcpy( z, home_dir, n );
-        home_dir = home_dir.Substring( 0, n );
-      }
-
-      return home_dir;
-    }
+	    return home_dir;
+     }
 
     /*
     ** Read input from the file given by sqliterc_override.  Or if that
@@ -2440,42 +2414,26 @@ home_dir = strdup("/");
         home_dir = find_home_dir();
         if ( home_dir == "" )
         {
-#if !(__RTP__) && !(_WRS_KERNEL)
-          fprintf( stderr, "%s: cannot locate your home directory!\n", Argv0 );
-#endif
+          Console.Error.WriteLine("{0}: cannot locate your home directory!\n", Environment.GetCommandLineArgs()[0]); 
           return;
         }
-        nBuf = strlen30( home_dir ) + 16;
-        //zBuf = malloc( nBuf );
-        //if ( zBuf == null )
-        //{
-        //  fprintf( stderr, "%s: out of memory!\n", Argv0 );
-        //  exit( 1 );
-        //}
-        csSQLite.sqlite3_snprintf( nBuf, ref zBuf, "%s/.sqliterc", home_dir );
-        free( ref home_dir );
-        sqliterc = zBuf;
+        sqliterc = Path.Combine(home_dir, ".sqliterc");
       }
       if ( File.Exists( sqliterc ) )
       {
         try
         {
-          _in = new StreamReader( sqliterc );// fopen( sqliterc, "rb" );
+          using (_in = new StreamReader(sqliterc))
+          {
+            if (stdin_is_interactive)
+            {
+              Console.WriteLine("-- Loading resources from {0}", sqliterc);
+            }
+            process_input(p, _in);
+          }
         }
         catch { }
       }
-      else { _in = null; }
-      if ( _in != null )
-      {
-        if ( stdin_is_interactive )
-        {
-          printf( "-- Loading resources from %s\n", sqliterc );
-        }
-        process_input( p, _in );
-        _in.Close();// fclose( _in );
-      }
-      free( ref zBuf );
-      return;
     }
 
     /*
@@ -2551,7 +2509,7 @@ signal(SIGINT, interrupt_handler);
 ** the name of the database file, the name of the initialization file,
 ** and the first command to execute.
 */
-      for ( i = 1 ; i < argc - 1 ; i++ )
+      for ( i = 0 ; i < argc - 1 ; i++ )
       {
         string z;
         if ( argv[i][0] != '-' ) break;

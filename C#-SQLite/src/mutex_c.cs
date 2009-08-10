@@ -25,7 +25,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -44,7 +44,7 @@ if (  sqlite3GlobalConfig.bCoreMutex   )
 if (  sqlite3GlobalConfig.mutex.xMutexAlloc != null )
 {
 /* If the xMutexAlloc method has not been set, then the user did not
-** install a mutex implementation via sqlite3_config() prior to 
+** install a mutex implementation via sqlite3_config() prior to
 ** sqlite3_initialize() being called. This block copies pointers to
 ** the default implementation into the sqlite3Config structure.
 **
@@ -154,7 +154,7 @@ return rc;
 
 /*
 ** The sqlite3_mutex_leave() routine exits a mutex that was previously
-** entered by the same thread.  The behavior is undefined if the mutex 
+** entered by the same thread.  The behavior is undefined if the mutex
 ** is not currently entered. If a NULL pointer is passed as an argument
 ** this function is a no-op.
 */

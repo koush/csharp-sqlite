@@ -134,7 +134,6 @@ if {[sqlite3 -has-codec] && [info command sqlite_orig]==""} {
 #
 if {![info exists nTest]} {
   sqlite3_shutdown 
-  install_malloc_faultsim 1 
   sqlite3_initialize
   autoinstall_test_functions
   if {[info exists tester_do_binarylog]} {
@@ -181,7 +180,6 @@ proc omit_test {name reason} {
 #
 proc do_test {name cmd expected} {
   global argv nErr nTest skip_test maxErr
-  sqlite3_memdebug_settitle $name
   if {[info exists ::tester_do_binarylog]} {
     sqlite3_instvfs marker binarylog "Start of $name"
   }
@@ -334,6 +332,7 @@ proc finalize_testing {} {
     close $fd
     sqlite3_instvfs destroy ostrace
   }
+ifcapable malloc {
   if {[sqlite3_memory_used]>0} {
     puts "Unfreed memory: [sqlite3_memory_used] bytes"
     incr nErr
@@ -365,6 +364,7 @@ proc finalize_testing {} {
       memdebug_log_sql leaks.sql
     }
   }
+}
   foreach f [glob -nocomplain test.db-*-journal] {
     file delete -force $f
   }
@@ -378,6 +378,7 @@ proc finalize_testing {} {
 # Display memory statistics for analysis and debugging purposes.
 #
 proc show_memstats {} {
+ifcapable malloc {
   set x [sqlite3_status SQLITE_STATUS_MEMORY_USED 0]
   set y [sqlite3_status SQLITE_STATUS_MALLOC_SIZE 0]
   set val [format {now %10d  max %10d  max-size %10d} \
@@ -399,6 +400,11 @@ proc show_memstats {} {
   set val [format {now %10d  max %10d  max-size %10d} \
                [lindex $x 1] [lindex $x 2] [lindex $y 2]]
   puts "Scratch overflow:     $val"
+}
+else
+{
+  puts "Memory usage not being tracked"
+}
   ifcapable yytrackmaxstackdepth {
     set x [sqlite3_status SQLITE_STATUS_PARSER_STACK 0]
     set val [format {               max %10d} [lindex $x 2]]

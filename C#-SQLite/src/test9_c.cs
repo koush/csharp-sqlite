@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -89,49 +89,49 @@ error_out:
       return TCL.TCL_ERROR;
     }
 
-    /*
-    ** c_realloc_test
-    */
-    static int c_realloc_test(
-    object clientdata, /* Pointer to sqlite3_enable_XXX function */
-    Tcl_Interp interp,    /* The TCL interpreter that invoked this command */
-    int objc,              /* Number of arguments */
-    Tcl_Obj[] objv /* Command arguments */
-    )
-    {
-      object p;
-      string zErrFunction = "N/A";
+//    /*
+//    ** c_realloc_test
+//    */
+//    static int c_realloc_test(
+//    object clientdata, /* Pointer to sqlite3_enable_XXX function */
+//    Tcl_Interp interp,    /* The TCL interpreter that invoked this command */
+//    int objc,              /* Number of arguments */
+//    Tcl_Obj[] objv /* Command arguments */
+//    )
+//    {
+//      object p;
+//      string zErrFunction = "N/A";
 
-      if ( objc != 1 )
-      {
-        TCL.Tcl_WrongNumArgs( interp, 1, objv, "" );
-        return TCL.TCL_ERROR;
-      }
+//      if ( objc != 1 )
+//      {
+//        TCL.Tcl_WrongNumArgs( interp, 1, objv, "" );
+//        return TCL.TCL_ERROR;
+//      }
 
-      p = sqlite3Malloc( 5 );
-      if ( p == null )
-      {
-        zErrFunction = "sqlite3Malloc";
-        goto error_out;
-      }
+//      p = sqlite3Malloc( 5 );
+//      if ( p == null )
+//      {
+//        zErrFunction = "sqlite3Malloc";
+//        goto error_out;
+//      }
 
-      /* Test that realloc()ing a block of memory to a negative size is
-      ** the same as free()ing that memory.
-      */
-      //TODO -- ignore realloc 
-      //p = sqlite3_realloc(p, -1);
-      //if( p!=null ){
-      //  zErrFunction = "sqlite3_realloc";
-      //  goto error_out;
-      //}
+//      /* Test that realloc()ing a block of memory to a negative size is
+//      ** the same as free()ing that memory.
+//      */
+//      //TODO -- ignore realloc
+//      //p = sqlite3_realloc(p, -1);
+//      //if( p!=null ){
+//      //  zErrFunction = "sqlite3_realloc";
+//      //  goto error_out;
+//      //}
 
-      return TCL.TCL_OK;
+//      return TCL.TCL_OK;
 
-error_out:
-      TCL.Tcl_ResetResult( interp );
-      TCL.Tcl_AppendResult( interp, "Error testing function: ", zErrFunction );
-      return TCL.TCL_ERROR;
-    }
+//error_out:
+//      TCL.Tcl_ResetResult( interp );
+//      TCL.Tcl_AppendResult( interp, "Error testing function: ", zErrFunction );
+//      return TCL.TCL_ERROR;
+//    }
 
 
     /*
@@ -228,10 +228,10 @@ error_out:
       //   char *zName;
       //   Tcl_ObjCmdProc *xProc;
       //   void *object;
-      //} 
+      //}
       _aObjCmd[] aObjCmd = new _aObjCmd[]  {
 new _aObjCmd( "c_misuse_test",    c_misuse_test, 0 ),
-new _aObjCmd( "c_realloc_test",   c_realloc_test, 0 ),
+//new _aObjCmd( "c_realloc_test",   c_realloc_test, 0 ),
 new _aObjCmd( "c_collation_test", c_collation_test, 0 ),
 };
       int i;

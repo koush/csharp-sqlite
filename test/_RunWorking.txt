@@ -63,7 +63,6 @@ set EXCLUDE {
   fts3.test
   fuzz.test
   fuzz3.test
-  fuzz_malloc.test
   in2.test
   loadext.test
   memleak.test
@@ -115,6 +114,33 @@ set EXCLUDE {
 #Not implemented in C# port for TCL
 	lock2.test
 	lock4.test
+
+#No MALLOC implemented in C# port for TCL
+altermalloc.test
+attachmalloc.test
+backup_malloc.test
+fuzz_malloc.test
+malloc.test
+malloc3.test
+malloc4.test
+malloc5.test
+malloc6.test
+malloc7.test
+malloc8.test
+malloc9.test
+mallocA.test
+mallocAll.test
+mallocB.test
+mallocC.test
+mallocD.test
+mallocE.test
+mallocF.test
+mallocG.test
+mallocH.test
+mallocI.test
+mallocJ.test
+mallocK.test
+malloc_common.tcl
 
 #broken to fix in C# port; Initial release
   autovacuum.test

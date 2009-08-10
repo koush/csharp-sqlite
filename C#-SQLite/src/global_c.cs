@@ -26,7 +26,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -35,14 +35,14 @@ namespace CS_SQLite3
 
 
     /* An array to map all upper-case characters into their corresponding
-    ** lower-case character. 
+    ** lower-case character.
     **
     ** SQLite only considers US-ASCII (or EBCDIC) characters.  We do not
     ** handle case conversions for the UTF character set since the tables
     ** involved are nearly as big or bigger than SQLite itself.
     */
     /* An array to map all upper-case characters into their corresponding
-    ** lower-case character. 
+    ** lower-case character.
     */
     static int[] sqlite3UpperToLower = new int[]  {
 #if SQLITE_ASCII

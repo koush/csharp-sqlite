@@ -28,7 +28,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -50,10 +50,10 @@ namespace CS_SQLite3
 
     /*
 ** The most recently coded instruction was an OP_Column to retrieve the
-** i-th column of table pTab. This routine sets the P4 parameter of the 
+** i-th column of table pTab. This routine sets the P4 parameter of the
 ** OP_Column to the default value, if any.
 **
-** The default value of a column is specified by a DEFAULT clause in the 
+** The default value of a column is specified by a DEFAULT clause in the
 ** column definition. This was either supplied by the user when the table
 ** was created, or added later to the table definition by an ALTER TABLE
 ** command. If the latter, then the row-records in the table btree on disk
@@ -62,9 +62,9 @@ namespace CS_SQLite3
 ** If the former, then all row-records are guaranteed to include a value
 ** for the column and the P4 value is not required.
 **
-** Column definitions created by an ALTER TABLE command may only have 
+** Column definitions created by an ALTER TABLE command may only have
 ** literal default values specified: a number, null or a string. (If a more
-** complicated default expression value was provided, it is evaluated 
+** complicated default expression value was provided, it is evaluated
 ** when the ALTER TABLE is executed and one of the literal values written
 ** into the sqlite_master table.)
 **
@@ -74,8 +74,8 @@ namespace CS_SQLite3
 ** sqlite3_value objects.
 **
 ** If parameter iReg is not negative, code an OP_RealAffinity instruction
-** on register iReg. This is used when an equivalent integer value is 
-** stored in place of an 8-byte floating point value in order to save 
+** on register iReg. This is used when an equivalent integer value is
+** stored in place of an 8-byte floating point value in order to save
 ** space.
 */
     static void sqlite3ColumnDefault( Vdbe v, Table pTab, int i, int iReg )
@@ -165,13 +165,13 @@ namespace CS_SQLite3
 
       sContext.pParse = null;
       db = pParse.db;
-      if ( pParse.nErr != 0 || db.mallocFailed != 0 )
+      if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
         goto update_cleanup;
       }
       Debug.Assert( pTabList.nSrc == 1 );
 
-      /* Locate the table which we want to update. 
+      /* Locate the table which we want to update.
       */
       pTab = sqlite3SrcListLookup( pParse, pTabList );
       if ( pTab == null ) goto update_cleanup;
@@ -445,9 +445,9 @@ sqlite3AuthContextPush(pParse, sContext, pTab.zName);
 
       if ( !isView )
       {
-        /* 
+        /*
         ** Open every index that needs updating.  Note that if any
-        ** index could potentially invoke a REPLACE conflict resolution 
+        ** index could potentially invoke a REPLACE conflict resolution
         ** action, then we need to open all indices because we might need
         ** to be deleting some records.
         */
@@ -597,7 +597,7 @@ sqlite3AuthContextPush(pParse, sContext, pTab.zName);
           sqlite3VdbeAddOp1( v, OP_MustBeInt, regNewRowid );
         }
 
-        /* Compute new data for this record.  
+        /* Compute new data for this record.
         */
         for ( i = 0 ; i < pTab.nCol ; i++ )
         {
@@ -644,7 +644,7 @@ sqlite3AuthContextPush(pParse, sContext, pTab.zName);
         aRegIdx, true, -1, false, false );
       }
 
-      /* Increment the row counter 
+      /* Increment the row counter
       */
       if ( ( db.flags & SQLITE_CountRows ) != 0 && pParse.trigStack == null )
       {
@@ -691,7 +691,7 @@ sqlite3AuthContextPush(pParse, sContext, pTab.zName);
       }
 
       /*
-      ** Return the number of rows that were changed. If this routine is 
+      ** Return the number of rows that were changed. If this routine is
       ** generating code because of a call to sqlite3NestedParse(), do not
       ** invoke the callback function.
       */
@@ -706,8 +706,8 @@ update_cleanup:
 #if !SQLITE_OMIT_AUTHORIZATION
 sqlite3AuthContextPop(sContext);
 #endif
-      sqlite3DbFree( db, ref  aRegIdx );
-      sqlite3DbFree( db, ref  aXRef );
+      //sqlite3DbFree( db, ref  aRegIdx );
+      //sqlite3DbFree( db, ref  aXRef );
       sqlite3SrcListDelete( db, ref pTabList );
       sqlite3ExprListDelete( db, ref pChanges );
       sqlite3ExprDelete( db, ref pWhere );
@@ -757,9 +757,9 @@ const char *pVTab = (const char*)sqlite3GetVTable(db, pTab);
 SelectDest dest;
 
 /* Construct the SELECT statement that will find the new values for
-** all updated rows. 
+** all updated rows.
 */
-pEList = sqlite3ExprListAppend(pParse, 0, 
+pEList = sqlite3ExprListAppend(pParse, 0,
 sqlite3CreateIdExpr(pParse, "_rowid_"));
 if( pRowid ){
 pEList = sqlite3ExprListAppend(pParse, pEList,
@@ -783,7 +783,7 @@ Debug.Assert( v );
 ephemTab = pParse.nTab++;
 sqlite3VdbeAddOp2(v, OP_OpenEphemeral, ephemTab, pTab.nCol+1+(pRowid!=0));
 
-/* fill the ephemeral table 
+/* fill the ephemeral table
 */
 sqlite3SelectDestInit(dest, SRT_Table, ephemTab);
 sqlite3Select(pParse, pSelect, ref dest);
@@ -804,7 +804,7 @@ sqlite3VdbeJumpHere(v, addr);
 sqlite3VdbeAddOp2(v, OP_Close, ephemTab, 0);
 
 /* Cleanup */
-sqlite3SelectDelete(pSelect);  
+sqlite3SelectDelete(pSelect);
 }
 #endif // * SQLITE_OMIT_VIRTUALTABLE */
 

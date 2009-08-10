@@ -23,7 +23,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -59,14 +59,14 @@ DWORD owner;               /* Thread holding this mutex */
 ** the LockFileEx() API.
 **
 ** mutexIsNT() is only used for the TryEnterCriticalSection() API call,
-** which is only available if your application was compiled with 
+** which is only available if your application was compiled with
 ** _WIN32_WINNT defined to a value >= 0x0400.  Currently, the only
-** call to TryEnterCriticalSection() is #ifdef'ed out, so #if 
+** call to TryEnterCriticalSection() is #ifdef'ed out, so #if
 ** this out as well.
 */
 #if FALSE
 #if SQLITE_OS_WINCE
-/# define mutexIsNT()  (1)
+//# define mutexIsNT()  (1)
 #else
 static int mutexIsNT(void){
 static int osType = 0;
@@ -107,7 +107,7 @@ static int winMutex_isInit = 0;
 */
 static long winMutex_lock = 0;
 
-static int winMutexInit(void){ 
+static int winMutexInit(void){
 /* The first to increment to 1 does actual initialization */
 if( InterlockedIncrement(&winMutex_lock)==1 ){
 int i;
@@ -120,11 +120,11 @@ while( !winMutex_isInit ){
 Sleep(1);
 }
 }
-return SQLITE_OK; 
+return SQLITE_OK;
 }
 
-static int winMutexEnd(void){ 
-/* The first to decrement to 0 does actual shutdown 
+static int winMutexEnd(void){
+/* The first to decrement to 0 does actual shutdown
 ** (which should be the last to shutdown.) */
 if( InterlockedDecrement(&winMutex_lock)==0 ){
 if( winMutex_isInit==1 ){
@@ -135,7 +135,7 @@ DeleteCriticalSection(&winMutex_staticMutexes[i].mutex);
 winMutex_isInit = 0;
 }
 }
-return SQLITE_OK; 
+return SQLITE_OK;
 }
 
 /*
@@ -173,7 +173,7 @@ return SQLITE_OK;
 **
 ** Note that if one of the dynamic mutex parameters (SQLITE_MUTEX_FAST
 ** or SQLITE_MUTEX_RECURSIVE) is used then sqlite3_mutex_alloc()
-** returns a different mutex on every call.  But for the static 
+** returns a different mutex on every call.  But for the static
 ** mutex types, the same mutex is returned on every call that has
 ** the same type number.
 */
@@ -213,7 +213,7 @@ Debug.Assert(p );
 Debug.Assert(p.nRef==0 );
 Debug.Assert(p.id==SQLITE_MUTEX_FAST || p.id==SQLITE_MUTEX_RECURSIVE );
 DeleteCriticalSection(p.mutex);
-sqlite3DbFree(db,p);
+//sqlite3DbFree(db,p);
 }
 
 /*
@@ -230,7 +230,7 @@ sqlite3DbFree(db,p);
 static void winMutexEnter(sqlite3_mutex p){
 Debug.Assert(p.id==SQLITE_MUTEX_RECURSIVE || winMutexNotheld(p) );
 EnterCriticalSection(p.mutex);
-p.owner = GetCurrentThreadId(); 
+p.owner = GetCurrentThreadId();
 p.nRef++;
 }
 static int winMutexTry(sqlite3_mutex p){
@@ -239,7 +239,7 @@ Debug.Assert(p.id==SQLITE_MUTEX_RECURSIVE || winMutexNotheld(p) );
 /*
 ** The sqlite3_mutex_try() routine is very rarely used, and when it
 ** is used it is merely an optimization.  So it is OK for it to always
-** fail.  
+** fail.
 **
 ** The TryEnterCriticalSection() interface is only available on WinNT.
 ** And some windows compilers complain if you try to use it without

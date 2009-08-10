@@ -35,7 +35,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -285,27 +285,27 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
     }
 #if  !SQLITE_OMIT_UTF16
 void sqlite3_result_text16(
-sqlite3_context pCtx, 
-string z, 
-int n, 
+sqlite3_context pCtx,
+string z,
+int n,
 dxDel xDel
 ){
 Debug.Assert( sqlite3_mutex_held(pCtx.s.db.mutex) );
 sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16NATIVE, xDel);
 }
 void sqlite3_result_text16be(
-sqlite3_context pCtx, 
-string z, 
-int n, 
+sqlite3_context pCtx,
+string z,
+int n,
 dxDel xDel
 ){
 Debug.Assert( sqlite3_mutex_held(pCtx.s.db.mutex) );
 sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16BE, xDel);
 }
 void sqlite3_result_text16le(
-sqlite3_context pCtx, 
-string z, 
-int n, 
+sqlite3_context pCtx,
+string z,
+int n,
 dxDel xDel
 ){
 Debug.Assert( sqlite3_mutex_held(pCtx.s.db.mutex) );
@@ -347,7 +347,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
       Debug.Assert( sqlite3_mutex_held( pCtx.s.db.mutex ) );
       sqlite3VdbeMemSetNull( pCtx.s );
       pCtx.isError = SQLITE_NOMEM;
-      pCtx.s.db.mallocFailed = 1;
+      //pCtx.s.db.mallocFailed = 1;
     }
 
     /*
@@ -355,7 +355,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** statement is completely executed or an error occurs.
     **
     ** This routine implements the bulk of the logic behind the sqlite_step()
-    ** API.  The only thing omitted is the automatic recompile if a 
+    ** API.  The only thing omitted is the automatic recompile if a
     ** schema change has occurred.  That detail is handled by the
     ** outer sqlite3_step() wrapper procedure.
     */
@@ -372,10 +372,10 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
 
       /* Assert that malloc() has not failed */
       db = p.db;
-      if ( db.mallocFailed != 0 )
-      {
-        return SQLITE_NOMEM;
-      }
+      //if ( db.mallocFailed != 0 )
+      //{
+      //  return SQLITE_NOMEM;
+      //}
 
       if ( p.pc <= 0 && p.expired )
       {
@@ -453,11 +453,11 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
         p.rc = SQLITE_NOMEM;
       }
 end_of_step:
-      /* At this point local variable rc holds the value that should be 
-      ** returned if this statement was compiled using the legacy 
+      /* At this point local variable rc holds the value that should be
+      ** returned if this statement was compiled using the legacy
       ** sqlite3_prepare() interface. According to the docs, this can only
-      ** be one of the values in the first Debug.Assert() below. Variable p.rc 
-      ** contains the value that would be returned if sqlite3_finalize() 
+      ** be one of the values in the first Debug.Assert() below. Variable p.rc
+      ** contains the value that would be returned if sqlite3_finalize()
       ** were called on statement p.
       */
       Debug.Assert( rc == SQLITE_ROW || rc == SQLITE_DONE || rc == SQLITE_ERROR
@@ -498,25 +498,25 @@ end_of_step:
         }
         if ( rc == SQLITE_SCHEMA && ALWAYS( v.isPrepareV2 ) && ALWAYS( db.pErr != null ) )
         {
-          /* This case occurs after failing to recompile an sql statement. 
-          ** The error message from the SQL compiler has already been loaded 
-          ** into the database handle. This block copies the error message 
+          /* This case occurs after failing to recompile an sql statement.
+          ** The error message from the SQL compiler has already been loaded
+          ** into the database handle. This block copies the error message
           ** from the database handle into the statement and sets the statement
-          ** program counter to 0 to ensure that when the statement is 
+          ** program counter to 0 to ensure that when the statement is
           ** finalized or reset the parser error message is available via
           ** sqlite3_errmsg() and sqlite3_errcode().
           */
           string zErr = sqlite3_value_text( db.pErr );
-          sqlite3DbFree( db, ref v.zErrMsg );
-          if ( 0 == db.mallocFailed )
+          //sqlite3DbFree( db, ref v.zErrMsg );
+          //if ( 0 == db.mallocFailed )
           {
             v.zErrMsg = zErr;// sqlite3DbStrDup(db, zErr);
           }
-          else
-          {
-            v.zErrMsg = "";
-            v.rc = SQLITE_NOMEM;
-          }
+          //else
+          //{
+          //  v.zErrMsg = "";
+          //  v.rc = SQLITE_NOMEM;
+          //}
         }
         rc = sqlite3ApiExit( db, rc );
         sqlite3_mutex_leave( db.mutex );
@@ -564,7 +564,7 @@ end_of_step:
       zErr = sqlite3_mprintf(
       "unable to use function %s in the requested context", zName );
       sqlite3_result_error( context, zErr, -1 );
-      sqlite3_free( ref zErr );
+      //sqlite3_free( ref zErr );
     }
 
     /*
@@ -644,7 +644,7 @@ end_of_step:
         int nMalloc = iArg; ;//VdbeFunc+ sizeof(struct AuxData)*iArg;
         if ( pVdbeFunc == null )
         {
-          pVdbeFunc = (VdbeFunc)sqlite3DbRealloc( pCtx.s.db, pVdbeFunc, nMalloc );
+          //pVdbeFunc = (VdbeFunc)sqlite3DbRealloc( pCtx.s.db, pVdbeFunc, nMalloc );
           pVdbeFunc = new VdbeFunc();
           if ( null == pVdbeFunc )
           {
@@ -675,7 +675,7 @@ failed:
 
 #if !SQLITE_OMIT_DEPRECATED
     /*
-** Return the number of times the Step function of a aggregate has been 
+** Return the number of times the Step function of a aggregate has been
 ** called.
 **
 ** This function is deprecated.  Do not use it for new code.  It is
@@ -743,11 +743,11 @@ failed:
         ** this assert() from failing, when building with SQLITE_DEBUG defined
         ** using gcc, force nullMem to be 8-byte aligned using the magical
         ** __attribute__((aligned(8))) macro.  */
-        //    Mem nullMem 
+        //    Mem nullMem
 #if (SQLITE_DEBUG) && (__GNUC__)
-__attribute__((aligned(8))) 
+__attribute__((aligned(8)))
 #endif
-        //      
+        //
         Mem nullMem = new Mem();//    static const Mem nullMem = {{0}, (double)0, 0, "", 0, MEM_Null, SQLITE_NULL, 0, 0, 0 };
 
         if ( pVm != null && ALWAYS( pVm.db != null ) )
@@ -761,9 +761,9 @@ __attribute__((aligned(8)))
     }
 
     /*
-    ** This function is called after invoking an sqlite3_value_XXX function on a 
+    ** This function is called after invoking an sqlite3_value_XXX function on a
     ** column value (i.e. a value returned by evaluating an SQL expression in the
-    ** select list of a SELECT statement) that may cause a malloc() failure. If 
+    ** select list of a SELECT statement) that may cause a malloc() failure. If
     ** malloc() has failed, the threads mallocFailed flag is cleared and the result
     ** code of statement pStmt set to SQLITE_NOMEM.
     **
@@ -803,8 +803,8 @@ __attribute__((aligned(8)))
       byte[] val;
       val = sqlite3_value_blob( columnMem( pStmt, i ) );
       /* Even though there is no encoding conversion, value_blob() might
-      ** need to call malloc() to expand the result of a zeroblob() 
-      ** expression. 
+      ** need to call malloc() to expand the result of a zeroblob()
+      ** expression.
       */
       columnMallocFailure( pStmt );
       return val;
@@ -912,17 +912,17 @@ __attribute__((aligned(8)))
       {
         N += useType * n;
         sqlite3_mutex_enter( db.mutex );
-        Debug.Assert( db.mallocFailed == 0 );
+        //Debug.Assert( db.mallocFailed == 0 );
         ret = xFunc( p.aColName[N] );
 
         /* A malloc may have failed inside of the xFunc() call. If this
         ** is the case, clear the mallocFailed flag and return NULL.
         */
-        if ( db.mallocFailed != 0 )
-        {
-          db.mallocFailed = 0;
-          ret = null;
-        }
+        //if ( db.mallocFailed != 0 )
+        //{
+        //  //db.mallocFailed = 0;
+        //  ret = null;
+        //}
         sqlite3_mutex_leave( db.mutex );
       }
       return ret;
@@ -1023,11 +1023,11 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
 
 
     /******************************* sqlite3_bind_  ***************************
-** 
+**
 ** Routines used to attach values to wildcards in a compiled SQL statement.
 */
     /*
-    ** Unbind the value bound to variable i in virtual machine p. This is the 
+    ** Unbind the value bound to variable i in virtual machine p. This is the
     ** the same as binding a NULL value to the column. If the "i" parameter is
     ** out of range, then SQLITE_RANGE is returned. Othewise SQLITE_OK.
     **
@@ -1165,10 +1165,10 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
     }
 #if  !SQLITE_OMIT_UTF16
 static int sqlite3_bind_text16(
-sqlite3_stmt pStmt, 
-int i, 
-string zData, 
-int nData, 
+sqlite3_stmt pStmt,
+int i,
+string zData,
+int nData,
 dxDel xDel
 ){
 return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
@@ -1231,7 +1231,7 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
 
     /*
     ** Return the number of wildcards that can be potentially bound to.
-    ** This routine is added to support DBD::SQLite.  
+    ** This routine is added to support DBD::SQLite.
     */
     static int sqlite3_bind_parameter_count( sqlite3_stmt pStmt )
     {

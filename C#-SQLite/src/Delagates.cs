@@ -1,12 +1,12 @@
     /*
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/Delagates.cs $
-    **  Revision        : $Revision$ 
-    **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $ 
-    **  Last Changed By : $LastChangedBy: noah.hart $ 
+    **  Revision        : $Revision$
+    **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
+    **  Last Changed By : $LastChangedBy: noah.hart $
     *************************************************************************
     */
 
@@ -49,7 +49,7 @@ namespace CS_SQLite3
 
     /*
      * FUNCTIONS
-     * 
+     *
      */
     public delegate void dxFunc( sqlite3_context ctx, int intValue, sqlite3_value[] value );
     public delegate void dxStep( sqlite3_context ctx, int intValue, sqlite3_value[] value );
@@ -92,7 +92,7 @@ namespace CS_SQLite3
     public delegate int dxCurrentTime( sqlite3_vfs vfs, ref double currenttime );
     public delegate int dxGetLastError( sqlite3_vfs pVfs, int nBuf, ref string zBuf );
 
-    /* 
+    /*
      * Pager Delegates
      */
 
@@ -104,7 +104,7 @@ namespace CS_SQLite3
 
     //Module
     public delegate void dxDestroy( ref PgHdr pDestroyArg );
-    public delegate int dxStress (object obj,PgHdr pPhHdr); 
+    public delegate int dxStress (object obj,PgHdr pPhHdr);
 
     //AutoExtention
     public delegate int dxInit( sqlite3 db, ref string zMessage, sqlite3_api_routines sar );
@@ -142,8 +142,8 @@ namespace CS_SQLite3
     public delegate void dxFree( ref byte[]  pOld);
     public delegate byte[] dxRealloc( ref byte[] pOld, int nSize );
     public delegate int  dxSize (byte[] pArray);
-    public delegate int dxRoundup( int nSize );      
-    
+    public delegate int dxRoundup( int nSize );
+
     //Mutex Methods
   public delegate int dxMutexInit();
   public delegate int dxMutexEnd( );
@@ -162,7 +162,7 @@ namespace CS_SQLite3
     public delegate int dxExprCallback (Walker W, ref Expr E);     /* Callback for expressions */
     public delegate int dxSelectCallback (Walker W, Select S);  /* Callback for SELECTs */
 
-  
+
   // pcache Methods
     public delegate int dxPC_Init( object NotUsed );
     public delegate void dxPC_Shutdown( object NotUsed );

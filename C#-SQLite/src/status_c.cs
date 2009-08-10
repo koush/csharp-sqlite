@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -52,8 +52,8 @@ namespace CS_SQLite3
     ** to the "sqlite3Stat" state vector declared above.
     */
 #if SQLITE_OMIT_WSD
-/# define wsdStatInit  sqlite3StatType *x = &GLOBAL(sqlite3StatType,sqlite3Stat)
-/# define wsdStat x[0]
+//# define wsdStatInit  sqlite3StatType *x = &GLOBAL(sqlite3StatType,sqlite3Stat)
+//# define wsdStat x[0]
 #else
     //# define wsdStatInit
     static void wsdStatInit() { }

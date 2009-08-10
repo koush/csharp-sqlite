@@ -31,7 +31,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -86,7 +86,7 @@ namespace CS_SQLite3
       */
 #if SQLITE_OMIT_WSD
 struct sqlite3PrngType *p = &GLOBAL(struct sqlite3PrngType, sqlite3Prng);
-/# define wsdPrng p[0]
+//# define wsdPrng p[0]
 #else
       //# define wsdPrng sqlite3Prng
       sqlite3PrngType wsdPrng = sqlite3Prng;

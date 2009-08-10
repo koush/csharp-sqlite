@@ -30,7 +30,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -46,7 +46,7 @@ namespace CS_SQLite3
     ** So we test the effects of a malloc() failing and the sqlite3OsXXX()
     ** function returning SQLITE_IOERR_NOMEM using the DO_OS_MALLOC_TEST macro.
     **
-    ** The following functions are instrumented for malloc() failure 
+    ** The following functions are instrumented for malloc() failure
     ** testing:
     **
     **     sqlite3OsOpen()
@@ -57,10 +57,10 @@ namespace CS_SQLite3
     **
     */
 #if (SQLITE_TEST) && !SQLITE_OS_WIN
-/#define DO_OS_MALLOC_TEST(x) if (!x || !sqlite3IsMemJournal(x)) {     \
+//#define DO_OS_MALLOC_TEST(x) if (!x || !sqlite3IsMemJournal(x)) {     \
 void *pTstAlloc = sqlite3Malloc(10);                             \
 if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
-sqlite3_free(pTstAlloc);                                         \
+//sqlite3_free(pTstAlloc);                                         \
 }
 #else
     //#define DO_OS_MALLOC_TEST(x)
@@ -221,7 +221,7 @@ sqlite3_free(pTstAlloc);                                         \
         rc = sqlite3OsOpen( pVfs, zFile, ref pFile, flags, ref pOutFlags );
         if ( rc != SQLITE_OK )
         {
-          pFile = null; // was  sqlite3DbFree(db,ref  pFile);
+          pFile = null; // was  //sqlite3DbFree(db,ref  pFile);
         }
         else
         {
@@ -235,7 +235,7 @@ sqlite3_free(pTstAlloc);                                         \
       int rc = SQLITE_OK;
       Debug.Assert( pFile != null );
       rc = sqlite3OsClose( pFile );
-      sqlite3_free( ref  pFile );
+      //sqlite3_free( ref  pFile );
       return rc;
     }
 

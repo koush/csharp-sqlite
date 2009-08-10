@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -40,7 +40,7 @@ namespace CS_SQLite3
     ** switch.  The following code should catch this problem at compile-time.
     */
 #if MEMORY_DEBUG
-/# error "The MEMORY_DEBUG macro is obsolete.  Use SQLITE_DEBUG instead."
+//# error "The MEMORY_DEBUG macro is obsolete.  Use SQLITE_DEBUG instead."
 #endif
 
 #if SQLITE_DEBUG
@@ -68,17 +68,17 @@ namespace CS_SQLite3
 */
 #if SQLITE_PERFORMANCE_TRACE
 
-/* 
-** hwtime.h contains inline assembler code for implementing 
+/*
+** hwtime.h contains inline assembler code for implementing
 ** high-performance timing routines.
 */
-/#include "hwtime.h"
+//#include "hwtime.h"
 
 static sqlite_u3264 g_start;
 static sqlite_u3264 g_elapsed;
-/#define TIMER_START       g_start=sqlite3Hwtime()
-/#define TIMER_END         g_elapsed=sqlite3Hwtime()-g_start
-/#define TIMER_ELAPSED     g_elapsed
+//#define TIMER_START       g_start=sqlite3Hwtime()
+//#define TIMER_END         g_elapsed=sqlite3Hwtime()-g_start
+//#define TIMER_ELAPSED     g_elapsed
 #else
     const int TIMER_START = 0;   //#define TIMER_START
     const int TIMER_END = 0;     //#define TIMER_END

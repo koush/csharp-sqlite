@@ -21,7 +21,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -136,7 +136,7 @@ namespace CS_SQLite3
 
     /*
     ** The second parameter to sqlite3BtreeGetMeta or sqlite3BtreeUpdateMeta
-    ** should be one of the following values. The integer values are assigned 
+    ** should be one of the following values. The integer values are assigned
     ** to constants so that the offset of the corresponding field in an
     ** SQLite database header may be found using the following formula:
     **
@@ -227,7 +227,7 @@ namespace CS_SQLite3
 //void sqlite3BtreeEnter(Btree*);
 //void sqlite3BtreeEnterAll(sqlite3*);
 #else
-    //# define sqlite3BtreeEnter(X) 
+    //# define sqlite3BtreeEnter(X)
     static void sqlite3BtreeEnter( Btree bt ) { }
     //# define sqlite3BtreeEnterAll(X)
     static void sqlite3BtreeEnterAll( sqlite3 p ) { }

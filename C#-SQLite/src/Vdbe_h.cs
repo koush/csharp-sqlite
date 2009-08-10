@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -166,7 +166,7 @@ public u64 cycles;         /* Total time spend executing this instruction */
     const int P4_KEYINFO_STATIC = ( -17 );   // #define P4_KEYINFO_STATIC  (-17)
 
     /*
-    ** The Vdbe.aColName array contains 5n Mem structures, where n is the 
+    ** The Vdbe.aColName array contains 5n Mem structures, where n is the
     ** number of columns of data returned by the statement.
     */
     //#define COLNAME_NAME     0
@@ -200,7 +200,7 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
 
     /*
 ** The following macro converts a relative address in the p2 field
-** of a VdbeOp structure into a negative number so that 
+** of a VdbeOp structure into a negative number so that
 ** sqlite3VdbeAddOpList() knows that the address is relative.  Calling
 ** the macro again restores the address.
 */

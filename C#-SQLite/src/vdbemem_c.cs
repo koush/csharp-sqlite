@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -46,7 +46,7 @@ namespace CS_SQLite3
     ** Call sqlite3VdbeMemExpandBlob() on the supplied value (type Mem*)
     ** P if required.
     */
-    //#define expandBlob(P) (((P)->flags&MEM_Zero)?sqlite3VdbeMemExpandBlob(P):0) 
+    //#define expandBlob(P) (((P)->flags&MEM_Zero)?sqlite3VdbeMemExpandBlob(P):0)
     static void expandBlob( Mem P )
     { if ( ( P.flags & MEM_Zero ) != 0 ) sqlite3VdbeMemExpandBlob( P ); } // TODO -- Convert to inline for speed
 
@@ -91,16 +91,16 @@ return rc;
     }
 
     /*
-    ** Make sure pMem.z points to a writable allocation of at least 
+    ** Make sure pMem.z points to a writable allocation of at least
     ** n bytes.
     **
     ** If the memory cell currently contains string or blob data
-    ** and the third argument passed to this function is true, the 
+    ** and the third argument passed to this function is true, the
     ** current content of the cell is preserved. Otherwise, it may
-    ** be discarded.  
+    ** be discarded.
     **
     ** This function sets the MEM_Dyn flag and clears any xDel callback.
-    ** It also clears MEM_Ephem and MEM_Static. If the preserve flag is 
+    ** It also clears MEM_Ephem and MEM_Static. If the preserve flag is
     ** not set, Mem.n is zeroed.
     */
     static int sqlite3VdbeMemGrow( Mem pMem, int n, int preserve )
@@ -108,8 +108,8 @@ return rc;
       // TODO -- What do we want to do about this routine?
       //Debug.Assert( 1 >=
       //  ((pMem.zMalloc !=null )? 1 : 0) + //&& pMem.zMalloc==pMem.z) ? 1 : 0) +
-      //  (((pMem.flags & MEM_Dyn)!=0 && pMem.xDel!=null) ? 1 : 0) + 
-      //  ((pMem.flags & MEM_Ephem)!=0 ? 1 : 0) + 
+      //  (((pMem.flags & MEM_Dyn)!=0 && pMem.xDel!=null) ? 1 : 0) +
+      //  ((pMem.flags & MEM_Ephem)!=0 ? 1 : 0) +
       //  ((pMem.flags & MEM_Static)!=0 ? 1 : 0)
       //);
       //assert( (pMem->flags&MEM_RowSet)==0 );
@@ -124,7 +124,7 @@ return rc;
       }
       else
       {
-        //  sqlite3DbFree(pMem->db,ref pMem.zMalloc);
+        //  //sqlite3DbFree(pMem->db,ref pMem.zMalloc);
         pMem.z = "";//   sqlite3DbMallocRaw( pMem.db, n );
       }
       //}
@@ -278,7 +278,7 @@ return SQLITE_OK;
       /* For a Real or Integer, use sqlite3_snprintf() to produce the UTF-8
       ** string representation of the value. Then, if the required encoding
       ** is UTF-16le or UTF-16be do a translation.
-      ** 
+      **
       ** FIX ME: It would be better if sqlite3_snprintf() could do UTF-16.
       */
       if ( ( fg & MEM_Int ) != 0 )
@@ -324,7 +324,7 @@ return SQLITE_OK;
         ctx.pFunc = pFunc;
         pFunc.xFinalize( ctx );
         Debug.Assert( 0 == ( pMem.flags & MEM_Dyn ) && pMem.xDel == null );
-        //sqlite3DbFree(pMem.db,ref pMem.zMalloc);
+        ////sqlite3DbFree(pMem.db,ref pMem.zMalloc);
         ctx.s.CopyTo( pMem );//memcpy(pMem, &ctx.s, sizeof(ctx.s));
         rc = ctx.isError;
       }
@@ -371,7 +371,7 @@ return SQLITE_OK;
     static void sqlite3VdbeMemRelease( Mem p )
     {
       sqlite3VdbeMemReleaseExternal( p );
-      //sqlite3DbFree(p.db,ref p.zMalloc);
+      ////sqlite3DbFree(p.db,ref p.zMalloc);
       p.zBLOB = null;
       p.z = null;
       //p.zMalloc = null;
@@ -661,11 +661,11 @@ return SQLITE_OK;
       Debug.Assert( ( pMem.flags & MEM_RowSet ) == 0 );
       sqlite3VdbeMemRelease( pMem );
       //pMem.zMalloc = sqlite3DbMallocRaw( db, 64 );
-      if ( db.mallocFailed != 0 )
-      {
-        pMem.flags = MEM_Null;
-      }
-      else
+      //if ( db.mallocFailed != 0 )
+      //{
+      //  pMem.flags = MEM_Null;
+      //}
+      //else
       {
         //Debug.Assert( pMem.zMalloc );
         pMem.u.pRowSet = new RowSet( db, 5 );// sqlite3RowSetInit( db, pMem.zMalloc,
@@ -771,8 +771,8 @@ return SQLITE_OK;
     ** Change the value of a Mem to be a string or a BLOB.
     **
     ** The memory management strategy depends on the value of the xDel
-    ** parameter. If the value passed is SQLITE_TRANSIENT, then the 
-    ** string is copied into a (possibly existing) buffer managed by the 
+    ** parameter. If the value passed is SQLITE_TRANSIENT, then the
+    ** string is copied into a (possibly existing) buffer managed by the
     ** Mem structure. Otherwise, any existing buffer is freed and the
     ** pointer copied.
     **
@@ -1084,7 +1084,7 @@ return SQLITE_NOMEM;
       int available = 0; /* Number of bytes available on the local btree page */
       int rc = SQLITE_OK; /* Return code */
 
-      /* Note: the calls to BtreeKeyFetch() and DataFetch() below assert() 
+      /* Note: the calls to BtreeKeyFetch() and DataFetch() below assert()
       ** that both the BtShared and database handle mutexes are held. */
       Debug.Assert( ( pMem.flags & MEM_RowSet ) == 0 );
       if ( key )
@@ -1159,7 +1159,7 @@ return SQLITE_NOMEM;
       if ( ( pVal.flags & MEM_Str ) != 0 )
       {
         sqlite3VdbeChangeEncoding( pVal, enc & ~SQLITE_UTF16_ALIGNED );
-        if ( ( enc & SQLITE_UTF16_ALIGNED ) != 0 && 1 == ( 1 & ( pVal.z[0] ) ) )  //1==(1&SQLITE_PTR_TO_INT(pVal.z)) 
+        if ( ( enc & SQLITE_UTF16_ALIGNED ) != 0 && 1 == ( 1 & ( pVal.z[0] ) ) )  //1==(1&SQLITE_PTR_TO_INT(pVal.z))
         {
           Debug.Assert( ( pVal.flags & ( MEM_Ephem | MEM_Static ) ) != 0 );
           if ( sqlite3VdbeMemMakeWriteable( pVal ) != SQLITE_OK )
@@ -1176,7 +1176,8 @@ return SQLITE_NOMEM;
         //  assert( 0==(1&SQLITE_PTR_TO_INT(pVal->z)) );
       }
       Debug.Assert( pVal.enc == ( enc & ~SQLITE_UTF16_ALIGNED ) || pVal.db == null
-      || pVal.db.mallocFailed != 0 );
+      //|| pVal.db.mallocFailed != 0
+      );
       if ( pVal.enc == ( enc & ~SQLITE_UTF16_ALIGNED ) )
       {
         return pVal.z;
@@ -1291,8 +1292,8 @@ return SQLITE_NOMEM;
       return SQLITE_OK;
 
 no_mem:
-      db.mallocFailed = 1;
-      sqlite3DbFree( db, ref zVal );
+      //db.mallocFailed = 1;
+      //sqlite3DbFree( db, ref zVal );
       pVal = null;// sqlite3ValueFree(pVal);
       ppVal = null;
       return SQLITE_NOMEM;
@@ -1319,7 +1320,7 @@ no_mem:
     {
       if ( v == null ) return;
       sqlite3VdbeMemRelease( v );
-      sqlite3DbFree( v.db, ref v );
+      //sqlite3DbFree( v.db, ref v );
     }
 
     /*

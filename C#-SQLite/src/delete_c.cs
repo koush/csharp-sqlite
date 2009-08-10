@@ -27,7 +27,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library 
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
     **  $Header$
     *************************************************************************
@@ -70,15 +70,15 @@ namespace CS_SQLite3
       **   1) It is a virtual table and no implementation of the xUpdate method
       **      has been provided, or
       **   2) It is a system table (i.e. sqlite_master), this call is not
-      **      part of a nested parse and writable_schema pragma has not 
+      **      part of a nested parse and writable_schema pragma has not
       **      been specified.
       **
       ** In either case leave an error message in pParse and return non-zero.
       */
       if (
-        // ( IsVirtual(pTab) 
+        // ( IsVirtual(pTab)
         //  && sqlite3GetVTable(pParse.db, pTab).pMod.pModule.xUpdate==null )
-        //|| 
+        //||
       ( ( pTab.tabFlags & TF_Readonly ) != 0
       && ( pParse.db.flags & SQLITE_WriteSchema ) == 0
       && pParse.nested == 0 )
@@ -186,11 +186,11 @@ Debug.Assert( pOffset == null );
 return pWhere;
 }
 
-/* Generate a select expression tree to enforce the limit/offset 
+/* Generate a select expression tree to enforce the limit/offset
 ** term for the DELETE or UPDATE statement.  For example:
 **   DELETE FROM table_a WHERE col1=1 ORDER BY col2 LIMIT 1 OFFSET 1
 ** becomes:
-**   DELETE FROM table_a WHERE rowid IN ( 
+**   DELETE FROM table_a WHERE rowid IN (
 **     SELECT rowid FROM table_a WHERE col1=1 ORDER BY col2 LIMIT 1 OFFSET 1
 **   );
 */
@@ -209,7 +209,7 @@ goto limit_where_cleanup_2;
 }
 
 /* generate the SELECT expression tree. */
-pSelect = sqlite3SelectNew( pParse, pEList, pSelectSrc, pWhere, null, null, 
+pSelect = sqlite3SelectNew( pParse, pEList, pSelectSrc, pWhere, null, null,
 pOrderBy, 0, pLimit, pOffset );
 if( pSelect == null ) return null;
 
@@ -279,7 +279,7 @@ return null;
 
       sContext.pParse = null;
       db = pParse.db;
-      if ( pParse.nErr != 0 || db.mallocFailed != 0 )
+      if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
         goto delete_from_cleanup;
       }
@@ -475,7 +475,7 @@ sqlite3AuthContextPush(pParse, sContext, pTab.zName);
 
         if ( !isView )
         {
-          /* Open cursors for the table we are deleting from and 
+          /* Open cursors for the table we are deleting from and
           ** all its indices.
           */
           sqlite3OpenTableAndIndices( pParse, pTab, iCur, OP_OpenWrite );
@@ -566,7 +566,7 @@ sqlite3VdbeAddOp4(v, OP_VUpdate, 0, 1, iRowid, pVTab, P4_VTAB);
       }
 
       /*
-      ** Return the number of rows that were deleted. If this routine is 
+      ** Return the number of rows that were deleted. If this routine is
       ** generating code because of a call to sqlite3NestedParse(), do not
       ** invoke the callback function.
       */
