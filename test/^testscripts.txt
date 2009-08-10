@@ -10,8 +10,6 @@ source $testdir/tester.tcl
 # or enter TCL commands such as the ones that are listed 
 # after these comments
 
-source $testdir/tkt3718.test
-
 ##########################################################################################
 puts -nonewline "Press RETURN to exit..."; gets stdin; exit
 
