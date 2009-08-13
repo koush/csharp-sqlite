@@ -42,8 +42,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SQLiteDatabase.cs" />
+    <Compile Include="SQLiteVdbe.cs" />
     <Compile Include="src\alter_c.cs">
     </Compile>
     <Compile Include="src\analyze_c.cs">
