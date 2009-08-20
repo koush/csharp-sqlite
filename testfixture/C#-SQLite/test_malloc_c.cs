@@ -32,7 +32,7 @@ namespace CS_SQLite3
     ** This file contains code used to implement test interfaces to the
     ** memory allocation subsystem.
     **
-    ** $Id: test_malloc.c,v 1.54 2009/04/07 11:21:29 danielk1977 Exp $
+    ** $Id: test_malloc.c,v 1.55 2009/07/01 18:09:02 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -1103,22 +1103,25 @@ sqlite3MemdebugSettitle(zTitle);
     **
     ** Enable or disable memory status reporting using SQLITE_CONFIG_MEMSTATUS.
     */
-    //static int test_config_memstatus(
-    //  object  clientData,
-    //  Tcl_Interp interp,
-    //  int objc,
-    //  Tcl_Obj[] objv
-    //){
-    //  int enable, rc;
-    //   if( objc!=2 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, "BOOLEAN");
-    //     return TCL.TCL_ERROR;
-    //}
-    //  if( TCL.Tcl_GetBooleanFromObj(interp, objv[1], &enable) ) return TCL.TCL_ERROR;
-    //  rc = sqlite3_config(SQLITE_CONFIG_MEMSTATUS, enable);
-    //  TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
-    //  return TCL.TCL_OK;
-    //}
+    static int test_config_memstatus(
+      object clientData,
+      Tcl_Interp interp,
+      int objc,
+      Tcl_Obj[] objv
+    )
+    {
+      bool enable=false ;
+      int rc;
+      if ( objc != 2 )
+      {
+        TCL.Tcl_WrongNumArgs( interp, 1, objv, "BOOLEAN" );
+        return TCL.TCL_ERROR;
+      }
+      if ( TCL.Tcl_GetBooleanFromObj( interp, objv[1], ref enable ) ) return TCL.TCL_ERROR;
+      rc = sqlite3_config( SQLITE_CONFIG_MEMSTATUS, enable );
+      TCL.Tcl_SetObjResult( interp, TCL.Tcl_NewIntObj( rc ) );
+      return TCL.TCL_OK;
+    }
 
     /*
     ** Usage:    sqlite3_config_lookaside  SIZE  COUNT
@@ -1513,7 +1516,25 @@ new _aOp( "SQLITE_STATUS_PARSER_STACK",        SQLITE_STATUS_PARSER_STACK       
       return TCL.TCL_OK;
     }
 
-    /*
+/*
+** sqlite3_install_memsys3
+*/
+static int test_install_memsys3(
+    object clientData,
+    Tcl_Interp interp,
+    int objc,
+    Tcl_Obj[] objv
+){
+  int rc = SQLITE_MISUSE;
+#if SQLITE_ENABLE_MEMSYS3
+  const sqlite3_mem_methods *sqlite3MemGetMemsys3(void);
+  rc = sqlite3_config(SQLITE_CONFIG_MALLOC, sqlite3MemGetMemsys3());
+#endif
+  TCL.Tcl_SetResult(interp, sqlite3TestErrorName(rc), TCL.TCL_VOLATILE);
+  return TCL.TCL_OK;
+}
+
+  /*
     ** Register commands with the TCL interpreter.
     */
     static public int Sqlitetest_malloc_Init( Tcl_Interp interp )
@@ -1547,12 +1568,13 @@ new _aObjCmd( "sqlite3_status", test_status,0 ),
 //{ "sqlite3_db_status",          test_db_status                ,0 },
 new _aObjCmd( "install_malloc_faultsim",    test_install_malloc_faultsim  ,0),
 //{ "sqlite3_config_heap",        test_config_heap              ,0 },
-//{ "sqlite3_config_memstatus",   test_config_memstatus         ,0 },
+new _aObjCmd(  "sqlite3_config_memstatus",   test_config_memstatus         ,0 ),
 new _aObjCmd(  "sqlite3_config_lookaside",   test_config_lookaside         ,0 ),
 //{ "sqlite3_config_error",       test_config_error             ,0 },
 new _aObjCmd(  "sqlite3_db_config_lookaside",test_db_config_lookaside      ,0 ),
 //{ "sqlite3_dump_memsys3",       test_dump_memsys3             ,3 },
 //{ "sqlite3_dump_memsys5",       test_dump_memsys3             ,5 },
+new _aObjCmd(  "sqlite3_install_memsys3",    test_install_memsys3          ,0 ),
 };
       int i;
       for ( i = 0 ; i < aObjCmd.Length ; i++ )

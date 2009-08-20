@@ -28,7 +28,7 @@ namespace CS_SQLite3
     ** This file contains C code routines that are called by the parser
     ** to handle SELECT statements in SQLite.
     **
-    ** $Id: select.c,v 1.524 2009/06/12 03:27:27 drh Exp $
+    ** $Id: select.c,v 1.526 2009/08/01 15:09:58 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -1386,7 +1386,7 @@ sqlite3VdbeSetColName(v, i, COLNAME_COLUMN, zOrigCol, SQLITE_TRANSIENT);
             string zNewName;
             //zName[nName] = 0;
             zNewName = sqlite3MPrintf( db, "%s:%d", zName.Substring( 0, nName ), ++cnt );
-            ////sqlite3DbFree(db, zName);
+            //sqlite3DbFree(db, zName);
             zName = zNewName;
             j = -1;
             if ( zName == "" ) break;
@@ -3140,11 +3140,11 @@ break;
         {
           Debug.Assert( pParent != p );  /* 2nd and subsequent times through the loop */
           pSrc = pParent.pSrc = sqlite3SrcListAppend( db, null, null, null );
-          if ( pSrc == null )
-          {
-            //Debug.Assert( db.mallocFailed != 0 );
-            break;
-          }
+          //if ( pSrc == null )
+          //{
+          //  //Debug.Assert( db.mallocFailed != 0 );
+          //  break;
+          //}
         }
 
         /* The subquery uses a single slot of the FROM clause of the outer

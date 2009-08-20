@@ -37,7 +37,7 @@ namespace CS_SQLite3
     ** file simultaneously, or one process from reading the database while
     ** another is writing.
     **
-    ** @(#) $Id: pager.c,v 1.603 2009/06/26 12:15:23 drh Exp $
+    ** @(#) $Id: pager.c,v 1.629 2009/08/10 17:48:57 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -148,13 +148,13 @@ if( (O=(char*)(P->xCodec(P->pCodec,D,N,X)))==0 ){ E; }
 #endif
 
     /*
-** The maximum allowed sector size. 16MB. If the xSectorsize() method
+** The maximum allowed sector size. 64KiB. If the xSectorsize() method 
 ** returns a value larger than this, then MAX_SECTOR_SIZE is used instead.
 ** This could conceivably cause corruption following a power failure on
 ** such a system. This is currently an undocumented limit.
 */
-    //#define MAX_SECTOR_SIZE 0x0100000
-    const int MAX_SECTOR_SIZE = 0x0100000;
+    //#define MAX_SECTOR_SIZE 0x10000
+    const int MAX_SECTOR_SIZE = 0x10000;
 
     /*
     ** An instance of the following structure is allocated for each active
@@ -341,9 +341,11 @@ if( (O=(char*)(P->xCodec(P->pCodec,D,N,X)))==0 ){ E; }
       public string zJournal;            /* Name of the journal file */
       public dxBusyHandler xBusyHandler; /* Function to call when busy */
       public object pBusyHandlerArg;     /* Context argument for xBusyHandler */
-#if SQLITE_TEST
+#if SQLITE_TEST || DEBUG
       public int nHit, nMiss;              /* Cache hits and missing */
       public int nRead, nWrite;            /* Database pages read/written */
+#else
+      public int nHit;
 #endif
       public dxReiniter xReiniter; //(DbPage*,int);/* Call this routine when reloading pages */
 #if SQLITE_HAS_CODEC
@@ -370,6 +372,7 @@ void *pCodec;               /* First argument to xCodec... methods */
     static void PAGER_INCR( ref int v ) { v++; }
 #else
 //# define PAGER_INCR(v)
+    static void PAGER_INCR(ref int v) {}
 #endif
 
     /*
@@ -451,7 +454,7 @@ void *pCodec;               /* First argument to xCodec... methods */
       return true;
     }
 #else
-static bool assert_pager_state( Pager pPager ) { return true; }
+    static bool assert_pager_state(Pager pPager) { return true; }
 #endif
 
     /*
@@ -1268,7 +1271,7 @@ pPg.pageHash==pager_pagehash(pPg) );
         /* If the file is unlocked, somebody else might change it. The
         ** values stored in Pager.dbSize etc. might become invalid if
         ** this happens. TODO: Really, this doesn't need to be cleared
-        ** until the change-counter check fails in pagerSharedLock().
+        ** until the change-counter check fails in PagerSharedLock().
         */
         pPager.dbSizeValid = false;
         rc = osUnlock( pPager.fd, NO_LOCK );
@@ -1317,28 +1320,22 @@ pPg.pageHash==pager_pagehash(pPg) );
     static int pager_error( Pager pPager, int rc )
     {
       int rc2 = rc & 0xff;
+      Debug.Assert(  rc==SQLITE_OK ||
+#if SQLITE_OMIT_MEMORYDB
+0==MEMDB
+#else
+ 0 == pPager.memDb
+#endif
+ );
       Debug.Assert(
       pPager.errCode == SQLITE_FULL ||
       pPager.errCode == SQLITE_OK ||
       ( pPager.errCode & 0xff ) == SQLITE_IOERR
       );
       if (
-      rc2 == SQLITE_FULL ||
-      rc2 == SQLITE_IOERR ||
-      rc2 == SQLITE_CORRUPT
-      )
+      rc2 == SQLITE_FULL || rc2 == SQLITE_IOERR )
       {
         pPager.errCode = rc;
-        if ( pPager.state == PAGER_UNLOCK
-        && sqlite3PcacheRefCount( pPager.pPCache ) == 0
-        )
-        {
-          /* If the pager is already unlocked, call pager_unlock() now to
-          ** clear the error state and ensure that the pager-cache is
-          ** completely empty.
-          */
-          pager_unlock( pPager );
-        }
       }
       return rc;
     }
@@ -1440,23 +1437,11 @@ pPg.pageHash==pager_pagehash(pPg) );
       if ( isOpen( pPager.jfd ) )
       {
 
-        /* TODO: There's a problem here if a journal-file was opened in MEMORY
-        ** mode and then the journal-mode is changed to TRUNCATE or PERSIST
-        ** during the transaction. This code should be changed to assume
-        ** that the journal mode has not changed since the transaction was
-        ** started. And the sqlite3PagerJournalMode() function should be
-        ** changed to make sure that this is the case too.
-        */
-
         /* Finalize the journal file. */
-        if ( pPager.journalMode == PAGER_JOURNALMODE_MEMORY )
+        if ( sqlite3IsMemJournal( pPager.jfd ) )
         {
-          bool isMemoryJournal = sqlite3IsMemJournal( pPager.jfd );
+          Debug.Assert( pPager.journalMode == PAGER_JOURNALMODE_MEMORY );
           sqlite3OsClose( pPager.jfd );
-          if ( !isMemoryJournal )
-          {
-            rc = sqlite3OsDelete( pPager.pVfs, pPager.zJournal, 0 );
-          }
         }
         else if ( pPager.journalMode == PAGER_JOURNALMODE_TRUNCATE )
         {
@@ -1482,9 +1467,15 @@ pPg.pageHash==pager_pagehash(pPg) );
         }
         else
         {
-          Debug.Assert( pPager.journalMode == PAGER_JOURNALMODE_DELETE || rc != 0 );
+          /* This branch may be executed with Pager.journalMode==MEMORY if
+          ** a hot-journal was just rolled back. In this case the journal
+          ** file should be closed and deleted. If this connection writes to
+          ** the database file, it will do so using an in-memory journal.  */
+          Debug.Assert( pPager.journalMode == PAGER_JOURNALMODE_DELETE
+               || pPager.journalMode == PAGER_JOURNALMODE_MEMORY
+          );
           sqlite3OsClose( pPager.jfd );
-          if ( rc == SQLITE_OK && !pPager.tempFile )
+          if ( !pPager.tempFile )
           {
             rc = sqlite3OsDelete( pPager.pVfs, pPager.zJournal, 0 );
           }
@@ -1770,10 +1761,7 @@ CODEC1( pPager, aData, pgno, 0, rc = SQLITE_NOMEM );
         */
         byte[] pData = pPg.pData;
         Buffer.BlockCopy( aData, 0, pData, 0, pPager.pageSize );// memcpy(pData, aData, pPager.pageSize);
-        if ( pPager.xReiniter != null )
-        {
-          pPager.xReiniter( pPg );
-        }
+        pPager.xReiniter( pPg );
         if ( isMainJrnl != 0 && ( 0 == isSavepnt || pOffset <= pPager.journalHdr ) )
         {
           /* If the contents of this page were just restored from the main
@@ -1816,92 +1804,49 @@ CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
       return rc;
     }
 
-#if !(NDEBUG) || (SQLITE_COVERAGE_TEST)
     /*
-** This routine looks ahead into the main journal file and determines
-** whether or not the next record (the record that begins at file
-** offset pPager.journalOff) is a well-formed page record consisting
-** of a valid page number, pPage.pageSize bytes of content, followed
-** by a valid checksum.
-**
-** The pager never needs to know this in order to do its job.   This
-** routine is only used from with Debug.Assert() and testcase() macros.
-*/
-    static bool pagerNextJournalPageIsValid( Pager pPager )
-    {
-      Pgno pgno = 0;       /* The page number of the page */
-      u32 cksum = 0;       /* The page checksum */
-      int rc;              /* Return code from read operations */
-      sqlite3_file fd;     /* The file descriptor from which we are reading */
-      u8[] aData;          /* Content of the page */
-
-      /* Read the page number header */
-      fd = pPager.jfd;
-      rc = read32bits( fd, pPager.journalOff, ref pgno );
-      if ( rc != SQLITE_OK ) { return false; }                                 /*NO_TEST*/
-      if ( pgno == 0 || pgno == PAGER_MJ_PGNO( pPager ) ) { return false; }        /*NO_TEST*/
-      if ( pgno > (Pgno)pPager.dbSize ) { return false; }                      /*NO_TEST*/
-
-      /* Read the checksum */
-      rc = read32bits( fd, pPager.journalOff + pPager.pageSize + 4, ref cksum );
-      if ( rc != SQLITE_OK ) { return false; }                                  /*NO_TEST*/
-
-      /* Read the data and verify the checksum */
-      aData = pPager.pTmpSpace;
-      rc = sqlite3OsRead( fd, aData, pPager.pageSize, pPager.journalOff + 4 );
-      if ( rc != SQLITE_OK ) { return false; }                                  /*NO_TEST*/
-      if ( pager_cksum( pPager, aData ) != cksum ) { return false; }              /*NO_TEST*/
-
-      /* Reach this point only if the page is valid */
-      return true;
-    }
-#else
-static bool pagerNextJournalPageIsValid( Pager pPager ) { return true; }
-#endif //* !defined(NDEBUG) || defined(SQLITE_COVERAGE_TEST) */
-
-    /*
-** Parameter zMaster is the name of a master journal file. A single journal
-** file that referred to the master journal file has just been rolled back.
-** This routine checks if it is possible to delete the master journal file,
-** and does so if it is.
-**
-** Argument zMaster may point to Pager.pTmpSpace. So that buffer is not
-** available for use within this function.
-**
-** When a master journal file is created, it is populated with the names
-** of all of its child journals, one after another, formatted as utf-8
-** encoded text. The end of each child journal file is marked with a
-** nul-terminator byte (0x00). i.e. the entire contents of a master journal
-** file for a transaction involving two databases might be:
-**
-**   "/home/bill/a.db-journal\x00/home/bill/b.db-journal\x00"
-**
-** A master journal file may only be deleted once all of its child
-** journals have been rolled back.
-**
-** This function reads the contents of the master-journal file into
-** memory and loops through each of the child journal names. For
-** each child journal, it checks if:
-**
-**   * if the child journal exists, and if so
-**   * if the child journal contains a reference to master journal
-**     file zMaster
-**
-** If a child journal can be found that matches both of the criteria
-** above, this function returns without doing anything. Otherwise, if
-** no such child journal can be found, file zMaster is deleted from
-** the file-system using sqlite3OsDelete().
-**
-** If an IO error within this function, an error code is returned. This
-** function allocates memory by calling sqlite3Malloc(). If an allocation
-** fails, SQLITE_NOMEM is returned. Otherwise, if no IO or malloc errors
-** occur, SQLITE_OK is returned.
-**
-** TODO: This function allocates a single block of memory to load
-** the entire contents of the master journal file. This could be
-** a couple of kilobytes or so - potentially larger than the page
-** size.
-*/
+    ** Parameter zMaster is the name of a master journal file. A single journal
+    ** file that referred to the master journal file has just been rolled back.
+    ** This routine checks if it is possible to delete the master journal file,
+    ** and does so if it is.
+    **
+    ** Argument zMaster may point to Pager.pTmpSpace. So that buffer is not
+    ** available for use within this function.
+    **
+    ** When a master journal file is created, it is populated with the names
+    ** of all of its child journals, one after another, formatted as utf-8
+    ** encoded text. The end of each child journal file is marked with a
+    ** nul-terminator byte (0x00). i.e. the entire contents of a master journal
+    ** file for a transaction involving two databases might be:
+    **
+    **   "/home/bill/a.db-journal\x00/home/bill/b.db-journal\x00"
+    **
+    ** A master journal file may only be deleted once all of its child
+    ** journals have been rolled back.
+    **
+    ** This function reads the contents of the master-journal file into
+    ** memory and loops through each of the child journal names. For
+    ** each child journal, it checks if:
+    **
+    **   * if the child journal exists, and if so
+    **   * if the child journal contains a reference to master journal
+    **     file zMaster
+    **
+    ** If a child journal can be found that matches both of the criteria
+    ** above, this function returns without doing anything. Otherwise, if
+    ** no such child journal can be found, file zMaster is deleted from
+    ** the file-system using sqlite3OsDelete().
+    **
+    ** If an IO error within this function, an error code is returned. This
+    ** function allocates memory by calling sqlite3Malloc(). If an allocation
+    ** fails, SQLITE_NOMEM is returned. Otherwise, if no IO or malloc errors
+    ** occur, SQLITE_OK is returned.
+    **
+    ** TODO: This function allocates a single block of memory to load
+    ** the entire contents of the master journal file. This could be
+    ** a couple of kilobytes or so - potentially larger than the page
+    ** size.
+    */
     static int pager_delmaster( Pager pPager, string zMaster )
     {
       sqlite3_vfs pVfs = pPager.pVfs;
@@ -1924,7 +1869,7 @@ static bool pagerNextJournalPageIsValid( Pager pPager ) { return true; }
       {
         const int flags = ( SQLITE_OPEN_READONLY | SQLITE_OPEN_MASTER_JOURNAL );
         int iDummy = 0;
-        rc = sqlite3OsOpen( pVfs, zMaster, ref pMaster, flags, ref  iDummy );
+        rc = sqlite3OsOpen( pVfs, zMaster, pMaster, flags, ref  iDummy );
       }
       if ( rc != SQLITE_OK ) goto delmaster_out;
 
@@ -1941,15 +1886,17 @@ static bool pagerNextJournalPageIsValid( Pager pPager ) { return true; }
       //  /* Load the entire master journal file into space obtained from
       //  ** sqlite3_malloc() and pointed to by zMasterJournal.
       //  */
-      //  zMasterJournal = (char*)sqlite3Malloc( (int)nMasterJournal + nMasterPtr );
+      //  zMasterJournal = sqlite3Malloc((int)nMasterJournal + nMasterPtr + 1);
       //  if ( !zMasterJournal )
       //  {
       //    rc = SQLITE_NOMEM;
       //    goto delmaster_out;
       //  }
-      //  zMasterPtr = &zMasterJournal[nMasterJournal];
+      //  zMasterPtr = &zMasterJournal[nMasterJournal+1];
       //  rc = sqlite3OsRead( pMaster, zMasterJournal, (int)nMasterJournal, 0 );
       //  if ( rc != SQLITE_OK ) goto delmaster_out;
+      //  zMasterJournal[nMasterJournal] = 0;
+
 
       //  zJournal = zMasterJournal;
       //  while ( ( zJournal - zMasterJournal ) < nMasterJournal )
@@ -2254,11 +2201,6 @@ delmaster_out:
         ** pages that need to be rolled back and that the number of pages
         ** should be computed based on the journal file size.
         */
-        testcase( nRec == 0 && 0 == isHot
-        && pPager.journalHdr + JOURNAL_HDR_SZ( pPager ) != pPager.journalOff
-        && ( ( szJ - pPager.journalOff ) / JOURNAL_PG_SZ( pPager ) ) > 0
-        && pagerNextJournalPageIsValid( pPager )
-        );
         if ( nRec == 0 && 0 == isHot &&
         pPager.journalHdr + JOURNAL_HDR_SZ( pPager ) == pPager.journalOff )
         {
@@ -2470,11 +2412,6 @@ end_playback:
         ** test is related to ticket #2565.  See the discussion in the
         ** pager_playback() function for additional information.
         */
-        Debug.Assert( !( nJRec == 0
-        && pPager.journalHdr + JOURNAL_HDR_SZ( pPager ) != pPager.journalOff
-        && ( ( szJ - pPager.journalOff ) / JOURNAL_PG_SZ( pPager ) ) > 0
-        && pagerNextJournalPageIsValid( pPager ) )
-        );
         if ( nJRec == 0
         && pPager.journalHdr + JOURNAL_HDR_SZ( pPager ) == pPager.journalOff
         )
@@ -2596,7 +2533,7 @@ end_playback:
       vfsFlags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
       SQLITE_OPEN_EXCLUSIVE | SQLITE_OPEN_DELETEONCLOSE;
       int dummy = 0;
-      rc = sqlite3OsOpen( pPager.pVfs, null, ref pFile, vfsFlags, ref dummy );
+      rc = sqlite3OsOpen( pPager.pVfs, null, pFile, vfsFlags, ref dummy );
       Debug.Assert( rc != SQLITE_OK || isOpen( pFile ) );
       return rc;
     }
@@ -2632,18 +2569,6 @@ end_playback:
     {
       pPager.xBusyHandler = xBusyHandler;
       pPager.pBusyHandlerArg = pBusyHandlerArg;
-    }
-
-    /*
-    ** Set the reinitializer for this pager. If not NULL, the reinitializer
-    ** is called when the content of a page in cache is modified (restored)
-    ** as part of a transaction or savepoint rollback. The callback gives
-    ** higher-level code an opportunity to restore the EXTRA section to
-    ** agree with the restored page data.
-    */
-    static void sqlite3PagerSetReiniter( Pager pPager, dxReiniter xReinit )
-    {
-      pPager.xReiniter = xReinit;
     }
 
     /*
@@ -2699,22 +2624,22 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
       {
         int pageSize = pPageSize;
         Debug.Assert( pageSize == 0 || ( pageSize >= 512 && pageSize <= SQLITE_MAX_PAGE_SIZE ) );
-        if ( pageSize != 0 && pageSize != pPager.pageSize
-        && ( pPager.memDb == 0 || pPager.dbSize == 0 )
-        && sqlite3PcacheRefCount( pPager.pPCache ) == 0
-        )
+        if ( ( pPager.memDb == 0 || pPager.dbSize == 0 )
+         && sqlite3PcacheRefCount( pPager.pPCache ) == 0
+         && pageSize !=0 && pageSize != pPager.pageSize
+            )
         {
-          byte[] pNew = new byte[pageSize]; //(char *)sqlite3PageMalloc(pageSize);
-          if ( pNew == null )
-          {
-            rc = SQLITE_NOMEM;
-          }
-          else
+          //PgHdr pNew = sqlite3PageMalloc( pageSize );
+          //if ( pNew == null )
+          //{
+          //  rc = SQLITE_NOMEM;
+          //}
+          //else
           {
             pager_reset( pPager );
             pPager.pageSize = pageSize;
-            sqlite3PageFree( ref  pPager.pTmpSpace );
-            pPager.pTmpSpace = pNew;
+            //sqlite3PageFree( ref  pPager.pTmpSpace );
+            pPager.pTmpSpace = new byte[pageSize];// pNew;
             sqlite3PcacheSetPageSize( pPager.pPCache, pageSize );
           }
         }
@@ -2943,7 +2868,45 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
       return rc;
     }
 
-    /*
+/*
+** Function assertTruncateConstraint(pPager) checks that one of the 
+** following is true for all dirty pages currently in the page-cache:
+**
+**   a) The page number is less than or equal to the size of the 
+**      current database image, in pages, OR
+**
+**   b) if the page content were written at this time, it would not
+**      be necessary to write the current content out to the sub-journal
+**      (as determined by function subjRequiresPage()).
+**
+** If the condition asserted by this function were not true, and the
+** dirty page were to be discarded from the cache via the pagerStress()
+** routine, pagerStress() would not write the current page content to
+** the database file. If a savepoint transaction were rolled back after
+** this happened, the correct behaviour would be to restore the current
+** content of the page. However, since this content is not present in either
+** the database file or the portion of the rollback journal and 
+** sub-journal rolled back the content could not be restored and the
+** database image would become corrupt. It is therefore fortunate that 
+** this circumstance cannot arise.
+*/
+#if SQLITE_DEBUG
+    static void assertTruncateConstraintCb( PgHdr pPg )
+    {
+      Debug.Assert( ( pPg.flags & PGHDR_DIRTY ) != 0 );
+      Debug.Assert( !subjRequiresPage( pPg ) || pPg.pgno <= pPg.pPager.dbSize );
+    }
+    static void assertTruncateConstraint( Pager pPager )
+    {
+      sqlite3PcacheIterateDirty( pPager.pPCache, assertTruncateConstraintCb );
+    }
+#else
+//# define assertTruncateConstraint(pPager)
+    static void assertTruncateConstraintCb(PgHdr pPg) { }
+    static void assertTruncateConstraint(Pager pPager) { }
+#endif
+
+/*
     ** Truncate the in-memory database file image to nPage pages. This
     ** function does not actually modify the database file on disk. It
     ** just sets the internal state of the pager object so that the
@@ -2955,6 +2918,7 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
       Debug.Assert( pPager.dbSize >= nPage );
       Debug.Assert( pPager.state >= PAGER_RESERVED );
       pPager.dbSize = nPage;
+      assertTruncateConstraint( pPager );
     }
 
     /*
@@ -3217,7 +3181,7 @@ static Pgno sqlite3PagerPagenumber( DbPage pPg )    {      return pPg.pgno;    }
       Pager pPager;                        /* Pager object */
       int rc;                              /* Return code */
 
-      if ( pList == null ) return SQLITE_OK;
+      if (NEVER( pList == null )) return SQLITE_OK;
       pPager = pList.pPager;
 
       /* At this point there may be either a RESERVED or EXCLUSIVE lock on the
@@ -3348,7 +3312,6 @@ pList.pageHash = pager_pagehash(pList);
         pPager.nSubRec++;
         Debug.Assert( pPager.nSavepoint > 0 );
         rc = addToSavepointBitvecs( pPager, pPg.pgno );
-        testcase( rc != SQLITE_OK );
       }
       return rc;
     }
@@ -3393,7 +3356,9 @@ pList.pageHash = pager_pagehash(pList);
       ** Similarly, if the pager has already entered the error state, do not
       ** try to write the contents of pPg to disk.
       */
-      if ( pPager.errCode != 0 || ( pPager.doNotSync && ( pPg.flags & PGHDR_NEED_SYNC ) != 0 ) )
+      if ( NEVER( pPager.errCode !=0)
+       || ( pPager.doNotSync && (pPg.flags & PGHDR_NEED_SYNC )!=0)
+      )
       {
         return SQLITE_OK;
       }
@@ -3439,7 +3404,9 @@ pList.pageHash = pager_pagehash(pList);
       ** be restored to its current value when the "ROLLBACK TO sp" is
       ** executed.
       */
-      if ( rc == SQLITE_OK && pPg.pgno > pPager.dbSize && subjRequiresPage( pPg ) )
+      if ( NEVER(
+           rc == SQLITE_OK && pPg.pgno > pPager.dbSize && subjRequiresPage( pPg )
+       ) )
       {
         rc = subjournalPage( pPg );
       }
@@ -3498,7 +3465,8 @@ pList.pageHash = pager_pagehash(pList);
     string zFilename,        /* Name of the database file to open */
     int nExtra,              /* Extra bytes append to each in-memory page */
     int flags,               /* flags controlling this file */
-    int vfsFlags             /* flags passed through to sqlite3_vfs.xOpen() */
+    int vfsFlags,            /* flags passed through to sqlite3_vfs.xOpen() */
+    dxReiniter xReinit       /* Function to reinitialize pages */  
     )
     {
       u8 pPtr;
@@ -3620,6 +3588,7 @@ pList.pageHash = pager_pagehash(pList);
         //memcpy(pPager.zJournal, zPathname, nPathname);
         //memcpy(&pPager.zJournal[nPathname], "-journal", 8);
         pPager.zJournal = pPager.zFilename + "-journal";
+        if ( pPager.zFilename.Length==0) pPager.zJournal = "";
         //sqlite3_free( ref zPathname );
       }
       else
@@ -3634,7 +3603,7 @@ pList.pageHash = pager_pagehash(pList);
       if (!String.IsNullOrEmpty(zFilename) && 0 == memDb)
       {
         int fout = 0;                    /* VFS flags returned by xOpen() */
-        rc = sqlite3OsOpen( pVfs, pPager.zFilename, ref pPager.fd, vfsFlags, ref fout );
+        rc = sqlite3OsOpen( pVfs, pPager.zFilename, pPager.fd, vfsFlags, ref fout );
         readOnly = ( fout & SQLITE_OPEN_READONLY ) != 0;
 
         /* If the file was successfully opened for read/write access,
@@ -3742,7 +3711,8 @@ szPageDflt = ii;
       pPager.memDb = memDb;
       pPager.readOnly = readOnly;
       /* pPager.needSync = 0; */
-      pPager.noSync = ( pPager.tempFile || !useJournal );
+      Debug.Assert( useJournal || pPager.tempFile );
+      pPager.noSync = pPager.tempFile;
       pPager.fullSync = pPager.noSync;
       pPager.sync_flags = SQLITE_SYNC_NORMAL;
       /* pPager.pFirst = 0; */
@@ -3752,12 +3722,17 @@ szPageDflt = ii;
       pPager.journalSizeLimit = SQLITE_DEFAULT_JOURNAL_SIZE_LIMIT;
       Debug.Assert( isOpen( pPager.fd ) || tempFile != 0 );
       setSectorSize( pPager );
-      if ( memDb!=0 )
+      if ( !useJournal )
+      {
+        pPager.journalMode = PAGER_JOURNALMODE_OFF;
+      }
+      else if ( memDb != 0 )
       {
         pPager.journalMode = PAGER_JOURNALMODE_MEMORY;
       }
       /* pPager.xBusyHandler = 0; */
       /* pPager.pBusyHandlerArg = 0; */
+      pPager.xReiniter = xReinit;
       /* memset(pPager.aHash, 0, sizeof(pPager.aHash)); */
       ppPager = pPager;
       return SQLITE_OK;
@@ -3803,6 +3778,7 @@ szPageDflt = ii;
       int exists = 0;               /* True if a journal file is present */
       Debug.Assert( pPager != null );
       Debug.Assert( pPager.useJournal != 0 );
+      Debug.Assert( pPager.state <= PAGER_SHARED );
 
       pExists = 0;
 
@@ -3836,15 +3812,10 @@ szPageDflt = ii;
             if ( nPage == 0 )
             {
               sqlite3BeginBenignMalloc();
-              if ( pPager.state >= PAGER_RESERVED
-              || sqlite3OsLock( pPager.fd, RESERVED_LOCK ) == SQLITE_OK )
+              if ( sqlite3OsLock( pPager.fd, RESERVED_LOCK ) == SQLITE_OK )
               {
                 sqlite3OsDelete( pVfs, pPager.zJournal, 0 );
-                Debug.Assert( pPager.state >= PAGER_SHARED );
-                if ( pPager.state == PAGER_SHARED )
-                {
-                  sqlite3OsUnlock( pPager.fd, SHARED_LOCK );
-                }
+                sqlite3OsUnlock( pPager.fd, SHARED_LOCK );
               }
               sqlite3EndBenignMalloc();
             }
@@ -3857,7 +3828,7 @@ szPageDflt = ii;
               ** it can be ignored.
               */
               int f = SQLITE_OPEN_READONLY | SQLITE_OPEN_MAIN_JOURNAL;
-              rc = sqlite3OsOpen( pVfs, pPager.zJournal, ref pPager.jfd, f, ref f );
+              rc = sqlite3OsOpen( pVfs, pPager.zJournal, pPager.jfd, f, ref f );
               if ( rc == SQLITE_OK )
               {
                 u8[] first = new u8[1];
@@ -3911,8 +3882,9 @@ szPageDflt = ii;
 #if SQLITE_OMIT_MEMORYDB
 Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
 #endif
+      Debug.Assert( isOpen( pPager.fd ) );
       Debug.Assert( pPager.fd.pMethods != null || pPager.tempFile );
-      if ( !isOpen( pPager.fd ) )
+      if ( NEVER(!isOpen( pPager.fd ) ))
       {
         Debug.Assert( pPager.tempFile );
         pPg.pData = new u8[pPager.pageSize];//memset(pPg->pData, 0, pPager.pageSize);
@@ -3949,10 +3921,12 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
 
 
     /*
-    ** This function is called whenever the upper layer requests a database
-    ** page is requested, before the cache is checked for a suitable page
-    ** or any data is read from the database. It performs the following
-    ** two functions:
+    ** This function is called to obtain a shared lock on the database file.
+    ** It is illegal to call sqlite3PagerAcquire() until after this function
+    ** has been successfully called. If a shared-lock is already held when
+    ** this function is called, it is a no-op.
+    **
+    ** The following operations are also performed by this function.
     **
     **   1) If the pager is currently in PAGER_UNLOCK state (no lock held
     **      on the database file), then an attempt is made to obtain a
@@ -3978,23 +3952,12 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
     ** IO error occurs while locking the database, checking for a hot-journal
     ** file or rolling back a journal file, the IO error code is returned.
     */
-    static int pagerSharedLock( Pager pPager )
+    static int sqlite3PagerSharedLock( Pager pPager )
     {
       int rc = SQLITE_OK;               /* Return code */
       bool isErrorReset = false;        /* True if recovering from error state */
 
-      /* If this database has no outstanding page references and is in an
-      ** error-state, this is a chance to clear the error. Discard the
-      ** contents of the pager-cache and rollback any hot journal in the
-      ** file-system.
-      */
-      if ( 0 ==
-#if SQLITE_OMIT_MEMORYDB
- MEMDB
-#else
- pPager.memDb
-#endif
- && sqlite3PcacheRefCount( pPager.pPCache ) == 0 && pPager.errCode != 0 )
+      if ( pPager.errCode != 0 )
       {
         if ( isOpen( pPager.jfd ) || !String.IsNullOrEmpty( pPager.zJournal ) )
         {
@@ -4002,15 +3965,6 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
         }
         pPager.errCode = SQLITE_OK;
         pager_reset( pPager );
-      }
-
-      /* If the pager is still in an error state, do not proceed. The error
-      ** state will be cleared at some point in the future when all page
-      ** references are dropped and the cache can be discarded.
-      */
-      if ( pPager.errCode != 0 && pPager.errCode != SQLITE_FULL )
-      {
-        return pPager.errCode;
       }
 
       if ( pPager.state == PAGER_UNLOCK || isErrorReset )
@@ -4025,7 +3979,12 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
 #endif
  );
         Debug.Assert( sqlite3PcacheRefCount( pPager.pPCache ) == 0 );
-        if ( 0 == pPager.noReadlock )
+        if ( pPager.noReadlock != 0 )
+        {
+          Debug.Assert( pPager.readOnly );
+          pPager.state = PAGER_SHARED;
+        }
+        else
         {
           rc = pager_wait_on_lock( pPager, SHARED_LOCK );
           if ( rc != SQLITE_OK )
@@ -4034,10 +3993,6 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
             return pager_error( pPager, rc );
           }
         }
-        else if ( pPager.state == PAGER_UNLOCK )
-        {
-          pPager.state = PAGER_SHARED;
-        }
         Debug.Assert( pPager.state >= SHARED_LOCK );
 
         /* If a journal file exists, and there is no RESERVED lock on the
@@ -4045,6 +4000,7 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
         */
         if ( !isErrorReset )
         {
+          Debug.Assert( pPager.state <= PAGER_SHARED );
           rc = hasHotJournal( pPager, ref isHotJournal );
           if ( rc != SQLITE_OK )
           {
@@ -4092,7 +4048,7 @@ CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
                 int fout = 0;
                 int f = SQLITE_OPEN_READWRITE | SQLITE_OPEN_MAIN_JOURNAL;
                 Debug.Assert( !pPager.tempFile );
-                rc = sqlite3OsOpen( pVfs, pPager.zJournal, ref pPager.jfd, f, ref fout );
+                rc = sqlite3OsOpen( pVfs, pPager.zJournal, pPager.jfd, f, ref fout );
                 Debug.Assert( rc != SQLITE_OK || isOpen( pPager.jfd ) );
                 if ( rc == SQLITE_OK && ( fout & SQLITE_OPEN_READONLY ) != 0 )
                 {
@@ -4222,27 +4178,9 @@ failed:
     }
 
     /*
-    ** Drop a page from the cache using sqlite3PcacheDrop().
-    **
-    ** If this means there are now no pages with references to them, a rollback
-    ** occurs and the lock on the database is removed.
-    */
-    static void pagerDropPage( DbPage pPg )
-    {
-      Pager pPager = pPg.pPager;
-      sqlite3PcacheDrop( pPg );
-      pagerUnlockIfUnused( pPager );
-    }
-
-    /*
     ** Acquire a reference to page number pgno in pager pPager (a page
     ** reference has type DbPage*). If the requested reference is
     ** successfully obtained, it is copied to *ppPage and SQLITE_OK returned.
-    **
-    ** This function calls pagerSharedLock() to obtain a SHARED lock on
-    ** the database file if such a lock or greater is not already held.
-    ** This may cause hot-journal rollback or a cache purge. See comments
-    ** above function pagerSharedLock() for details.
     **
     ** If the requested page is already in the cache, it is returned.
     ** Otherwise, a new page object is allocated and populated with data
@@ -4309,18 +4247,12 @@ failed:
     u8 noContent     /* Do not bother reading content from disk if true */
     )
     {
-      PgHdr pPg = null;
       int rc;
+      PgHdr pPg = null;
 
       Debug.Assert( assert_pager_state( pPager ) );
-      Debug.Assert( pPager.state == PAGER_UNLOCK
-      || sqlite3PcacheRefCount( pPager.pPCache ) > 0
-      || pgno == 1
-      );
-      /* The maximum page number is 2^31. Return SQLITE_CORRUPT if a page
-      ** number greater than this, or zero, is requested.
-      */
-      if ( pgno > PAGER_MAX_PGNO || pgno == 0 || pgno == PAGER_MJ_PGNO( pPager ) )
+      Debug.Assert( pPager.state > PAGER_UNLOCK );
+      if ( pgno == 0 )
       {
 #if SQLITE_DEBUG
         return SQLITE_CORRUPT_BKPT();
@@ -4329,76 +4261,88 @@ return SQLITE_CORRUPT_BKPT;
 #endif
       }
 
-      /* Make sure we have not hit any critical errors.
-      */
-      Debug.Assert( pPager != null );
-      ppPage = null;
+  /* If the pager is in the error state, return an error immediately. 
+  ** Otherwise, request the page from the PCache layer. */
+  if( pPager.errCode!=SQLITE_OK && pPager.errCode!=SQLITE_FULL ){
+    rc = pPager.errCode;
+  }else{
+    rc = sqlite3PcacheFetch(pPager.pPCache, pgno, 1,ref  ppPage);
+  }
 
-      /* If this is the first page accessed, then get a SHARED lock
-      ** on the database file. pagerSharedLock() is a no-op if
-      ** a database lock is already held.
-      */
-      rc = pagerSharedLock( pPager );
-      if ( rc != SQLITE_OK )
-      {
-        return rc;
-      }
-      Debug.Assert( pPager.state != PAGER_UNLOCK );
+  if( rc!=SQLITE_OK ){
+    /* Either the call to sqlite3PcacheFetch() returned an error or the
+    ** pager was already in the error-state when this function was called.
+    ** Set pPg to 0 and jump to the exception handler.  */
+    pPg = null;
+    goto pager_acquire_err;
+  }
+  Debug.Assert( (ppPage).pgno==pgno );
+  Debug.Assert( (ppPage).pPager==pPager || (ppPage).pPager==null );
 
-      rc = sqlite3PcacheFetch( pPager.pPCache, pgno, 1, ref pPg );
-      if ( rc != SQLITE_OK )
-      {
-        pagerUnlockIfUnused( pPager );
-        return rc;
-      }
+  if ( ( ppPage ).pPager != null )
+  {
+    /* In this case the pcache already contains an initialized copy of
+    ** the page. Return without further ado.  */
+    Debug.Assert( pgno <= PAGER_MAX_PGNO && pgno != PAGER_MJ_PGNO( pPager ) );
+    PAGER_INCR( ref pPager.nHit );
+    return SQLITE_OK;
 
-      Debug.Assert( pPg.pgno == pgno );
-      Debug.Assert( pPg.pPager == pPager || pPg.pPager == null );
-      if ( pPg.pPager == null )
-      {
-        /* The pager cache has created a new page. Its content needs to
-        ** be initialized.
-        */
-        int nMax = 0;
+  }
+  else
+  {
+    /* The pager cache has created a new page. Its content needs to 
+    ** be initialized.  */
+    int nMax = 0;
 #if SQLITE_TEST
-        PAGER_INCR( ref pPager.nMiss );
+    PAGER_INCR( ref pPager.nMiss );
 #endif
-        pPg.pPager = pPager;
-        pPg.pExtra = new MemPage();//memset(pPg.pExtra, 0, pPager.nExtra);
+    pPg = ppPage;
+    pPg.pPager = pPager;
+    pPg.pExtra = new MemPage();//memset(pPg.pExtra, 0, pPager.nExtra);
 
-        rc = sqlite3PagerPagecount( pPager, ref nMax );
-        if ( rc != SQLITE_OK )
-        {
-          sqlite3PagerUnref( pPg );
-          return rc;
-        }
+    /* The maximum page number is 2^31. Return SQLITE_CORRUPT if a page
+    ** number greater than this, or the unused locking-page, is requested. */
+    if ( pgno > PAGER_MAX_PGNO || pgno == PAGER_MJ_PGNO( pPager ) )
+    {
+#if SQLITE_DEBUG
+      rc = SQLITE_CORRUPT_BKPT();
+#else
+      rc = SQLITE_CORRUPT_BKPT;
+#endif
+      goto pager_acquire_err;
+    }
+    rc = sqlite3PagerPagecount( pPager, ref nMax );
+    if ( rc != SQLITE_OK )
+    {
+      goto pager_acquire_err;
+    }
 
-        if ( nMax < (int)pgno ||
+    if ( nMax < (int)pgno ||
 #if SQLITE_OMIT_MEMORYDB
 1==MEMDB
 #else
  pPager.memDb != 0
 #endif
  || noContent != 0 )
+    {
+      if ( pgno > pPager.mxPgno )
+      {
+        rc = SQLITE_FULL;
+        goto pager_acquire_err;
+      }
+      if ( noContent != 0 )
+      {
+        /* Failure to set the bits in the InJournal bit-vectors is benign.
+        ** It merely means that we might do some extra work to journal a
+        ** page that does not need to be journaled.  Nevertheless, be sure
+        ** to test the case where a malloc error occurs while trying to set
+        ** a bit in a bit vector.
+        */
+        sqlite3BeginBenignMalloc();
+        if ( pgno <= pPager.dbOrigSize )
         {
-          if ( pgno > pPager.mxPgno )
-          {
-            sqlite3PagerUnref( pPg );
-            return SQLITE_FULL;
-          }
-          if ( noContent != 0 )
-          {
-            /* Failure to set the bits in the InJournal bit-vectors is benign.
-            ** It merely means that we might do some extra work to journal a
-            ** page that does not need to be journaled.  Nevertheless, be sure
-            ** to test the case where a malloc error occurs while trying to set
-            ** a bit in a bit vector.
-            */
-            sqlite3BeginBenignMalloc();
-            if ( pgno <= pPager.dbOrigSize )
-            {
 #if !NDEBUG || SQLITE_COVERAGE_TEST
-              rc = sqlite3BitvecSet( pPager.pInJournal, pgno );          //TESTONLY( rc = ) sqlite3BitvecSet(pPager.pInJournal, pgno);
+          rc = sqlite3BitvecSet( pPager.pInJournal, pgno );          //TESTONLY( rc = ) sqlite3BitvecSet(pPager.pInJournal, pgno);
 #else
 sqlite3BitvecSet(pPager.pInJournal, pgno);
 #endif
@@ -4426,24 +4370,25 @@ addToSavepointBitvecs(pPager, pgno);
           rc = readDbPage( pPg );
           if ( rc != SQLITE_OK )
           {
-            pagerDropPage( pPg );
-            return rc;
-          }
+goto pager_acquire_err;          }
         }
 
 #if SQLITE_CHECK_PAGES
 pPg.pageHash = pager_pagehash(pPg);
 #endif
       }
-      else
-      {
-        /* The requested page is in the page cache. */
-#if SQLITE_TEST
-        PAGER_INCR( ref pPager.nHit );
-#endif
-      }
-      ppPage = pPg;
       return SQLITE_OK;
+
+      pager_acquire_err:
+      Debug.Assert( rc != SQLITE_OK );
+      if ( pPg!=null )
+      {
+        sqlite3PcacheDrop( pPg );
+      }
+      pagerUnlockIfUnused( pPager );
+
+      ppPage = null;
+      return rc;
     }
 
     /*
@@ -4465,13 +4410,9 @@ pPg.pageHash = pager_pagehash(pPg);
 
       Debug.Assert( pPager != null );
       Debug.Assert( pgno != 0 );
-
-      if ( ( pPager.state != PAGER_UNLOCK )
-      && ( pPager.errCode == SQLITE_OK || pPager.errCode == SQLITE_FULL )
-      )
-      {
-        sqlite3PcacheFetch( pPager.pPCache, pgno, 0, ref pPg );
-      }
+      Debug.Assert( pPager.pPCache != null );
+      Debug.Assert( pPager.state > PAGER_UNLOCK );
+      sqlite3PcacheFetch( pPager.pPCache, pgno, 0, ref pPg );
 
       return pPg;
     }
@@ -4550,12 +4491,12 @@ pPg.pageHash = pager_pagehash(pPg);
       Debug.Assert( pPager.state >= PAGER_RESERVED );
       Debug.Assert( pPager.useJournal != 0 );
       Debug.Assert( pPager.pInJournal == null );
+      Debug.Assert( pPager.journalMode != PAGER_JOURNALMODE_OFF );
 
-      /* If already in the error state, this function is a no-op. */
-      if ( pPager.errCode != 0 )
-      {
-        return pPager.errCode;
-      }
+      /* If already in the error state, this function is a no-op.  But on
+      ** the other hand, this routine is never called if we are already in
+      ** an error state. */
+      if ( NEVER( pPager.errCode )!=0 ) return pPager.errCode;
 
       /* TODO: Is it really possible to get here with dbSizeValid==0? If not,
       ** the call to PagerPagecount() can be removed.
@@ -4590,7 +4531,7 @@ pVfs, pPager.zJournal, pPager.jfd, flags, jrnlBufferSize(pPager)
 );
 #else
           int int0 = 0;
-          rc = sqlite3OsOpen( pVfs, pPager.zJournal, ref pPager.jfd, flags, ref int0 );
+          rc = sqlite3OsOpen( pVfs, pPager.zJournal, pPager.jfd, flags, ref int0 );
 #endif
         }
         Debug.Assert( rc != SQLITE_OK || isOpen( pPager.jfd ) );
@@ -4678,9 +4619,7 @@ Debug.Assert( 0==MEMDB && !pPager.tempFile );
         /* If the required locks were successfully obtained, open the journal
         ** file and write the first journal-header to it.
         */
-        if ( rc == SQLITE_OK && pPager.useJournal != 0
-        && pPager.journalMode != PAGER_JOURNALMODE_OFF
-        )
+        if ( rc == SQLITE_OK && pPager.journalMode != PAGER_JOURNALMODE_OFF )
         {
           rc = pager_open_journal( pPager );
         }
@@ -4700,6 +4639,16 @@ Debug.Assert( 0==MEMDB && !pPager.tempFile );
       }
       PAGERTRACE( "TRANSACTION %d\n", PAGERID( pPager ) );
       Debug.Assert( !isOpen( pPager.jfd ) || pPager.journalOff > 0 || rc != SQLITE_OK );
+      if ( rc != SQLITE_OK )
+      {
+        Debug.Assert( !pPager.dbModified );
+        /* Ignore any IO error that occurs within pager_end_transaction(). The
+        ** purpose of this call is to reset the internal state of the pager
+        ** sub-system. It doesn't matter if the journal-file is not properly
+        ** finalized at this point (since it is not a valid journal file anyway).
+        */
+        pager_end_transaction( pPager, 0 );
+      }
       return rc;
     }
 
@@ -4716,17 +4665,19 @@ Debug.Assert( 0==MEMDB && !pPager.tempFile );
       Pager pPager = pPg.pPager;
       int rc = SQLITE_OK;
 
-      /* Check for errors
+      /* This routine is not called unless a transaction has already been
+      ** started.
       */
-      if ( pPager.errCode != 0 )
-      {
-        return pPager.errCode;
-      }
-      if ( pPager.readOnly )
-      {
-        return SQLITE_PERM;
-      }
+      Debug.Assert( pPager.state >= PAGER_RESERVED );
 
+      /* If an error has been previously detected, we should not be
+      ** calling this routine.  Repeat the error for robustness.
+      */
+      if (NEVER(pPager.errCode) != 0) return pPager.errCode;
+
+      /* Higher-level routines never call this function if database is not
+      ** writable.  But check anyway, just for robustness. */
+      if ( NEVER( pPager.readOnly ) ) return SQLITE_PERM;
       Debug.Assert( 0 == pPager.setMaster );
 
 #if SQLITE_CHECK_PAGES
@@ -4747,19 +4698,18 @@ CHECK_PAGE(pPg);
         ** written to the transaction journal or the ckeckpoint journal
         ** or both.
         **
-        ** First check to see that the transaction journal exists and
-        ** create it if it does not.
+        ** Higher level routines should have already started a transaction,
+        ** which means they have acquired the necessary locks and opened
+        ** a rollback journal.  Double-check to makes sure this is the case.
         */
-        Debug.Assert( pPager.state != PAGER_UNLOCK );
         rc = sqlite3PagerBegin( pPager, false, pPager.subjInMemory );
-        if ( rc != SQLITE_OK )
+        if (NEVER( rc != SQLITE_OK ))
         {
           return rc;
         }
-        Debug.Assert( pPager.state >= PAGER_RESERVED );
-        if ( !isOpen( pPager.jfd ) && pPager.useJournal != 0
-        && pPager.journalMode != PAGER_JOURNALMODE_OFF )
+        if ( !isOpen( pPager.jfd ) && pPager.journalMode != PAGER_JOURNALMODE_OFF )
         {
+          Debug.Assert( pPager.useJournal != 0 );
           rc = pager_open_journal( pPager );
           if ( rc != SQLITE_OK ) return rc;
         }
@@ -4976,7 +4926,7 @@ CHECK_PAGE(pPg);
         ** journal file must contain sync()ed copies of all of them
         ** before any of them can be written out to the database file.
         */
-        if ( needSync )
+        if ( rc == SQLITE_OK && needSync )
         {
           Debug.Assert(
 #if SQLITE_OMIT_MEMORYDB
@@ -4985,7 +4935,7 @@ CHECK_PAGE(pPg);
  0 == pPager.memDb
 #endif
  && pPager.noSync == false );
-          for ( ii = 0 ; ii < nPage && needSync ; ii++ )
+          for ( ii = 0 ; ii < nPage ; ii++ )
           {
             PgHdr pPage = pager_lookup( pPager, (u32)( pg1 + ii ) );
             if ( pPage != null )
@@ -5055,12 +5005,12 @@ pPg.pageHash = pager_pagehash(pPg);
     ** change-counter, stored as a 4-byte big-endian integer starting at
     ** byte offset 24 of the pager file.
     **
-    ** If the isDirect flag is zero, then this is done by calling
+    ** If the isDirectMode flag is zero, then this is done by calling
     ** sqlite3PagerWrite() on page 1, then modifying the contents of the
     ** page data. In this case the file will be updated when the current
     ** transaction is committed.
     **
-    ** The isDirect flag may only be non-zero if the library was compiled
+    ** The isDirectMode flag may only be non-zero if the library was compiled
     ** with the SQLITE_ENABLE_ATOMIC_WRITE macro defined. In this case,
     ** if isDirect is non-zero, then the database file is updated directly
     ** by writing an updated version of page 1 using a call to the
@@ -5081,15 +5031,17 @@ pPg.pageHash = pager_pagehash(pPg);
       ** "if( isDirect )" condition.
       */
 #if !SQLITE_ENABLE_ATOMIC_WRITE
-      int isDirect = 0;
+//# define DIRECT_MODE 0
+      bool DIRECT_MODE = false;
       Debug.Assert( isDirectMode == false );
       UNUSED_PARAMETER( isDirectMode );
 #else
-const int isDirect = isDirectMode;
+//# define DIRECT_MODE isDirectMode
+int DIRECT_MODE = isDirectMode;
 #endif
 
       Debug.Assert( pPager.state >= PAGER_RESERVED );
-      if ( !pPager.changeCountDone && pPager.dbSize > 0 )
+      if ( !pPager.changeCountDone && ALWAYS(pPager.dbSize > 0 ))
       {
         PgHdr pPgHdr = null;            /* Reference to page 1 */
         u32 change_counter;           /* Initial value of change-counter field */
@@ -5101,9 +5053,11 @@ const int isDirect = isDirectMode;
         Debug.Assert( pPgHdr == null || rc == SQLITE_OK );
 
         /* If page one was fetched successfully, and this function is not
-        ** operating in direct-mode, make page 1 writable.
+        ** operating in direct-mode, make page 1 writable.  When not in 
+        ** direct mode, page 1 is always held in cache and hence the PagerGet()
+        ** above is always successful - hence the ALWAYS on rc==SQLITE_OK.
         */
-        if ( rc == SQLITE_OK && 0 == isDirect )
+        if ( !DIRECT_MODE && ALWAYS( rc == SQLITE_OK ) )
         {
           rc = sqlite3PagerWrite( pPgHdr );
         }
@@ -5116,15 +5070,18 @@ const int isDirect = isDirectMode;
           put32bits( pPgHdr.pData, 24, change_counter );
 
           /* If running in direct mode, write the contents of page 1 to the file. */
-          if ( isDirect != 0 )
+          if ( DIRECT_MODE  )
           {
             u8[] zBuf = pPgHdr.pData;
             Debug.Assert( pPager.dbFileSize > 0 );
             rc = sqlite3OsWrite( pPager.fd, zBuf, pPager.pageSize, 0 );
-          }
 
-          /* If everything worked, set the changeCountDone flag. */
-          if ( rc == SQLITE_OK )
+            if ( rc == SQLITE_OK )
+            {
+              pPager.changeCountDone = true;
+            }
+          }
+          else
           {
             pPager.changeCountDone = true;
           }
@@ -5146,13 +5103,14 @@ const int isDirect = isDirectMode;
     static int sqlite3PagerSync( Pager pPager )
     {
       int rc;                             /* Return code */
-      if (
+      Debug.Assert( 
 #if SQLITE_OMIT_MEMORYDB
-1 == MEMDB
+0 == MEMDB
 #else
- pPager.memDb != 0
+0 == pPager.memDb 
 #endif
- || pPager.noSync )
+);
+      if ( pPager.noSync )
       {
         rc = SQLITE_OK;
       }
@@ -5197,18 +5155,18 @@ const int isDirect = isDirectMode;
     {
       int rc = SQLITE_OK;             /* Return code */
 
-      if ( pPager.errCode != 0 )
-      {
-        return pPager.errCode;
-      }
+      /* The dbOrigSize is never set if journal_mode=OFF */
+      Debug.Assert( pPager.journalMode != PAGER_JOURNALMODE_OFF || pPager.dbOrigSize == 0 );
+
+      /* If a prior error occurred, this routine should not be called.  ROLLBACK
+      ** is the appropriate response to an error, not COMMIT.  Guard against
+      ** coding errors by repeating the prior error. */
+      if (NEVER(pPager.errCode) != 0) return pPager.errCode;
 
       PAGERTRACE( "DATABASE SYNC: File=%s zMaster=%s nSize=%d\n",
       pPager.zFilename, zMaster, pPager.dbSize );
 
-      /* If this is an in-memory db, or no pages have been written to, or this
-      ** function has already been called, it is a no-op.
-      */
-      if ( pPager.state != PAGER_SYNCED &&
+      if ( 
 #if SQLITE_OMIT_MEMORYDB
  0 != MEMDB
 #else
@@ -5216,6 +5174,10 @@ const int isDirect = isDirectMode;
 #endif
  && pPager.dbModified )
       {
+        /* If this is an in-memory db, or no pages have been written to, or this
+        ** function has already been called, it is mostly a no-op.  However, any
+        ** backup in progress needs to be restarted.
+        */
         sqlite3BackupRestart( pPager.pBackup );
       }
       else if ( pPager.state != PAGER_SYNCED && pPager.dbModified )
@@ -5279,10 +5241,13 @@ rc = pager_incr_changecounter(pPager, 0);
         ** that it took at the start of the transaction. Otherwise, the
         ** calls to sqlite3PagerGet() return zeroed pages instead of
         ** reading data from the database file.
+        **
+        ** When journal_mode==OFF the dbOrigSize is always zero, so this
+        ** block never runs if journal_mode=OFF.
         */
 #if !SQLITE_OMIT_AUTOVACUUM
         if ( pPager.dbSize < pPager.dbOrigSize
-        && pPager.journalMode != PAGER_JOURNALMODE_OFF
+        && ALWAYS(pPager.journalMode != PAGER_JOURNALMODE_OFF)
         )
         {
           Pgno i;                                   /* Iterator variable */
@@ -5349,15 +5314,6 @@ rc = pager_incr_changecounter(pPager, 0);
       }
 
 commit_phase_one_exit:
-      if ( rc == SQLITE_IOERR_BLOCKED )
-      {
-        /* pager_incr_changecounter() may attempt to obtain an exclusive
-        ** lock to spill the cache and return IOERR_BLOCKED. But since
-        ** there is no chance the cache is inconsistent, it is
-        ** better to return SQLITE_BUSY.
-        **/
-        rc = SQLITE_BUSY;
-      }
       return rc;
     }
 
@@ -5381,20 +5337,16 @@ commit_phase_one_exit:
     {
       int rc = SQLITE_OK;                 /* Return code */
 
-      /* Do not proceed if the pager is already in the error state. */
-      if ( pPager.errCode != 0 )
-      {
-        return pPager.errCode;
-      }
+      /* This routine should not be called if a prior error has occurred.
+      ** But if (due to a coding error elsewhere in the system) it does get
+      ** called, just return the same error code without doing anything. */
+      if (NEVER(pPager.errCode) != 0) return pPager.errCode;
 
       /* This function should not be called if the pager is not in at least
       ** PAGER_RESERVED state. And indeed SQLite never does this. But it is
-      ** nice to have this defensive block here anyway.
+      ** nice to have this defensive test here anyway.
       */
-      if ( NEVER( pPager.state < PAGER_RESERVED ) )
-      {
-        return SQLITE_ERROR;
-      }
+      if ( NEVER( pPager.state < PAGER_RESERVED ) ) return SQLITE_ERROR;
 
       /* An optimization. If the database was not actually modified during
       ** this transaction, the pager is running in exclusive-mode and is
@@ -5628,7 +5580,7 @@ commit_phase_one_exit:
           Debug.Assert( pPager.dbSizeValid );
           aNew[ii] = new PagerSavepoint();
           aNew[ii].nOrig = pPager.dbSize;
-          if ( isOpen( pPager.jfd ) && pPager.journalOff > 0 )
+          if ( isOpen( pPager.jfd ) && ALWAYS(pPager.journalOff > 0 ))
           {
             aNew[ii].iOffset = pPager.journalOff;
           }
@@ -5646,6 +5598,7 @@ commit_phase_one_exit:
 
         /* Open the sub-journal, if it is not already opened. */
         rc = openSubJournal( pPager );
+        assertTruncateConstraint( pPager );
       }
 
       return rc;
@@ -5917,7 +5870,7 @@ return pPager->pCodec;
         rc = sqlite3PagerGet( pPager, needSyncPgno, ref pPgHdr );
         if ( rc != SQLITE_OK )
         {
-          if ( pPager.pInJournal != null && (int)needSyncPgno <= pPager.dbOrigSize )
+          if ( needSyncPgno <= pPager.dbOrigSize )
           {
             Debug.Assert( pPager.pTmpSpace != null );
             u32[] pTemp = new u32[pPager.pTmpSpace.Length];
@@ -5954,7 +5907,11 @@ MEMDB != 0
       {
         DbPage pNew = null;
         rc = sqlite3PagerAcquire( pPager, origPgno, ref pNew, 1 );
-        if ( rc != SQLITE_OK ) return rc;
+        if ( rc != SQLITE_OK )
+        {
+          sqlite3PcacheMove( pPg, origPgno );
+          return rc;
+        }
         sqlite3PagerUnref( pNew );
       }
       return SQLITE_OK;
@@ -5976,8 +5933,7 @@ MEMDB != 0
     */
     static MemPage sqlite3PagerGetExtra( DbPage pPg )
     {
-      Pager pPager = pPg.pPager;
-      return ( pPager != null ? pPg.pExtra : null );
+      return pPg.pExtra;
     }
 
     /*

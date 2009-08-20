@@ -21,7 +21,7 @@ namespace CS_SQLite3
     **
     ** This file contains code that is common across all mutex implementations.
     **
-    ** $Id: mutex.c,v 1.30 2009/02/17 16:29:11 danielk1977 Exp $
+    ** $Id: mutex.c,v 1.31 2009/07/16 18:21:18 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -48,35 +48,16 @@ if (  sqlite3GlobalConfig.mutex.xMutexAlloc != null )
 ** sqlite3_initialize() being called. This block copies pointers to
 ** the default implementation into the sqlite3Config structure.
 **
-** The danger is that although sqlite3_config() is not a threadsafe
-** API, sqlite3_initialize() is, and so multiple threads may be
-** attempting to run this function simultaneously. To guard write
-** access to the sqlite3Config structure, the 'MASTER' static mutex
-** is obtained before modifying it.
 */
 sqlite3_mutex_methods p = sqlite3DefaultMutex();
-sqlite3_mutex pMaster = null;
+sqlite3_mutex_methods pTo = sqlite3GlobalConfig.mutex;
 
-rc = p.xMutexInit();
-if ( rc == SQLITE_OK )
-{
-pMaster = p.xMutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
-Debug.Assert( pMaster != null );
-p.xMutexEnter( pMaster );
-Debug.Assert(  sqlite3GlobalConfig.mutex.xMutexAlloc == null
-||  sqlite3GlobalConfig.mutex.xMutexAlloc == p.xMutexAlloc
-);
-if (  sqlite3GlobalConfig.mutex.xMutexAlloc == null )
-{
-sqlite3GlobalConfig.mutex = p;
+ memcpy(pTo, pFrom, offsetof(sqlite3_mutex_methods, xMutexAlloc));
+      memcpy(&pTo->xMutexFree, &pFrom->xMutexFree,
+             sizeof(*pTo) - offsetof(sqlite3_mutex_methods, xMutexFree));
+      pTo->xMutexAlloc = pFrom->xMutexAlloc;
 }
-p.xMutexLeave( pMaster );
-}
-}
-else
-{
-rc =  sqlite3GlobalConfig.mutex.xMutexInit();
-}
+    rc =  sqlite3GlobalConfig.mutex.xMutexInit();
 }
 
 return rc;

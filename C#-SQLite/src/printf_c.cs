@@ -1225,7 +1225,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       return ( zBuf = z );
     }
 
-#if SQLITE_DEBUG
+#if SQLITE_DEBUG || DEBUG || TRACE
     /*
 ** A version of printf() that understands %lld.  Used for debugging.
 ** The printf() built into some versions of windows does not understand %lld

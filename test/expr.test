@@ -310,7 +310,7 @@ test_expr expr-5.14  {t1='AB'} {t1 LIKE 'A%b' ESCAPE 'b'} 0
 
 # The following tests only work on versions of TCL that support Unicode
 #
-if {"UNICODE NOT IMPLEMENTED"=="ON C# PORT" &&  "\u1234"!="u1234"} {
+if {"UNICODE NOT IMPLEMENTED"=="ON TCL C# PORT" &&  "\u1234"!="u1234"} {
   test_expr expr-5.13a "t1='a\u0080c', t2='a_c'" {t1 LIKE t2} 1
   test_expr expr-5.13b "t1='a\u0080c', t2='A_C'" {t1 LIKE t2} $NCSL
   test_expr expr-5.14a "t1='a\u07FFc', t2='a_c'" {t1 LIKE t2} 1

@@ -16,7 +16,7 @@ namespace CS_SQLite3
     **
     *************************************************************************
     **
-    ** $Id: btmutex.c,v 1.15 2009/04/10 12:55:17 danielk1977 Exp $
+    ** $Id: btmutex.c,v 1.17 2009/07/20 12:33:33 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -210,7 +210,9 @@ p->wantToLock++;
 if( !p->locked ){
 assert( p->wantToLock==1 );
 while( p->pPrev ) p = p->pPrev;
-while( p->locked && p->pNext ) p = p->pNext;
+/* Reason for ALWAYS:  There must be at least on unlocked Btree in
+** the chain.  Otherwise the !p->locked test above would have failed */
+while( p->locked && ALWAYS(p->pNext) ) p = p->pNext;
 for(pLater = p->pNext; pLater; pLater=pLater->pNext){
 if( pLater->locked ){
 unlockBtreeMutex(pLater);
@@ -321,8 +323,12 @@ assert( !p->locked || p->wantToLock>0 );
 /* We should already hold a lock on the database connection */
 assert( sqlite3_mutex_held(p->db->mutex) );
 
+/* The Btree is sharable because only sharable Btrees are entered
+** into the array in the first place. */
+assert( p->sharable );
+
 p->wantToLock++;
-if( !p->locked && p->sharable ){
+if( !p->locked ){
 lockBtreeMutex(p);
 }
 }
@@ -337,14 +343,14 @@ for(i=0; i<pArray->nMutex; i++){
 Btree *p = pArray->aBtree[i];
 /* Some basic sanity checking */
 assert( i==0 || pArray->aBtree[i-1]->pBt<p->pBt );
-assert( p->locked || !p->sharable );
+assert( p->locked);
 assert( p->wantToLock>0 );
 
 /* We should already hold a lock on the database connection */
 assert( sqlite3_mutex_held(p->db->mutex) );
 
 p->wantToLock--;
-if( p->wantToLock==0 && p->locked ){
+if( p->wantToLock==0){
 unlockBtreeMutex(p);
 }
 }

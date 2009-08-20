@@ -161,7 +161,17 @@ sqlite3ValueFree(ref pTmp);
           pParse.nErr++;
           return SQLITE_ERROR;
         }
-        Debug.Assert( p == pColl );
+//
+        //Debug.Assert(p == pColl);
+        if (p != pColl) // Had to lookup appropriate sequence
+        {
+          pColl.enc = p.enc;
+          pColl.pUser= p.pUser;
+          pColl.type = p.type;
+          pColl.xCmp = p.xCmp;
+          pColl.xDel = p.xDel;
+        } 
+
       }
       return SQLITE_OK;
     }

@@ -25,7 +25,7 @@ namespace CS_SQLite3
     *************************************************************************
     ** This file implements that page cache.
     **
-    ** @(#) $Id: pcache.c,v 1.44 2009/03/31 01:32:18 drh Exp $
+    ** @(#) $Id: pcache.c,v 1.47 2009/07/25 11:46:49 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -223,10 +223,10 @@ expensive_assert( pcacheCheckSynced(p) );
     static void sqlite3PcacheOpen(
     int szPage,                  /* Size of every page */
     int szExtra,                 /* Extra space associated with each page */
-    bool bPurgeable,              /* True if pages are on backing store */
+    bool bPurgeable,             /* True if pages are on backing store */
     dxStress xStress,//int (*xStress)(void*,PgHdr*),/* Call to try to make pages clean */
-    object pStress,               /* Argument to xStress */
-    PCache p                    /* Preallocated space for the PCache */
+    object pStress,              /* Argument to xStress */
+    PCache p                     /* Preallocated space for the PCache */
     )
     {
       p.Clear();//memset(p, 0, sizeof(PCache));
@@ -267,6 +267,7 @@ expensive_assert( pcacheCheckSynced(p) );
       int eCreate;
 
       Debug.Assert( pCache != null );
+      Debug.Assert( createFlag == 1 || createFlag == 0 );
       Debug.Assert( pgno > 0 );
 
       /* If the pluggable cache (sqlite3_pcache*) has not been allocated,
@@ -286,11 +287,8 @@ expensive_assert( pcacheCheckSynced(p) );
         pCache.pCache = p;
       }
 
-      eCreate = createFlag != 0 ? 1 : 0;
-      if ( eCreate != 0 && ( !pCache.bPurgeable || null == pCache.pDirty ) )
-      {
-        eCreate = 2;
-      }
+      eCreate = createFlag * ( 1 + ( ( !pCache.bPurgeable || null == pCache.pDirty ) ? 1 : 0 ) );
+
       if ( pCache.pCache != null )
       {
         pPage = sqlite3GlobalConfig.pcache.xFetch( pCache.pCache, pgno, eCreate );
@@ -581,33 +579,26 @@ expensive_assert( pcacheCheckSynced(pCache) );
     ** Sort the list of pages in accending order by pgno.  Pages are
     ** connected by pDirty pointers.  The pDirtyPrev pointers are
     ** corrupted by this sort.
+    **
+    ** Since there cannot be more than 2^31 distinct pages in a database,
+    ** there cannot be more than 31 buckets required by the merge sorter.
+    ** One extra bucket is added to catch overflow in case something
+    ** ever changes to make the previous sentence incorrect.
     */
-    const int N_SORT_BUCKET_ALLOC = 25;
-#if !SQLITE_TEST
-const int N_SORT_BUCKET = 25;
-#else
-    static int sqlite3_pager_n_sort_bucket = 0;
-    //  #undef N_SORT_BUCKET
-    static int N_SORT_BUCKET()
-    { return ( sqlite3_pager_n_sort_bucket != 0 ? sqlite3_pager_n_sort_bucket : N_SORT_BUCKET_ALLOC ); }
-#endif
+    //#define N_SORT_BUCKET  32
+    const int N_SORT_BUCKET = 32;
+
     static PgHdr pcacheSortDirtyList( PgHdr pIn )
     {
-      PgHdr[] a; PgHdr p;//a[N_SORT_BUCKET_ALLOC], p;
+      PgHdr[] a; PgHdr p;//a[N_SORT_BUCKET], p;
       int i;
-      a = new PgHdr[N_SORT_BUCKET_ALLOC];//memset(a, 0, sizeof(a));
+      a = new PgHdr[N_SORT_BUCKET];//memset(a, 0, sizeof(a));
       while ( pIn != null )
       {
         p = pIn;
         pIn = p.pDirty;
         p.pDirty = null;
-        for ( i = 0 ; i <
-#if !SQLITE_TEST
-N_SORT_BUCKET
-#else
- N_SORT_BUCKET()
-#endif
- - 1 ; i++ )
+        for ( i = 0 ; ALWAYS(i <N_SORT_BUCKET - 1) ; i++ )
         {
           if ( a[i] == null )
           {
@@ -620,30 +611,16 @@ N_SORT_BUCKET
             a[i] = null;
           }
         }
-        if ( i ==
-#if !SQLITE_TEST
-N_SORT_BUCKET
-#else
- N_SORT_BUCKET()
-#endif
- - 1 )
+        if ( NEVER(i ==N_SORT_BUCKET - 1 ))
         {
-          /* Coverage: To get here, there need to be 2^(N_SORT_BUCKET)
-          ** elements in the input list. This is possible, but impractical.
-          ** Testing this line is the point of global variable
-          ** sqlite3_pager_n_sort_bucket.
+          /* To get here, there need to be 2^(N_SORT_BUCKET) elements in
+          ** the input list.  But that is impossible.
           */
           a[i] = pcacheMergeDirtyList( a[i], p );
         }
       }
       p = a[0];
-      for ( i = 1 ; i <
-#if !SQLITE_TEST
-N_SORT_BUCKET
-#else
- N_SORT_BUCKET()
-#endif
- ; i++ )
+      for ( i = 1 ; i <N_SORT_BUCKET ; i++ )
       {
         p = pcacheMergeDirtyList( p, a[i] );
       }
@@ -714,18 +691,20 @@ N_SORT_BUCKET
       }
     }
 
-#if SQLITE_CHECK_PAGES
+#if SQLITE_CHECK_PAGES  || (SQLITE_DEBUG)
 /*
 ** For all dirty pages currently in the cache, invoke the specified
 ** callback. This is only used if the SQLITE_CHECK_PAGES macro is
 ** defined.
 */
-void sqlite3PcacheIterateDirty(PCache *pCache, void (*xIter)(PgHdr *)){
-PgHdr *pDirty;
-for(pDirty=pCache->pDirty; pDirty; pDirty=pDirty->pDirtyNext){
-xIter(pDirty);
-}
-}
+    static void sqlite3PcacheIterateDirty( PCache pCache, dxIter xIter )
+    {
+      PgHdr pDirty;
+      for ( pDirty = pCache.pDirty ; pDirty != null ; pDirty = pDirty.pDirtyNext )
+      {
+        xIter( pDirty );
+      }
+    }
 #endif
   }
 }

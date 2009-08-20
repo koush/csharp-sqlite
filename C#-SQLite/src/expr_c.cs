@@ -124,11 +124,11 @@ namespace CS_SQLite3
       {
         int op;
         pColl = pExpr.pColl;
-        if ( pColl != null ) break;
+        if (pColl != null ) break;
         op = p.op;
         if ( ( op == TK_AGG_COLUMN || op == TK_COLUMN || op == TK_REGISTER ) && p.pTab != null )
         {
-          /* op==TK_REGISTER && p-.pTab!=0 happens when pExpr was originally
+          /* op==TK_REGISTER && p->pTab!=0 happens when pExpr was originally
           ** a TK_COLUMN but was previously evaluated and cached in a register */
           string zColl;
           int j = p.iColumn;

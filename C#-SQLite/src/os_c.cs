@@ -144,14 +144,14 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     static int sqlite3OsOpen(
     sqlite3_vfs pVfs,
     string zPath,
-    ref sqlite3_file pFile,
+    sqlite3_file pFile,
     int flags,
     ref int pFlagsOut
     )
     {
       int rc;
       DO_OS_MALLOC_TEST( null );
-      rc = pVfs.xOpen( pVfs, zPath, ref pFile, flags, ref pFlagsOut );
+      rc = pVfs.xOpen( pVfs, zPath, pFile, flags, ref pFlagsOut );
       Debug.Assert( rc == SQLITE_OK || pFile.pMethods == null );
       return rc;
     }
@@ -218,7 +218,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       pFile = new sqlite3_file(); //sqlite3Malloc(ref pVfs.szOsFile);
       if ( pFile != null )
       {
-        rc = sqlite3OsOpen( pVfs, zFile, ref pFile, flags, ref pOutFlags );
+        rc = sqlite3OsOpen( pVfs, zFile, pFile, flags, ref pOutFlags );
         if ( rc != SQLITE_OK )
         {
           pFile = null; // was  //sqlite3DbFree(db,ref  pFile);

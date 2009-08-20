@@ -12,6 +12,7 @@ namespace CS_SQLite3
   using tcl.lang;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
+  using DbPage = csSQLite.PgHdr;
 
   public partial class csSQLite
   {
@@ -30,7 +31,7 @@ namespace CS_SQLite3
     ** is not included in the SQLite library.  It is used for automated
     ** testing of the SQLite library.
     **
-    ** $Id: test2.c,v 1.71 2009/06/18 17:22:39 drh Exp $
+    ** $Id: test2.c,v 1.74 2009/07/24 19:01:20 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -81,6 +82,14 @@ namespace CS_SQLite3
     static int test_pagesize = 1024;
 
     /*
+    ** Dummy page reinitializer
+    */
+    static void pager_test_reiniter( DbPage pNotUsed )
+    {
+      return;
+    }
+    
+    /*
     ** Usage:   pager_open FILENAME N-PAGE
     **
     ** Open a new pager
@@ -103,7 +112,8 @@ namespace CS_SQLite3
     //  }
     //  if( Tcl_GetInt(interp, argv[2], nPage) ) return TCL.TCL_ERROR;
     //  rc = sqlite3PagerOpen(sqlite3_vfs_find(0), pPager, argv[1], 0, 0,
-    //      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MAIN_DB);
+    //      SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_MAIN_DB,
+    // pager_test_reiniter);
     //  if( rc!=SQLITE_OK ){
     //    Tcl_AppendResult(interp, errorName(rc), 0);
     //    return TCL.TCL_ERROR;
@@ -366,7 +376,10 @@ namespace CS_SQLite3
     //  }
     //  pPager = sqlite3TestTextToPtr(interp,argv[1].ToString());
     //  if( Tcl_GetInt(interp, argv[2], pgno) ) return TCL.TCL_ERROR;
-    //  rc = sqlite3PagerGet(pPager, pgno, pPage);
+    //rc = sqlite3PagerSharedLock(pPager);
+    //if( rc==SQLITE_OK ){
+    //  rc = sqlite3PagerGet(pPager, pgno, &pPage);
+    //}
     //  if( rc!=SQLITE_OK ){
     //    Tcl_AppendResult(interp, errorName(rc), 0);
     //    return TCL.TCL_ERROR;
@@ -649,7 +662,6 @@ namespace CS_SQLite3
     static Var.SQLITE3_GETSET sqlite3_io_error_hardhit = new Var.SQLITE3_GETSET( "sqlite3_io_error_hardhit" );
     static Var.SQLITE3_GETSET sqlite3_diskfull_pending = new Var.SQLITE3_GETSET( "sqlite3_diskfull_pending" );
     static Var.SQLITE3_GETSET sqlite3_diskfull = new Var.SQLITE3_GETSET( "sqlite3_diskfull" );
-    //static Var.SQLITE3_GETSET sqlite3_pager_n_sort_bucket = new Var.SQLITE3_GETSET( "sqlite3_pager_n_sort_bucket" );
 
     /*
     ** Register commands with the TCL interpreter.
@@ -713,8 +725,6 @@ new _aCmd( "sqlite3_test_control_pending_byte",(Tcl_CmdProc)testPendingByte),
       TCL.Tcl_LinkVar( interp, "sqlite_pending_byte",
       TCLsqlite3PendingByte, VarFlags.SQLITE3_LINK_INT );
       TCLsqlite3PendingByte.iValue = sqlite3PendingByte;
-      //TCL.Tcl_LinkVar(interp, "sqlite_pager_n_sort_bucket",
-      //   sqlite3_pager_n_sort_bucket,VarFlags.SQLITE3_LINK_INT );
       return TCL.TCL_OK;
     }
   }

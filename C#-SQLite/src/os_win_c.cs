@@ -34,7 +34,7 @@ namespace CS_SQLite3
     **
     ** This file contains code that is specific to windows.
     **
-    ** $Id: os_win.c,v 1.156 2009/04/23 19:08:33 shane Exp $
+    ** $Id: os_win.c,v 1.157 2009/08/05 04:08:30 shane Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -141,6 +141,16 @@ HANDLE hShared;         /* Shared memory segment used for locking */
 winceLock local;        /* Locks obtained by this instance of sqlite3_file */
 winceLock *shared;      /* Global shared lock memory for the file  */
 #endif
+
+      public void Clear()
+      {
+        pMethods = null;
+        fs = null;
+        locktype = 0;
+        sharedLockByte = 0;
+        lastErrno = 0;
+        sectorSize = 0;
+      }
     };
 
     /*
@@ -517,8 +527,7 @@ bReturn = TRUE;
 }
 
 /* Want a read-only lock? */
-else if ((dwFileOffsetLow >= SHARED_FIRST &&
-dwFileOffsetLow < SHARED_FIRST + SHARED_SIZE) &&
+  else if (dwFileOffsetLow == SHARED_FIRST &&
 nNumberOfBytesToLockLow == 1){
 if (pFile.shared.bExclusive == 0){
 pFile.local.nReaders ++;
@@ -998,7 +1007,7 @@ return SQLITE_OK;
         {
           pFile.fs.Unlock( SHARED_FIRST, SHARED_SIZE ); //     res = UnlockFile(pFilE.h, SHARED_FIRST, 0, SHARED_SIZE, 0);
         }
-        catch ( IOException e )
+        catch ( Exception e )
         {
           res = 0;
         }
@@ -1270,7 +1279,7 @@ return SQLITE_OK;
         {
           id.fs.Unlock( RESERVED_BYTE, 1 );// UnlockFile(pFilE.h, RESERVED_BYTE, 0, 1, 0);
         }
-        catch ( IOException e ) { }
+        catch ( Exception e ) { }
       }
       if ( locktype == NO_LOCK && type >= SHARED_LOCK )
       {
@@ -1282,7 +1291,7 @@ return SQLITE_OK;
         {
           id.fs.Unlock( PENDING_BYTE, 1 );//    UnlockFile(pFilE.h, PENDING_BYTE, 0, 1, 0);
         }
-        catch ( IOException e )
+        catch ( Exception e )
         { }
       }
       pFile.locktype = (u8)locktype;
@@ -1497,7 +1506,7 @@ sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", error, error);
     static int winOpen(
     sqlite3_vfs pVfs,       /* Not used */
     string zName,           /* Name of the file (UTF-8) */
-    ref sqlite3_file pFile, /* Write the SQLite file handle here */
+    sqlite3_file pFile, /* Write the SQLite file handle here */
     int flags,              /* Open mode flags */
     ref int pOutFlags       /* Status return flags */
     )
@@ -1633,7 +1642,7 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
         //        free(zConverted);
         if ( ( flags & SQLITE_OPEN_READWRITE ) != 0 )
         {
-          return winOpen( pVfs, zName, ref pFile,
+          return winOpen( pVfs, zName, pFile,
           ( ( flags | SQLITE_OPEN_READONLY ) & ~SQLITE_OPEN_READWRITE ), ref pOutFlags );
         }
         else
@@ -1652,7 +1661,7 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
         pOutFlags = SQLITE_OPEN_READONLY;
       }
       //}
-      pFile = new sqlite3_file(); // memset(pFile, 0, sizeof(*pFile));
+      pFile.Clear(); // memset(pFile, 0, sizeof(*pFile));
       pFile.pMethods = winIoMethod;
       pFile.fs = fs;
       pFile.lastErrno = NO_ERROR;

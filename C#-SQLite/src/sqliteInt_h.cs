@@ -37,7 +37,7 @@ namespace CS_SQLite3
     *************************************************************************
     ** Internal interface definitions for SQLite.
     **
-    ** @(#) $Id: sqliteInt.h,v 1.890 2009/06/26 15:14:55 drh Exp $
+    ** @(#) $Id: sqliteInt.h,v 1.898 2009/08/10 03:57:58 shane Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -314,17 +314,20 @@ void sqlite3Coverage(int);
     //# define NEVER(X)       ((X)?(assert(0),1):0)
     static bool NEVER( bool X ) { if ( X == true ) Debug.Assert( false ); return false; }
     static byte NEVER( byte X ) { if ( X != 0 ) Debug.Assert( false ); return 0; }
+    static int NEVER( int X ) { if ( X != 0 ) Debug.Assert( false ); return 0; }
     static bool NEVER<T>( T X ) { if ( X != null ) Debug.Assert( false ); return false; }
 #else
 //# define ALWAYS(X)      (X)
-static bool ALWAYS( bool X ) { return true; }
-static int ALWAYS( int X ) { return 0; }
+    static bool ALWAYS(bool X) { return X; }
+    static byte ALWAYS(byte X) { return X; }
+    static int ALWAYS(int X) { return X; }
 static bool ALWAYS<T>( T X ) { return true; }
 
 //# define NEVER(X)       (X)
-static bool NEVER( bool X ) { return false; }
-static byte NEVER( byte X ) { return 0; }
-static bool NEVER<T>( T X ) { return false; }
+static bool NEVER(bool X) { return X; }
+static byte NEVER(byte X) { return X; }
+static int NEVER(int X) { return X; }
+static bool NEVER<T>(T X) { return false; }
 #endif
 
     /*
@@ -679,6 +682,7 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct TriggerStep TriggerStep;
     //typedef struct Trigger Trigger;
     //typedef struct UnpackedRecord UnpackedRecord;
+    //typedef struct VTable VTable;
     //typedef struct Walker Walker;
     //typedef struct WherePlan WherePlan;
     //typedef struct WhereInfo WhereInfo;
@@ -888,6 +892,7 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
         public int iDb;                    /* When back is being initialized */
         public int newTnum;                /* Rootpage of table being initialized */
         public u8 busy;                    /* TRUE if currently initializing */
+        public u8 orphanTrigger;           /* Last statement is orphaned TEMP trigger */
       };
       public sqlite3InitInfo init = new sqlite3InitInfo();
       public int nExtension;               /* Number of loaded extensions */
@@ -929,10 +934,11 @@ public object pAuthArg;               /* 1st argument to the access auth functio
       public int nProgressOps;                  /* Number of opcodes for progress callback */
 #endif
 #if !SQLITE_OMIT_VIRTUALTABLE
-public Hash aModule;                 /* populated by sqlite3_create_module() */
-public Table pVTab;                 /* vtab with active Connect/Create method */
-public sqlite3_vtab[] aVTrans;       /* Virtual tables with open transactions */
-public int nVTrans;                  /* Allocated size of aVTrans */
+      public Hash aModule;                  /* populated by sqlite3_create_module() */
+      public Table pVTab;                   /* vtab with active Connect/Create method */
+      public VTable aVTrans;                /* Virtual tables with open transactions */
+      public int nVTrans;                   /* Allocated size of aVTrans */
+      public VTable pDisconnect;            /* Disconnect these in next sqlite3_prepare() */
 #endif
       public FuncDefHash aFunc = new FuncDefHash();       /* Hash table of connection functions */
       public Hash aCollSeq = new Hash();                  /* All collating sequences */
@@ -997,9 +1003,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     const int SQLITE_LoadExtension = 0x00020000; //#define SQLITE_LoadExtension  0x00020000  /* Enable load_extension */
 
     const int SQLITE_RecoveryMode = 0x00040000;  //#define SQLITE_RecoveryMode   0x00040000  /* Ignore schema errors */
-    const int SQLITE_SharedCache = 0x00080000;   //#define SQLITE_SharedCache    0x00080000  /* Cache sharing is enabled */
-    const int SQLITE_CommitBusy = 0x00200000;    //#define SQLITE_CommitBusy     0x00200000  /* In the process of committing */
-    const int SQLITE_ReverseOrder = 0x00400000;  //#define SQLITE_ReverseOrder   0x00400000  /* Reverse unordered SELECTs */
+    const int SQLITE_ReverseOrder = 0x00100000;  //#define SQLITE_ReverseOrder   0x00100000  /* Reverse unordered SELECTs */
 
     /*
     ** Possible values for the sqlite.magic field.
@@ -1182,15 +1186,13 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     ** instance of the following structure, stored in the sqlite3.aModule
     ** hash table.
     */
-#if !SQLITE_OMIT_VIRTUALTABLE
-public class Module
-{
-public sqlite3_module pModule;          /* Callback pointers */
-public string zName;                    /* Name passed to create_module() */
-public object pAux;                     /* pAux passed to create_module() */
-public dxDestroy xDestroy;//)(void *);  /* Module destructor function */
-};
-#endif
+    public class Module
+    {
+      public sqlite3_module pModule;          /* Callback pointers */
+      public string zName;                    /* Name passed to create_module() */
+      public object pAux;                     /* pAux passed to create_module() */
+      public dxDestroy xDestroy;//)(void *);  /* Module destructor function */
+    };
 
     /*
 ** information about each column of an SQL table is held in an instance
@@ -1309,6 +1311,57 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
     const int SQLITE_STOREP2 = 0x10;   //#define SQLITE_STOREP2      0x10  /* Store result in reg[P2] rather than jump */
 
     /*
+    ** An object of this type is created for each virtual table present in
+    ** the database schema. 
+    **
+    ** If the database schema is shared, then there is one instance of this
+    ** structure for each database connection (sqlite3*) that uses the shared
+    ** schema. This is because each database connection requires its own unique
+    ** instance of the sqlite3_vtab* handle used to access the virtual table 
+    ** implementation. sqlite3_vtab* handles can not be shared between 
+    ** database connections, even when the rest of the in-memory database 
+    ** schema is shared, as the implementation often stores the database
+    ** connection handle passed to it via the xConnect() or xCreate() method
+    ** during initialization internally. This database connection handle may
+    ** then used by the virtual table implementation to access real tables 
+    ** within the database. So that they appear as part of the callers 
+    ** transaction, these accesses need to be made via the same database 
+    ** connection as that used to execute SQL operations on the virtual table.
+    **
+    ** All VTable objects that correspond to a single table in a shared
+    ** database schema are initially stored in a linked-list pointed to by
+    ** the Table.pVTable member variable of the corresponding Table object.
+    ** When an sqlite3_prepare() operation is required to access the virtual
+    ** table, it searches the list for the VTable that corresponds to the
+    ** database connection doing the preparing so as to use the correct
+    ** sqlite3_vtab* handle in the compiled query.
+    **
+    ** When an in-memory Table object is deleted (for example when the
+    ** schema is being reloaded for some reason), the VTable objects are not 
+    ** deleted and the sqlite3_vtab* handles are not xDisconnect()ed 
+    ** immediately. Instead, they are moved from the Table.pVTable list to
+    ** another linked list headed by the sqlite3.pDisconnect member of the
+    ** corresponding sqlite3 structure. They are then deleted/xDisconnected 
+    ** next time a statement is prepared using said sqlite3*. This is done
+    ** to avoid deadlock issues involving multiple sqlite3.mutex mutexes.
+    ** Refer to comments above function sqlite3VtabUnlockList() for an
+    ** explanation as to why it is safe to add an entry to an sqlite3.pDisconnect
+    ** list without holding the corresponding sqlite3.mutex mutex.
+    **
+    ** The memory for objects of this type is always allocated by 
+    ** sqlite3DbMalloc(), using the connection handle stored in VTable.db as 
+    ** the first argument.
+    */
+    public class VTable
+    {
+      public sqlite3 db;              /* Database connection associated with this table */
+      public Module pMod;             /* Pointer to module implementation */
+      public sqlite3_vtab pVtab;      /* Pointer to vtab instance */
+      public int nRef;                /* Number of pointers to this structure */
+      public VTable pNext;            /* Next in linked list (see above) */
+    };
+
+    /*
     ** Each SQL table is represented in memory by an instance of the
     ** following structure.
     **
@@ -1360,10 +1413,9 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
       public int addColOffset;  /* Offset in CREATE TABLE stmt to add a new column */
 #endif
 #if !SQLITE_OMIT_VIRTUALTABLE
-public Module pMod;           /* Pointer to the implementation of the module */
-public sqlite3_vtab pVtab;    /* Pointer to the module instance */
-public int nModuleArg;        /* Number of arguments to the module */
-public string[] azModuleArg;    /* Text of all module args. [0] is module name */
+      public VTable pVTable;      /* List of VTable objects. */
+      public int nModuleArg;      /* Number of arguments to the module */
+      public string[] azModuleArg;/* Text of all module args. [0] is module name */
 #endif
       public Trigger pTrigger;  /* List of SQL triggers on this table */
       public Schema pSchema;    /* Schema that contains this table */
@@ -2622,10 +2674,8 @@ public TableLock[] aTableLock; /* Required table locks for shared-cache mode */
       public int nAliasAlloc;                /* Number of allocated slots for aAlias[] */
       public int[] aAlias;                   /* Register used to hold aliased result */
       public u8 explain;                     /* True if the EXPLAIN flag is found on the query */
-      public Token sErrToken;                /* The token at which the error occurred */
       public Token sNameToken;               /* Token with unqualified schema object name */
       public Token sLastToken = new Token(); /* The last token parsed */
-      public StringBuilder zSql;             /* All SQL text */
       public StringBuilder zTail;            /* All SQL text past the last semicolon parsed */
       public Table pNewTable;                /* A table being constructed by CREATE TABLE */
       public Trigger pNewTrigger;            /* Trigger under construct by a CREATE TRIGGER */
@@ -2656,10 +2706,8 @@ public Table[] apVtabLock;        /* Pointer to virtual tables needing locking *
         nAliasAlloc = 0;
         aAlias = null;
         explain = 0;
-        sErrToken = new Token();
         sNameToken = new Token();
         sLastToken = new Token();
-        zSql.Length = 0;
         zTail.Length = 0;
         pNewTable = null;
         pNewTrigger = null;
@@ -2686,10 +2734,8 @@ apVtabLoc = null;
         nAliasAlloc = SaveBuf[nested].nAliasAlloc;
         aAlias = SaveBuf[nested].aAlias;
         explain = SaveBuf[nested].explain;
-        sErrToken = SaveBuf[nested].sErrToken;
         sNameToken = SaveBuf[nested].sNameToken;
         sLastToken = SaveBuf[nested].sLastToken;
-        zSql = SaveBuf[nested].zSql;
         zTail = SaveBuf[nested].zTail;
         pNewTable = SaveBuf[nested].pNewTable;
         pNewTrigger = SaveBuf[nested].pNewTrigger;
@@ -2716,10 +2762,8 @@ apVtabLock = SaveBuf[nested].apVtabLock;
         SaveBuf[nested].nAliasAlloc = nAliasAlloc;
         SaveBuf[nested].aAlias = aAlias;
         SaveBuf[nested].explain = explain;
-        SaveBuf[nested].sErrToken = sErrToken;
         SaveBuf[nested].sNameToken = sNameToken;
         SaveBuf[nested].sLastToken = sLastToken;
-        SaveBuf[nested].zSql = zSql;
         SaveBuf[nested].zTail = zTail;
         SaveBuf[nested].pNewTable = pNewTable;
         SaveBuf[nested].pNewTrigger = pNewTrigger;
@@ -2737,9 +2781,9 @@ SaveBuf[nested].apVtabLock = apVtabLock ;
     };
 
 #if SQLITE_OMIT_VIRTUALTABLE
-    const bool IN_DECLARE_VTAB = false;//#define IN_DECLARE_VTAB 0
+    static bool IN_DECLARE_VTAB = false;//#define IN_DECLARE_VTAB 0
 #else
-//  const int ;//#define IN_DECLARE_VTAB (pParse.declareVtab)
+//  int ;//#define IN_DECLARE_VTAB (pParse.declareVtab)
 #endif
 
     /*
@@ -2863,20 +2907,21 @@ the <column-list> is stored here */
     */
     public class TriggerStep
     {
-      public int op;              /* One of TK_DELETE, TK_UPDATE, TK_INSERT, TK_SELECT */
-      public int orconf;          /* OE_Rollback etc. */
+      public u8 op;               /* One of TK_DELETE, TK_UPDATE, TK_INSERT, TK_SELECT */
+      public u8 orconf;           /* OE_Rollback etc. */
       public Trigger pTrig;       /* The trigger that this step is a part of */
-
-      public Select pSelect;      /* Valid for SELECT and sometimes
-INSERT steps (when pExprList == 0) */
-      public Token target = new Token();         /* Target table for DELETE, UPDATE, INSERT.  Quoted */
-      public Expr pWhere;         /* Valid for DELETE, UPDATE steps */
-      public ExprList pExprList;  /* Valid for UPDATE statements and sometimes
-INSERT steps (when pSelect == 0)         */
-      public IdList pIdList;      /* Valid for INSERT statements only */
+      public Select pSelect;      /* SELECT statment or RHS of INSERT INTO .. SELECT ... */
+      public Token target;        /* Target table for DELETE, UPDATE, INSERT */
+      public Expr pWhere;         /* The WHERE clause for DELETE or UPDATE steps */
+      public ExprList pExprList;  /* SET clause for UPDATE.  VALUES clause for INSERT */
+      public IdList pIdList;      /* Column names for INSERT */
       public TriggerStep pNext;   /* Next in the link-list */
       public TriggerStep pLast;   /* Last element in link-list. Valid for 1st elem only */
 
+      public TriggerStep()
+      {
+        target = new Token();
+      }
       public TriggerStep Copy()
       {
         if ( this == null )
@@ -3128,10 +3173,10 @@ INSERT steps (when pSelect == 0)         */
     ** it allows the operator to set a breakpoint at the spot where database
     ** corruption is first detected.
     */
-#if SQLITE_DEBUG
+#if SQLITE_DEBUG || DEBUG
     static int SQLITE_CORRUPT_BKPT()
     {
-      return sqlite3Corrupt();
+       return sqlite3Corrupt();
     }
 #else
 //#define SQLITE_CORRUPT_BKPT SQLITE_CORRUPT
@@ -3189,9 +3234,9 @@ const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
 ** Internal function prototypes
 */
     //int sqlite3StrICmp(const char *, const char *);
-    //int sqlite3StrNICmp(const char *, const char *, int);
     //int sqlite3IsNumber(const char*, int*, u8);
     //int sqlite3Strlen30(const char*);
+    //#define sqlite3StrNICmp sqlite3_strnicmp
 
     //int sqlite3MallocInit(void);
     //void sqlite3MallocEnd(void);
@@ -3463,8 +3508,8 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //void sqlite3DeleteTriggerStep(sqlite3*, TriggerStep*);
     //TriggerStep *sqlite3TriggerSelectStep(sqlite3*,Select*);
     //TriggerStep *sqlite3TriggerInsertStep(sqlite3*,Token*, IdList*,
-    //                                      ExprList*,Select*,int);
-    //TriggerStep *sqlite3TriggerUpdateStep(sqlite3*,Token*,ExprList*, Expr*, int);
+    //                                      ExprList*,Select*,u8);
+    //TriggerStep *sqlite3TriggerUpdateStep(sqlite3*,Token*,ExprList*, Expr*, u8);
     //TriggerStep *sqlite3TriggerDeleteStep(sqlite3*,Token*, Expr*);
     //void sqlite3DeleteTrigger(sqlite3*, Trigger*);
     //void sqlite3UnlinkAndDeleteTrigger(sqlite3*,int,const char*);
@@ -3567,7 +3612,7 @@ void sqlite3AuthContextPop(AuthContext*);
     //const void *sqlite3ValueText(sqlite3_value*, u8);
     //int sqlite3ValueBytes(sqlite3_value*, u8);
     //void sqlite3ValueSetStr(sqlite3_value*, int, const void *,u8,
-    //                        void(*)(void*));
+    //                      //  void(*)(void*));
     //void sqlite3ValueFree(sqlite3_value*);
     //sqlite3_value *sqlite3ValueNew(sqlite3 *);
     //char *sqlite3Utf16to8(sqlite3 *, const void*, int);
@@ -3654,8 +3699,8 @@ int sqlite3ParserStackPeak(void*);
 #endif
 
 #if SQLITE_OMIT_VIRTUALTABLE
-    //#  define sqlite3VtabClear(X)
-    static void sqlite3VtabClear( Table X ) { }
+    //#  define sqlite3VtabClear(Y)
+    static void sqlite3VtabClear( Table Y ) { }
 
     //#  define sqlite3VtabSync(X,Y) SQLITE_OK
     static int sqlite3VtabSync( sqlite3 X, string Y ) { return SQLITE_OK; }
@@ -3667,22 +3712,34 @@ int sqlite3ParserStackPeak(void*);
     static void sqlite3VtabCommit( sqlite3 X ) { }
 
     //#  define sqlite3VtabInSync(db) 0
+    //#  define sqlite3VtabLock(X) 
+    static void sqlite3VtabLock( VTable X ) { }
+
+    //#  define sqlite3VtabUnlock(X)
+    static void sqlite3VtabUnlock( VTable X ) { }
+
+    //#  define sqlite3VtabUnlockList(X)
+    static void sqlite3VtabUnlockList( sqlite3 X ) { }
+
     static void sqlite3VtabArgExtend( Parse p, Token t ) { }//#  define sqlite3VtabArgExtend(P, T)
     static void sqlite3VtabArgInit( Parse p ) { }//#  define sqlite3VtabArgInit(P)
     static void sqlite3VtabBeginParse( Parse p, Token t1, Token t2, Token t3 ) { }//#  define sqlite3VtabBeginParse(P, T, T1, T2)
     static void sqlite3VtabFinishParse<T>( Parse P, T t ) { }//#  define sqlite3VtabFinishParse(P, T)
     static bool sqlite3VtabInSync( sqlite3 db ) { return false; }
+
+    static VTable sqlite3GetVTable(sqlite3 db , Table T) {return null;}
 #else
 //void sqlite3VtabClear(Table*);
 //int sqlite3VtabSync(sqlite3 db, int rc);
 //int sqlite3VtabRollback(sqlite3 db);
 //int sqlite3VtabCommit(sqlite3 db);
+//void sqlite3VtabLock(VTable *);
+//void sqlite3VtabUnlock(VTable *);
+//void sqlite3VtabUnlockList(sqlite3*);
 //#  define sqlite3VtabInSync(db) ((db)->nVTrans>0 && (db)->aVTrans==0)
 static bool sqlite3VtabInSync( sqlite3 db ) { return ( db.nVTrans > 0 && db.aVTrans == 0 ); }
 #endif
     //void sqlite3VtabMakeWritable(Parse*,Table*);
-    //void sqlite3VtabLock(sqlite3_vtab*);
-    //void sqlite3VtabUnlock(sqlite3*, sqlite3_vtab*);
     //void sqlite3VtabBeginParse(Parse*, Token*, Token*, Token*);
     //void sqlite3VtabFinishParse(Parse*, Token*);
     //void sqlite3VtabArgInit(Parse*);
@@ -3690,7 +3747,7 @@ static bool sqlite3VtabInSync( sqlite3 db ) { return ( db.nVTrans > 0 && db.aVTr
     //int sqlite3VtabCallCreate(sqlite3*, int, const char *, char **);
     //int sqlite3VtabCallConnect(Parse*, Table*);
     //int sqlite3VtabCallDestroy(sqlite3*, int, const char *);
-    //int sqlite3VtabBegin(sqlite3 *, sqlite3_vtab *);
+    //int sqlite3VtabBegin(sqlite3 *, VTable *);
     //FuncDef *sqlite3VtabOverloadFunction(sqlite3 *,FuncDef*, int nArg, Expr*);
     //void sqlite3InvalidFunction(sqlite3_context*,int,sqlite3_value**);
     //int sqlite3TransferBindings(sqlite3_stmt *, sqlite3_stmt *);
@@ -3698,6 +3755,7 @@ static bool sqlite3VtabInSync( sqlite3 db ) { return ( db.nVTrans > 0 && db.aVTr
     //void sqlite3ExprListCheckLength(Parse*, ExprList*, const char*);
     //CollSeq *sqlite3BinaryCompareCollSeq(Parse *, Expr *, Expr *);
     //int sqlite3TempInMemory(const sqlite3*);
+    //VTable *sqlite3GetVTable(sqlite3*, Table*);
 
 
     /*

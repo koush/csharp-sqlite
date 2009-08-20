@@ -79,7 +79,7 @@ namespace CS_SQLite3
     /*
          sqlite_vfs Delegates
      */
-    public delegate int dxOpen( sqlite3_vfs vfs, string zName, ref sqlite3_file db, int flags, ref int pOutFlags );
+    public delegate int dxOpen( sqlite3_vfs vfs, string zName, sqlite3_file db, int flags, ref int pOutFlags );
     public delegate int dxDelete( sqlite3_vfs vfs, string zName, int syncDir );
     public delegate int dxAccess( sqlite3_vfs vfs, string zName, int flags, ref int pResOut );
     public delegate int dxFullPathname( sqlite3_vfs vfs, string zName, int nOut, StringBuilder zOut );
@@ -105,6 +105,27 @@ namespace CS_SQLite3
     //Module
     public delegate void dxDestroy( ref PgHdr pDestroyArg );
     public delegate int dxStress (object obj,PgHdr pPhHdr);
+
+    //sqlite3_module
+    public delegate int smdxCreate( sqlite3 db, object pAux, int argc, string constargv, ref sqlite3_vtab ppVTab, ref string pError );
+    public delegate int smdxConnect( sqlite3 db, object pAux, int argc, string constargv, ref sqlite3_vtab ppVTab, ref string pError );
+    public delegate int smdxBestIndex( sqlite3_vtab pVTab, ref sqlite3_index_info pIndex );
+    public delegate int smdxDisconnect( sqlite3_vtab pVTab );
+    public delegate int smdxDestroy( sqlite3_vtab pVTab );
+    public delegate int smdxOpen( sqlite3_vtab pVTab, ref sqlite3_vtab_cursor ppCursor );
+    public delegate int smdxClose( sqlite3_vtab_cursor pCursor );
+    public delegate int smdxFilter( sqlite3_vtab_cursor pCursor, int idxNum, string idxStr, int argc, sqlite3_value[] argv );
+    public delegate int smdxNext( sqlite3_vtab_cursor pCursor );
+    public delegate int smdxEof( sqlite3_vtab_cursor pCursor );
+    public delegate int smdxColumn( sqlite3_vtab_cursor pCursor, sqlite3_context p2, int p3 );
+    public delegate int smdxRowid( sqlite3_vtab_cursor pCursor, sqlite3_int64 pRowid );
+    public delegate int smdxUpdate( sqlite3_vtab pVTab, int p1, sqlite3_value[] p2, sqlite3_int64 p3 );
+    public delegate int smdxBegin( sqlite3_vtab pVTab );
+    public delegate int smdxSync( sqlite3_vtab pVTab );
+    public delegate int smdxCommit( sqlite3_vtab pVTab );
+    public delegate int smdxRollback( sqlite3_vtab pVTab );
+    public delegate int smdxFindFunction( sqlite3_vtab pVtab, int nArg, string zName, object pxFunc, ref sqlite3_value[] ppArg );
+    public delegate int smdxRename( sqlite3_vtab pVtab, string zNew );
 
     //AutoExtention
     public delegate int dxInit( sqlite3 db, ref string zMessage, sqlite3_api_routines sar );
@@ -174,5 +195,7 @@ namespace CS_SQLite3
     public delegate void dxPC_Rekey( sqlite3_pcache pCache, PgHdr p2, u32 oldKey, u32 newKey );
     public delegate void dxPC_Truncate( sqlite3_pcache pCache, u32 iLimit );
     public delegate  void dxPC_Destroy(ref sqlite3_pcache pCache);
+
+    public delegate void dxIter(PgHdr p);
   }
 }

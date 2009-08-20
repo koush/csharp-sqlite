@@ -24,7 +24,7 @@ namespace CS_SQLite3
     ** This file contains C code routines that are called by the parser
     ** to handle UPDATE statements.
     **
-    ** $Id: update.c,v 1.206 2009/07/27 10:05:06 danielk1977 Exp $
+    ** $Id: update.c,v 1.207 2009/08/08 18:01:08 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -136,7 +136,7 @@ namespace CS_SQLite3
       bool chngRowid;             /* True if the record number is being changed */
       Expr pRowidExpr = null;     /* Expression defining the new record number */
       bool openAll = false;       /* True if all indices need to be opened */
-      AuthContext sContext = new AuthContext();  /* The authorization context */
+      AuthContext sContext;       /* The authorization context */
       NameContext sNC;            /* The name-context to resolve expressions in */
       int iDb;                    /* Database containing the table being updated */
       int j1;                     /* Addresses of jump instructions */
@@ -163,7 +163,7 @@ namespace CS_SQLite3
       int regData;                 /* New data for the row */
       int regRowSet = 0;           /* Rowset of rows to be updated */
 
-      sContext.pParse = null;
+      sContext = new AuthContext(); //memset( &sContext, 0, sizeof( sContext ) );
       db = pParse.db;
       if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
@@ -195,19 +195,16 @@ const bool isView = false;
 const bool isView = false;
 #endif
 
-
       if ( sqlite3ViewGetColumnNames( pParse, pTab ) != 0 )
       {
         goto update_cleanup;
       }
-#if !SQLITE_OMIT_VIEW || !SQLITE_OMIT_VIRTUALTABLE
-      if ( sqlite3IsReadOnly( pParse, pTab, pTrigger != null ? 1 : 0 ) )
+      if ( sqlite3IsReadOnly( pParse, pTab, ( pTrigger != null ? 1 : 0 ) ) )
       {
         goto update_cleanup;
       }
-#endif
       aXRef = new int[pTab.nCol];// sqlite3DbMallocRaw(db, sizeof(int) * pTab.nCol);
-      if ( aXRef == null ) goto update_cleanup;
+      //if ( aXRef == null ) goto update_cleanup;
       for ( i = 0 ; i < pTab.nCol ; i++ ) aXRef[i] = -1;
 
       /* If there are FOR EACH ROW triggers, allocate cursors for the
@@ -793,7 +790,8 @@ iReg = ++pParse.nMem;
 pParse.nMem += pTab.nCol+1;
 addr = sqlite3VdbeAddOp2(v, OP_Rewind, ephemTab, 0);
 sqlite3VdbeAddOp3(v, OP_Column,  ephemTab, 0, iReg);
-sqlite3VdbeAddOp3(v, OP_Column, ephemTab, (pRowid?1:0), iReg+1);
+sqlite3VdbeAddOp3(v, OP_Column, ephemTab, (pRowid
+1:0), iReg+1);
 for(i=0; i<pTab.nCol; i++){
 sqlite3VdbeAddOp3(v, OP_Column, ephemTab, i+1+(pRowid!=0), iReg+2+i);
 }

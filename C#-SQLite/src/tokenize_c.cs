@@ -23,7 +23,7 @@ namespace CS_SQLite3
     ** individual tokens and sends those tokens one-by-one over to the
     ** parser for analysis.
     **
-    ** $Id: tokenize.c,v 1.162 2009/06/23 20:28:54 drh Exp $
+    ** $Id: tokenize.c,v 1.163 2009/07/03 22:54:37 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -528,8 +528,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
         db.u1.isInterrupted = false;
       }
       pParse.rc = SQLITE_OK;
-      pParse.zTail = new StringBuilder();
-      pParse.zSql = new StringBuilder( zSql );
+      pParse.zTail = new StringBuilder( zSql );
       i = 0;
       Debug.Assert( pzErrMsg != null );
       pEngine = sqlite3ParserAlloc();//sqlite3ParserAlloc((void*(*)(size_t))sqlite3Malloc);

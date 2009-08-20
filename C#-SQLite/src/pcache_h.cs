@@ -24,7 +24,7 @@ namespace CS_SQLite3
     ** This header file defines the interface that the sqlite page cache
     ** subsystem.
     **
-    ** @(#) $Id: pcache.h,v 1.19 2009/01/20 17:06:27 danielk1977 Exp $
+    ** @(#) $Id: pcache.h,v 1.20 2009/07/25 11:46:49 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -50,8 +50,8 @@ namespace CS_SQLite3
       public PgHdr pDirty;          /* Transient list of dirty pages */
       public Pgno pgno;             /* The page number for this page */
       public Pager pPager;          /* The pager to which this page belongs */
-#if SQLITE_CHECK_PAGES
-public int pageHash;          /* Hash of page content */
+#if SQLITE_CHECK_PAGES || (SQLITE_DEBUG)
+      public int pageHash;          /* Hash of page content */
 #endif
       public int flags;             /* PGHDR flags defined below */
       /**********************************************************************
@@ -60,10 +60,11 @@ public int pageHash;          /* Hash of page content */
       */
       public int nRef;              /* Number of users of this page */
       public PCache pCache;         /* Cache that owns this page */
+      public bool CacheAllocated;   /* True, if allocated from cache */
 
       public PgHdr pDirtyNext;      /* Next element in list of dirty pages */
       public PgHdr pDirtyPrev;      /* Previous element in list of dirty pages */
-      public PgHdr1 pPgHdr1;    /* Cache page header this this page */
+      public PgHdr1 pPgHdr1;        /* Cache page header this this page */
 
       public static implicit operator bool( PgHdr b )
       {

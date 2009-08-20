@@ -29,7 +29,7 @@ namespace CS_SQLite3
     ** so is applicable.  Because this module is responsible for selecting
     ** indices, you might also think of this module as the "query optimizer".
     **
-    ** $Id: where.c,v 1.408 2009/06/16 14:15:22 shane Exp $
+    ** $Id: where.c,v 1.411 2009/07/31 06:14:52 danielk1977 Exp $
     **
     *************************************************************************
     *************************************************************************
@@ -1381,6 +1381,7 @@ return 1;
       {
         Debug.Assert( pWC.op == TK_AND );
         exprAnalyzeOrTerm( pSrc, pWC, idxTerm );
+	  pTerm = pWC.a[idxTerm];
       }
 #endif //* SQLITE_OMIT_OR_OPTIMIZATION */
 
@@ -1992,7 +1993,7 @@ return pIdxInfo;
 ** that this is required.
 */
 static int vtabBestIndex(Parse *pParse, Table *pTab, sqlite3_index_info *p){
-sqlite3_vtab *pVtab = pTab.pVtab;
+sqlite3_vtab *pVtab = sqlite3GetVTable(pParse->db, pTab)->pVtab;
 int i;
 int rc;
 
@@ -2089,7 +2090,7 @@ return;
 ** sqlite3ViewGetColumnNames() would have picked up the error.
 */
 Debug.Assert( pTab.azModuleArg && pTab.azModuleArg[0] );
-Debug.Assert( pTab.pVtab );
+Debug.Assert( sqlite3GetVTable(pParse.db, pTab) );
 
 /* Set the aConstraint[].usable fields and initialize all
 ** output variables to zero.
@@ -3868,13 +3869,14 @@ pVtabIdx.idxNum, pVtabIdx.idxStr);
 #endif //* SQLITE_OMIT_EXPLAIN */
         pTabItem = pTabList.a[pLevel.iFrom];
         pTab = pTabItem.pTab;
-        iDb = sqlite3SchemaToIndex( pParse.db, pTab.pSchema );
+        iDb = sqlite3SchemaToIndex( db, pTab.pSchema );
         if ( ( pTab.tabFlags & TF_Ephemeral ) != 0 || pTab.pSelect != null ) continue;
 #if  !SQLITE_OMIT_VIRTUALTABLE
 if( (pLevel.plan.wsFlags & WHERE_VIRTUALTABLE)!=null ){
+ VTable pVTab = sqlite3GetVTable(db, pTab);
 int iCur = pTabItem.iCursor;
 sqlite3VdbeAddOp4(v, OP_VOpen, iCur, 0, 0,
-pTab.pVtab, P4_VTAB);
+pVTab, P4_VTAB);
 }else
 #endif
         if ( ( pLevel.plan.wsFlags & WHERE_IDX_ONLY ) == 0

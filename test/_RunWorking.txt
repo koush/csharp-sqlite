@@ -45,7 +45,7 @@ set ISQUICK 1
 set ISVERYQUICK 0
 
 set EXCLUDE {
- all.test
+  all.test
   async.test
   async2.test
   async3.test
@@ -142,16 +142,11 @@ mallocJ.test
 mallocK.test
 malloc_common.tcl
 
-#broken to fix in C# port; Initial release
+#broken to fix in C# port; 3.6.17
   autovacuum.test
-	backup.test
-	collate3.test
 	eval.test
-	memsubsys1.test
-	pcache2.test
 	rollback.test
 	tclsqlite.test
-	trigger2.test
 }
 
 if {[sqlite3 -has-codec]} {

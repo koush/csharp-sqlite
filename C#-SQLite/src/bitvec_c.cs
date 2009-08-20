@@ -48,7 +48,7 @@ namespace CS_SQLite3
     ** start of a transaction, and is thus usually less than a few thousand,
     ** but can be as large as 2 billion for a really big database.
     **
-    ** @(#) $Id: bitvec.c,v 1.15 2009/06/02 21:31:39 drh Exp $
+    ** @(#) $Id: bitvec.c,v 1.17 2009/07/25 17:33:26 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -197,8 +197,7 @@ namespace CS_SQLite3
         while ( p.u.aHash[h] != 0 )
         {
           if ( p.u.aHash[h] == i ) return 1;
-          h++;
-          if ( h >= BITVEC_NINT ) h = 0;
+          h = ( h + 1 ) % BITVEC_NINT;
         }
         return 0;
       }
@@ -219,7 +218,7 @@ namespace CS_SQLite3
     static int sqlite3BitvecSet( Bitvec p, u32 i )
     {
       u32 h;
-      Debug.Assert( p != null );
+      if ( p == null ) return SQLITE_OK;
       Debug.Assert( i > 0 );
       Debug.Assert( i <= p.iSize );
       i--;
@@ -304,7 +303,7 @@ bitvec_set_end:
     */
     static void sqlite3BitvecClear( Bitvec p, u32 i, u32[] pBuf )
     {
-      Debug.Assert( p != null );
+      if ( p == null ) return; 
       Debug.Assert( i > 0 );
       i--;
       while ( p.iDivisor != 0 )
@@ -432,6 +431,10 @@ bitvec_set_end:
       pTmpSpace = new u32[BITVEC_SZ];// sqlite3_malloc( BITVEC_SZ );
       if ( pBitvec == null || pV == null || pTmpSpace == null ) goto bitvec_end;
       Array.Clear( pV, 0, (int)( sz + 7 ) / 8 + 1 );// memset( pV, 0, ( sz + 7 ) / 8 + 1 );
+
+      /* NULL pBitvec tests */
+      sqlite3BitvecSet( null, (u32)1 );
+      sqlite3BitvecClear( null, 1, pTmpSpace );
 
       /* Run the program */
       pc = 0;

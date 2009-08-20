@@ -30,7 +30,7 @@ namespace CS_SQLite3
     ** If the default page cache implementation is overriden, then neither of
     ** these two features are available.
     **
-    ** @(#) $Id: pcache1.c,v 1.17 2009/06/09 18:58:53 shane Exp $
+    ** @(#) $Id: pcache1.c,v 1.19 2009/07/17 11:44:07 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -115,6 +115,7 @@ namespace CS_SQLite3
     public class PgFreeslot
     {
       public PgFreeslot pNext;  /* Next free slot */
+      public PgHdr _PgHdr;      /* Next Free Header */
     };
 
     /*
@@ -192,6 +193,7 @@ namespace CS_SQLite3
         while ( n-- != 0 )
         {
           p = new PgFreeslot();// (PgFreeslot)pBuf;
+          p._PgHdr = new PgHdr();
           p.pNext = pcache1.pFree;
           pcache1.pFree = p;
           //pBuf = (void*)&((char*)pBuf)[sz];
@@ -208,51 +210,58 @@ namespace CS_SQLite3
     */
     static PgHdr pcache1Alloc( int nByte )
     {
-      PgHdr p = new PgHdr();
+      PgHdr p;
       Debug.Assert( sqlite3_mutex_held( pcache1.mutex ) );
-      //if( nByte<=pcache1.szSlot && pcache1.pFree!=null ){
-      Debug.Assert( pcache1.isInit != 0 );
-      //  p = (PgHdr1 )pcache1.pFree;
-      //  pcache1.pFree = pcache1.pFree.pNext;
-      sqlite3StatusSet( SQLITE_STATUS_PAGECACHE_SIZE, nByte );
-      sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_USED, 1 );
-      //}else{
+      if ( nByte <= pcache1.szSlot && pcache1.pFree != null )
+      {
+        Debug.Assert( pcache1.isInit != 0 );
+        p = pcache1.pFree._PgHdr;
+        p.CacheAllocated = true;
+        pcache1.pFree = pcache1.pFree.pNext;
+        sqlite3StatusSet( SQLITE_STATUS_PAGECACHE_SIZE, nByte );
+        sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_USED, 1 );
+      }
+      else
+      {
 
-      /* Allocate a new buffer using sqlite3Malloc. Before doing so, exit the
-      ** global pcache mutex and unlock the pager-cache object pCache. This is
-      ** so that if the attempt to allocate a new buffer causes the the
-      ** configured soft-heap-limit to be breached, it will be possible to
-      ** reclaim memory from this pager-cache.
-      */
-      //  pcache1LeaveMutex();
-      //  p = sqlite3Malloc(nByte);
-      //  pcache1EnterMutex();
-      //  if( p !=null){
-      //    int sz = sqlite3MallocSize(p);
-      //    sqlite3StatusAdd(SQLITE_STATUS_PAGECACHE_OVERFLOW, sz);
-      //  }
-      //}
+        /* Allocate a new buffer using sqlite3Malloc. Before doing so, exit the
+        ** global pcache mutex and unlock the pager-cache object pCache. This is
+        ** so that if the attempt to allocate a new buffer causes the the
+        ** configured soft-heap-limit to be breached, it will be possible to
+        ** reclaim memory from this pager-cache.
+        */
+        pcache1LeaveMutex();
+        p = new PgHdr();//  p = sqlite3Malloc(nByte);
+        p.CacheAllocated = false;
+        pcache1EnterMutex();
+        //  if( p !=null){
+        int sz = nByte;//int sz = sqlite3MallocSize(p);
+        sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_OVERFLOW, sz );
+      }
       return p;
     }
 
     /*
     ** Free an allocated buffer obtained from pcache1Alloc().
     */
-    static void pcache1Free<T>( ref T p ) where T : class
+    static void pcache1Free( ref PgHdr p )
     {
       Debug.Assert( sqlite3_mutex_held( pcache1.mutex ) );
       if ( p == null ) return;
-      //if( p>=pcache1.pStart && p<pcache1.pEnd ){
-      //  PgFreeslot pSlot;
-      //sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_USED, -1 );
-      //  pSlot = (PgFreeslot)p;
-      //  pSlot.pNext = pcache1.pFree;
-      //  pcache1.pFree = pSlot;
-      //}else{
-      //  int iSize = sqlite3MallocSize(p);
-      //  sqlite3StatusAdd(SQLITE_STATUS_PAGECACHE_OVERFLOW, -iSize);
-      //sqlite3_free( ref p );
-      //}
+      if (p.CacheAllocated) //if ( p >= pcache1.pStart && p < pcache1.pEnd )
+      {
+        PgFreeslot pSlot = new PgFreeslot();
+        sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_USED, -1 );
+        pSlot._PgHdr = p;// (PgFreeslot)p;
+        pSlot.pNext = pcache1.pFree;
+        pcache1.pFree = pSlot;
+      }
+      else
+      {
+        int iSize = p.pData.Length;//sqlite3MallocSize( p );
+        sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_OVERFLOW, -iSize );
+        p = null;//sqlite3_free( ref p );
+      }
     }
 
     /*
@@ -261,9 +270,9 @@ namespace CS_SQLite3
     static PgHdr1 pcache1AllocPage( PCache1 pCache )
     {
       //int nByte = sizeof(PgHdr1) + pCache.szPage;
-      PgHdr pPg = pcache1Alloc( -1 );//nByte);
+      PgHdr pPg = pcache1Alloc( pCache.szPage );
       PgHdr1 p;
-      if ( pPg != null )
+      //if ( pPg != null )
       {
         // PAGE_TO_PGHDR1( pCache, pPg );
         p = new PgHdr1();
@@ -274,19 +283,23 @@ namespace CS_SQLite3
           pcache1.nCurrentPage++;
         }
       }
-      else
-      {
-        p = null;
-      }
+      //else
+      //{
+      //  p = null;
+      //}
       return p;
     }
 
     /*
     ** Free a page object allocated by pcache1AllocPage().
+    **
+    ** The pointer is allowed to be NULL, which is prudent.  But it turns out
+    ** that the current implementation happens to never call this routine
+    ** with a NULL pointer, so we mark the NULL test with ALWAYS().
     */
     static void pcache1FreePage( ref PgHdr1 p )
     {
-      if ( p != null )
+      if ( ALWAYS( p != null ) )
       {
         if ( p.pCache.bPurgeable )
         {
@@ -313,7 +326,7 @@ namespace CS_SQLite3
     /*
     ** Free an allocated buffer obtained from sqlite3PageMalloc().
     */
-    static void sqlite3PageFree( ref byte[] p )
+    static void sqlite3PageFree( ref PgHdr p)
     {
       pcache1EnterMutex();
       pcache1Free( ref p );
@@ -577,36 +590,42 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Implementation of the sqlite3_pcache.xFetch method.
+    ** Implementation of the sqlite3_pcache.xFetch method. 
     **
     ** Fetch a page by key value.
     **
     ** Whether or not a new page may be allocated by this function depends on
-    ** the value of the createFlag argument.
+    ** the value of the createFlag argument.  0 means do not allocate a new
+    ** page.  1 means allocate a new page if space is easily available.  2 
+    ** means to try really hard to allocate a new page.
+    **
+    ** For a non-purgeable cache (a cache used as the storage for an in-memory
+    ** database) there is really no difference between createFlag 1 and 2.  So
+    ** the calling function (pcache.c) will never have a createFlag of 1 on
+    ** a non-purgable cache.
     **
     ** There are three different approaches to obtaining space for a page,
     ** depending on the value of parameter createFlag (which may be 0, 1 or 2).
     **
-    **   1. Regardless of the value of createFlag, the cache is searched for a
+    **   1. Regardless of the value of createFlag, the cache is searched for a 
     **      copy of the requested page. If one is found, it is returned.
     **
     **   2. If createFlag==0 and the page is not already in the cache, NULL is
     **      returned.
     **
-    **   3. If createFlag is 1, the cache is marked as purgeable and the page is
-    **      not already in the cache, and if either of the following are true,
-    **      return NULL:
+    **   3. If createFlag is 1, and the page is not already in the cache,
+    **      and if either of the following are true, return NULL:
     **
     **       (a) the number of pages pinned by the cache is greater than
     **           PCache1.nMax, or
     **       (b) the number of pages pinned by the cache is greater than
-    **           the sum of nMax for all purgeable caches, less the sum of
-    **           nMin for all other purgeable caches.
+    **           the sum of nMax for all purgeable caches, less the sum of 
+    **           nMin for all other purgeable caches. 
     **
     **   4. If none of the first three conditions apply and the cache is marked
     **      as purgeable, and if one of the following is true:
     **
-    **       (a) The number of pages allocated for the cache is already
+    **       (a) The number of pages allocated for the cache is already 
     **           PCache1.nMax, or
     **
     **       (b) The number of pages allocated for all purgeable caches is
@@ -615,7 +634,7 @@ namespace CS_SQLite3
     **
     **      then attempt to recycle a page from the LRU list. If it is the right
     **      size, return the recycled buffer. Otherwise, free the buffer and
-    **      proceed to step 5.
+    **      proceed to step 5. 
     **
     **   5. Otherwise, allocate and return a new page buffer.
     */
@@ -625,6 +644,7 @@ namespace CS_SQLite3
       PCache1 pCache = p;
       PgHdr1 pPage = null;
 
+      Debug.Assert( pCache.bPurgeable || createFlag != 1 );
       pcache1EnterMutex();
       if ( createFlag == 1 ) sqlite3BeginBenignMalloc();
 
@@ -643,7 +663,7 @@ namespace CS_SQLite3
 
       /* Step 3 of header comment. */
       nPinned = pCache.nPage - pCache.nRecyclable;
-      if ( createFlag == 1 && pCache.bPurgeable && (
+      if ( createFlag == 1 && (
       nPinned >= ( pcache1.nMaxPage + pCache.nMin - pcache1.nMinPage )
       || nPinned >= ( pCache.nMax * 9 / 10 )
       ) )
@@ -789,7 +809,14 @@ fetch_out:
       pPage.pNext = pCache.apHash[h];
       pCache.apHash[h] = pPage;
 
-      if ( iNew > pCache.iMaxKey )
+      /* The xRekey() interface is only used to move pages earlier in the
+      ** database file (in order to move all free pages to the end of the
+      ** file where they can be truncated off.)  Hence, it is not possible
+      ** for the new page number to be greater than the largest previously
+      ** fetched page.  But we retain the following test in case xRekey()
+      ** begins to be used in different ways in the future.
+      */
+      if ( NEVER( iNew > pCache.iMaxKey ) )
       {
         pCache.iMaxKey = iNew;
       }

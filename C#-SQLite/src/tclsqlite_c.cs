@@ -39,7 +39,7 @@ using sqlite3_blob = sqlite.Incrblob;
     ** A TCL Interface to SQLite.  Append this file to sqlite3.c and
     ** compile the whole thing to build a TCL-enabled version of SQLite.
     **
-    ** $Id: tclsqlite.c,v 1.241 2009/03/27 12:44:35 drh Exp $
+    ** $Id: tclsqlite.c,v 1.242 2009/07/03 22:54:37 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -1462,7 +1462,7 @@ sqlite3_set_authorizer(pDb.db, 0, 0);
             zName = TCL.Tcl_GetStringFromObj( objv[2], 0 );
             zScript = TCL.Tcl_GetStringFromObj( objv[3], nScript );
             pCollate = new SqlCollate();//(SqlCollate*)Tcl_Alloc( sizeof(*pCollate) + nScript + 1 );
-            if ( pCollate == null ) return TCL.TCL_ERROR;
+            //if ( pCollate == null ) return TCL.TCL_ERROR;
             pCollate.interp = interp;
             pCollate.pNext = pDb.pCollate;
             pCollate.zScript = zScript; // pCollate[1];
@@ -1960,6 +1960,7 @@ rc = TCL_ERROR;
               ** which matches the next sequence of SQL.
               */
               pStmt = null;
+              zSql = zSql.TrimStart();// while ( isspace( zSql[0] ) ) { zSql++; }
               len = strlen30( zSql );
               for ( pPreStmt = pDb.stmtList ; pPreStmt != null ; pPreStmt = pPreStmt.pNext )
               {
@@ -2001,7 +2002,10 @@ rc = TCL_ERROR;
               */
               if ( pStmt == null )
               {
-                //Console.WriteLine( zSql.Substring( 0, 100 > zSql.Length ? zSql.Length : 100 ) );
+#if TRACE
+                int zLen = zSql.IndexOfAny(new char[] {'\n',';'} );
+                Console.WriteLine( zLen ==-1 ? zSql : zSql.Substring(0,zLen+1));
+#endif
                 if ( SQLITE_OK != sqlite3_prepare_v2( pDb.db, zSql, -1, ref pStmt, ref zLeft ) )
                 {
                   TCL.Tcl_SetObjResult( interp, dbTextToObj( sqlite3_errmsg( pDb.db ) ) );

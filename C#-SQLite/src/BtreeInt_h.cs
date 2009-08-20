@@ -28,7 +28,7 @@ namespace CS_SQLite3
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** $Id: btreeInt.h,v 1.49 2009/06/24 05:40:34 danielk1977 Exp $
+    ** $Id: btreeInt.h,v 1.52 2009/07/15 17:25:46 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -359,6 +359,26 @@ namespace CS_SQLite3
     */
     const int EXTRA_SIZE = 0;// No used in C#, since we use create a class; was MemPage.Length;
 
+    /*
+    ** A linked list of the following structures is stored at BtShared.pLock.
+    ** Locks are added (or upgraded from READ_LOCK to WRITE_LOCK) when a cursor 
+    ** is opened on the table with root page BtShared.iTable. Locks are removed
+    ** from this list when a transaction is committed or rolled back, or when
+    ** a btree handle is closed.
+    */
+    public class BtLock {
+      Btree pBtree;         /* Btree handle holding this lock */
+      Pgno iTable;          /* Root page of table */
+      u8 eLock;             /* READ_LOCK or WRITE_LOCK */
+      BtLock pNext;         /* Next in BtShared.pLock list */
+    };
+
+    /* Candidate values for BtLock.eLock */
+    //#define READ_LOCK     1
+    //#define WRITE_LOCK    2
+    const int READ_LOCK = 1;
+    const int WRITE_LOCK = 2;
+
     /* A Btree handle
     **
     ** A database connection contains a pointer to an instance of
@@ -391,6 +411,9 @@ namespace CS_SQLite3
       public int nBackup;       /* Number of backup operations reading this btree */
       public Btree pNext;       /* List of other sharable Btrees from the same db */
       public Btree pPrev;       /* Back pointer of the same list */
+#if !SQLITE_OMIT_SHARED_CACHE
+      BtLock lock;              /* Object used to lock page 1 */
+#endif
     };
 
     /*
@@ -543,7 +566,7 @@ public u8 isPending;            /* If waiting for read-locks to clear */
       public int eState;              /* One of the CURSOR_XXX constants (see below) */
       public byte[] pKey;             /* Saved key that was cursor's last known position */
       public i64 nKey;                /* Size of pKey, or last integer key */
-      public int skip;                /* (skip<0) . Prev() is a no-op. (skip>0) . Next() is */
+      public int skipNext;            /* Prev() is noop if negative. Next() is noop if positive */
 #if !SQLITE_OMIT_INCRBLOB
 public bool isIncrblobHandle;   /* True if this cursor is an incr. io handle */
 public Pgno[] aOverflow;         /* Cache of overflow page locations */
@@ -597,27 +620,6 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
     static u32 PENDING_BYTE_PAGE( BtShared pBt ) { return (u32)PAGER_MJ_PGNO( pBt.pPager ); }
 
     /*
-    ** A linked list of the following structures is stored at BtShared.pLock.
-    ** Locks are added (or upgraded from READ_LOCK to WRITE_LOCK) when a cursor
-    ** is opened on the table with root page BtShared.iTable. Locks are removed
-    ** from this list when a transaction is committed or rolled back, or when
-    ** a btree handle is closed.
-    */
-    public class BtLock
-    {
-      public Btree pBtree;         /* Btree handle holding this lock */
-      public int iTable;          /* Root page of table */
-      public u8 eLock;             /* READ_LOCK or WRITE_LOCK */
-      public BtLock pNext;         /* Next in BtShared.pLock list */
-    };
-
-    /* Candidate values for BtLock.eLock */
-    //#define READ_LOCK     1
-    //#define WRITE_LOCK    2
-    const int READ_LOCK = 1;
-    const int WRITE_LOCK = 2;
-
-    /*
     ** These macros define the location of the pointer-map entry for a
     ** database page. The first argument to each is the number of usable
     ** bytes on each page of the database (often 1024). The second is the
@@ -633,7 +635,7 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
     ** this test.
     */
     //#define PTRMAP_PAGENO(pBt, pgno) ptrmapPageno(pBt, pgno)
-    static u32 PTRMAP_PAGENO( BtShared pBt, u32 pgno ) { return ptrmapPageno( pBt, pgno ); }
+    static Pgno PTRMAP_PAGENO( BtShared pBt, Pgno pgno ) { return ptrmapPageno( pBt, pgno ); }
     //#define PTRMAP_PTROFFSET(pgptrmap, pgno) (5*(pgno-pgptrmap-1))
     static u32 PTRMAP_PTROFFSET( u32 pgptrmap, u32 pgno ) { return ( 5 * ( pgno - pgptrmap - 1 ) ); }
     //#define PTRMAP_ISPAGE(pBt, pgno) (PTRMAP_PAGENO((pBt),(pgno))==(pgno))
@@ -692,6 +694,8 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
       Debug.Assert( p.pBt.inTransaction != TRANS_NONE || p.pBt.nTransaction == 0 );
       Debug.Assert( p.pBt.inTransaction >= p.inTrans );
     }
+#else
+    static void btreeIntegrity(Btree p) { }
 #endif
 
     /*
@@ -742,19 +746,5 @@ public static bool ISAUTOVACUUM =false;
     //#define get4byte sqlite3Get4byte
     //#define put4byte sqlite3Put4byte
 
-    /*
-    ** Internal routines that should be accessed by the btree layer only.
-    */
-    //int sqlite3BtreeGetPage(BtShared*, Pgno, MemPage**, int);
-    //int sqlite3BtreeInitPage(MemPage pPage);
-    //void sqlite3BtreeParseCellPtr(MemPage*, u8*, CellInfo*);
-    //void sqlite3BtreeParseCell(MemPage*, int, CellInfo*);
-    //int sqlite3BtreeRestoreCursorPosition(BtCursor pCur);
-    //void sqlite3BtreeMoveToParent(BtCursor *pCur);
-
-#if SQLITE_TEST
-    //void sqlite3BtreeGetTempCursor(BtCursor *pCur, BtCursor *pTempCur);
-    //void sqlite3BtreeReleaseTempCursor(BtCursor *pCur);
-#endif
   }
 }

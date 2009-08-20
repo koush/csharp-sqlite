@@ -34,7 +34,7 @@ namespace CS_SQLite3
     ** This file contains functions for allocating memory, comparing
     ** strings, and stuff like that.
     **
-    ** $Id: util.c,v 1.261 2009/06/24 10:26:33 drh Exp $
+    ** $Id: util.c,v 1.262 2009/07/28 16:44:26 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -301,6 +301,9 @@ rc = isnan(x);
         return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
       }
     }
+
+    static int sqlite3_strnicmp( string zLeft, int offsetLeft, string zRight, int N )
+    { return sqlite3StrNICmp(  zLeft,  offsetLeft,  zRight,  N );}
 
     static int sqlite3StrNICmp( string zLeft, int offsetLeft, string zRight, int N )
     {

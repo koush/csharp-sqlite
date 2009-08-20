@@ -77,7 +77,7 @@ do_test memsubsys2-1.2 {
 sqlite3_memory_highwater 1
 set highwater [sqlite3_memory_highwater 0]
 do_test memsubsys2-2.1 {
-  //sqlite3_free [set x [sqlite3_malloc 100000]]
+  sqlite3_free [set x [sqlite3_malloc 100000]]
   expr {$x!="0"}
 } {1}
 do_test memsubsys2-2.2 {
@@ -116,10 +116,10 @@ do_test memsubsys2-3.7 {
   sqlite3_memory_used
 } {0}
 do_test memsubsys2-3.8 {
-  //sqlite3_free $::allocation
+  sqlite3_free $::allocation
 } {}
 do_test memsubsys2-3.9 {
-  //sqlite3_free 0
+  sqlite3_free 0
 } {}
   
 
@@ -154,10 +154,10 @@ do_test memsubsys2-4.7 {
   expr {[sqlite3_memory_used]>=100000}
 } {1}
 do_test memsubsys2-4.8 {
-  //sqlite3_free $::allocation
+  sqlite3_free $::allocation
 } {}
 do_test memsubsys2-4.9 {
-  //sqlite3_free 0
+  sqlite3_free 0
 } {}
 do_test memsubsys2-4.10 {
   expr {[sqlite3_memory_highwater 0]>=100000}

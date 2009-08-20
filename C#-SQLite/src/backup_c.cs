@@ -29,7 +29,7 @@ namespace CS_SQLite3
     ** This file contains the implementation of the sqlite3_backup_XXX()
     ** API functions and the related features.
     **
-    ** $Id: backup.c,v 1.17 2009/06/03 11:25:07 danielk1977 Exp $
+    ** $Id: backup.c,v 1.19 2009/07/06 19:03:13 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -191,10 +191,10 @@ namespace CS_SQLite3
       {
         /* Allocate space for a new sqlite3_backup object */
         p = new sqlite3_backup();// (sqlite3_backup)sqlite3_malloc( sizeof( sqlite3_backup ) );
-        if ( null == p )
-        {
-          sqlite3Error( pDestDb, SQLITE_NOMEM, 0 );
-        }
+        //if ( null == p )
+        //{
+        //  sqlite3Error( pDestDb, SQLITE_NOMEM, 0 );
+        //}
       }
 
       /* If the allocation succeeded, populate the new object. */
@@ -375,7 +375,7 @@ namespace CS_SQLite3
         )
         {
           p.bDestLocked = 1;
-          rc = sqlite3BtreeGetMeta( p.pDest, BTREE_SCHEMA_VERSION, ref p.iDestSchema );
+          sqlite3BtreeGetMeta( p.pDest, BTREE_SCHEMA_VERSION, ref p.iDestSchema );
         }
 
         /* If there is no open read-transaction on the source database, open
@@ -424,18 +424,19 @@ namespace CS_SQLite3
           }
         }
 
-        if ( rc == SQLITE_DONE )
-        {
-          int nSrcPagesize = sqlite3BtreeGetPageSize( p.pSrc );
-          int nDestPagesize = sqlite3BtreeGetPageSize( p.pDest );
-          u32 nDestTruncate;
 
           /* Update the schema version field in the destination database. This
           ** is to make sure that the schema-version really does change in
           ** the case where the source and destination databases have the
           ** same schema version.
           */
-          sqlite3BtreeUpdateMeta( p.pDest, 1, (u32)p.iDestSchema + 1 );
+        if ( rc == SQLITE_DONE
+         && ( rc = sqlite3BtreeUpdateMeta( p.pDest, 1, p.iDestSchema + 1 ) ) == SQLITE_OK
+        )
+        {
+          int nSrcPagesize = sqlite3BtreeGetPageSize( p.pSrc );
+          int nDestPagesize = sqlite3BtreeGetPageSize( p.pDest );
+          int nDestTruncate;
           if ( p.pDestDb != null )
           {
             sqlite3ResetInternalSchema( p.pDestDb, 0 );
@@ -456,7 +457,7 @@ namespace CS_SQLite3
           if ( nSrcPagesize < nDestPagesize )
           {
             int ratio = nDestPagesize / nSrcPagesize;
-            nDestTruncate = (u32)( ( nSrcPage + ratio - 1 ) / ratio );
+            nDestTruncate = ( nSrcPage + ratio - 1 ) / ratio;
             if ( nDestTruncate == (int)PENDING_BYTE_PAGE( p.pDest.pBt ) )
             {
               nDestTruncate--;
@@ -464,9 +465,9 @@ namespace CS_SQLite3
           }
           else
           {
-            nDestTruncate = (u32)( nSrcPage * ( nSrcPagesize / nDestPagesize ) );
+            nDestTruncate = nSrcPage * ( nSrcPagesize / nDestPagesize );
           }
-          sqlite3PagerTruncateImage( pDestPager, nDestTruncate );
+          sqlite3PagerTruncateImage( pDestPager, (u32)nDestTruncate );
 
           if ( nSrcPagesize < nDestPagesize )
           {

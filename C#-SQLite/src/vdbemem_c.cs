@@ -30,7 +30,7 @@ namespace CS_SQLite3
     ** only within the VDBE.  Interface routines refer to a Mem using the
     ** name sqlite_value
     **
-    ** $Id: vdbemem.c,v 1.150 2009/06/25 01:47:12 drh Exp $
+    ** $Id: vdbemem.c,v 1.152 2009/07/22 18:07:41 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -309,7 +309,7 @@ return SQLITE_OK;
     ** Return SQLITE_ERROR if the finalizer reports an error.  SQLITE_OK
     ** otherwise.
     */
-    static int sqlite3VdbeMemFinalize( ref Mem pMem, FuncDef pFunc )
+    static int sqlite3VdbeMemFinalize( Mem pMem, FuncDef pFunc )
     {
       int rc = SQLITE_OK;
       if ( ALWAYS( pFunc != null && pFunc.xFinalize != null ) )
@@ -324,7 +324,7 @@ return SQLITE_OK;
         ctx.pFunc = pFunc;
         pFunc.xFinalize( ctx );
         Debug.Assert( 0 == ( pMem.flags & MEM_Dyn ) && pMem.xDel == null );
-        ////sqlite3DbFree(pMem.db,ref pMem.zMalloc);
+        //sqlite3DbFree(pMem.db,ref pMem.zMalloc);
         ctx.s.CopyTo( pMem );//memcpy(pMem, &ctx.s, sizeof(ctx.s));
         rc = ctx.isError;
       }
@@ -343,7 +343,7 @@ return SQLITE_OK;
       {
         if ( ( p.flags & MEM_Agg ) != 0 )
         {
-          sqlite3VdbeMemFinalize( ref p, p.u.pDef );
+          sqlite3VdbeMemFinalize( p, p.u.pDef );
           Debug.Assert( ( p.flags & MEM_Agg ) == 0 );
           sqlite3VdbeMemRelease( p );
         }
@@ -361,6 +361,12 @@ return SQLITE_OK;
       p.n = 0;
       p.z = null;
       p.zBLOB = null;
+      //
+      // Release additional C# pointers for backlinks
+      p._Mem = null;
+      p._SumCtx = null;
+      p._MD5Context = null;
+      p._MD5Context = null;
     }
 
     /*
@@ -371,7 +377,7 @@ return SQLITE_OK;
     static void sqlite3VdbeMemRelease( Mem p )
     {
       sqlite3VdbeMemReleaseExternal( p );
-      ////sqlite3DbFree(p.db,ref p.zMalloc);
+      //sqlite3DbFree(p.db,ref p.zMalloc);
       p.zBLOB = null;
       p.z = null;
       //p.zMalloc = null;
@@ -617,6 +623,14 @@ return SQLITE_OK;
       if ( n < 0 ) n = 0;
       pMem.u.nZero = n;
       pMem.enc = SQLITE_UTF8;
+#if SQLITE_OMIT_INCRBLOB
+  sqlite3VdbeMemGrow(pMem, n, 0);
+  //if( pMem.z!= null ){
+   pMem.n = n;
+   pMem.z = null;//memset(pMem.z, 0, n);
+   pMem.zBLOB = new byte[n];
+   //}
+#endif
     }
 
     /*
@@ -1084,7 +1098,9 @@ return SQLITE_NOMEM;
       int available = 0; /* Number of bytes available on the local btree page */
       int rc = SQLITE_OK; /* Return code */
 
-      /* Note: the calls to BtreeKeyFetch() and DataFetch() below assert()
+      Debug.Assert( sqlite3BtreeCursorIsValid(pCur) );
+
+	/* Note: the calls to BtreeKeyFetch() and DataFetch() below assert()
       ** that both the BtShared and database handle mutexes are held. */
       Debug.Assert( ( pMem.flags & MEM_RowSet ) == 0 );
       if ( key )
@@ -1113,7 +1129,7 @@ return SQLITE_NOMEM;
         pMem.flags = MEM_Blob | MEM_Dyn | MEM_Term;
         if ( key )
         {
-          rc = sqlite3BtreeKey( pCur, offset, amt, ref pMem.zBLOB );
+          rc = sqlite3BtreeKey( pCur, (u32)offset, (u32)amt,  pMem.zBLOB );
         }
         else
         {

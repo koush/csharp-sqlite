@@ -36,7 +36,7 @@ namespace CS_SQLite3
     ** Code for testing all sorts of SQLite interfaces.  This code
     ** implements new SQL functions used by the test scripts.
     **
-    ** $Id: test_func.c,v 1.15 2009/05/07 13:43:49 drh Exp $
+    ** $Id: test_func.c,v 1.16 2009/07/22 07:27:57 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -203,6 +203,7 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     }
     static void test_agg_errmsg16_final( sqlite3_context ctx )
     {
+#if !SQLITE_OMIT_UTF16
       string z;
       sqlite3 db = sqlite3_context_db_handle( ctx );
       sqlite3_aggregate_context( ctx, 2048 );
@@ -210,6 +211,7 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
       z = sqlite3_errmsg16( db );
       sqlite3EndBenignMalloc();
       sqlite3_result_text16( ctx, z, -1, SQLITE_TRANSIENT );
+#endif
     }
 
     /*

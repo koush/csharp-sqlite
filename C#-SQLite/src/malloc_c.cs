@@ -22,7 +22,7 @@ namespace CS_SQLite3
     **
     ** Memory allocation functions used throughout sqlite.
     **
-    ** $Id: malloc.c,v 1.64 2009/06/27 00:48:33 drh Exp $
+    ** $Id: malloc.c,v 1.66 2009/07/17 11:44:07 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -117,13 +117,11 @@ return nRet;
       ** The alarm callback and its arguments.  The mem0.mutex lock will
       ** be held while the callback is running.  Recursive calls into
       ** the memory subsystem are allowed, but no new callbacks will be
-      ** issued.  The alarmBusy variable is set to prevent recursive
-      ** callbacks.
+      ** issued.
       */
       public sqlite3_int64 alarmThreshold;
       public dxalarmCallback alarmCallback; // (*alarmCallback)(void*, sqlite3_int64,int);
       public object alarmArg;
-      public int alarmBusy;
 
       /*
       ** Pointers to the end of  sqlite3GlobalConfig.pScratch and
@@ -148,7 +146,7 @@ return nRet;
         this.aPageFree = aPageFree;
       }
     }
-    static Mem0Global mem0 = new Mem0Global( 62560955, 0, null, 0, null, null, 0, null, null );
+    static Mem0Global mem0 = new Mem0Global( 0, null, 0, null, null, 0, null, null );
 
     //#define mem0 GLOBAL(struct Mem0Global, mem0)
 
@@ -286,16 +284,17 @@ return nRet;
       //dxCallback xCallback; //void (*xCallback)(void*,sqlite3_int64,int);
       //sqlite3_int64 nowUsed;
       //object pArg;
-      //if( mem0.alarmCallback==0 || mem0.alarmBusy  ) return;
-      //mem0.alarmBusy = 1;
+      //if( mem0.alarmCallback==0 ) return;
       //xCallback = mem0.alarmCallback;
       //nowUsed = sqlite3StatusValue(SQLITE_STATUS_MEMORY_USED);
       //pArg = mem0.alarmArg;
+      //mem0.alarmCallback = null;
       //sqlite3_mutex_leave(mem0.mutex);
       //xCallback(pArg, nowUsed, nByte);
       //sqlite3_mutex_enter(mem0.mutex);
-      //mem0.alarmBusy = 0;
-    }
+      //mem0.alarmCallback = xCallback;
+      //mem0.alarmArg = pArg;
+      }
 
     /*
     ** Do a memory allocation with statistics and alarms.  Assume the
@@ -524,11 +523,7 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
     int sqlite3DbMallocSize( sqlite3 db, byte[] p )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      if ( p == null )
-      {
-        return 0;
-      }
-      else if ( isLookaside( db, p ) )
+      if ( isLookaside( db, p ) )
       {
         return db.lookaside.sz;
       }

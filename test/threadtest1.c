@@ -123,7 +123,7 @@ char **db_query(sqlite *db, const char *zFile, const char *zFormat, ...){
     free(zSql);
     Exit(1);
   }
-  //sqlite3_free(zSql);
+  sqlite3_free(zSql);
   if( sResult.azElem==0 ){
     db_query_callback(&sResult, 0, 0, 0);
   }
@@ -150,10 +150,10 @@ void db_execute(sqlite *db, const char *zFile, const char *zFormat, ...){
   if( zErrMsg ){
     fprintf(stdout,"%s: command failed: %s - %s\n", zFile, zSql, zErrMsg);
     free(zErrMsg);
-    //sqlite3_free(zSql);
+    sqlite3_free(zSql);
     Exit(1);
   }
-  //sqlite3_free(zSql);
+  sqlite3_free(zSql);
 }
 
 /*
@@ -162,7 +162,7 @@ void db_execute(sqlite *db, const char *zFile, const char *zFormat, ...){
 void db_query_free(char **az){
   int i;
   for(i=0; az[i]; i++){
-    //sqlite3_free(az[i]);
+    sqlite3_free(az[i]);
   }
   free(az);
 }

@@ -23,7 +23,7 @@ namespace CS_SQLite3
     ** This file contains C code routines that are called by the parser
     ** in order to generate code for DELETE FROM statements.
     **
-    ** $Id: delete.c,v 1.206 2009/07/27 10:05:05 danielk1977 Exp $
+    ** $Id: delete.c,v 1.207 2009/08/08 18:01:08 drh Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -76,10 +76,9 @@ namespace CS_SQLite3
       ** In either case leave an error message in pParse and return non-zero.
       */
       if (
-        // ( IsVirtual(pTab)
-        //  && sqlite3GetVTable(pParse.db, pTab).pMod.pModule.xUpdate==null )
-        //||
-      ( ( pTab.tabFlags & TF_Readonly ) != 0
+         ( IsVirtual( pTab )
+          && sqlite3GetVTable( pParse.db, pTab ).pMod.pModule.xUpdate == null )
+        || ( ( pTab.tabFlags & TF_Readonly ) != 0
       && ( pParse.db.flags & SQLITE_WriteSchema ) == 0
       && pParse.nested == 0 )
       )
@@ -123,18 +122,18 @@ namespace CS_SQLite3
 
         pWhere = sqlite3ExprDup( db, pWhere, 0 );
         pFrom = sqlite3SrcListAppend( db, null, null, null );
-        if ( pFrom != null )
-        {
+        //if ( pFrom != null )
+        //{
           Debug.Assert( pFrom.nSrc == 1 );
           pFrom.a[0].zAlias = pView.zName;// sqlite3DbStrDup( db, pView.zName );
           pFrom.a[0].pSelect = pDup;
           Debug.Assert( pFrom.a[0].pOn == null );
           Debug.Assert( pFrom.a[0].pUsing == null );
-        }
-        else
-        {
-          sqlite3SelectDelete( db, ref pDup );
-        }
+        //}
+        //else
+        //{
+        //  sqlite3SelectDelete( db, ref pDup );
+        //}
         pDup = sqlite3SelectNew( pParse, null, pFrom, pWhere, null, null, null, 0, null, null );
       }
       sqlite3SelectDestInit( dest, SRT_EphemTab, iCur );
@@ -260,7 +259,7 @@ return null;
       Index pIdx;            /* For looping over indices of the table */
       int iCur;              /* VDBE VdbeCursor number for pTab */
       sqlite3 db;            /* Main database structure */
-      AuthContext sContext = new AuthContext();  /* Authorization context */
+      AuthContext sContext;  /* Authorization context */
       int oldIdx = -1;       /* VdbeCursor for the OLD table of AFTER triggers */
       NameContext sNC;       /* Name context to resolve expressions in */
       int iDb;               /* Database number */
@@ -277,7 +276,8 @@ return null;
       int iEndBeforeTrigger = 0;       /* Exit of before trigger program */
       u32 old_col_mask = 0;        /* Mask of OLD.* columns in use */
 
-      sContext.pParse = null;
+      sContext = new AuthContext();//memset(&sContext, 0, sizeof(sContext));
+
       db = pParse.db;
       if ( pParse.nErr != 0 /*|| db.mallocFailed != 0 */ )
       {
@@ -334,6 +334,7 @@ rcauth = sqlite3AuthCheck(pParse, SQLITE_DELETE, pTab->zName, 0, zDb);
         goto delete_from_cleanup;
       }
       Debug.Assert( !isView || pTrigger != null );
+
       /* Allocate a cursor used to store the old.* data for a trigger.
       */
       if ( pTrigger != null )

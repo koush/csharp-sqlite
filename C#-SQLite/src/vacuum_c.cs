@@ -28,7 +28,7 @@ namespace CS_SQLite3
     ** Most of the code in this file may be omitted by defining the
     ** SQLITE_OMIT_VACUUM macro.
     **
-    ** $Id: vacuum.c,v 1.90 2009/06/03 11:25:07 danielk1977 Exp $
+    ** $Id: vacuum.c,v 1.91 2009/07/02 07:47:33 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -298,8 +298,7 @@ BTREE_USER_VERSION,       0,  /* Preserve the user version */
         {
           /* GetMeta() and UpdateMeta() cannot fail in this context because
           ** we already have page 1 loaded into cache and marked dirty. */
-          rc = sqlite3BtreeGetMeta( pMain, aCopy[i], ref meta );
-          if ( NEVER( rc != SQLITE_OK ) ) goto end_of_vacuum;
+          sqlite3BtreeGetMeta( pMain, aCopy[i], ref meta );
           rc = sqlite3BtreeUpdateMeta( pTemp, aCopy[i], (u32)( meta + aCopy[i + 1] ) );
           if ( NEVER( rc != SQLITE_OK ) ) goto end_of_vacuum;
         }

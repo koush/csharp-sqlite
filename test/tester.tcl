@@ -13,8 +13,10 @@
 #
 # $Id: tester.tcl,v 1.143 2009/04/09 01:23:49 drh Exp $
 #########################################################################################
-# Repository path:    $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/test/tester.tcl $
-# Last Changed   :    $Revision: 62 $ $LastChangedDate: 2009-08-03 09:19:48 -0700 (Mon, 03 Aug 2009) $ $LastChangedBy: noah.hart $ 
+# Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+# C#-SQLite is an independent reimplementation of the SQLite software library
+#
+# $Header: test/tester.tcl,v de00c40da114 2009/08/10 20:32:00 Noah $
 ######################################################################################
 
 #
@@ -31,7 +33,7 @@ for {set i 0} {$i<[llength $argv]} {incr i} {
 }
 
 set tcl_precision 15
-sqlite3_test_control_pending_byte 0x10000
+sqlite3_test_control_pending_byte 0x0010000
 
 # 
 # Check the command-line arguments for a default soft-heap-limit.
@@ -134,6 +136,7 @@ if {[sqlite3 -has-codec] && [info command sqlite_orig]==""} {
 #
 if {![info exists nTest]} {
   sqlite3_shutdown 
+# install_malloc_faultsim 1    
   sqlite3_initialize
   autoinstall_test_functions
   if {[info exists tester_do_binarylog]} {
@@ -180,6 +183,7 @@ proc omit_test {name reason} {
 #
 proc do_test {name cmd expected} {
   global argv nErr nTest skip_test maxErr
+# sqlite3_memdebug_settitle $name
   if {[info exists ::tester_do_binarylog]} {
     sqlite3_instvfs marker binarylog "Start of $name"
   }

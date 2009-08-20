@@ -43,7 +43,7 @@ namespace CS_SQLite3
 //# error "The MEMORY_DEBUG macro is obsolete.  Use SQLITE_DEBUG instead."
 #endif
 
-#if SQLITE_DEBUG
+#if SQLITE_DEBUG || TRACE
     static bool sqlite3OsTrace = false;
     static void OSTRACE1( string X ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X ); }
     static void OSTRACE2( string X, object Y ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y ); }

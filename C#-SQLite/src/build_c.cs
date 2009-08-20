@@ -38,7 +38,7 @@ namespace CS_SQLite3
     **     COMMIT
     **     ROLLBACK
     **
-    ** $Id: build.c,v 1.554 2009/06/25 11:50:21 drh Exp $
+    ** $Id: build.c,v 1.557 2009/07/24 17:58:53 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -209,7 +209,7 @@ p.zName, P4_STATIC );
 {
 int i;
 for(i=0; i<pParse.nVtabLock; i++){
-char *vtab = (char *)pParse.apVtabLock[i].pVtab;
+char *vtab = (char *)sqlite3GetVTable(db, pParse->apVtabLock[i]);
 sqlite3VdbeAddOp4(v, OP_VBegin, 0, 0, 0, vtab, P4_VTAB);
 }
 pParse.nVtabLock = 0;
@@ -498,6 +498,7 @@ pParse.nVtabLock = 0;
       }
       Debug.Assert( iDb == 0 );
       db.flags &= ~SQLITE_InternChanges;
+      sqlite3VtabUnlockList( db );
       sqlite3BtreeLeaveAll( db );
       /* If one or more of the auxiliary database files has been closed,
       ** then remove them from the auxiliary database list.  We take the
@@ -524,7 +525,7 @@ pParse.nVtabLock = 0;
       if ( db.nDb <= 2 && db.aDb != db.aDbStatic )
       {
         Array.Copy( db.aDb, db.aDbStatic, 2 );// memcpy(db.aDbStatic, db.aDb, 2*sizeof(db.aDb[0]));
-        ////sqlite3DbFree(db,ref db.aDb);
+        //sqlite3DbFree(db,ref db.aDb);
         //db.aDb = db.aDbStatic;
       }
     }
@@ -2252,7 +2253,7 @@ code = SQLITE_DROP_VIEW;
 }
 }else if( IsVirtual(pTab) ){
 code = SQLITE_DROP_VTABLE;
-zArg2 = pTab.pMod.zName;
+zArg2 = sqlite3GetVTable(db, pTab)->pMod->zName;
 }else{
 if( OMIT_TEMPDB ==0&& iDb==1 ){
 code = SQLITE_DROP_TEMP_TABLE;
@@ -3510,7 +3511,7 @@ exit_drop_index:
       if ( pList == null )
       {
         pList = new SrcList();//sqlite3DbMallocZero(db, SrcList.Length );
-        if ( pList == null ) return null;
+        //if ( pList == null ) return null;
         pList.nAlloc = 1;
         pList.a = new SrcList_item[1];
       }
@@ -3521,7 +3522,7 @@ exit_drop_index:
       //  return null;
       //}
       pItem = pList.a[pList.nSrc - 1];
-      if ( pDatabase != null && pDatabase.z == null )
+      if ( pDatabase != null && String.IsNullOrEmpty(pDatabase.z))
       {
         pDatabase = null;
       }
@@ -3620,14 +3621,18 @@ exit_drop_index:
     {
       SrcList_item pItem;
       sqlite3 db = pParse.db;
-      p = sqlite3SrcListAppend( db, p, pTable, pDatabase );
-      if ( p == null || NEVER( p.nSrc == 0 ) )
+      if ( null == p && ( pOn != null || pUsing != null ) )
       {
-        sqlite3ExprDelete( db, ref pOn );
-        sqlite3IdListDelete( db, ref pUsing );
-        sqlite3SelectDelete( db, ref pSubquery );
-        return p;
+        sqlite3ErrorMsg( pParse, "a JOIN clause is required before %s",
+          ( pOn != null ? "ON" : "USING" )
+        );
+        goto append_from_error;
       }
+      p = sqlite3SrcListAppend( db, p, pTable, pDatabase );
+      //if ( p == null || NEVER( p.nSrc == 0 ) )
+      //{
+      //  goto append_from_error;
+      //}
       pItem = p.a[p.nSrc - 1];
       Debug.Assert( pAlias != null );
       if ( pAlias.n != 0 )
@@ -3638,6 +3643,12 @@ exit_drop_index:
       pItem.pOn = pOn;
       pItem.pUsing = pUsing;
       return p;
+append_from_error:
+      Debug.Assert( p == null );
+      sqlite3ExprDelete( db, ref pOn );
+      sqlite3IdListDelete( db, ref pUsing );
+      sqlite3SelectDelete( db, ref pSubquery );
+      return null;
     }
 
     /*

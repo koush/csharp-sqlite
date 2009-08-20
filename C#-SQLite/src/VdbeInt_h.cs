@@ -172,8 +172,8 @@ set { _flags = value; }
 #else
       public u16 flags = MEM_Null;  /* Some combination of MEM_Null, MEM_Str, MEM_Dyn, etc. */
 #endif
-      public u8 type = SQLITE_NULL;/* One of SQLITE_NULL, SQLITE_TEXT, SQLITE_INTEGER, etc */
-      public u8 enc;               /* SQLITE_UTF8, SQLITE_UTF16BE, SQLITE_UTF16LE */
+      public u8 type = SQLITE_NULL; /* One of SQLITE_NULL, SQLITE_TEXT, SQLITE_INTEGER, etc */
+      public u8 enc;                /* SQLITE_UTF8, SQLITE_UTF16BE, SQLITE_UTF16LE */
       public dxDel xDel;            /* If not null, call this function to delete Mem.z */
       // Not used under c#
       //public string zMalloc;      /* Dynamic buffer allocated by sqlite3Malloc() */
@@ -241,12 +241,20 @@ set { _flags = value; }
     //#define MEM_Ephem     0x1000   /* Mem.z points to an ephemeral string */
     //#define MEM_Agg       0x2000   /* Mem.z points to an agg function context */
     //#define MEM_Zero      0x4000   /* Mem.i contains count of 0s appended to blob */
-    const int MEM_Term = 0x0200;   /* String rep is nul terminated */
-    const int MEM_Dyn = 0x0400;   /* Need to call sqliteFree() on Mem.z */
-    const int MEM_Static = 0x0800;   /* Mem.z points to a static string */
-    const int MEM_Ephem = 0x1000;   /* Mem.z points to an ephemeral string */
-    const int MEM_Agg = 0x2000;   /* Mem.z points to an agg function context */
-    const int MEM_Zero = 0x4000;   /* Mem.i contains count of 0s appended to blob */
+//#ifdef SQLITE_OMIT_INCRBLOB
+//  #undef MEM_Zero
+//  #define MEM_Zero 0x0000
+//#endif
+    const int MEM_Term = 0x0200;   
+    const int MEM_Dyn = 0x0400;   
+    const int MEM_Static = 0x0800; 
+    const int MEM_Ephem = 0x1000;  
+    const int MEM_Agg = 0x2000;   
+#if !SQLITE_OMIT_INCRBLOB
+    const int MEM_Zero = 0x4000;  
+#else
+    const int MEM_Zero = 0x0000;  
+#endif
 
     /*
     ** Clear any existing type flags from a Mem and replace them with f

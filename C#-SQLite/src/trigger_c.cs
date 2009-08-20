@@ -20,7 +20,7 @@ namespace CS_SQLite3
     *************************************************************************
     **
     **
-    ** $Id: trigger.c,v 1.141 2009/05/28 01:00:55 drh Exp $
+    ** $Id: trigger.c,v 1.143 2009/08/10 03:57:58 shane Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -47,7 +47,7 @@ namespace CS_SQLite3
         sqlite3SelectDelete( db, ref pTmp.pSelect );
         sqlite3IdListDelete( db, ref pTmp.pIdList );
 
-        //sqlite3DbFree( db, ref pTmp );
+        pTriggerStep = null;//sqlite3DbFree( db, ref pTmp );
       }
     }
 
@@ -110,14 +110,14 @@ namespace CS_SQLite3
     int noErr          /* Suppress errors if the trigger already exists */
     )
     {
-      Trigger pTrigger = null;
-      Table pTab;
-      string zName = null;        /* Name of the trigger */
-      sqlite3 db = pParse.db;
-      int iDb;                /* The database to store the trigger in */
+      Trigger pTrigger = null;      /* The new trigger */
+      Table pTab;                   /* Table that the trigger fires off of */
+      string zName = null;          /* Name of the trigger */
+      sqlite3 db = pParse.db;       /* The database connection */
+      int iDb;                      /* The database to store the trigger in */
       Token pName = null;           /* The unqualified db name */
-      DbFixer sFix = new DbFixer();
-      int iTabDb;
+      DbFixer sFix = new DbFixer(); /* State vector for the DB fixer */
+      int iTabDb;                   /* Index of the database holding pTab */
 
       Debug.Assert( pName1 != null );   /* pName1.z might be NULL, but not pName1 itself */
       Debug.Assert( pName2 != null );
@@ -171,6 +171,18 @@ namespace CS_SQLite3
       if ( pTab == null )
       {
         /* The table does not exist. */
+        if ( db.init.iDb == 1 )
+        {
+          /* Ticket #3810.
+          ** Normally, whenever a table is dropped, all associated triggers are
+          ** dropped too.  But if a TEMP trigger is created on a non-TEMP table
+          ** and the table is dropped by a different database connection, the
+          ** trigger is not visible to the database connection that does the
+          ** drop so the trigger cannot be dropped.  This results in an
+          ** "orphaned trigger" - a trigger whose associated table is missing.
+          */
+          db.init.orphanTrigger = 1;
+        }
         goto trigger_cleanup;
       }
       if ( IsVirtual( pTab ) )
@@ -392,21 +404,21 @@ triggerfinish_cleanup:
     */
     static TriggerStep triggerStepAllocate(
     sqlite3 db,                /* Database connection */
-    int op,                     /* Trigger opcode */
+    u8 op,                     /* Trigger opcode */
     Token pName                /* The target name */
     )
     {
       TriggerStep pTriggerStep;
 
       pTriggerStep = new TriggerStep();// sqlite3DbMallocZero( db, sizeof( TriggerStep ) + pName.n );
-      if ( pTriggerStep != null )
-      {
+      //if ( pTriggerStep != null )
+      //{
         string z;// = (char*)&pTriggerStep[1];
         z = pName.z;// memcpy( z, pName.z, pName.n );
         pTriggerStep.target.z = z;
         pTriggerStep.target.n = pName.n;
         pTriggerStep.op = op;
-      }
+      //}
       return pTriggerStep;
     }
 
@@ -418,11 +430,11 @@ triggerfinish_cleanup:
     ** body of a trigger.
     */
     // OVERLOADS, so I don't need to rewrite parse.c
-    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, int null_4, int null_5, int orconf )
+    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, int null_4, int null_5, u8 orconf )
     { return sqlite3TriggerInsertStep( db, pTableName, pColumn, null, null, orconf ); }
-    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, ExprList pEList, int null_5, int orconf )
+    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, ExprList pEList, int null_5, u8 orconf )
     { return sqlite3TriggerInsertStep( db, pTableName, pColumn, pEList, null, orconf ); }
-    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, int null_4, Select pSelect, int orconf )
+    static TriggerStep sqlite3TriggerInsertStep( sqlite3 db, Token pTableName, IdList pColumn, int null_4, Select pSelect, u8 orconf )
     { return sqlite3TriggerInsertStep( db, pTableName, pColumn, null, pSelect, orconf ); }
     static TriggerStep sqlite3TriggerInsertStep(
     sqlite3 db,        /* The database connection */
@@ -430,7 +442,7 @@ triggerfinish_cleanup:
     IdList pColumn,    /* List of columns in pTableName to insert into */
     ExprList pEList,   /* The VALUE clause: a list of values to be inserted */
     Select pSelect,    /* A SELECT statement that supplies values */
-    int orconf         /* The conflict algorithm (OE_Abort, OE_Replace, etc.) */
+    u8 orconf          /* The conflict algorithm (OE_Abort, OE_Replace, etc.) */
     )
     {
       TriggerStep pTriggerStep;
@@ -439,17 +451,17 @@ triggerfinish_cleanup:
       Debug.Assert( pEList != null || pSelect != null /*|| db.mallocFailed != 0 */ );
 
       pTriggerStep = triggerStepAllocate( db, TK_INSERT, pTableName );
-      if ( pTriggerStep != null )
-      {
+      //if ( pTriggerStep != null )
+      //{
         pTriggerStep.pSelect = sqlite3SelectDup( db, pSelect, EXPRDUP_REDUCE );
         pTriggerStep.pIdList = pColumn;
         pTriggerStep.pExprList = sqlite3ExprListDup( db, pEList, EXPRDUP_REDUCE );
         pTriggerStep.orconf = orconf;
-      }
-      else
-      {
-        sqlite3IdListDelete( db, ref pColumn );
-      }
+      //}
+      //else
+      //{
+      //  sqlite3IdListDelete( db, ref pColumn );
+      //}
       sqlite3ExprListDelete( db, ref pEList );
       sqlite3SelectDelete( db, ref pSelect );
 
@@ -466,18 +478,18 @@ triggerfinish_cleanup:
     Token pTableName,   /* Name of the table to be updated */
     ExprList pEList,    /* The SET clause: list of column and new values */
     Expr pWhere,        /* The WHERE clause */
-    int orconf          /* The conflict algorithm. (OE_Abort, OE_Ignore, etc) */
+    u8 orconf           /* The conflict algorithm. (OE_Abort, OE_Ignore, etc) */
     )
     {
       TriggerStep pTriggerStep;
 
       pTriggerStep = triggerStepAllocate( db, TK_UPDATE, pTableName );
-      if ( pTriggerStep != null )
-      {
+      //if ( pTriggerStep != null )
+      //{
         pTriggerStep.pExprList = sqlite3ExprListDup( db, pEList, EXPRDUP_REDUCE );
         pTriggerStep.pWhere = sqlite3ExprDup( db, pWhere, EXPRDUP_REDUCE );
         pTriggerStep.orconf = orconf;
-      }
+      //}
       sqlite3ExprListDelete( db, ref pEList );
       sqlite3ExprDelete( db, ref pWhere );
       return pTriggerStep;
@@ -497,11 +509,11 @@ triggerfinish_cleanup:
       TriggerStep pTriggerStep;
 
       pTriggerStep = triggerStepAllocate( db, TK_DELETE, pTableName );
-      if ( pTriggerStep != null )
-      {
+      //if ( pTriggerStep != null )
+      //{
         pTriggerStep.pWhere = sqlite3ExprDup( db, pWhere, EXPRDUP_REDUCE );
         pTriggerStep.orconf = OE_Default;
-      }
+      //}
       sqlite3ExprDelete( db, ref pWhere );
       return pTriggerStep;
     }
@@ -515,11 +527,11 @@ triggerfinish_cleanup:
     {
       if ( pTrigger == null ) return;
       sqlite3DeleteTriggerStep( db, ref pTrigger.step_list );
-      pTrigger.name = null;////sqlite3DbFree(db,ref pTrigger.name);
+      //sqlite3DbFree(db,ref pTrigger.name);
       //sqlite3DbFree( db, ref pTrigger.table );
       sqlite3ExprDelete( db, ref pTrigger.pWhen );
       sqlite3IdListDelete( db, ref pTrigger.pColumns );
-      //sqlite3DbFree( db, ref pTrigger );
+      pTrigger = null;//sqlite3DbFree( db, ref pTrigger );
     }
 
     /*
@@ -754,8 +766,8 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
       SrcList pSrc;        /* SrcList to be returned */
 
       pSrc = sqlite3SrcListAppend( pParse.db, 0, pStep.target, 0 );
-      if ( pSrc != null )
-      {
+      //if ( pSrc != null )
+      //{
         Debug.Assert( pSrc.nSrc > 0 );
         Debug.Assert( pSrc.a != null );
         iDb = sqlite3SchemaToIndex( pParse.db, pStep.pTrig.pSchema );
@@ -765,7 +777,7 @@ new VdbeOpList( OP_Next,       0, ADDR(1),  0), /* 8 */
           Debug.Assert( iDb < pParse.db.nDb );
           pSrc.a[pSrc.nSrc - 1].zDatabase = db.aDb[iDb].zName;// sqlite3DbStrDup( db, db.aDb[iDb].zName );
         }
-      }
+      //}
       return pSrc;
     }
 

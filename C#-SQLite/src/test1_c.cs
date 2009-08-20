@@ -39,7 +39,7 @@ namespace CS_SQLite3
     ** is not included in the SQLite library.  It is used for automated
     ** testing of the SQLite library.
     **
-    ** $Id: test1.c,v 1.353 2009/05/03 20:23:54 drh Exp $
+    ** $Id: test1.c,v 1.354 2009/08/10 04:37:50 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -5017,42 +5017,41 @@ Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(amt));
         return TCL.TCL_ERROR;
       }
 
-#if ! (SQLITE_ENABLE_LOCKING_STYLE)
-#  if  (__APPLE__)
-//#    define SQLITE_ENABLE_LOCKING_STYLE 1
-const int SQLITE_ENABLE_LOCKING_STYLE = 1
-#  else
-      //#    define SQLITE_ENABLE_LOCKING_STYLE 0
-      const int SQLITE_ENABLE_LOCKING_STYLE = 1;
-#  endif
-#endif
-#if SQLITE_ENABLE_LOCKING_STYLE && (__APPLE__)
-{
-char *proxyPath = "test.proxy";
-char *testPath;
-int rc;
-rc = sqlite3_file_control(db, NULL, SQLITE_SET_LOCKPROXYFILE, proxyPath);
-if( rc ){
-TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
-return TCL.TCL_ERROR;
-}
-rc = sqlite3_file_control(db, NULL, SQLITE_GET_LOCKPROXYFILE, &testPath);
-if( strncmp(proxyPath,testPath,11) ){
-TCL.Tcl_AppendResult(interp, "Lock proxy file did not match the "
-"previously assigned value", 0);
-return TCL.TCL_ERROR;
-}
-if( rc ){
-TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
-return TCL.TCL_ERROR;
-}
-rc = sqlite3_file_control(db, NULL, SQLITE_SET_LOCKPROXYFILE, proxyPath);
-if( rc ){
-TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
-return TCL.TCL_ERROR;
-}
-}
-#endif
+//#if ! (SQLITE_ENABLE_LOCKING_STYLE)
+//#  if  (__APPLE__)
+////#    define SQLITE_ENABLE_LOCKING_STYLE 1
+//const int SQLITE_ENABLE_LOCKING_STYLE = 1
+//#  else
+//      //#    define SQLITE_ENABLE_LOCKING_STYLE 0
+//#  endif
+//#endif
+//#if SQLITE_ENABLE_LOCKING_STYLE && (__APPLE__)
+//{
+//char *proxyPath = "test.proxy";
+//char *testPath;
+//int rc;
+//rc = sqlite3_file_control(db, NULL, SQLITE_SET_LOCKPROXYFILE, proxyPath);
+//if( rc ){
+//TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
+//return TCL.TCL_ERROR;
+//}
+//rc = sqlite3_file_control(db, NULL, SQLITE_GET_LOCKPROXYFILE, &testPath);
+//if( strncmp(proxyPath,testPath,11) ){
+//TCL.Tcl_AppendResult(interp, "Lock proxy file did not match the "
+//"previously assigned value", 0);
+//return TCL.TCL_ERROR;
+//}
+//if( rc ){
+//TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
+//return TCL.TCL_ERROR;
+//}
+//rc = sqlite3_file_control(db, NULL, SQLITE_SET_LOCKPROXYFILE, proxyPath);
+//if( rc ){
+//TCL.Tcl_SetObjResult(interp, TCL.Tcl_NewIntObj(rc));
+//return TCL.TCL_ERROR;
+//}
+//}
+//#endif
       return TCL.TCL_OK;
     }
 

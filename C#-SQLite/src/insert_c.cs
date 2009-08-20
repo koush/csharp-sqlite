@@ -24,7 +24,7 @@ namespace CS_SQLite3
     ** This file contains C code routines that are called by the parser
     ** to handle INSERT statements in SQLite.
     **
-    ** $Id: insert.c,v 1.269 2009/06/23 20:28:54 drh Exp $
+    ** $Id: insert.c,v 1.270 2009/07/24 17:58:53 danielk1977 Exp $
     **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
@@ -159,10 +159,15 @@ namespace CS_SQLite3
     ** a statement of the form  "INSERT INTO <iDb, pTab> SELECT ..." can
     ** run without using temporary table for the results of the SELECT.
     */
-    static bool readsTable( Vdbe v, int iStartAddr, int iDb, Table pTab )
+    static bool readsTable(Parse p, int iStartAddr, int iDb, Table pTab )
     {
+      Vdbe v = sqlite3GetVdbe( p );
       int i;
       int iEnd = sqlite3VdbeCurrentAddr( v );
+#if !SQLITE_OMIT_VIRTUALTABLE
+  VTable pVTab = IsVirtual(pTab) ? sqlite3GetVTable(p,db, pTab) : null;
+#endif
+
       for ( i = iStartAddr ; i < iEnd ; i++ )
       {
         VdbeOp pOp = sqlite3VdbeGetOp( v, i );
@@ -184,7 +189,7 @@ namespace CS_SQLite3
           }
         }
 #if !SQLITE_OMIT_VIRTUALTABLE
-if( pOp.opcode==OP_VOpen && pOp.p4.pVtab==pTab.pVtab ){
+if( pOp.opcode==OP_VOpen && pOp.p4.pVtab==pVTab){
 Debug.Assert( pOp.p4.pVtab!=0 );
 Debug.Assert( pOp.p4type==P4_VTAB );
 return true;
@@ -561,28 +566,28 @@ isView = false;
 #endif
       Debug.Assert( ( pTrigger != null && tmask != 0 ) || ( pTrigger == null && tmask == 0 ) );
 
+#if !SQLITE_OMIT_VIEW
+      /* If pTab is really a view, make sure it has been initialized.
+      ** ViewGetColumnNames() is a no-op if pTab is not a view (or virtual
+      ** module table).
+      */
+      if ( sqlite3ViewGetColumnNames( pParse, pTab ) != -0 )
+      {
+        goto insert_cleanup;
+      }
+#endif
+
       /* Ensure that:
-      *  (a) the table is not read-only,
+      *  (a) the table is not read-only, 
       *  (b) that if it is a view then ON INSERT triggers exist
       */
       if ( sqlite3IsReadOnly( pParse, pTab, tmask ) )
       {
         goto insert_cleanup;
       }
-      Debug.Assert( pTab != null );
 
-#if !SQLITE_OMIT_VIEW
-      /* If pTab is really a view, make sure it has been initialized.
-** ViewGetColumnNames() is a no-op if pTab is not a view (or virtual
-** module table).
-*/
-      if ( sqlite3ViewGetColumnNames( pParse, pTab ) != -0 )
-      {
-        goto insert_cleanup;
-      }
-#endif
       /* Allocate a VDBE
-*/
+      */
       v = sqlite3GetVdbe( pParse );
       if ( v == null ) goto insert_cleanup;
       if ( pParse.nested == 0 ) sqlite3VdbeCountChanges( v );
@@ -689,7 +694,7 @@ isView = false;
         ** of the tables being read by the SELECT statement.  Also use a
         ** temp table in the case of row triggers.
         */
-        if ( pTrigger != null || readsTable( v, addrSelect, iDb, pTab ) )
+        if ( pTrigger != null || readsTable( pParse, addrSelect, iDb, pTab ) )
         {
           useTempTable = true;
         }
@@ -1128,13 +1133,11 @@ isView = false;
         ** do the insertion.
         */
 #if !SQLITE_OMIT_VIRTUALTABLE
-if ( IsVirtual( pTab ) )
-{
-sqlite3VtabMakeWritable( pParse, pTab );
-sqlite3VdbeAddOp4( v, OP_VUpdate, 1, pTab.nCol + 2, regIns,
-pTab.pVtab, P4_VTAB );
-}
-else
+    if( IsVirtual(pTab) ){
+      const char *pVTab = (const char *)sqlite3GetVTable(db, pTab);
+      sqlite3VtabMakeWritable(pParse, pTab);
+      sqlite3VdbeAddOp4(v, OP_VUpdate, 1, pTab->nCol+2, regIns, pVTab, P4_VTAB);
+    }else
 #endif
         {
           int isReplace = 0;    /* Set to true if constraints may cause a replace */

@@ -593,7 +593,7 @@ end_of_step:
           pMem.u.pDef = p.pFunc;
           if ( pMem.z != null )
           {
-            pMem.z = null;//TODO --  memset( pMem.z, 0, nByte );
+            pMem.z = null;
           }
           pMem._Mem = new Mem();
           pMem._Mem.flags = 0;

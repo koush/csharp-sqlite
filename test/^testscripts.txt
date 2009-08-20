@@ -5,10 +5,6 @@ set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 #source $testdir/_RunWorking.txt       
 
-# Uncomment the _RunWorking line to run all the tests
-# or copy one of test filenames 
-# or enter TCL commands such as the ones that are listed 
-# after these comments
 
 ##########################################################################################
 puts -nonewline "Press RETURN to exit..."; gets stdin; exit
