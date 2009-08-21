@@ -178,8 +178,6 @@
     </Compile>
     <Compile Include="src\table_c.cs">
     </Compile>
-    <Compile Include="src\tclsqlite_c.cs">
-    </Compile>
     <Compile Include="src\tokenize_c.cs">
     </Compile>
     <Compile Include="src\trigger_c.cs">

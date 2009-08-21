@@ -41,12 +41,6 @@
     <Compile Include="Stress.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\C#-SQLite\Community.Data.SQLite.csproj">
-      <Project>{F1653F20-D47D-4F29-8C55-3C835542AF5F}</Project>
-      <Name>Community.Data.SQLite</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

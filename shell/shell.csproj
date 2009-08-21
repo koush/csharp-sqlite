@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{F1653F20-D47D-4F29-8C55-3C835542AF5F}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -32,7 +32,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
+    <DefineConstants>TRACE;TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
@@ -241,54 +241,6 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\table_c.cs">
       <Link>C#-SQLite\table_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\tclsqlite_c.cs">
-      <Link>C#-SQLite\tclsqlite_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test1_c.cs">
-      <Link>C#-SQLite\test1_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test2_c.cs">
-      <Link>C#-SQLite\test2_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test3_c.cs">
-      <Link>C#-SQLite\test3_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test6_c.cs">
-      <Link>C#-SQLite\test6_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test9_c.cs">
-      <Link>C#-SQLite\test9_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_autoext_c.cs">
-      <Link>C#-SQLite\test_autoext_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_backup_c.cs">
-      <Link>C#-SQLite\test_backup_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_config_c.cs">
-      <Link>C#-SQLite\test_config_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_func_c.cs">
-      <Link>C#-SQLite\test_func_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_hexio_c.cs">
-      <Link>C#-SQLite\test_hexio_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_journal_c.cs">
-      <Link>C#-SQLite\test_journal_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_malloc_c.cs">
-      <Link>C#-SQLite\test_malloc_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_md5_c.cs">
-      <Link>C#-SQLite\test_md5_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_mutex_c.cs">
-      <Link>C#-SQLite\test_mutex_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_onefile_c.cs">
-      <Link>C#-SQLite\test_onefile_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\tokenize_c.cs">
       <Link>C#-SQLite\tokenize_c.cs</Link>

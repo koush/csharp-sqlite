@@ -236,51 +236,6 @@
     <Compile Include="..\C#-SQLite\src\table_c.cs">
       <Link>C#-SQLite\table_c.cs</Link>
     </Compile>
-    <Compile Include="..\C#-SQLite\src\tclsqlite_c.cs">
-      <Link>C#-SQLite\tclsqlite_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test1_c.cs">
-      <Link>C#-SQLite\test1_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test2_c.cs">
-      <Link>C#-SQLite\test2_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test3_c.cs">
-      <Link>C#-SQLite\test3_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test6_c.cs">
-      <Link>C#-SQLite\test6_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test9_c.cs">
-      <Link>C#-SQLite\test9_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_autoext_c.cs">
-      <Link>C#-SQLite\test_autoext_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_backup_c.cs">
-      <Link>C#-SQLite\test_backup_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_config_c.cs">
-      <Link>C#-SQLite\test_config_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_func_c.cs">
-      <Link>C#-SQLite\test_func_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_hexio_c.cs">
-      <Link>C#-SQLite\test_hexio_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_journal_c.cs">
-      <Link>C#-SQLite\test_journal_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_md5_c.cs">
-      <Link>C#-SQLite\test_md5_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_mutex_c.cs">
-      <Link>C#-SQLite\test_mutex_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\test_onefile_c.cs">
-      <Link>C#-SQLite\test_onefile_c.cs</Link>
-    </Compile>
     <Compile Include="..\C#-SQLite\src\tokenize_c.cs">
       <Link>C#-SQLite\tokenize_c.cs</Link>
     </Compile>
@@ -770,9 +725,24 @@
     <Compile Include="..\TCL\src\_tcl_Conversions.cs">
       <Link>TCL\src\_tcl_Conversions.cs</Link>
     </Compile>
-    <Compile Include="C#-SQLite\test_malloc_c.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\tclsqlite_c.cs" />
+    <Compile Include="src\test1_c.cs" />
+    <Compile Include="src\test2_c.cs" />
+    <Compile Include="src\test3_c.cs" />
+    <Compile Include="src\test6_c.cs" />
+    <Compile Include="src\test9_c.cs" />
     <Compile Include="src\testfixture.cs" />
+    <Compile Include="src\test_autoext_c.cs" />
+    <Compile Include="src\test_backup_c.cs" />
+    <Compile Include="src\test_config_c.cs" />
+    <Compile Include="src\test_func_c.cs" />
+    <Compile Include="src\test_hexio_c.cs" />
+    <Compile Include="src\test_journal_c.cs" />
+    <Compile Include="src\test_malloc_c.cs" />
+    <Compile Include="src\test_md5_c.cs" />
+    <Compile Include="src\test_mutex_c.cs" />
+    <Compile Include="src\test_onefile_c.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\test\crashtest1.c">

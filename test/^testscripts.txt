@@ -3,7 +3,13 @@
 #########################################################################################
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
-#source $testdir/_RunWorking.txt       
+#source $testdir/_RunWorking.txt
+
+# Uncomment the _RunWorking line to run all the tests
+# or copy one of test filenames 
+# or enter TCL commands such as the ones that are listed 
+# after these comments
+
 
 
 ##########################################################################################
@@ -19,7 +25,7 @@ do_test SIMPLE_SQLITE_VERSION {
     execsql { 
     SELECT SQLITE_VERSION();
   }
-} {3.6.16.C#}
+} {3.6.17.C#}
 
 do_test SIMPLE_COUNT_SQL_MASTER {
     execsql { 
