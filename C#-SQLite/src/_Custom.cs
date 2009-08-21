@@ -4,8 +4,10 @@
     *************************************************************************
     */
 using System;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -300,15 +302,25 @@ namespace CS_SQLite3
       public u32 dwHighDateTime;
     }
 
-    [DllImport( "Kernel32" )]
-    public static extern bool GetDiskFreeSpace(
-    [MarshalAs( UnmanagedType.LPStr )] StringBuilder lpszPath,
-    ref int secPerCluster,
-    ref int bytesPerSecond,
-    ref int numberOfFreeClusters,
-    ref int totalNumberClusters
-    );
-
+    // Example (C#)
+    public static int GetbytesPerSector( StringBuilder diskPath )
+    {
+      ManagementObjectSearcher mosLogicalDisks = new ManagementObjectSearcher( "select * from Win32_LogicalDisk where DeviceID = '" + diskPath.ToString().Remove( diskPath.Length - 1, 1 ) + "'");
+      try
+      {
+        foreach ( ManagementObject moLogDisk in mosLogicalDisks.Get() )
+        {
+          ManagementObjectSearcher mosDiskDrives = new ManagementObjectSearcher( "select * from Win32_DiskDrive where SystemName = '" + moLogDisk["SystemName"] + "'" );
+          foreach ( ManagementObject moPDisk in mosDiskDrives.Get() )
+          {
+            return int.Parse( moPDisk["BytesPerSector"].ToString() );
+          }
+        }
+      }
+      catch { }
+      return 0;
+    }
+    
     [DllImport( "kernel32.dll" )]
     public static extern bool GetSystemTimeAsFileTime( ref FILETIME sysfiletime );
 

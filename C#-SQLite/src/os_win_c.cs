@@ -2001,11 +2001,11 @@ return SQLITE_OK;
               }
             }
             zConverted.Length = i;
-            dwRet = GetDiskFreeSpace( zConverted,
-                 ref dwDummy,
-                 ref bytesPerSector,
-                 ref dwDummy,
-                 ref dwDummy );
+            //dwRet = GetDiskFreeSpace( zConverted,
+            //     ref dwDummy,
+            //     ref bytesPerSector,
+            //     ref dwDummy,
+            //     ref dwDummy );
             //#if !SQLITE_OS_WINCE
             //}else{
             //  /* trim path to just drive reference */
@@ -2027,12 +2027,14 @@ return SQLITE_OK;
           }
           //free(zConverted);
         }
-        if ( !dwRet )
-        {
-          bytesPerSector = SQLITE_DEFAULT_SECTOR_SIZE;
-        }
+        //  if ( !dwRet )
+        //  {
+        //    bytesPerSector = SQLITE_DEFAULT_SECTOR_SIZE;
+        //  }
+        //}
+      bytesPerSector=  GetbytesPerSector( zConverted );
       }
-      return (int)bytesPerSector;
+      return bytesPerSector == 0 ? SQLITE_DEFAULT_SECTOR_SIZE : bytesPerSector;
     }
 
 #if !SQLITE_OMIT_LOAD_EXTENSION
@@ -2102,22 +2104,20 @@ static int winDlClose(ref sqlite3_vfs vfs, object data) { return 0; }
 ** Write up to nBuf bytes of randomness into zBuf.
 */
 
-    [StructLayout( LayoutKind.Explicit, Size = 16, CharSet = CharSet.Ansi )]
-    public class _SYSTEMTIME
-    {
-      [FieldOffset( 0 )]
-      public u32 byte_0_3;
-      [FieldOffset( 4 )]
-      public u32 byte_4_7;
-      [FieldOffset( 8 )]
-      public u32 byte_8_11;
-      [FieldOffset( 12 )]
-      public u32 byte_12_15;
-    }
-    [DllImport( "kernel32.dll" )]
-    public static extern void GetSystemTime( [MarshalAs( UnmanagedType.LPStruct )]_SYSTEMTIME stSYSTEMTIME );
-    [DllImport( "Kernel32.dll" )]
-    private static extern bool QueryPerformanceCounter( out long lpPerformanceCount );
+    //[StructLayout( LayoutKind.Explicit, Size = 16, CharSet = CharSet.Ansi )]
+    //public class _SYSTEMTIME
+    //{
+    //  [FieldOffset( 0 )]
+    //  public u32 byte_0_3;
+    //  [FieldOffset( 4 )]
+    //  public u32 byte_4_7;
+    //  [FieldOffset( 8 )]
+    //  public u32 byte_8_11;
+    //  [FieldOffset( 12 )]
+    //  public u32 byte_12_15;
+    //}
+    //[DllImport( "Kernel32.dll" )]
+    //private static extern bool QueryPerformanceCounter( out long lpPerformanceCount );
 
     static int winRandomness( sqlite3_vfs pVfs, int nBuf, ref byte[] zBuf )
     {
@@ -2204,22 +2204,24 @@ n += sizeof( long );
       const sqlite3_int64 ntuPerHalfDay =
       10000000 * (sqlite3_int64)43200;
 
-      /* 2^32 - to avoid use of LL and warnings in gcc */
-      const sqlite3_int64 max32BitValue =
-      (sqlite3_int64)2000000000 + (sqlite3_int64)2000000000 + (sqlite3_int64)294967296;
+      ///* 2^32 - to avoid use of LL and warnings in gcc */
+      //const sqlite3_int64 max32BitValue =
+      //(sqlite3_int64)2000000000 + (sqlite3_int64)2000000000 + (sqlite3_int64)294967296;
 
-#if SQLITE_OS_WINCE
-SYSTEMTIME time;
-GetSystemTime(&time);
-/* if SystemTimeToFileTime() fails, it returns zero. */
-if (!SystemTimeToFileTime(&time,&ft)){
-return 1;
-}
-#else
-      GetSystemTimeAsFileTime( ref ft );
-#endif
-      UNUSED_PARAMETER( pVfs );
-      timeW = ( ( (sqlite3_int64)ft.dwHighDateTime ) * max32BitValue ) + (sqlite3_int64)ft.dwLowDateTime;
+//#if SQLITE_OS_WINCE
+//SYSTEMTIME time;
+//GetSystemTime(&time);
+///* if SystemTimeToFileTime() fails, it returns zero. */
+//if (!SystemTimeToFileTime(&time,&ft)){
+//return 1;
+//}
+//#else
+//      GetSystemTimeAsFileTime( ref ft );
+//      ft = System.DateTime.UtcNow.ToFileTime();
+//#endif
+//      UNUSED_PARAMETER( pVfs );
+//      timeW = ( ( (sqlite3_int64)ft.dwHighDateTime ) * max32BitValue ) + (sqlite3_int64)ft.dwLowDateTime;
+      timeW = System.DateTime.UtcNow.ToFileTime();
       timeF = timeW % ntuPerDay;          /* fractional days (100-nanoseconds) */
       timeW = timeW / ntuPerDay;          /* whole days */
       timeW = timeW + 2305813;            /* add whole days (from 2305813.5) */
