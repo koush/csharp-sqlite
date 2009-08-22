@@ -2127,17 +2127,13 @@ static int winDlClose(ref sqlite3_vfs vfs, object data) { return 0; }
       n = nBuf;
       Array.Clear( zBuf, 0, n );// memset( zBuf, 0, nBuf );
 #else
-_SYSTEMTIME SYSTEMTIME = new _SYSTEMTIME();
-if ( Marshal.SizeOf( SYSTEMTIME ) <= nBuf - n )
-{
-GetSystemTime( SYSTEMTIME );
-put32bits( zBuf, 0, SYSTEMTIME.byte_0_3 );
-put32bits( zBuf, 4, SYSTEMTIME.byte_4_7 );
-put32bits( zBuf, 8, SYSTEMTIME.byte_8_11 );
-put32bits( zBuf, 12, SYSTEMTIME.byte_12_15 );
+      byte[] sBuf = BitConverter.GetBytes(System.DateTime.Now.Ticks);
+zBuf[0] = sBuf[0];
+zBuf[1] = sBuf[1];
+zBuf[2] = sBuf[2];
+zBuf[3] = sBuf[3];
 ;// memcpy(&zBuf[n], x, sizeof(x))
 n += 16;// sizeof(x);
-}
 if ( sizeof( DWORD ) <= nBuf - n )
 {
 //DWORD pid = GetCurrentProcessId();
@@ -2154,7 +2150,7 @@ n += 4;// cnt.Length;
 if ( sizeof( long ) <= nBuf - n )
 {
 long i;
-QueryPerformanceCounter( out i );
+i = System.DateTime.UtcNow.Millisecond;// QueryPerformanceCounter(out i);
 put32bits( zBuf, n, (u32)( i & 0xFFFFFFFF ) );//memcpy(&zBuf[n], i, sizeof(i));
 put32bits( zBuf, n, (u32)( i >> 32 ) );
 n += sizeof( long );
