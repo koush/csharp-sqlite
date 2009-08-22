@@ -82,7 +82,7 @@ public class Benchmark
     stmt.Close();
     db.ExecuteNonQuery( "END" );
     Console.WriteLine( "inserting " + nRecords + " records: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
 
     db.ExecuteNonQuery( "BEGIN EXCLUSIVE" );
     start = DateTime.Now.Ticks;
@@ -108,7 +108,7 @@ public class Benchmark
     c2.Close();
     db.ExecuteNonQuery( "END" );
     Console.WriteLine( "performing " + nRecords * 2 + " index searches: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
 
     db.ExecuteNonQuery( "BEGIN EXCLUSIVE" );
     start = DateTime.Now.Ticks;
@@ -138,7 +138,7 @@ public class Benchmark
     c2.Close();
     Debug.Assert( i == nRecords );
     Console.WriteLine( "iterating through " + ( nRecords * 2 ) + " records: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
     db.ExecuteNonQuery( "END" );
 
     db.ExecuteNonQuery( "BEGIN EXCLUSIVE" );
@@ -155,7 +155,7 @@ public class Benchmark
     stmt.Close();
     db.ExecuteNonQuery( "END" );
     Console.WriteLine( "deleting " + nRecords + " records: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
     db.CloseDatabase();
 
   }
@@ -207,7 +207,7 @@ private static void TestSQLite()
     com.Parameters.Clear();
     com.ExecuteNonQuery();
     Console.WriteLine( "inserting " + nRecords + " records: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
 
     com.CommandText = "BEGIN EXCLUSIVE";
     com.ExecuteNonQuery();
@@ -246,7 +246,7 @@ private static void TestSQLite()
     }
 
     Console.WriteLine( "performing " + nRecords * 2 + " index searches: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
     com.CommandText = "END";
     com.Parameters.Clear();
     com.ExecuteNonQuery();
@@ -289,7 +289,7 @@ private static void TestSQLite()
       Debug.Assert( i == nRecords );
     }
     Console.WriteLine( "iteration through " + ( nRecords * 2 ) + " records: " +
-    ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
 
     com.CommandText = "END";
     com.Parameters.Clear();
@@ -315,7 +315,7 @@ private static void TestSQLite()
     com.ExecuteNonQuery();
 
     Console.WriteLine( "deleting " + nRecords + " records: "
-    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " milliseconds" );
+    + ( ( DateTime.Now.Ticks - start ) * 10e-8 + .05).ToString( "#.0" ) + " seconds" );
     con.Close();
   }
 }
