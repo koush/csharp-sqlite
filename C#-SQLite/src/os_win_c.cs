@@ -1,6 +1,7 @@
 #define SQLITE_OS_WIN
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -736,9 +737,9 @@ free(pFile.zDeleteOnClose);
       {
         rc = id.fs.Seek( offset, SeekOrigin.Begin ); // SetFilePointer(pFile.fs.Name, lowerBits, upperBits, FILE_BEGIN);
       }
-      catch ( IOException e )      //            if( rc==INVALID_SET_FILE_POINTER && (error=GetLastError())!=NO_ERROR )
+      catch ( Exception e )      //            if( rc==INVALID_SET_FILE_POINTER && (error=GetLastError())!=NO_ERROR )
       {
-        pFile.lastErrno = (u32)GetLastError();
+        pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
         return SQLITE_FULL;
       }
 
@@ -746,9 +747,9 @@ free(pFile.zDeleteOnClose);
       {
         got = id.fs.Read( pBuf, 0, amt ); // if (!ReadFile(pFile.fs.Name, pBuf, amt, got, 0))
       }
-      catch ( IOException e )
+      catch ( Exception e )
       {
-        pFile.lastErrno = (u32)GetLastError();
+        pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
         return SQLITE_IOERR_READ;
       }
       if ( got == amt )
@@ -818,7 +819,7 @@ free(pFile.zDeleteOnClose);
       //  }
       if ( rc == 0 || amt > (int)wrote )
       {
-        id.lastErrno = (u32)GetLastError();
+        id.lastErrno = (u32)Marshal.GetLastWin32Error();
         return SQLITE_FULL;
       }
       return SQLITE_OK;
@@ -860,7 +861,7 @@ free(pFile.zDeleteOnClose);
       }
       catch ( IOException e )
       {
-        id.lastErrno = (u32)GetLastError();
+        id.lastErrno = (u32)Marshal.GetLastWin32Error();
         return SQLITE_IOERR_TRUNCATE;
       }
       return SQLITE_OK;
@@ -990,7 +991,7 @@ return SQLITE_OK;
       //}
       if ( res == 0 )
       {
-        pFile.lastErrno = (u32)GetLastError();
+        pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
       }
       return res;
     }
@@ -1022,7 +1023,7 @@ return SQLITE_OK;
 #endif
       if ( res == 0 )
       {
-        pFile.lastErrno = (u32)GetLastError();
+        pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
       }
       return res;
     }
@@ -1107,7 +1108,7 @@ return SQLITE_OK;
         gotPendingLock = ( res != 0 );
         if ( 0 == res )
         {
-          error = (u32)GetLastError();
+          error = (u32)Marshal.GetLastWin32Error();
         }
       }
 
@@ -1123,7 +1124,7 @@ return SQLITE_OK;
         }
         else
         {
-          error = (u32)GetLastError();
+          error = (u32)Marshal.GetLastWin32Error();
         }
       }
 
@@ -1139,7 +1140,7 @@ return SQLITE_OK;
         }
         else
         {
-          error = (u32)GetLastError();
+          error = (u32)Marshal.GetLastWin32Error();
         }
       }
 
@@ -1167,7 +1168,7 @@ return SQLITE_OK;
         }
         else
         {
-          error = (u32)GetLastError();
+          error = (u32)Marshal.GetLastWin32Error();
 #if SQLITE_DEBUG
           OSTRACE2( "error-code = %d\n", error );
 #endif
@@ -1474,7 +1475,7 @@ return SQLITE_OK;
     */
     static int getLastErrorMsg( int nBuf, ref string zBuf )
     {
-      int error = GetLastError();
+      //int error = GetLastError ();
 
 #if SQLITE_OS_WINCE
 sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", error, error);
@@ -1483,19 +1484,20 @@ sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", error, error);
 ** returns the number of TCHARs written to the output
 ** buffer, excluding the terminating null char.
 */
-      int iDummy = 0;
-      object oDummy = null;
-      if ( 00 == FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM,
-      ref oDummy,
-      error,
-      0,
-      zBuf,
-      nBuf - 1,
-      ref iDummy ) )
-      {
-        sqlite3_snprintf( nBuf, ref zBuf, "OsError 0x%x (%u)", error, error );
-      }
+      //int iDummy = 0;
+      //object oDummy = null;
+      //if ( 00 == FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM,
+      //ref oDummy,
+      //error,
+      //0,
+      //zBuf,
+      //nBuf - 1,
+      //ref iDummy ) )
+      //{
+      //  sqlite3_snprintf( nBuf, ref zBuf, "OsError 0x%x (%u)", error, error );
+      //}
 #endif
+      zBuf = new Win32Exception(Marshal.GetLastWin32Error()).Message;
 
       return 0;
     }
@@ -2312,15 +2314,7 @@ n += sizeof( long );
     //
 
     [DllImport( "kernel32.dll", SetLastError = true )]
-    static extern int FormatMessageA( int dwFlags, ref object lpSource,
-    int dwMessageId, int dwLanguageId, string lpBuffer,
-    int nSize, ref int Arguments );
-
-    [DllImport( "kernel32.dll", SetLastError = true )]
     static extern int FlushFileBuffers( IntPtr hFile );
-
-    [DllImport( "kernel32", SetLastError = true )]
-    static extern int GetLastError();
 
     [DllImport( "kernel32", SetLastError = true )]
     static extern int LockFile(int hFile, int dwFileOffsetLow, int dwFileOffsetHigh, int nNumberOfBytesToLockLow, int nNumberOfBytesToLockHigh);
