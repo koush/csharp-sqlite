@@ -1095,15 +1095,23 @@ return SQLITE_OK;
       {
         int cnt = 3;
         res = 0;
-        while (cnt-- > 0 && (res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), PENDING_BYTE, 0, 1, 0)) == 0)
+        while ( cnt-- > 0 && res == 0 )//(res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), PENDING_BYTE, 0, 1, 0)) == 0)
         {
-          /* Try 3 times to get the pending lock.  The pending lock might be
-          ** held by another reader process who will release it momentarily.
-          */
+          try
+          {
+            pFile.fs.Lock( PENDING_BYTE, 1 );
+            res = 1;
+          }
+          catch ( Exception e )
+          {
+            /* Try 3 times to get the pending lock.  The pending lock might be
+            ** held by another reader process who will release it momentarily.
+            */
 #if SQLITE_DEBUG
-          OSTRACE2( "could not get a PENDING lock. cnt=%d\n", cnt );
+            OSTRACE2( "could not get a PENDING lock. cnt=%d\n", cnt );
 #endif
-          Thread.Sleep( 1 );
+            Thread.Sleep( 1 );
+          }
         }
         gotPendingLock = ( res != 0 );
         if ( 0 == res )
@@ -1132,8 +1140,18 @@ return SQLITE_OK;
       */
       if ( ( locktype == RESERVED_LOCK ) && res != 0 )
       {
-        Debug.Assert( pFile.locktype == SHARED_LOCK );
-        res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), RESERVED_BYTE, 0, 1, 0);
+        Debug.Assert( pFile.locktype == SHARED_LOCK );        
+        try
+        {
+          pFile.fs.Lock( RESERVED_BYTE, 1 );//res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), RESERVED_BYTE, 0, 1, 0);
+          newLocktype = RESERVED_LOCK;
+          res = 1;
+        }
+        catch ( Exception e )
+        {
+          res = 0;
+          error = (u32)Marshal.GetLastWin32Error();
+        }
         if ( res != 0 )
         {
           newLocktype = RESERVED_LOCK;
@@ -1161,7 +1179,17 @@ return SQLITE_OK;
 #if SQLITE_DEBUG
         OSTRACE2( "unreadlock = %d\n", res );
 #endif
-        res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), SHARED_FIRST, 0, SHARED_SIZE, 0);
+        //res = LockFile(pFile.fs.SafeFileHandle.DangerousGetHandle().ToInt32(), SHARED_FIRST, 0, SHARED_SIZE, 0);
+        try
+        {
+          pFile.fs.Lock( SHARED_FIRST, SHARED_SIZE );
+          newLocktype = EXCLUSIVE_LOCK;
+          res = 1;
+        }
+        catch ( Exception e )
+        {
+          res = 0;
+        }
         if ( res != 0 )
         {
           newLocktype = EXCLUSIVE_LOCK;
@@ -2313,19 +2341,9 @@ n += sizeof( long );
     //          Windows DLL definitions
     //
 
-    [DllImport( "kernel32.dll", SetLastError = true )]
-    static extern int FlushFileBuffers( IntPtr hFile );
-
-    [DllImport( "kernel32", SetLastError = true )]
-    static extern int LockFile(int hFile, int dwFileOffsetLow, int dwFileOffsetHigh, int nNumberOfBytesToLockLow, int nNumberOfBytesToLockHigh);
-
     [DllImport( "kernel32", SetLastError = true )]
     static extern int LockFileEx(int hFile, int dwFlags, int dwReserved, int nNumberOfBytesToLockLow, int nNumberOfBytesToLockHigh, ref OVERLAPPED lpOverlapped);
     const int LOCKFILE_EXCLUSIVE_LOCK = 0x00000002;
-
-    [DllImport( "kernel32", SetLastError = true )]
-    static extern int UnlockFile( IntPtr hFile, int dwFileOffsetLow, int dwFileOffsetHigh, int nNumberOfBytesToUnlockLow, int nNumberOfBytesToUnlockHigh );
-
 
     public struct OVERLAPPED
     {
@@ -2335,37 +2353,6 @@ n += sizeof( long );
       public int OffsetHigh;
       public int hEvent;
     }
-
-
-    const u32 GENERIC_READ = 0x80000000;
-    const int GENERIC_WRITE = 0x40000000;
-    const int FILE_SHARE_READ = 0x1;
-    const int FILE_SHARE_WRITE = 0x2;
-    const int CREATE_ALWAYS = 2;
-    const int CREATE_NEW = 1;
-    const int OPEN_ALWAYS = 4;
-    const int OPEN_EXISTING = 3;
-    const int TRUNCATE_EXISTING = 5;
-    const int FILE_ATTRIBUTE_ARCHIVE = 0x20;
-    const int FILE_ATTRIBUTE_READONLY = 0x1;
-    const int FILE_ATTRIBUTE_HIDDEN = 0x2;
-    const int FILE_ATTRIBUTE_SYSTEM = 0x4;
-    const int FILE_ATTRIBUTE_NORMAL = 0x80;
-    const int FILE_ATTRIBUTE_TEMPORARY = 0x100;
-    const int FILE_FLAG_DELETE_ON_CLOSE = 0x4000000;
-    const int FILE_FLAG_NO_BUFFERING = 0x20000000;
-    const int FILE_FLAG_OVERLAPPED = 0x40000000;
-    const int FILE_FLAG_POSIX_SEMANTICS = 0x1000000;
-    const int FILE_FLAG_RANDOM_ACCESS = 0x10000000;
-    const int FILE_FLAG_SEQUENTIAL_SCAN = 0x8000000;
-    const u32 FILE_FLAG_WRITE_THROUGH = 0x80000000;
-
-    const int INVALID_HANDLE_VALUE = -1;
     const int NO_ERROR = 0;
-
-    const int FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
-    // These are the Win32 error code for file not found or access denied.
-    const int ERROR_FILE_NOT_FOUND = 2;
-    const int ERROR_ACCESS_DENIED = 5;
   }
 }
