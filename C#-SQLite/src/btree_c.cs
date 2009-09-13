@@ -742,8 +742,8 @@ p.eState = CURSOR_INVALID;
     //         SQLITE_OK)
     static int restoreCursorPosition(BtCursor pCur)
     {
-      if (pCur.eState == CURSOR_REQUIRESEEK)
-        return btreeRestoreCursorPosition(pCur);
+      if ( pCur.eState >= CURSOR_REQUIRESEEK )
+        return btreeRestoreCursorPosition( pCur );
       else
         return SQLITE_OK;
     }
@@ -4448,6 +4448,7 @@ return SQLITE_ABORT;
     static byte[] fetchPayload(
     BtCursor pCur,   /* Cursor pointing to entry to read from */
     ref int pAmt,    /* Write the number of available bytes here */
+    ref int outOffset, /* Offset into Buffer */
     bool skipKey    /* read beginning at data if this is true */
     )
     {
@@ -4459,6 +4460,7 @@ return SQLITE_ABORT;
       Debug.Assert(pCur != null && pCur.iPage >= 0 && pCur.apPage[pCur.iPage] != null);
       Debug.Assert(pCur.eState == CURSOR_VALID);
       Debug.Assert(cursorHoldsMutex(pCur));
+      outOffset = -1;
       pPage = pCur.apPage[pCur.iPage];
       Debug.Assert(pCur.aiIdx[pCur.iPage] < pPage.nCell);
       if (NEVER(pCur.info.nSize == 0))
@@ -4477,17 +4479,19 @@ return SQLITE_ABORT;
       {
         nKey = (u32)pCur.info.nKey;
       }
-      if (skipKey)
+      if ( skipKey )
       {
         //aPayload += nKey;
-        Buffer.BlockCopy(pCur.info.pCell, (int)(pCur.info.iCell + pCur.info.nHeader + nKey), aPayload, 0, (int)(pCur.info.nSize - pCur.info.nHeader - nKey));
+        outOffset = (int)( pCur.info.iCell + pCur.info.nHeader + nKey );
+        Buffer.BlockCopy( pCur.info.pCell, outOffset, aPayload, 0, (int)( pCur.info.nSize - pCur.info.nHeader - nKey ) );
         nLocal = pCur.info.nLocal - nKey;
       }
       else
       {
-        Buffer.BlockCopy(pCur.info.pCell, pCur.info.iCell + pCur.info.nHeader, aPayload, 0, pCur.info.nSize - pCur.info.nHeader);
+        outOffset = (int)( pCur.info.iCell + pCur.info.nHeader );
+        Buffer.BlockCopy( pCur.info.pCell, outOffset, aPayload, 0, pCur.info.nSize - pCur.info.nHeader );
         nLocal = pCur.info.nLocal;
-        Debug.Assert(nLocal <= nKey);
+        Debug.Assert( nLocal <= nKey );
       }
       pAmt = (int)nLocal;
       return aPayload;
@@ -4507,29 +4511,28 @@ return SQLITE_ABORT;
     ** These routines is used to get quick access to key and data
     ** in the common case where no overflow pages are used.
     */
-    static byte[] sqlite3BtreeKeyFetch(BtCursor pCur, ref int pAmt)
+    static byte[] sqlite3BtreeKeyFetch( BtCursor pCur, ref int pAmt, ref int outOffset )
     {
       byte[] p = null;
-      Debug.Assert(sqlite3_mutex_held(pCur.pBtree.db.mutex));
-      Debug.Assert(cursorHoldsMutex(pCur));
-      if (ALWAYS(pCur.eState == CURSOR_VALID))
+      Debug.Assert( sqlite3_mutex_held( pCur.pBtree.db.mutex ) );
+      Debug.Assert( cursorHoldsMutex( pCur ) );
+      if ( ALWAYS( pCur.eState == CURSOR_VALID ) )
       {
-        p = fetchPayload(pCur, ref pAmt, false);
+        p = fetchPayload( pCur, ref pAmt, ref outOffset, false );
       }
       return p;
     }
-    static byte[] sqlite3BtreeDataFetch(BtCursor pCur, ref int pAmt)
+    static byte[] sqlite3BtreeDataFetch( BtCursor pCur, ref int pAmt, ref int outOffset )
     {
       byte[] p = null;
-      Debug.Assert(sqlite3_mutex_held(pCur.pBtree.db.mutex));
-      Debug.Assert(cursorHoldsMutex(pCur));
-      if (ALWAYS(pCur.eState == CURSOR_VALID))
+      Debug.Assert( sqlite3_mutex_held( pCur.pBtree.db.mutex ) );
+      Debug.Assert( cursorHoldsMutex( pCur ) );
+      if ( ALWAYS( pCur.eState == CURSOR_VALID ) )
       {
-        p = fetchPayload(pCur, ref pAmt, true);
+        p = fetchPayload( pCur, ref pAmt, ref outOffset, true );
       }
       return p;
     }
-
 
     /*
     ** Move the cursor down to a new child page.  The newPgno argument is the
@@ -6665,7 +6668,7 @@ if (false)
       int usableSpace;             /* Bytes in pPage beyond the header */
       int pageFlags;               /* Value of pPage.aData[0] */
       int subtotal;                /* Subtotal of bytes in cells on one page */
-      int iSpace1 = 0;             /* First unused byte of aSpace1[] */
+      //int iSpace1 = 0;             /* First unused byte of aSpace1[] */
       int iOvflSpace = 0;          /* First unused byte of aOvflSpace[] */
       int szScratch;               /* Size of scratch memory requested */
       MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
@@ -6677,7 +6680,7 @@ if (false)
       int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
       u8[][] apCell = null;                 /* All cells begin balanced */
       u16[] szCell;                         /* Local size of all cells in apCell[] */
-      u8[] aSpace1;                         /* Space for copies of dividers cells */
+      //u8[] aSpace1;                         /* Space for copies of dividers cells */
       Pgno pgno;                   /* Temp var to store a page number in */
 
       pBt = pParent.pBt;
@@ -6806,7 +6809,7 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
       //  goto balance_cleanup;
       //}
       szCell = new u16[nMaxCells];//(u16*)&apCell[nMaxCells];
-      aSpace1 = new byte[pBt.pageSize * (nMaxCells)];//  aSpace1 = (u8*)&szCell[nMaxCells];
+      //aSpace1 = new byte[pBt.pageSize * (nMaxCells)];//  aSpace1 = (u8*)&szCell[nMaxCells];
       //Debug.Assert( EIGHT_BYTE_ALIGNMENT(aSpace1) );
 
       /*
@@ -6864,9 +6867,9 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
           Debug.Assert(nCell < nMaxCells);
           szCell[nCell] = sz;
           //pTemp = &aSpace1[iSpace1];
-          iSpace1 += sz;
+          //iSpace1 += sz;
           Debug.Assert(sz <= pBt.pageSize / 4);
-          Debug.Assert(iSpace1 <= pBt.pageSize);
+          //Debug.Assert(iSpace1 <= pBt.pageSize);
           Buffer.BlockCopy(pParent.aData, apDiv[i], pTemp, 0, sz);//memcpy( pTemp, apDiv[i], sz );
           apCell[nCell] = new byte[sz];
           Buffer.BlockCopy(pTemp, leafCorrection, apCell[nCell], 0, sz);//apCell[nCell] = pTemp + leafCorrection;
