@@ -503,7 +503,7 @@ public u8 isPending;            /* If waiting for read-locks to clear */
     ** based on information extract from the raw disk page.
     */
     //typedef struct CellInfo CellInfo;
-    public class CellInfo
+    public struct CellInfo
     {
       public byte[] pCell;  /* Pointer to the start of cell content */
       public int iCell;     /* Offset to start of cell content -- Needed for C# */

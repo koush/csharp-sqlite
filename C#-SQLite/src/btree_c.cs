@@ -968,20 +968,20 @@ return SQLITE_CORRUPT_BKPT;
     static void btreeParseCellPtr(
     MemPage pPage,        /* Page containing the cell */
     int iCell,            /* Pointer to the cell text. */
-    CellInfo pInfo        /* Fill in this structure */
+    ref CellInfo pInfo        /* Fill in this structure */
     )
-    { btreeParseCellPtr(pPage, pPage.aData, iCell, pInfo); }
+    { btreeParseCellPtr(pPage, pPage.aData, iCell, ref pInfo); }
     static void btreeParseCellPtr(
     MemPage pPage,        /* Page containing the cell */
     byte[] pCell,         /* The actual data */
-    CellInfo pInfo        /* Fill in this structure */
+    ref CellInfo pInfo        /* Fill in this structure */
     )
-    { btreeParseCellPtr(pPage, pCell, 0, pInfo); }
+    { btreeParseCellPtr( pPage, pCell, 0, ref pInfo ); }
     static void btreeParseCellPtr(
     MemPage pPage,         /* Page containing the cell */
     u8[] pCell,            /* Pointer to the cell text. */
     int iCell,             /* Pointer to the cell text. */
-    CellInfo pInfo         /* Fill in this structure */
+    ref CellInfo pInfo         /* Fill in this structure */
     )
     {
       u16 n;                  /* Number bytes in cell content header */
@@ -1066,18 +1066,18 @@ return SQLITE_CORRUPT_BKPT;
     }
     //#define parseCell(pPage, iCell, pInfo) \
     //  btreeParseCellPtr((pPage), findCell((pPage), (iCell)), (pInfo))
-    static void parseCell(MemPage pPage, int iCell, CellInfo pInfo)
+    static void parseCell( MemPage pPage, int iCell, ref CellInfo pInfo )
     {
-      btreeParseCellPtr((pPage), findCell((pPage), (iCell)), (pInfo));
+      btreeParseCellPtr( ( pPage ), findCell( ( pPage ), ( iCell ) ), ref ( pInfo ) );
     }
 
     static void btreeParseCell(
     MemPage pPage,         /* Page containing the cell */
     int iCell,              /* The cell index.  First cell is 0 */
-    CellInfo pInfo         /* Fill in this structure */
+    ref CellInfo pInfo         /* Fill in this structure */
     )
     {
-      parseCell(pPage, iCell, pInfo);
+      parseCell( pPage, iCell, ref pInfo );
     }
 
     /*
@@ -1097,7 +1097,7 @@ return SQLITE_CORRUPT_BKPT;
         Buffer.BlockCopy(pPage.aData, iCell, pCell, 0, pPage.aData.Length - iCell);
       else
         Buffer.BlockCopy(pPage.aData, iCell, pCell, 0, pCell.Length);
-      btreeParseCellPtr(pPage, pCell, info);
+      btreeParseCellPtr( pPage, pCell, ref info );
       return info.nSize;
     }
 
@@ -1107,7 +1107,7 @@ return SQLITE_CORRUPT_BKPT;
       CellInfo info = new CellInfo();
       byte[] pTemp = new byte[pCell.Length];
       Buffer.BlockCopy(pCell, offset, pTemp, 0, pCell.Length - offset);
-      btreeParseCellPtr(pPage, pTemp, info);
+      btreeParseCellPtr( pPage, pTemp, ref info );
       return info.nSize;
     }
 
@@ -1122,9 +1122,9 @@ return SQLITE_CORRUPT_BKPT;
 ** cell. If SQLITE_DEBUG is defined, an Debug.Assert() at the bottom of
 ** this function verifies that this invariant is not violated. */
       CellInfo debuginfo = new CellInfo();
-      btreeParseCellPtr(pPage, pCell, debuginfo);
+      btreeParseCellPtr(pPage, pCell, ref debuginfo);
 #else
-      CellInfo debuginfo = null;
+      CellInfo debuginfo = new CellInfo();
 #endif
 
       if (pPage.intKey != 0)
@@ -1195,7 +1195,7 @@ static int cellSize(MemPage pPage, int iCell) { return -1; }
       if (pRC != 0) return;
       CellInfo info = new CellInfo();
       Debug.Assert(pCell != 0);
-      btreeParseCellPtr(pPage, pCell, info);
+      btreeParseCellPtr( pPage, pCell, ref info );
       Debug.Assert((info.nData + (pPage.intKey != 0 ? 0 : info.nKey)) == info.nPayload);
       if (info.iOverflow != 0)
       {
@@ -1209,7 +1209,7 @@ static int cellSize(MemPage pPage, int iCell) { return -1; }
       if (pRC != 0) return;
       CellInfo info = new CellInfo();
       Debug.Assert(pCell != null);
-      btreeParseCellPtr(pPage, pCell, info);
+      btreeParseCellPtr( pPage, pCell, ref info );
       Debug.Assert((info.nData + (pPage.intKey != 0 ? 0 : info.nKey)) == info.nPayload);
       if (info.iOverflow != 0)
       {
@@ -2994,7 +2994,7 @@ return SQLITE_CORRUPT_BKPT;
           if (eType == PTRMAP_OVERFLOW1)
           {
             CellInfo info = new CellInfo();
-            btreeParseCellPtr(pPage, pCell, info);
+            btreeParseCellPtr( pPage, pCell, ref info );
             if (info.iOverflow != 0)
             {
               if (iFrom == sqlite3Get4byte(pPage.aData, pCell, info.iOverflow))
@@ -3948,8 +3948,8 @@ sqlite3BtreeTripAllCursors(p, rc);
       CellInfo info;
       int iPage = pCur.iPage;
       info = new CellInfo();//memset(info, 0, sizeof(info));
-      btreeParseCell(pCur.apPage[iPage], pCur.aiIdx[iPage], info);
-      Debug.Assert(info.Equals(pCur.info));//memcmp(info, ref pCur.info, sizeof(info))==null );
+      btreeParseCell(pCur.apPage[iPage], pCur.aiIdx[iPage], ref info);
+      Debug.Assert(info.Equals(pCur.info));//memcmp(info, pCur.info, sizeof(info))==0 );
     }
 #else
 //  #define assertCellInfo(x)
@@ -3962,7 +3962,7 @@ static void assertCellInfo(BtCursor pCur) { }
       if (pCur.info.nSize == 0)
       {
         int iPage = pCur.iPage;
-        btreeParseCell(pCur.apPage[iPage], pCur.aiIdx[iPage], pCur.info);
+        btreeParseCell( pCur.apPage[iPage], pCur.aiIdx[iPage], ref pCur.info );
         pCur.validNKey = true;
       }
       else
@@ -4466,7 +4466,7 @@ return SQLITE_ABORT;
       if (NEVER(pCur.info.nSize == 0))
       {
         btreeParseCell(pCur.apPage[pCur.iPage], pCur.aiIdx[pCur.iPage],
-        pCur.info);
+        ref pCur.info );
       }
       //aPayload = pCur.info.pCell;
       //aPayload += pCur.info.nHeader;
@@ -5042,7 +5042,7 @@ return SQLITE_CORRUPT_BKPT;
               u8[] pCellKey;
               u8[] pCellBody = new u8[pPage.aData.Length - pCell + pPage.childPtrSize];
               Buffer.BlockCopy(pPage.aData, pCell - pPage.childPtrSize, pCellBody, 0, pCellBody.Length);//          u8 * const pCellBody = pCell - pPage->childPtrSize;
-              btreeParseCellPtr(pPage, pCellBody, pCur.info);
+              btreeParseCellPtr( pPage, pCellBody, ref pCur.info );
               nCell = (int)pCur.info.nKey;
               pCellKey = new byte[nCell]; //sqlite3Malloc( nCell );
               //if ( pCellKey == null )
@@ -5846,7 +5846,7 @@ rc = SQLITE_CORRUPT_BKPT;
       u16 ovflPageSize;
 
       Debug.Assert(sqlite3_mutex_held(pPage.pBt.mutex));
-      btreeParseCellPtr(pPage, pCell, info);
+      btreeParseCellPtr( pPage, pCell, ref info );
       if (info.iOverflow == 0)
       {
         return SQLITE_OK;  /* No overflow pages. Return without doing anything */
@@ -5944,7 +5944,7 @@ return SQLITE_CORRUPT_BKPT;
         nData = nZero = 0;
       }
       nHeader += putVarint(pCell, nHeader, (u64)nKey); //putVarint( pCell[nHeader], *(u64*)&nKey );
-      btreeParseCellPtr(pPage, pCell, info);
+      btreeParseCellPtr( pPage, pCell, ref info );
       Debug.Assert(info.nHeader == nHeader);
       Debug.Assert(info.nKey == nKey);
       Debug.Assert(info.nData == (u32)(nData + nZero));
@@ -7121,7 +7121,7 @@ if (false)
             */
             CellInfo info = new CellInfo();
             j--;
-            btreeParseCellPtr(pNew, apCell[j], info);
+            btreeParseCellPtr( pNew, apCell[j], ref info );
             pCell = pTemp;
             sz = 4 + putVarint( pCell, 4, (u64)info.nKey );
             pTemp = null;
@@ -8669,7 +8669,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
         "On tree page %d cell %d: ", iPage, i);
         int iCell = findCell(pPage, i); //pCell = findCell( pPage, i );
         pCell = pPage.aData;
-        btreeParseCellPtr(pPage, iCell, info); //btreeParseCellPtr( pPage, pCell, info );
+        btreeParseCellPtr( pPage, iCell, ref info ); //btreeParseCellPtr( pPage, pCell, info );
         sz = info.nData;
         if (0 == pPage.intKey) sz += (u32)info.nKey;
         Debug.Assert(sz == info.nPayload);
