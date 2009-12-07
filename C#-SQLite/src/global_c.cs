@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -22,11 +22,11 @@ namespace CS_SQLite3
     **
     ** This file contains definitions of global variables and contants.
     **
-    ** $Id: global.c,v 1.12 2009/02/05 16:31:46 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
@@ -172,12 +172,14 @@ namespace CS_SQLite3
     0,                         /* nPage */
     0,                         /* mxParserStack */
     false,                     /* sharedCacheEnabled */
-      /* All the rest need to always be zero */
-    0,                         /* isInit */
-    0,                         /* inProgress */
-    0,                         /* isMallocInit */
-    null,                      /* pInitMutex */
-    0                          /* nRefInitMutex */
+   /* All the rest should always be initialized to zero */
+   0,                          /* isInit */
+   0,                          /* inProgress */
+   0,                          /* isMutexInit */
+   0,                          /* isMallocInit */
+   0,                          /* isPCacheInit */
+   null,                       /* pInitMutex */
+   0                           /* nRefInitMutex */
     );
 
     /*

@@ -1,4 +1,4 @@
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -89,7 +89,7 @@ JournalFile p = (JournalFile *)pJfd;
 if( p.pReal ){
 sqlite3OsClose(p.pReal);
 }
-//sqlite3DbFree(db,p.zBuf);
+sqlite3DbFree(db,p.zBuf);
 return SQLITE_OK;
 }
 

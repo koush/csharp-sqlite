@@ -1,6 +1,6 @@
 using u8 = System.Byte;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -24,8 +24,8 @@ namespace CS_SQLite3
     ** Some of the definitions that are in this file are marked as
     ** "experimental".  Experimental interfaces are normally new
     ** features recently added to SQLite.  We do not anticipate changes
-    ** to experimental interfaces but reserve to make minor changes if
-    ** experience from use "in the wild" suggest such changes are prudent.
+    ** to experimental interfaces but reserve the right to make minor changes
+    ** if experience from use "in the wild" suggest such changes are prudent.
     **
     ** The official C-language API documentation for SQLite is derived
     ** from comments in this file.  This file is the authoritative source
@@ -36,13 +36,14 @@ namespace CS_SQLite3
     ** the version number) and changes its name to "sqlite3.h" as
     ** part of the build process.
     **
-    ** @(#) $Id: sqlite.h.in,v 1.462 2009/08/06 17:40:46 drh Exp $
-        *************************************************************************
-        **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-        **  C#-SQLite is an independent reimplementation of the SQLite software library
-        **
-        **  $Header$
-        *************************************************************************
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#ifndef _SQLITE3_H_
     //#define _SQLITE3_H_
@@ -71,7 +72,7 @@ namespace CS_SQLite3
     /*
     ** These no-op macros are used in front of interfaces to mark those
     ** interfaces as either deprecated or experimental.  New applications
-    ** should not use deprecated intrfaces - they are support for backwards
+    ** should not use deprecated interfaces - they are support for backwards
     ** compatibility only.  Application writers should be aware that
     ** experimental interfaces are subject to change in point releases.
     **
@@ -101,53 +102,84 @@ namespace CS_SQLite3
     ** the sqlite3.h file specify the version of SQLite with which
     ** that header file is associated.
     **
-    ** The "version" of SQLite is a string of the form "X.Y.Z".
-    ** The phrase "alpha" or "beta" might be appended after the Z.
-    ** The X value is major version number always 3 in SQLite3.
-    ** The X value only changes when backwards compatibility is
+    ** The "version" of SQLite is a string of the form "W.X.Y" or "W.X.Y.Z".
+    ** The W value is major version number and is always 3 in SQLite3.
+    ** The W value only changes when backwards compatibility is
     ** broken and we intend to never break backwards compatibility.
-    ** The Y value is the minor version number and only changes when
+    ** The X value is the minor version number and only changes when
     ** there are major feature enhancements that are forwards compatible
     ** but not backwards compatible.
-    ** The Z value is the release number and is incremented with
-    ** each release but resets back to 0 whenever Y is incremented.
+    ** The Y value is the release number and is incremented with
+    ** each release but resets back to 0 whenever X is incremented.
+    ** The Z value only appears on branch releases.
     **
-    ** See also: [sqlite3_libversion()] and [sqlite3_libversion_number()].
+    ** The SQLITE_VERSION_NUMBER is an integer that is computed as
+    ** follows:
+    **
+    ** <blockquote><pre>
+    ** SQLITE_VERSION_NUMBER = W*1000000 + X*1000 + Y
+    ** </pre></blockquote>
+    **
+    ** Since version 3.6.18, SQLite source code has been stored in the
+    ** <a href="http://www.fossil-scm.org/">fossil configuration management
+    ** system</a>.  The SQLITE_SOURCE_ID
+    ** macro is a string which identifies a particular check-in of SQLite
+    ** within its configuration management system.  The string contains the
+    ** date and time of the check-in (UTC) and an SHA1 hash of the entire
+    ** source tree.
+    **
+    ** See also: [sqlite3_libversion()],
+    ** [sqlite3_libversion_number()], [sqlite3_sourceid()],
+    ** [sqlite_version()] and [sqlite_source_id()].
     **
     ** Requirements: [H10011] [H10014]
     */
-    //#define SQLITE_VERSION         "3.6.17"
-    //#define SQLITE_VERSION_NUMBER  3006017
-    const string SQLITE_VERSION = "3.6.17.C#";
-    const int SQLITE_VERSION_NUMBER = 300601767;
+    //#define SQLITE_VERSION        "3.6.18"
+    //#define SQLITE_VERSION_NUMBER 3006018
+    //#define SQLITE_SOURCE_ID      "2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee"
+    const string SQLITE_VERSION = "3.6.18.C#";
+    const int SQLITE_VERSION_NUMBER = 300601867;
+    const string SQLITE_SOURCE_ID = "Ported to C# from 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee";
 
     /*
     ** CAPI3REF: Run-Time Library Version Numbers {H10020} <S60100>
     ** KEYWORDS: sqlite3_version
     **
-    ** These features provide the same information as the [SQLITE_VERSION]
-    ** and [SQLITE_VERSION_NUMBER] #defines in the header, but are associated
-    ** with the library instead of the header file.  Cautious programmers might
-    ** include a check in their application to verify that
-    ** sqlite3_libversion_number() always returns the value
-    ** [SQLITE_VERSION_NUMBER].
+    ** These interfaces provide the same information as the [SQLITE_VERSION],
+    ** [SQLITE_VERSION_NUMBER], and [SQLITE_SOURCE_ID] #defines in the header,
+    ** but are associated with the library instead of the header file.  Cautious
+    ** programmers might include assert() statements in their application to
+    ** verify that values returned by these interfaces match the macros in
+    ** the header, and thus insure that the application is
+    ** compiled with matching library and header files.
+    **
+    ** <blockquote><pre>
+    ** assert( sqlite3_libversion_number()==SQLITE_VERSION_NUMBER );
+    ** assert( strcmp(sqlite3_sourceid(),SQLITE_SOURCE_ID)==0 );
+    ** assert( strcmp(sqlite3_libversion,SQLITE_VERSION)==0 );
+    ** </pre></blockquote>
     **
     ** The sqlite3_libversion() function returns the same information as is
     ** in the sqlite3_version[] string constant.  The function is provided
     ** for use in DLLs since DLL users usually do not have direct access to string
-    ** constants within the DLL.
+    ** constants within the DLL.  Similarly, the sqlite3_sourceid() function
+    ** returns the same information as is in the [SQLITE_SOURCE_ID] #define of
+    ** the header file.
+    **
+    ** See also: [sqlite_version()] and [sqlite_source_id()].
     **
     ** Requirements: [H10021] [H10022] [H10023]
     */
     //SQLITE_API SQLITE_EXTERN const char sqlite3_version[];
     //SQLITE_API const char *sqlite3_libversion(void);
+    //SQLITE_API const char *sqlite3_sourceid(void);
     //SQLITE_API int sqlite3_libversion_number(void);
 
     /*
     ** CAPI3REF: Test To See If The Library Is Threadsafe {H10100} <S60100>
     **
     ** SQLite can be compiled with or without mutexes.  When
-    ** the [SQLITE_THREADSAFE] C preprocessor macro 1 or 2, mutexes
+    ** the [SQLITE_THREADSAFE] C preprocessor macro is 1 or 2, mutexes
     ** are enabled and SQLite is threadsafe.  When the
     ** [SQLITE_THREADSAFE] macro is 0, 
     ** the mutexes are omitted.  Without the mutexes, it is not safe
@@ -158,7 +190,7 @@ namespace CS_SQLite3
     ** the mutexes.  But for maximum safety, mutexes should be enabled.
     ** The default behavior is for mutexes to be enabled.
     **
-    ** This interface can be used by a program to make sure that the
+    ** This interface can be used by an application to make sure that the
     ** version of SQLite that it is linking against was compiled with
     ** the desired setting of the [SQLITE_THREADSAFE] macro.
     **
@@ -473,6 +505,8 @@ namespace CS_SQLite3
     //#define SQLITE_OPEN_MASTER_JOURNAL   0x00004000  /* VFS only */
     //#define SQLITE_OPEN_NOMUTEX          0x00008000  /* Ok for sqlite3_open_v2() */
     //#define SQLITE_OPEN_FULLMUTEX        0x00010000  /* Ok for sqlite3_open_v2() */
+    //#define SQLITE_OPEN_SHAREDCACHE      0x00020000  /* Ok for sqlite3_open_v2() */
+    //#define SQLITE_OPEN_PRIVATECACHE     0x00040000  /* Ok for sqlite3_open_v2() */
     public const int SQLITE_OPEN_READONLY = 0x00000001;
     public const int SQLITE_OPEN_READWRITE = 0x00000002;
     public const int SQLITE_OPEN_CREATE = 0x00000004;
@@ -487,7 +521,8 @@ namespace CS_SQLite3
     public const int SQLITE_OPEN_MASTER_JOURNAL = 0x00004000;
     public const int SQLITE_OPEN_NOMUTEX = 0x00008000;
     public const int SQLITE_OPEN_FULLMUTEX = 0x00010000;
-
+    public const int SQLITE_OPEN_SHAREDCACHE = 0x00020000;
+    public const int SQLITE_OPEN_PRIVATECACHE = 0x00040000;
 
     /*
     ** CAPI3REF: Device Characteristics {H10240} <H11120>
@@ -574,8 +609,9 @@ namespace CS_SQLite3
     /*
     ** CAPI3REF: OS Interface Open File Handle {H11110} <S20110>
     **
-    ** An [sqlite3_file] object represents an open file in the OS
-    ** interface layer.  Individual OS interface implementations will
+    ** An [sqlite3_file] object represents an open file in the 
+    ** [sqlite3_vfs | OS interface layer].  Individual OS interface
+    ** implementations will
     ** want to subclass this object by appending additional fields
     ** for their own use.  The pMethods entry is a pointer to an
     ** [sqlite3_io_methods] object that defines methods for performing
@@ -1070,8 +1106,9 @@ namespace CS_SQLite3
     ** interface is called automatically by sqlite3_initialize() and
     ** sqlite3_os_end() is called by sqlite3_shutdown().  Appropriate
     ** implementations for sqlite3_os_init() and sqlite3_os_end()
-    ** are built into SQLite when it is compiled for unix, windows, or os/2.
-    ** When built for other platforms (using the [SQLITE_OS_OTHER=1] compile-time
+    ** are built into SQLite when it is compiled for Unix, Windows, or OS/2.
+    ** When [custom builds | built for other platforms]
+    ** (using the [SQLITE_OS_OTHER=1] compile-time
     ** option) the application must supply a suitable implementation for
     ** sqlite3_os_init() and sqlite3_os_end().  An application-supplied
     ** implementation of sqlite3_os_init() or sqlite3_os_end()
@@ -1152,13 +1189,15 @@ namespace CS_SQLite3
     ** This object is used in only one place in the SQLite interface.
     ** A pointer to an instance of this object is the argument to
     ** [sqlite3_config()] when the configuration option is
-    ** [SQLITE_CONFIG_MALLOC].  By creating an instance of this object
-    ** and passing it to [sqlite3_config()] during configuration, an
-    ** application can specify an alternative memory allocation subsystem
-    ** for SQLite to use for all of its dynamic memory needs.
+    ** [SQLITE_CONFIG_MALLOC] or [SQLITE_CONFIG_GETMALLOC].  
+    ** By creating an instance of this object
+    ** and passing it to [sqlite3_config]([SQLITE_CONFIG_MALLOC])
+    ** during configuration, an application can specify an alternative
+    ** memory allocation subsystem for SQLite to use for all of its
+    ** dynamic memory needs.
     **
-    ** Note that SQLite comes with a built-in memory allocator that is
-    ** perfectly adequate for the overwhelming majority of applications
+    ** Note that SQLite comes with several [built-in memory allocators]
+    ** that are perfectly adequate for the overwhelming majority of applications
     ** and that this object is only useful to a tiny minority of applications
     ** with specialized memory allocation requirements.  This object is
     ** also used during testing of SQLite in order to specify an alternative
@@ -1166,8 +1205,16 @@ namespace CS_SQLite3
     ** order to verify that SQLite recovers gracefully from such
     ** conditions.
     **
-    ** The xMalloc, xFree, and xRealloc methods must work like the
-    ** malloc(), free(), and realloc() functions from the standard library.
+    ** The xMalloc and xFree methods must work like the
+    ** malloc() and free() functions from the standard C library.
+    ** The xRealloc method must work like realloc() from the standard C library
+    ** with the exception that if the second argument to xRealloc is zero,
+    ** xRealloc must be a no-op - it must not perform any allocation or
+    ** deallocation.  SQLite guaranteeds that the second argument to
+    ** xRealloc is always a value returned by a prior call to xRoundup.
+    ** And so in cases where xRoundup always returns a positive number,
+    ** xRealloc can perform exactly as the standard library realloc() and
+    ** still be in compliance with this specification.
     **
     ** xSize should return the allocated size of a memory allocation
     ** previously obtained from xMalloc or xRealloc.  The allocated size
@@ -1177,6 +1224,9 @@ namespace CS_SQLite3
     ** a memory allocation given a particular requested size.  Most memory
     ** allocators round up memory allocations at least to the next multiple
     ** of 8.  Some allocators round up to a larger multiple or to a power of 2.
+    ** Every memory allocation request coming in through [sqlite3_malloc()]
+    ** or [sqlite3_realloc()] first calls xRoundup.  If xRoundup returns 0, 
+    ** that causes the corresponding memory allocation to fail.
     **
     ** The xInit method initializes the memory allocator.  (For example,
     ** it might allocate any require mutexes or initialize internal data
@@ -1184,6 +1234,20 @@ namespace CS_SQLite3
     ** [sqlite3_shutdown()] and should deallocate any resources acquired
     ** by xInit.  The pAppData pointer is used as the only parameter to
     ** xInit and xShutdown.
+    **
+    ** SQLite holds the [SQLITE_MUTEX_STATIC_MASTER] mutex when it invokes
+    ** the xInit method, so the xInit method need not be threadsafe.  The
+    ** xShutdown method is only called from [sqlite3_shutdown()] so it does
+    ** not need to be threadsafe either.  For all other methods, SQLite
+    ** holds the [SQLITE_MUTEX_STATIC_MEM] mutex as long as the
+    ** [SQLITE_CONFIG_MEMSTATUS] configuration option is turned on (which
+    ** it is by default) and so the methods are automatically serialized.
+    ** However, if [SQLITE_CONFIG_MEMSTATUS] is disabled, then the other
+    ** methods must be threadsafe or else make their own arrangements for
+    ** serialization.
+    **
+    ** SQLite will never invoke xInit() more than once without an intervening
+    ** call to xShutdown().
     */
     //typedef struct sqlite3_mem_methods sqlite3_mem_methods;
     //struct sqlite3_mem_methods {
@@ -1369,9 +1433,12 @@ namespace CS_SQLite3
     **
     ** <dt>SQLITE_CONFIG_LOOKASIDE</dt>
     ** <dd>This option takes two arguments that determine the default
-    ** memory allcation lookaside optimization.  The first argument is the
+    ** memory allocation lookaside optimization.  The first argument is the
     ** size of each lookaside buffer slot and the second is the number of
-    ** slots allocated to each database connection.</dd>
+    ** slots allocated to each database connection.  This option sets the
+    ** <i>default</i> lookaside size.  The [SQLITE_DBCONFIG_LOOKASIDE]
+    ** verb to [sqlite3_db_config()] can be used to change the lookaside
+    ** configuration on individual connections.</dd>
     **
     ** <dt>SQLITE_CONFIG_PCACHE</dt>
     ** <dd>This option takes a single argument which is a pointer to
@@ -1431,16 +1498,25 @@ namespace CS_SQLite3
     ** is invoked.
     **
     ** <dl>
-    ** <dt>SQLITE_DBCONFIG_LOOKASIDE</dt>
-    ** <dd>This option takes three additional arguments that determine the 
-    ** [lookaside memory allocator] configuration for the [database connection].
-    ** The first argument (the third parameter to [sqlite3_db_config()] is a
-    ** pointer to an 8-byte aligned memory buffer to use for lookaside memory.
-    ** The first argument may be NULL in which case SQLite will allocate the
-    ** lookaside buffer itself using [sqlite3_malloc()].  The second argument is the
-    ** size of each lookaside buffer slot and the third argument is the number of
-    ** slots.  The size of the buffer in the first argument must be greater than
-    ** or equal to the product of the second and third arguments.</dd>
+    ** <dt>SQLITE_CONFIG_LOOKASIDE</dt>
+    ** <dd>This option takes two arguments that determine the default
+    ** memory allocation lookaside optimization.  The first argument is the
+    ** size of each lookaside buffer slot and the second is the number of
+    ** slots allocated to each database connection.  This option sets the
+    ** <i>default</i> lookaside size.  The [SQLITE_DBCONFIG_LOOKASIDE]
+    ** verb to [sqlite3_db_config()] can be used to change the lookaside
+    ** configuration on individual connections.</dd>
+    **
+    ** <dt>SQLITE_CONFIG_PCACHE</dt>
+    ** <dd>This option takes a single argument which is a pointer to
+    ** an [sqlite3_pcache_methods] object.  This object specifies the interface
+    ** to a custom page cache implementation.  SQLite makes a copy of the
+    ** object and uses it for page cache memory allocations.</dd>
+    **
+    ** <dt>SQLITE_CONFIG_GETPCACHE</dt>
+    ** <dd>This option takes a single argument which is a pointer to an
+    ** [sqlite3_pcache_methods] object.  SQLite copies of the current
+    ** page cache implementation into that object.</dd>
     **
     ** </dl>
     */
@@ -1845,7 +1921,7 @@ namespace CS_SQLite3
     /*
     ** CAPI3REF: Formatted String Printing Functions {H17400} <S70000><S20000>
     **
-    ** These routines are workalikes of the "printf()" family of functions
+    ** These routines are work-alikes of the "printf()" family of functions
     ** from the standard C library.
     **
     ** The sqlite3_mprintf() and sqlite3_vmprintf() routines write their
@@ -2132,7 +2208,7 @@ namespace CS_SQLite3
     ** database connections for the meaning of "modify" in this paragraph.
     **
     ** When [sqlite3_prepare_v2()] is used to prepare a statement, the
-    ** statement might be reprepared during [sqlite3_step()] due to a 
+    ** statement might be re-prepared during [sqlite3_step()] due to a 
     ** schema change.  Hence, the application should ensure that the
     ** correct authorizer callback remains in place during the [sqlite3_step()].
     **
@@ -2334,7 +2410,8 @@ namespace CS_SQLite3
     ** except that it accepts two additional parameters for additional control
     ** over the new database connection.  The flags parameter can take one of
     ** the following three values, optionally combined with the 
-    ** [SQLITE_OPEN_NOMUTEX] or [SQLITE_OPEN_FULLMUTEX] flags:
+    ** [SQLITE_OPEN_NOMUTEX], [SQLITE_OPEN_FULLMUTEX], [SQLITE_OPEN_SHAREDCACHE],
+    ** and/or [SQLITE_OPEN_PRIVATECACHE] flags:
     **
     ** <dl>
     ** <dt>[SQLITE_OPEN_READONLY]</dt>
@@ -2354,7 +2431,8 @@ namespace CS_SQLite3
     **
     ** If the 3rd parameter to sqlite3_open_v2() is not one of the
     ** combinations shown above or one of the combinations shown above combined
-    ** with the [SQLITE_OPEN_NOMUTEX] or [SQLITE_OPEN_FULLMUTEX] flags,
+    ** with the [SQLITE_OPEN_NOMUTEX], [SQLITE_OPEN_FULLMUTEX],
+    ** [SQLITE_OPEN_SHAREDCACHE] and/or [SQLITE_OPEN_SHAREDCACHE] flags,
     ** then the behavior is undefined.
     **
     ** If the [SQLITE_OPEN_NOMUTEX] flag is set, then the database connection
@@ -2363,6 +2441,11 @@ namespace CS_SQLite3
     ** [SQLITE_OPEN_FULLMUTEX] flag is set then the database connection opens
     ** in the serialized [threading mode] unless single-thread was
     ** previously selected at compile-time or start-time.
+    ** The [SQLITE_OPEN_SHAREDCACHE] flag causes the database connection to be
+    ** eligible to use [shared cache mode], regardless of whether or not shared
+    ** cache is enabled using [sqlite3_enable_shared_cache()].  The
+    ** [SQLITE_OPEN_PRIVATECACHE] flag causes the database connection to not
+    ** participate in [shared cache mode] even if it is enabled.
     **
     ** If the filename is ":memory:", then a private, temporary in-memory database
     ** is created for the connection.  This in-memory database will vanish when
@@ -2556,6 +2639,10 @@ namespace CS_SQLite3
     ** <dt>SQLITE_LIMIT_VARIABLE_NUMBER</dt>
     ** <dd>The maximum number of variables in an SQL statement that can
     ** be bound.</dd>
+    **
+    ** <dt>SQLITE_LIMIT_TRIGGER_DEPTH</dt>
+    ** <dd>The maximum depth of recursion for triggers.</dd>
+    ** </dl>
     ** </dl>
     */
     //#define SQLITE_LIMIT_LENGTH                    0
@@ -2568,6 +2655,8 @@ namespace CS_SQLite3
     //#define SQLITE_LIMIT_ATTACHED                  7
     //#define SQLITE_LIMIT_LIKE_PATTERN_LENGTH       8
     //#define SQLITE_LIMIT_VARIABLE_NUMBER           9
+    //#define SQLITE_LIMIT_TRIGGER_DEPTH            10
+
     public const int SQLITE_LIMIT_LENGTH = 0;
     public const int SQLITE_LIMIT_SQL_LENGTH = 1;
     public const int SQLITE_LIMIT_COLUMN = 2;
@@ -2578,6 +2667,7 @@ namespace CS_SQLite3
     public const int SQLITE_LIMIT_ATTACHED = 7;
     public const int SQLITE_LIMIT_LIKE_PATTERN_LENGTH = 8;
     public const int SQLITE_LIMIT_VARIABLE_NUMBER = 9;
+    public const int SQLITE_LIMIT_TRIGGER_DEPTH = 10;
 
     /*
     ** CAPI3REF: Compiling An SQL Statement {H13010} <S10000>
@@ -2754,7 +2844,8 @@ namespace CS_SQLite3
     ** KEYWORDS: {SQL parameter} {SQL parameters} {parameter binding}
     **
     ** In the SQL strings input to [sqlite3_prepare_v2()] and its variants,
-    ** literals may be replaced by a [parameter] in one of these forms:
+    ** literals may be replaced by a [parameter] that matches one of following
+    ** templates:
     **
     ** <ul>
     ** <li>  ?
@@ -2764,8 +2855,8 @@ namespace CS_SQLite3
     ** <li>  $VVV
     ** </ul>
     **
-    ** In the parameter forms shown above NNN is an integer literal,
-    ** and VVV is an alpha-numeric parameter name. The values of these
+    ** In the templates above, NNN represents an integer literal,
+    ** and VVV represents an alphanumeric identifer.  The values of these
     ** parameters (also called "host parameter names" or "SQL parameters")
     ** can be set using the sqlite3_bind_*() routines defined here.
     **
@@ -3423,7 +3514,7 @@ namespace CS_SQLite3
     ** [SQLITE_UTF8 | text encoding] this SQL function prefers for
     ** its parameters.  Any SQL function implementation should be able to work
     ** work with UTF-8, UTF-16le, or UTF-16be.  But some implementations may be
-    ** more efficient with one encoding than another.  It is allowed to
+    ** more efficient with one encoding than another.  An application may
     ** invoke sqlite3_create_function() or sqlite3_create_function16() multiple
     ** times with the same function but with different values of eTextRep.
     ** When multiple implementations of the same function are available, SQLite
@@ -3445,7 +3536,7 @@ namespace CS_SQLite3
     ** It is permitted to register multiple implementations of the same
     ** functions with the same name but with either differing numbers of
     ** arguments or differing preferred text encodings.  SQLite will use
-    ** the implementation most closely matches the way in which the
+    ** the implementation that most closely matches the way in which the
     ** SQL function is used.  A function implementation with a non-negative
     ** nArg parameter is a better match than a function implementation with
     ** a negative nArg.  A function where the preferred text encoding
@@ -3801,10 +3892,11 @@ namespace CS_SQLite3
     ** or sqlite3_result_blob is a non-NULL pointer, then SQLite calls that
     ** function as the destructor on the text or BLOB result when it has
     ** finished using that result.
-    ** If the 4th parameter to the sqlite3_result_text* interfaces or
+    ** If the 4th parameter to the sqlite3_result_text* interfaces or to
     ** sqlite3_result_blob is the special constant SQLITE_STATIC, then SQLite
     ** assumes that the text or BLOB result is in constant space and does not
-    ** copy the it or call a destructor when it has finished using that result.
+    ** copy the content of the parameter nor call a destructor on the content
+    ** when it has finished using that result.
     ** If the 4th parameter to the sqlite3_result_text* interfaces
     ** or sqlite3_result_blob is the special constant SQLITE_TRANSIENT
     ** then SQLite makes a copy of the result into space obtained from
@@ -4639,7 +4731,7 @@ namespace CS_SQLite3
       public sqlite3_index_constraint_usage[] aConstraintUsage;
       public int idxNum;                /* Number used to identify the index */
       public string idxStr;             /* String, possibly obtained from sqlite3Malloc */
-      public int needToFreeIdxStr;      /* Free idxStr using //sqlite3DbFree(db,) if true */
+      public int needToFreeIdxStr;      /* Free idxStr using sqlite3DbFree(db,) if true */
       public bool orderByConsumed;       /* True if output is already ordered */
       public double estimatedCost;      /* Estimated cost of using this index */
     }
@@ -4860,7 +4952,7 @@ namespace CS_SQLite3
     **
     ** Use the [sqlite3_blob_bytes()] interface to determine the size of
     ** the opened blob.  The size of a blob may not be changed by this
-    ** underface.  Use the [UPDATE] SQL command to change the size of a
+    ** interface.  Use the [UPDATE] SQL command to change the size of a
     ** blob.
     **
     ** The [sqlite3_bind_zeroblob()] and [sqlite3_result_zeroblob()] interfaces
@@ -5100,7 +5192,7 @@ namespace CS_SQLite3
     ** might return such a mutex in response to SQLITE_MUTEX_FAST.
     **
     ** {H17017} The other allowed parameters to sqlite3_mutex_alloc() each return
-    ** a pointer to a static preexisting mutex. {END}  Four static mutexes are
+    ** a pointer to a static preexisting mutex. {END}  Six static mutexes are
     ** used by the current version of SQLite.  Future versions of SQLite
     ** may add additional static mutexes.  Static mutexes are for internal
     ** use by SQLite only.  Applications that use SQLite mutexes should
@@ -5206,6 +5298,21 @@ namespace CS_SQLite3
     ** of passing a NULL pointer instead of a valid mutex handle are undefined
     ** (i.e. it is acceptable to provide an implementation that segfaults if
     ** it is passed a NULL pointer).
+    **
+    ** The xMutexInit() method must be threadsafe.  It must be harmless to
+    ** invoke xMutexInit() mutiple times within the same process and without
+    ** intervening calls to xMutexEnd().  Second and subsequent calls to
+    ** xMutexInit() must be no-ops.
+    **
+    ** xMutexInit() must not use SQLite memory allocation ([sqlite3_malloc()]
+    ** and its associates).  Similarly, xMutexAlloc() must not use SQLite memory
+    ** allocation for a static mutex.  However xMutexAlloc() may use SQLite
+    ** memory allocation for a fast or recursive mutex.
+    **
+    ** SQLite will invoke the xMutexEnd() method when [sqlite3_shutdown()] is
+    ** called, but only if the prior call to xMutexInit returned SQLITE_OK.
+    ** If xMutexInit fails in any way, it is expected to clean up after itself
+    ** prior to returning.
     */
     //typedef struct sqlite3_mutex_methods sqlite3_mutex_methods;
     //struct sqlite3_mutex_methods {
@@ -5423,7 +5530,7 @@ namespace CS_SQLite3
     ** This routine returns SQLITE_OK on success and a non-zero
     ** [error code] on failure.
     **
-    ** This routine is threadsafe but is not atomic.  This routine can
+    ** This routine is threadsafe but is not atomic.  This routine can be
     ** called while other threads are running the same or different SQLite
     ** interfaces.  However the values returned in *pCurrent and
     ** *pHighwater reflect the status of SQLite at different points in time
@@ -5555,7 +5662,14 @@ namespace CS_SQLite3
     ** CAPI3REF: Status Parameters for database connections {H17520} <H17500>
     ** EXPERIMENTAL
     **
-    ** Status verbs for [sqlite3_db_status()].
+    ** These constants are the available integer "verbs" that can be passed as
+    ** the second argument to the [sqlite3_db_status()] interface.
+    **
+    ** New verbs may be added in future releases of SQLite. Existing verbs
+    ** might be discontinued. Applications should check the return code from
+    ** [sqlite3_db_status()] to make sure that the call worked.
+    ** The [sqlite3_db_status()] interface will return a non-zero error code
+    ** if a discontinued or unsupported verb is invoked.
     **
     ** <dl>
     ** <dt>SQLITE_DBSTATUS_LOOKASIDE_USED</dt>
@@ -5635,84 +5749,101 @@ namespace CS_SQLite3
 
     /*
     ** CAPI3REF: Application Defined Page Cache.
+    ** KEYWORDS: {page cache}
     ** EXPERIMENTAL
     **
     ** The [sqlite3_config]([SQLITE_CONFIG_PCACHE], ...) interface can
     ** register an alternative page cache implementation by passing in an 
     ** instance of the sqlite3_pcache_methods structure. The majority of the 
-    ** heap memory used by sqlite is used by the page cache to cache data read 
+    ** heap memory used by SQLite is used by the page cache to cache data read 
     ** from, or ready to be written to, the database file. By implementing a 
     ** custom page cache using this API, an application can control more 
-    ** precisely the amount of memory consumed by sqlite, the way in which 
-    ** said memory is allocated and released, and the policies used to 
+    ** precisely the amount of memory consumed by SQLite, the way in which 
+    ** that memory is allocated and released, and the policies used to 
     ** determine exactly which parts of a database file are cached and for 
     ** how long.
     **
-    ** The contents of the structure are copied to an internal buffer by sqlite
-    ** within the call to [sqlite3_config].
+    ** The contents of the sqlite3_pcache_methods structure are copied to an
+    ** internal buffer by SQLite within the call to [sqlite3_config].  Hence
+    ** the application may discard the parameter after the call to
+    ** [sqlite3_config()] returns.
     **
     ** The xInit() method is called once for each call to [sqlite3_initialize()]
     ** (usually only once during the lifetime of the process). It is passed
     ** a copy of the sqlite3_pcache_methods.pArg value. It can be used to set
     ** up global structures and mutexes required by the custom page cache 
-    ** implementation. The xShutdown() method is called from within 
-    ** [sqlite3_shutdown()], if the application invokes this API. It can be used
-    ** to clean up any outstanding resources before process shutdown, if required.
+    ** implementation. 
     **
-    ** The xCreate() method is used to construct a new cache instance. The
+    ** The xShutdown() method is called from within [sqlite3_shutdown()], 
+    ** if the application invokes this API. It can be used to clean up 
+    ** any outstanding resources before process shutdown, if required.
+    **
+    ** SQLite holds a [SQLITE_MUTEX_RECURSIVE] mutex when it invokes
+    ** the xInit method, so the xInit method need not be threadsafe.  The
+    ** xShutdown method is only called from [sqlite3_shutdown()] so it does
+    ** not need to be threadsafe either.  All other methods must be threadsafe
+    ** in multithreaded applications.
+    **
+    ** SQLite will never invoke xInit() more than once without an intervening
+    ** call to xShutdown().
+    **
+    ** The xCreate() method is used to construct a new cache instance.  SQLite
+    ** will typically create one cache instance for each open database file,
+    ** though this is not guaranteed. The
     ** first parameter, szPage, is the size in bytes of the pages that must
-    ** be allocated by the cache. szPage will not be a power of two. The
-    ** second argument, bPurgeable, is true if the cache being created will
-    ** be used to cache database pages read from a file stored on disk, or
+    ** be allocated by the cache.  szPage will not be a power of two.  szPage
+    ** will the page size of the database file that is to be cached plus an
+    ** increment (here called "R") of about 100 or 200.  SQLite will use the
+    ** extra R bytes on each page to store metadata about the underlying
+    ** database page on disk.  The value of R depends
+    ** on the SQLite version, the target platform, and how SQLite was compiled.
+    ** R is constant for a particular build of SQLite.  The second argument to
+    ** xCreate(), bPurgeable, is true if the cache being created will
+    ** be used to cache database pages of a file stored on disk, or
     ** false if it is used for an in-memory database. The cache implementation
-    ** does not have to do anything special based on the value of bPurgeable,
-    ** it is purely advisory. 
+    ** does not have to do anything special based with the value of bPurgeable;
+    ** it is purely advisory.  On a cache where bPurgeable is false, SQLite will
+    ** never invoke xUnpin() except to deliberately delete a page.
+    ** In other words, a cache created with bPurgeable set to false will
+    ** never contain any unpinned pages.
     **
     ** The xCachesize() method may be called at any time by SQLite to set the
     ** suggested maximum cache-size (number of pages stored by) the cache
     ** instance passed as the first argument. This is the value configured using
     ** the SQLite "[PRAGMA cache_size]" command. As with the bPurgeable parameter,
-    ** the implementation is not required to do anything special with this
-    ** value, it is advisory only.
+    ** the implementation is not required to do anything with this
+    ** value; it is advisory only.
     **
     ** The xPagecount() method should return the number of pages currently
-    ** stored in the cache supplied as an argument.
+    ** stored in the cache.
     ** 
     ** The xFetch() method is used to fetch a page and return a pointer to it. 
     ** A 'page', in this context, is a buffer of szPage bytes aligned at an
     ** 8-byte boundary. The page to be fetched is determined by the key. The
     ** mimimum key value is 1. After it has been retrieved using xFetch, the page 
-    ** is considered to be pinned.
+    ** is considered to be "pinned".
     **
-    ** If the requested page is already in the page cache, then a pointer to
-    ** the cached buffer should be returned with its contents intact. If the
-    ** page is not already in the cache, then the expected behaviour of the
-    ** cache is determined by the value of the createFlag parameter passed
-    ** to xFetch, according to the following table:
+    ** If the requested page is already in the page cache, then the page cache
+    ** implementation must return a pointer to the page buffer with its content
+    ** intact.  If the requested page is not already in the cache, then the
+    ** behavior of the cache implementation is determined by the value of the
+    ** createFlag parameter passed to xFetch, according to the following table:
     **
     ** <table border=1 width=85% align=center>
-    **   <tr><th>createFlag<th>Expected Behaviour
-    **   <tr><td>0<td>NULL should be returned. No new cache entry is created.
-    **   <tr><td>1<td>If createFlag is set to 1, this indicates that 
-    **                SQLite is holding pinned pages that can be unpinned
-    **                by writing their contents to the database file (a
-    **                relatively expensive operation). In this situation the
-    **                cache implementation has two choices: it can return NULL,
-    **                in which case SQLite will attempt to unpin one or more 
-    **                pages before re-requesting the same page, or it can
-    **                allocate a new page and return a pointer to it. If a new
-    **                page is allocated, then the first sizeof(void*) bytes of
-    **                it (at least) must be zeroed before it is returned.
-    **   <tr><td>2<td>If createFlag is set to 2, then SQLite is not holding any
-    **                pinned pages associated with the specific cache passed
-    **                as the first argument to xFetch() that can be unpinned. The
-    **                cache implementation should attempt to allocate a new
-    **                cache entry and return a pointer to it. Again, the first
-    **                sizeof(void*) bytes of the page should be zeroed before 
-    **                it is returned. If the xFetch() method returns NULL when 
-    **                createFlag==2, SQLite assumes that a memory allocation 
-    **                failed and returns SQLITE_NOMEM to the user.
+    ** <tr><th> createFlag <th> Behaviour when page is not already in cache
+    ** <tr><td> 0 <td> Do not allocate a new page.  Return NULL.
+    ** <tr><td> 1 <td> Allocate a new page if it easy and convenient to do so.
+    **                 Otherwise return NULL.
+    ** <tr><td> 2 <td> Make every effort to allocate a new page.  Only return
+    **                 NULL if allocating a new page is effectively impossible.
     ** </table>
+    **
+    ** SQLite will normally invoke xFetch() with a createFlag of 0 or 1.  If
+    ** a call to xFetch() with createFlag==1 returns NULL, then SQLite will
+    ** attempt to unpin one or more cache pages by spilling the content of
+    ** pinned pages to disk and synching the operating system disk cache. After
+    ** attempting to unpin pages, the xFetch() method will be invoked again with
+    ** a createFlag of 2.
     **
     ** xUnpin() is called by SQLite with a pointer to a currently pinned page
     ** as its second argument. If the third parameter, discard, is non-zero,
@@ -5720,10 +5851,7 @@ namespace CS_SQLite3
     ** assumes that the next time the page is retrieved from the cache using
     ** the xFetch() method, it will be zeroed. If the discard parameter is
     ** zero, then the page is considered to be unpinned. The cache implementation
-    ** may choose to reclaim (free or recycle) unpinned pages at any time.
-    ** SQLite assumes that next time the page is retrieved from the cache
-    ** it will either be zeroed, or contain the same data that it did when it
-    ** was unpinned.
+    ** may choose to evict unpinned pages at any time.
     **
     ** The cache is not required to perform any reference counting. A single 
     ** call to xUnpin() unpins the page regardless of the number of prior calls 

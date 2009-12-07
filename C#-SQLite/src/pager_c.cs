@@ -11,7 +11,7 @@ using u32 = System.UInt32;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using System.Text;
   using DbPage = csSQLite.PgHdr;
@@ -903,8 +903,7 @@ pPg.pageHash==pager_pagehash(pPg) );
       }
       else
       {
-        zHeader[0] = 0;
-        put32bits( zHeader, aJournalMagic.Length, 0 );
+        Array.Clear( zHeader, 0, aJournalMagic.Length + 4 );//memset(zHeader, 0, sizeof(aJournalMagic)+4);
       }
 
       /* The random check-hash initialiser */

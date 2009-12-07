@@ -1,7 +1,7 @@
 #define SQLITE_OS_WIN
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -242,6 +242,11 @@ namespace CS_SQLite3
     static int RESERVED_BYTE = ( PENDING_BYTE + 1 );
     static int SHARED_FIRST = ( PENDING_BYTE + 2 );
     static int SHARED_SIZE = 510;
+
+    /*
+    ** Wrapper around OS specific sqlite3_os_init() function.
+    */
+    //int sqlite3OsInit(void);
 
     /*
     ** Functions for accessing sqlite3_file methods

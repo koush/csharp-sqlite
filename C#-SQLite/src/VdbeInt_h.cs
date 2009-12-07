@@ -13,7 +13,7 @@ using unsigned = System.UIntPtr;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using Op = csSQLite.VdbeOp;
 
@@ -85,16 +85,12 @@ namespace CS_SQLite3
       public bool atFirst;         /* True if pointing to first entry */
       public bool useRandomRowid;  /* Generate new record numbers semi-randomly */
       public bool nullRow;         /* True if pointing to a row with no data */
-      public bool pseudoTable;     /* This is a NEW or OLD pseudo-tables of a trigger */
-      public bool ephemPseudoTable;
       public bool deferredMoveto;  /* A call to sqlite3BtreeMoveto() is needed */
       public bool isTable;         /* True if a table requiring integer keys */
       public bool isIndex;         /* True if an index containing keys only - no data */
       public i64 movetoTarget;     /* Argument to the deferred sqlite3BtreeMoveto() */
       public Btree pBt;            /* Separate file holding temporary table */
-      public int nData;            /* Number of bytes in pData */
-      public byte[] pData;         /* Data for a NEW or OLD pseudo-table */
-      public i64 iKey;             /* Key for the NEW or OLD pseudo-table row */
+      public int pseudoTableReg;   /* Register holding pseudotable content. */
       public KeyInfo pKeyInfo;     /* Info about index keys needed by index cursors */
       public int nField;           /* Number of fields in the header */
       public int seqCount;         /* Sequence counter */
@@ -104,15 +100,19 @@ public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
 #endif
 
       /* Result of last sqlite3BtreeMoveto() done by an OP_NotExists or
-** OP_IsUnique opcode on this cursor. */
+      ** OP_IsUnique opcode on this cursor. */
       public int seekResult;
 
       /* Cached information about the header for the data record that the
-      ** cursor is currently pointing to.  Only valid if cacheValid is true.
+      ** cursor is currently pointing to.  Only valid if cacheStatus matches
+      ** Vdbe.cacheCtr.  Vdbe.cacheCtr will never take on the value of
+      ** CACHE_STALE and so setting cacheStatus=CACHE_STALE guarantees that
+      ** the cache is out of date.
+      **
       ** aRow might point to (ephemeral) data for the current row, or it might
       ** be NULL.
       */
-      public int cacheStatus;      /* Cache is valid if this matches Vdbe.cacheCtr */
+      public u32 cacheStatus;      /* Cache is valid if this matches Vdbe.cacheCtr */
       public Pgno payloadSize;     /* Total number of bytes in the record */
       public u32[] aType;          /* Type values for all entries in the record */
       public u32[] aOffset;        /* Cached offsets to the start of each columns data */
@@ -122,6 +122,40 @@ public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
     //typedef struct VdbeCursor VdbeCursor;
 
 
+/*
+** When a sub-program is executed (OP_Program), a structure of this type
+** is allocated to store the current value of the program counter, as
+** well as the current memory cell array and various other frame specific
+** values stored in the Vdbe struct. When the sub-program is finished, 
+** these values are copied back to the Vdbe from the VdbeFrame structure,
+** restoring the state of the VM to as it was before the sub-program
+** began executing.
+**
+** Frames are stored in a linked list headed at Vdbe.pParent. Vdbe.pParent
+** is the parent of the current frame, or zero if the current frame
+** is the main Vdbe program.
+*/
+//typedef struct VdbeFrame VdbeFrame;
+public class VdbeFrame {
+  public Vdbe v;                 /* VM this frame belongs to */
+  public int pc;                 /* Program Counter */
+  public Op[] aOp;               /* Program instructions */
+  public int nOp;                /* Size of aOp array */
+  public Mem[] aMem;             /* Array of memory cells */
+  public int nMem;               /* Number of entries in aMem */
+  public VdbeCursor[] apCsr;     /* Element of Vdbe cursors */
+  public u16 nCursor;            /* Number of entries in apCsr */
+  public int token;              /* Copy of SubProgram.token */
+  public Mem[] aChildMem;        /* Array of memory cells for child frame */
+  public int nChildMem;          /* Number of memory cells for child frame */
+  public VdbeCursor[] aChildCsr; /* Array of cursors for child frame */
+  public int nChildCsr;          /* Number of cursors for child frame */
+  public i64 lastRowid;          /* Last insert rowid (sqlite3.lastRowid) */
+  public int nChange;            /* Statement changes (Vdbe.nChanges)     */
+  public VdbeFrame pParent;      /* Parent of this frame */
+};
+
+//#define VdbeFrameMem(p) ((Mem *)&((u8 *)p)[ROUND8(sizeof(VdbeFrame))])
     /*
     ** A value for VdbeCursor.cacheValid that means the cache is always invalid.
     */
@@ -155,6 +189,7 @@ set { _i = value; }
         public int nZero;           /* Used when bit MEM_Zero is set in flags */
         public FuncDef pDef;        /* Used only when flags==MEM_Agg */
         public RowSet pRowSet;      /* Used only when flags==MEM_RowSet */
+        public VdbeFrame pFrame;    /* Used when flags==MEM_Frame */
       };
       public union_ip u;
       public double r;              /* Real value */
@@ -179,6 +214,7 @@ set { _flags = value; }
       //public string zMalloc;      /* Dynamic buffer allocated by sqlite3Malloc() */
       public Mem _Mem;              /* Used when C# overload Z as MEM space */
       public SumCtx _SumCtx;        /* Used when C# overload Z as Sum context */
+      public SubProgram[] _SubProgram;/* Used when C# overload Z as SubProgram*/
       public StrAccum _StrAccum;    /* Used when C# overload Z as STR context */
       public object _MD5Context;    /* Used when C# overload Z as MD5 context */
 
@@ -221,14 +257,16 @@ set { _flags = value; }
     //#define MEM_Real      0x0008   /* Value is a real number */
     //#define MEM_Blob      0x0010   /* Value is a BLOB */
     //#define MEM_RowSet    0x0020   /* Value is a RowSet object */
+    //#define MEM_Frame     0x0040   /* Value is a VdbeFrame object */
     //#define MEM_TypeMask  0x00ff   /* Mask of type bits */
-    const int MEM_Null = 0x0001;  /* Value is NULL */
-    const int MEM_Str = 0x0002;  /* Value is a string */
-    const int MEM_Int = 0x0004;  /* Value is an integer */
-    const int MEM_Real = 0x0008;  /* Value is a real number */
-    const int MEM_Blob = 0x0010;  /* Value is a BLOB */
-    const int MEM_RowSet = 0x0020;  /* Value is a RowSet object */
-    const int MEM_TypeMask = 0x00ff;   /* Mask of type bits */
+    const int MEM_Null = 0x0001; 
+    const int MEM_Str = 0x0002;  
+    const int MEM_Int = 0x0004;  
+    const int MEM_Real = 0x0008; 
+    const int MEM_Blob = 0x0010; 
+    const int MEM_RowSet = 0x0020; 
+    const int MEM_Frame = 0x0040;
+    const int MEM_TypeMask = 0x00ff; 
 
     /* Whenever Mem contains a valid string or blob representation, one of
     ** the following flags must be set to determine the memory management
@@ -305,7 +343,7 @@ set { _flags = value; }
     {
       public FuncDef pFunc;        /* Pointer to function information.  MUST BE FIRST */
       public VdbeFunc pVdbeFunc;   /* Auxilary data, if created. */
-      public Mem s = new Mem();    /* The return value is stored here */
+      public Mem s = Pool.Allocate_Mem();    /* The return value is stored here */
       public Mem pMem;             /* Memory cell used to store aggregate context */
       public int isError;          /* Error code returned by the function. */
       public CollSeq pColl;        /* Collating sequence */
@@ -322,22 +360,6 @@ set { _flags = value; }
     {
       Hash hash;             /* A set is just a hash table */
       HashElem prev;         /* Previously accessed hash elemen */
-    };
-
-    /*
-    ** A Context stores the last insert rowid, the last statement change count,
-    ** and the current statement change count (i.e. changes since last statement).
-    ** The current keylist is also stored in the context.
-    ** Elements of Context structure type make up the ContextStack, which is
-    ** updated by the ContextPush and ContextPop opcodes (used by triggers).
-    ** The context is pushed before executing a trigger a popped when the
-    ** trigger finishes.
-    */
-    //typedef struct Context Context;
-    public class Context
-    {
-      public i64 lastRowid;    /* Last insert rowid (sqlite3.lastRowid) */
-      public int nChange;      /* Statement changes (Vdbe.nChanges)     */
     };
 
     /*
@@ -380,10 +402,7 @@ set { _flags = value; }
       public u32 magic;              /* Magic number for sanity checking */
       public int nMem;               /* Number of memory locations currently allocated */
       public Mem[] aMem;             /* The memory locations */
-      public int cacheCtr;           /* VdbeCursor row cache generation counter */
-      public int contextStackTop;    /* Index of top element in the context stack */
-      public int contextStackDepth;  /* The size of the "context" stack */
-      public Context[] contextStack; /* Stack used by opcodes ContextPush & ContextPop*/
+      public u32 cacheCtr;           /* VdbeCursor row cache generation counter */
       public int pc;                 /* The program counter */
       public int rc;                 /* Value to return */
       public string zErrMsg;         /* Error message written here */
@@ -406,6 +425,8 @@ set { _flags = value; }
 #if SQLITE_DEBUG
       public FILE trace;                  /* Write an execution trace here, if not NULL */
 #endif
+      public VdbeFrame pFrame;       /* Parent frame */
+      public int nFrame;             /* Number of frames in pFrame list */
 
       public Vdbe Copy()
       {
@@ -435,9 +456,6 @@ set { _flags = value; }
         ct.nMem = nMem;
         ct.aMem = aMem;
         ct.cacheCtr = cacheCtr;
-        ct.contextStackTop = contextStackTop;
-        ct.contextStackDepth = contextStackDepth;
-        ct.contextStack = contextStack;
         ct.pc = pc;
         ct.rc = rc;
         ct.errorAction = errorAction;
@@ -463,6 +481,8 @@ set { _flags = value; }
         ct.trace = trace;
 #endif
         ct.iStatement = iStatement;
+        ct.pFrame = pFrame;
+        ct.nFrame = nFrame;
 
 #if SQLITE_SSE
 ct.fetchId=fetchId;
@@ -536,6 +556,8 @@ ct.pLruNext=pLruNext;
     //int sqlite3VdbeOpcodeHasProperty(int, int);
     //int sqlite3VdbeMemGrow(Mem pMem, int n, int preserve);
     //int sqlite3VdbeCloseStatement(Vdbe *, int);
+    //void sqlite3VdbeFrameDelete(VdbeFrame*);
+    //int sqlite3VdbeFrameRestore(VdbeFrame *);
     //#if SQLITE_ENABLE_MEMORY_MANAGEMENT
     //int sqlite3VdbeReleaseBuffers(Vdbe p);
     //#endif

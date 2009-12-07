@@ -7,7 +7,7 @@ using sqlite3_int64 = System.Int64;
 using i64 = System.Int64;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -565,7 +565,7 @@ zulu_time:
       x.tz = 0;
       x.validJD = 0;
       computeJD( x );
-      t = (long)( x.iJD / 1000 - 210866760000L );//  t = x.iJD/1000 - 21086676*(i64)10000;
+      t = (long)( x.iJD / 1000 - 210866760000L );// (time_t)(x.iJD/1000 - 21086676*(i64)10000);
 #if  HAVE_LOCALTIME_R
 {
 struct tm sLocal;

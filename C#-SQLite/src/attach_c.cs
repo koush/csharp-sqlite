@@ -4,7 +4,7 @@ using System.Text;
 
 using u8 = System.Byte;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -60,7 +60,7 @@ namespace CS_SQLite3
       {
         if ( pExpr.op != TK_ID )
         {
-          rc = sqlite3ResolveExprNames( pName, ref pExpr );
+          rc = sqlite3ResolveExprNames( pName,ref pExpr );
           if ( rc == SQLITE_OK && sqlite3ExprIsConstant( pExpr ) == 0 )
           {
             sqlite3ErrorMsg( pName.pParse, "invalid name: \"%s\"", pExpr.u.zToken );
@@ -247,7 +247,7 @@ break;
         if ( rc == SQLITE_NOMEM || rc == SQLITE_IOERR_NOMEM )
         {
   ////        db.mallocFailed = 1;
-          //sqlite3DbFree( db, zErrDyn );
+          sqlite3DbFree( db, ref zErrDyn );
           zErrDyn = sqlite3MPrintf( db, "out of memory" );
         }
         else if ( zErrDyn == "" )
@@ -264,7 +264,7 @@ attach_error:
       if ( zErrDyn != "" )
       {
         sqlite3_result_error( context, zErrDyn, -1 );
-        //sqlite3DbFree( db, ref zErrDyn );
+        sqlite3DbFree( db, ref zErrDyn );
       }
       if ( rc != 0 ) sqlite3_result_error_code( context, rc );
     }

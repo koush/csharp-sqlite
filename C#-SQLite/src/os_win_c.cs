@@ -17,7 +17,7 @@ using u32 = System.UInt32;
 
 using sqlite3_int64 = System.Int64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   internal static class HelperMethods
   {
@@ -105,11 +105,11 @@ namespace CS_SQLite3
     **
     ** This file contains code that is specific to windows.
     **
-    ** $Id: os_win.c,v 1.157 2009/08/05 04:08:30 shane Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
@@ -122,7 +122,7 @@ namespace CS_SQLite3
 ** A Note About Memory Allocation:
 **
 ** This driver uses malloc()/free() directly rather than going through
-** the SQLite-wrappers sqlite3Malloc()///sqlite3DbFree(db,ref  ).  Those wrappers
+** the SQLite-wrappers sqlite3Malloc()/sqlite3DbFree(db,ref  ).  Those wrappers
 ** are designed for use on embedded systems where memory is scarce and
 ** malloc failures happen frequently.  Win32 does not typically run on
 ** embedded systems, and when it does the developers normally have bigger
@@ -426,8 +426,8 @@ SYSTEMTIME pTm;
 sqlite3_int64 t64;
 t64 = *t;
 t64 = (t64 + 11644473600)*10000000;
-uTm.dwLowDateTime = t64 & 0xFFFFFFFF;
-uTm.dwHighDateTime= t64 >> 32;
+uTm.dwLowDateTime = (DWORD)(t64 & 0xFFFFFFFF);
+uTm.dwHighDateTime= (DWORD)(t64 >> 32);
 FileTimeToLocalFileTime(&uTm,&lTm);
 FileTimeToSystemTime(&lTm,&pTm);
 y.tm_year = pTm.wYear - 1900;
@@ -447,7 +447,7 @@ return &y;
 //#define UnlockFile(a,b,c,d,e)     winceUnlockFile(&a, b, c, d, e)
 //#define LockFileEx(a,b,c,d,e,f)   winceLockFileEx(&a, b, c, d, e, f)
 
-//#define HANDLE_TO_WINFILE(a) (sqlite3_file*)&((char*)a)[-offsetof(sqlite3_file,h)]
+//#define HANDLE_TO_WINFILE(a) (winFile*)&((char*)a)[-(int)offsetof(winFile,h)]
 
 /*
 ** Acquire a lock on the handle h
@@ -577,139 +577,150 @@ pFile.hMutex = NULL;
 ** An implementation of the LockFile() API of windows for wince
 */
 static BOOL winceLockFile(
-HANDLE phFile,
-DWORD dwFileOffsetLow,
-DWORD dwFileOffsetHigh,
-DWORD nNumberOfBytesToLockLow,
-DWORD nNumberOfBytesToLockHigh
+  HANDLE *phFile,
+  DWORD dwFileOffsetLow,
+  DWORD dwFileOffsetHigh,
+  DWORD nNumberOfBytesToLockLow,
+  DWORD nNumberOfBytesToLockHigh
 ){
-sqlite3_file pFile = HANDLE_TO_WINFILE(phFile);
-BOOL bReturn = FALSE;
+  winFile *pFile = HANDLE_TO_WINFILE(phFile);
+  BOOL bReturn = FALSE;
 
-if (!pFile.hMutex) return TRUE;
-winceMutexAcquire(pFile.hMutex);
+  UNUSED_PARAMETER(dwFileOffsetHigh);
+  UNUSED_PARAMETER(nNumberOfBytesToLockHigh);
 
-/* Wanting an exclusive lock? */
-if (dwFileOffsetLow == SHARED_FIRST
-&& nNumberOfBytesToLockLow == SHARED_SIZE){
-if (pFile.shared.nReaders == 0 && pFile.shared.bExclusive == 0){
-pFile.shared.bExclusive = TRUE;
-pFile.local.bExclusive = TRUE;
-bReturn = TRUE;
-}
-}
+  if (!pFile->hMutex) return TRUE;
+  winceMutexAcquire(pFile->hMutex);
 
-/* Want a read-only lock? */
-else if (dwFileOffsetLow == SHARED_FIRST &&
-nNumberOfBytesToLockLow == 1){
-if (pFile.shared.bExclusive == 0){
-pFile.local.nReaders ++;
-if (pFile.local.nReaders == 1){
-pFile.shared.nReaders ++;
-}
-bReturn = TRUE;
-}
-}
+  /* Wanting an exclusive lock? */
+  if (dwFileOffsetLow == (DWORD)SHARED_FIRST
+       && nNumberOfBytesToLockLow == (DWORD)SHARED_SIZE){
+    if (pFile->shared->nReaders == 0 && pFile->shared->bExclusive == 0){
+       pFile->shared->bExclusive = TRUE;
+       pFile->local.bExclusive = TRUE;
+       bReturn = TRUE;
+    }
+  }
 
-/* Want a pending lock? */
-else if (dwFileOffsetLow == PENDING_BYTE && nNumberOfBytesToLockLow == 1){
-/* If no pending lock has been acquired, then acquire it */
-if (pFile.shared.bPending == 0) {
-pFile.shared.bPending = TRUE;
-pFile.local.bPending = TRUE;
-bReturn = TRUE;
-}
-}
-/* Want a reserved lock? */
-else if (dwFileOffsetLow == RESERVED_BYTE && nNumberOfBytesToLockLow == 1){
-if (pFile.shared.bReserved == 0) {
-pFile.shared.bReserved = TRUE;
-pFile.local.bReserved = TRUE;
-bReturn = TRUE;
-}
-}
+  /* Want a read-only lock? */
+  else if (dwFileOffsetLow == (DWORD)SHARED_FIRST &&
+           nNumberOfBytesToLockLow == 1){
+    if (pFile->shared->bExclusive == 0){
+      pFile->local.nReaders ++;
+      if (pFile->local.nReaders == 1){
+        pFile->shared->nReaders ++;
+      }
+      bReturn = TRUE;
+    }
+  }
 
-winceMutexRelease(pFile.hMutex);
-return bReturn;
+  /* Want a pending lock? */
+  else if (dwFileOffsetLow == (DWORD)PENDING_BYTE && nNumberOfBytesToLockLow == 1){
+    /* If no pending lock has been acquired, then acquire it */
+    if (pFile->shared->bPending == 0) {
+      pFile->shared->bPending = TRUE;
+      pFile->local.bPending = TRUE;
+      bReturn = TRUE;
+    }
+  }
+
+  /* Want a reserved lock? */
+  else if (dwFileOffsetLow == (DWORD)RESERVED_BYTE && nNumberOfBytesToLockLow == 1){
+    if (pFile->shared->bReserved == 0) {
+      pFile->shared->bReserved = TRUE;
+      pFile->local.bReserved = TRUE;
+      bReturn = TRUE;
+    }
+  }
+
+  winceMutexRelease(pFile->hMutex);
+  return bReturn;
 }
 
 /*
 ** An implementation of the UnlockFile API of windows for wince
 */
 static BOOL winceUnlockFile(
-HANDLE phFile,
-DWORD dwFileOffsetLow,
-DWORD dwFileOffsetHigh,
-DWORD nNumberOfBytesToUnlockLow,
-DWORD nNumberOfBytesToUnlockHigh
+  HANDLE *phFile,
+  DWORD dwFileOffsetLow,
+  DWORD dwFileOffsetHigh,
+  DWORD nNumberOfBytesToUnlockLow,
+  DWORD nNumberOfBytesToUnlockHigh
 ){
-sqlite3_file pFile = HANDLE_TO_WINFILE(phFile);
-BOOL bReturn = FALSE;
+  winFile *pFile = HANDLE_TO_WINFILE(phFile);
+  BOOL bReturn = FALSE;
 
-if (!pFile.hMutex) return TRUE;
-winceMutexAcquire(pFile.hMutex);
+  UNUSED_PARAMETER(dwFileOffsetHigh);
+  UNUSED_PARAMETER(nNumberOfBytesToUnlockHigh);
 
-/* Releasing a reader lock or an exclusive lock */
-if (dwFileOffsetLow >= SHARED_FIRST &&
-dwFileOffsetLow < SHARED_FIRST + SHARED_SIZE){
-/* Did we have an exclusive lock? */
-if (pFile.local.bExclusive){
-pFile.local.bExclusive = FALSE;
-pFile.shared.bExclusive = FALSE;
-bReturn = TRUE;
-}
+  if (!pFile->hMutex) return TRUE;
+  winceMutexAcquire(pFile->hMutex);
 
-/* Did we just have a reader lock? */
-else if (pFile.local.nReaders){
-pFile.local.nReaders --;
-if (pFile.local.nReaders == 0)
-{
-pFile.shared.nReaders --;
-}
-bReturn = TRUE;
-}
-}
+  /* Releasing a reader lock or an exclusive lock */
+  if (dwFileOffsetLow == (DWORD)SHARED_FIRST){
+    /* Did we have an exclusive lock? */
+    if (pFile->local.bExclusive){
+      assert(nNumberOfBytesToUnlockLow == (DWORD)SHARED_SIZE);
+      pFile->local.bExclusive = FALSE;
+      pFile->shared->bExclusive = FALSE;
+      bReturn = TRUE;
+    }
 
-/* Releasing a pending lock */
-else if (dwFileOffsetLow == PENDING_BYTE && nNumberOfBytesToUnlockLow == 1){
-if (pFile.local.bPending){
-pFile.local.bPending = FALSE;
-pFile.shared.bPending = FALSE;
-bReturn = TRUE;
-}
-}
-/* Releasing a reserved lock */
-else if (dwFileOffsetLow == RESERVED_BYTE && nNumberOfBytesToUnlockLow == 1){
-if (pFile.local.bReserved) {
-pFile.local.bReserved = FALSE;
-pFile.shared.bReserved = FALSE;
-bReturn = TRUE;
-}
-}
+    /* Did we just have a reader lock? */
+    else if (pFile->local.nReaders){
+      assert(nNumberOfBytesToUnlockLow == (DWORD)SHARED_SIZE || nNumberOfBytesToUnlockLow == 1);
+      pFile->local.nReaders --;
+      if (pFile->local.nReaders == 0)
+      {
+        pFile->shared->nReaders --;
+      }
+      bReturn = TRUE;
+    }
+  }
 
-winceMutexRelease(pFile.hMutex);
-return bReturn;
+  /* Releasing a pending lock */
+  else if (dwFileOffsetLow == (DWORD)PENDING_BYTE && nNumberOfBytesToUnlockLow == 1){
+    if (pFile->local.bPending){
+      pFile->local.bPending = FALSE;
+      pFile->shared->bPending = FALSE;
+      bReturn = TRUE;
+    }
+  }
+  /* Releasing a reserved lock */
+  else if (dwFileOffsetLow == (DWORD)RESERVED_BYTE && nNumberOfBytesToUnlockLow == 1){
+    if (pFile->local.bReserved) {
+      pFile->local.bReserved = FALSE;
+      pFile->shared->bReserved = FALSE;
+      bReturn = TRUE;
+    }
+  }
+
+  winceMutexRelease(pFile->hMutex);
+  return bReturn;
 }
 
 /*
 ** An implementation of the LockFileEx() API of windows for wince
 */
 static BOOL winceLockFileEx(
-HANDLE phFile,
-DWORD dwFlags,
-DWORD dwReserved,
-DWORD nNumberOfBytesToLockLow,
-DWORD nNumberOfBytesToLockHigh,
-LPOVERLAPPED lpOverlapped
+  HANDLE *phFile,
+  DWORD dwFlags,
+  DWORD dwReserved,
+  DWORD nNumberOfBytesToLockLow,
+  DWORD nNumberOfBytesToLockHigh,
+  LPOVERLAPPED lpOverlapped
 ){
-/* If the caller wants a shared read lock, forward this call
-** to winceLockFile */
-if (lpOverlapped.Offset == SHARED_FIRST &&
-dwFlags == 1 &&
-nNumberOfBytesToLockLow == SHARED_SIZE){
-return winceLockFile(phFile, SHARED_FIRST, 0, 1, 0);
-}
-return FALSE;
+  UNUSED_PARAMETER(dwReserved);
+  UNUSED_PARAMETER(nNumberOfBytesToLockHigh);
+
+  /* If the caller wants a shared read lock, forward this call
+  ** to winceLockFile */
+  if (lpOverlapped->Offset == (DWORD)SHARED_FIRST &&
+      dwFlags == 1 &&
+      nNumberOfBytesToLockLow == (DWORD)SHARED_SIZE){
+    return winceLockFile(phFile, SHARED_FIRST, 0, 1, 0);
+  }
+  return FALSE;
 }
 /*
 ** End of the special code for wince
@@ -2053,11 +2064,17 @@ return SQLITE_OK;
     string zRelative     /* UTF-8 file name */
     )
     {
+#if FALSE
       int bytesPerSector = SQLITE_DEFAULT_SECTOR_SIZE;
+  /* GetDiskFreeSpace is not supported under WINCE */
+#if SQLITE_OS_WINCE
+  UNUSED_PARAMETER(pVfs);
+  UNUSED_PARAMETER(zRelative);
+#else
       StringBuilder zFullpath = new StringBuilder( MAX_PATH + 1 );
       int rc;
-      bool dwRet = false;
-      int dwDummy = 0;
+      //bool dwRet = false;
+      //int dwDummy = 0;
 
       /*
       ** We need to get the full path name of the file
@@ -2096,7 +2113,6 @@ return SQLITE_OK;
             //     ref bytesPerSector,
             //     ref dwDummy,
             //     ref dwDummy );
-            //#if !SQLITE_OS_WINCE
             //}else{
             //  /* trim path to just drive reference */
             //  CHAR* p = (CHAR*)zConverted;
@@ -2113,7 +2129,6 @@ return SQLITE_OK;
             //                                  ref bytesPerSector,
             //                                  dwDummy,
             //                                  dwDummy );
-            //#endif
           }
           //free(zConverted);
         }
@@ -2122,9 +2137,13 @@ return SQLITE_OK;
         //    bytesPerSector = SQLITE_DEFAULT_SECTOR_SIZE;
         //  }
         //}
+        //#endif
         bytesPerSector = GetbytesPerSector( zConverted );
       }
+#endif
       return bytesPerSector == 0 ? SQLITE_DEFAULT_SECTOR_SIZE : bytesPerSector;
+#endif
+return SQLITE_DEFAULT_SECTOR_SIZE;
     }
 
 #if !SQLITE_OMIT_LOAD_EXTENSION

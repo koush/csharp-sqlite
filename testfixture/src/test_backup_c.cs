@@ -9,7 +9,7 @@ using u64 = System.UInt64;
 
 using ClientData = System.Object;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;

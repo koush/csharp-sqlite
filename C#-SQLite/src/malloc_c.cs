@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_int64 = System.Int64;
   using sqlite3_u3264 = System.UInt64;
@@ -66,7 +66,9 @@ namespace CS_SQLite3
       {
         iLimit = n;
       }
-      sqlite3_initialize();
+#if !SQLITE_OMIT_AUTOINIT
+  sqlite3_initialize();
+#endif
       if ( iLimit > 0 )
       {
         sqlite3MemoryAlarm( (dxalarmCallback)softHeapLimitEnforcer, 0, iLimit );
@@ -558,37 +560,7 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
         Debugger.Break(); // TODO --    sqlite3GlobalConfig.m.xFree(p);
       }
     }
-    /*
-    ** Free memory that might be associated with a particular database
-    ** connection.
-    */
-    // -- overloads ---------------------------------------
-    static void //sqlite3DbFree( sqlite3 db, ref string x )
-    {
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      x = null;
-    }
-    static void //sqlite3DbFree( sqlite3 db, ref byte[] x )
-    {
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      x = null;
-    }
-    static void //sqlite3DbFree( sqlite3 db, ref int[] x )
-    {
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      x = null;
-    }
-    static void //sqlite3DbFree( sqlite3 db, ref StringBuilder x )
-    {
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      x = null;
-    }
-    static void //sqlite3DbFree<T>( sqlite3 db, ref T p ) where T : class
-    {
-      Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
-      p = null;
-    }
-    static void //sqlite3DbFree( sqlite3 db, object p )
+    static void sqlite3DbFree( sqlite3 db, object p )
     {
       Debug.Assert( db == null || sqlite3_mutex_held( db.mutex ) );
       if ( isLookaside( db, p ) )
@@ -626,17 +598,13 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
         return null;
       }
       nOld = sqlite3MallocSize( pOld );
-      if ( sqlite3GlobalConfig.bMemstat )
-      {
-        sqlite3_mutex_enter( mem0.mutex );
-        sqlite3StatusSet( SQLITE_STATUS_MALLOC_SIZE, nBytes );
         nNew = sqlite3GlobalConfig.m.xRoundup( nBytes );
         if ( nOld == nNew )
         {
           pNew = pOld;
-        }
-        else
-        {
+  }else if( sqlite3GlobalConfig.bMemstat ){
+    sqlite3_mutex_enter(mem0.mutex);
+    sqlite3StatusSet(SQLITE_STATUS_MALLOC_SIZE, nBytes);
           if ( sqlite3StatusValue( SQLITE_STATUS_MEMORY_USED ) + nNew - nOld >=
           mem0.alarmThreshold )
           {
@@ -653,12 +621,11 @@ return db != null && p >= db.lookaside.pStart && p < db.lookaside.pEnd;
             nNew = sqlite3MallocSize( pNew );
             sqlite3StatusAdd( SQLITE_STATUS_MEMORY_USED, nNew - nOld );
           }
-        }
         sqlite3_mutex_leave( mem0.mutex );
       }
       else
       {
-        Debugger.Break(); // TODO --pNew =  sqlite3GlobalConfig.m.xRealloc(ref pOld, nBytes);
+        Debugger.Break(); // TODO --pNew =  sqlite3GlobalConfig.m.xRealloc(ref pOld, nNew);
       }
       return pNew;
     }
@@ -776,7 +743,7 @@ return (void*)pBuf;
       //      pNew = sqlite3DbMallocRaw(db, n);
       //      if( pNew ){
       //        memcpy(pNew, p, db.lookaside.sz);
-      //        //sqlite3DbFree(db, p);
+      //        sqlite3DbFree(db, p);
       //      }
       //    }else{
       //      pNew = sqlite3_realloc(p, n);
@@ -796,7 +763,7 @@ return (void*)pBuf;
     //  object pNew;
     //  pNew = "";//sqlite3DbRealloc(db, p, n);
     //      if( pNew ==null){
-    //        //sqlite3DbFree(db,ref  p);
+    //        sqlite3DbFree(db,ref  p);
     //      }
     //      return pNew;
     //    }
@@ -859,7 +826,7 @@ return (void*)pBuf;
       va_start( ap, zFormat );
       z = sqlite3VMPrintf( db, zFormat, ap );
       va_end( ap );
-      //sqlite3DbFree( db, ref pz );
+      sqlite3DbFree( db, ref pz );
       pz = z;
     }
 

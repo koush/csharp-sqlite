@@ -6,7 +6,7 @@ using i64 = System.Int64;
 using u32 = System.UInt32;
 
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -151,7 +151,11 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       int rc;
       DO_OS_MALLOC_TEST( null );
-      rc = pVfs.xOpen( pVfs, zPath, pFile, flags, ref pFlagsOut );
+      /* 0x7f1f is a mask of SQLITE_OPEN_ flags that are valid to be passed
+      ** down into the VFS layer.  Some SQLITE_OPEN_ flags (for example,
+      ** SQLITE_OPEN_FULLMUTEX or SQLITE_OPEN_SHAREDCACHE) are blocked before
+      ** reaching the VFS. */
+      rc = pVfs.xOpen( pVfs, zPath, pFile, flags & 0x7f1f, ref pFlagsOut );
       Debug.Assert( rc == SQLITE_OK || pFile.pMethods == null );
       return rc;
     }
@@ -221,7 +225,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
         rc = sqlite3OsOpen( pVfs, zFile, pFile, flags, ref pOutFlags );
         if ( rc != SQLITE_OK )
         {
-          pFile = null; // was  //sqlite3DbFree(db,ref  pFile);
+          pFile = null; // was  sqlite3DbFree(db,ref  pFile);
         }
         else
         {
@@ -239,6 +243,18 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       return rc;
     }
 
+/*
+** This function is a wrapper around the OS specific implementation of
+** sqlite3_os_init(). The purpose of the wrapper is to provide the
+** ability to simulate a malloc failure, so that the handling of an
+** error in sqlite3_os_init() by the upper layers can be tested.
+*/
+static int sqlite3OsInit(){
+  //void *p = sqlite3_malloc(10);
+  //if( p==null ) return SQLITE_NOMEM;
+  //sqlite3_free(p);
+  return sqlite3_os_init();
+}
     /*
     ** The list of all registered VFS implementations.
     */

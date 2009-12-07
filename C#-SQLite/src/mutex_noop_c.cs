@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {

@@ -2,7 +2,7 @@ using i64 = System.Int64;
 using u8 = System.Byte;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -49,6 +49,7 @@ namespace CS_SQLite3
     */
     //typedef struct VdbeFunc VdbeFunc;
     //typedef struct Mem Mem;
+    //typedef struct SubProgram SubProgram;
 
     /*
     ** A single instruction of the virtual machine has an opcode
@@ -56,7 +57,7 @@ namespace CS_SQLite3
     ** as an instance of the following structure:
     */
     public class union_p4
-    {             /* forth parameter */
+    {             /* fourth parameter */
       public int i;                /* Integer value if p4type==P4_INT32 */
       public object p;             /* Generic pointer */
       //public string z;           /* Pointer to data for string (char array) types */
@@ -70,6 +71,7 @@ namespace CS_SQLite3
       public VTable pVtab;         /* Used when p4type is P4_VTAB */
       public KeyInfo pKeyInfo;     /* Used when p4type is P4_KEYINFO */
       public int[] ai;             /* Used when p4type is P4_INTARRAY */
+      public SubProgram pProgram;  /* Used when p4type is P4_SUBPROGRAM */
       public dxDel pFuncDel;       /* Used when p4type is P4_FUNCDEL */
     } ;
     public class VdbeOp
@@ -116,6 +118,19 @@ public u64 cycles;         /* Total time spend executing this instruction */
     //typedef struct VdbeOp VdbeOp;
 
     /*
+    ** A sub-routine used to implement a trigger program.
+    */
+    public class SubProgram
+    {
+      public VdbeOp[] aOp;          /* Array of opcodes for sub-program */
+      public int nOp;               /* Elements in aOp[] */
+      public int nMem;              /* Number of memory cells required */
+      public int nCsr;              /* Number of cursors required */
+      public int nRef;              /* Number of pointers to this structure */
+      public int token;             /* id that may be used to recursive triggers */
+    };
+
+    /*
     ** A smaller version of VdbeOp used for the VdbeAddOpList() function because
     ** it takes up less space.
     */
@@ -137,7 +152,7 @@ public u64 cycles;         /* Total time spend executing this instruction */
     //typedef struct VdbeOpList VdbeOpList;
 
     /*
-    ** Allowed values of VdbeOp.p3type
+    ** Allowed values of VdbeOp.p4type
     */
     const int P4_NOTUSED = 0;   /* The P4 parameter is not used */
     const int P4_DYNAMIC = ( -1 );  /* Pointer to a string obtained from sqliteMalloc=(); */
@@ -154,6 +169,7 @@ public u64 cycles;         /* Total time spend executing this instruction */
     const int P4_INT64 = ( -13 ); /* P4 is a 64-bit signed integer */
     const int P4_INT32 = ( -14 ); /* P4 is a 32-bit signed integer */
     const int P4_INTARRAY = ( -15 ); /* #define P4_INTARRAY (-15) /* P4 is a vector of 32-bit integers */
+    const int P4_SUBPROGRAM = ( -18 );/* #define P4_SUBPROGRAM  (-18) /* P4 is a pointer to a SubProgram structure */
 
     /* When adding a P4 argument using P4_KEYINFO, a copy of the KeyInfo structure
     ** is made.  That copy is freed when the Vdbe is finalized.  But if the
@@ -238,13 +254,16 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
     //VdbeOp *sqlite3VdbeGetOp(Vdbe*, int);
     //int sqlite3VdbeMakeLabel(Vdbe*);
     //void sqlite3VdbeDelete(Vdbe*);
-    //void sqlite3VdbeMakeReady(Vdbe*,int,int,int,int);
+    //void sqlite3VdbeMakeReady(Vdbe*,int,int,int,int,int,int);
     //int sqlite3VdbeFinalize(Vdbe*);
     //void sqlite3VdbeResolveLabel(Vdbe*, int);
     //int sqlite3VdbeCurrentAddr(Vdbe*);
-    //#if SQLITE_DEBUG
-    //  void sqlite3VdbeTrace(Vdbe*,FILE*);
-    //#endif
+    #if SQLITE_DEBUG
+    //int sqlite3VdbeAssertMayAbort(Vdbe *, int);
+    //void sqlite3VdbeTrace(Vdbe*,FILE*);
+#else
+    static int sqlite3VdbeAssertMayAbort( Vdbe v, int i ) { return 1; }
+#endif
     //void sqlite3VdbeResetStepResult(Vdbe*);
     //int sqlite3VdbeReset(Vdbe*);
     //void sqlite3VdbeSetNumCols(Vdbe*,int);
@@ -253,7 +272,9 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
     //sqlite3 *sqlite3VdbeDb(Vdbe*);
     //void sqlite3VdbeSetSql(Vdbe*, const char *z, int n, int);
     //void sqlite3VdbeSwap(Vdbe*,Vdbe*);
-
+    //VdbeOp *sqlite3VdbeTakeOpArray(Vdbe*, int*, int*);
+    //void sqlite3VdbeProgramDelete(sqlite3 *, SubProgram *, int);
+    
 #if SQLITE_ENABLE_MEMORY_MANAGEMENT
 //int sqlite3VdbeReleaseMemory(int);
 #endif

@@ -9,7 +9,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -129,7 +129,7 @@ namespace CS_SQLite3
       string zVal = p;
       Debug.Assert( zVal != null );
       //zVal--;
-      //sqlite3DbFree( null, ref zVal );
+      sqlite3DbFree( null, ref zVal );
       test_destructor_count_var--;
     }
     static void test_destructor(
@@ -227,7 +227,7 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     */
     static void free_test_auxdata( ref string p ) {
       p = null;
-      //sqlite3DbFree( null, ref p );
+      sqlite3DbFree( null, ref p );
     }
     static void test_auxdata(
     sqlite3_context pCtx,     /* Function context */

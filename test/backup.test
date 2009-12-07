@@ -177,7 +177,7 @@ foreach nPagePerStep {1 200} {
   }]
 
   if { $isMemDest==0 || $pgsz_dest == 1024 } {
-    if 1 {
+    if 0 {
       puts -nonewline "Test $iTest: src=$zSrcFile dest=$zDestFile"
       puts -nonewline " (as $db_dest.$file_dest)"
       puts -nonewline " rows_dest=$rows_dest pgsz_dest=$pgsz_dest"

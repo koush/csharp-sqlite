@@ -3,15 +3,21 @@
 #########################################################################################
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
-#source $testdir/_RunWorking.txt
+source $testdir/_RunWorking.txt
 
 # Uncomment the _RunWorking line to run all the tests
 # or copy one of test filenames 
 # or enter TCL commands such as the ones that are listed 
 # after these comments
 
-
-
+#source $testdir/alter.test
+do_test alter-12.1 {
+  execsql {
+    CREATE TABLE t12(a, b, c);
+    CREATE VIEW v1 AS SELECT * FROM t12;
+	SELECT * FROM v1; 
+}
+} {}
 ##########################################################################################
 puts -nonewline "Press RETURN to exit..."; gets stdin; exit
 
@@ -23,9 +29,9 @@ puts -nonewline "Press RETURN to exit..."; gets stdin; exit
 ##########################################################################################
 do_test SIMPLE_SQLITE_VERSION {
     execsql { 
-    SELECT SQLITE_VERSION();
+    SELECT SQLITE_VERSION(), SQLITE_SOURCE_ID();
   }
-} {3.6.17.C#}
+} {3.6.18.C# {Ported to C# from 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee}}
 
 do_test SIMPLE_COUNT_SQL_MASTER {
     execsql { 
@@ -43,7 +49,6 @@ do_test SIMPLE_SELECT_ALL {
     SELECT * FROM SQLITE_MASTER;
   }
 } {table T1 T1 2 {CREATE TABLE T1 (C1)}}
-
 
 
 

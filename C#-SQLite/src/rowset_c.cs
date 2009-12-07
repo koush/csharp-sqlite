@@ -8,7 +8,7 @@ using u32 = System.UInt32;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_int64 = System.Int64;
 
@@ -193,7 +193,7 @@ namespace CS_SQLite3
       for ( pChunk = p.pChunk ; pChunk != null ; pChunk = pNextChunk )
       {
         pNextChunk = pChunk.pNextChunk;
-        //sqlite3DbFree( p.db, ref pChunk );
+        sqlite3DbFree( p.db, ref pChunk );
       }
       p.pChunk = null;
       p.nFresh = 0;

@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -474,7 +474,7 @@ return rc;
     //}
 #endif
 
-#if ! SQLITE_OMIT_UTF16
+#if !SQLITE_OMIT_UTF16
 /*
 ** Convert a UTF-16 string in the native encoding into a UTF-8 string.
 ** Memory to hold the UTF-8 string is obtained from sqlite3Malloc and must
@@ -484,7 +484,7 @@ return rc;
 */
 static string sqlite3Utf16to8(sqlite3 db, string z, int nByte){
 Debugger.Break (); // TODO -
-Mem m = new Mem();
+Mem m = Pool.Allocate_Mem();
 //  memset(&m, 0, sizeof(m));
 //  m.db = db;
 //  sqlite3VdbeMemSetStr(&m, z, nByte, SQLITE_UTF16NATIVE, SQLITE_STATIC);
@@ -497,6 +497,32 @@ Mem m = new Mem();
 //  Debug.Assert( (m.flags & MEM_Str)!=0 || db.mallocFailed !=0);
 return m.z;// ( m.flags & MEM_Dyn ) != 0 ? m.z : sqlite3DbStrDup( db, m.z );
 }
+
+/*
+** Convert a UTF-8 string to the UTF-16 encoding specified by parameter
+** enc. A pointer to the new string is returned, and the value of *pnOut
+** is set to the length of the returned string in bytes. The call should
+** arrange to call sqlite3DbFree() on the returned pointer when it is
+** no longer required.
+** 
+** If a malloc failure occurs, NULL is returned and the db.mallocFailed
+** flag set.
+*/
+#if SQLITE_ENABLE_STAT2
+char *sqlite3Utf8to16(sqlite3 *db, u8 enc, char *z, int n, int *pnOut){
+  Mem m;
+  memset(&m, 0, sizeof(m));
+  m.db = db;
+  sqlite3VdbeMemSetStr(&m, z, n, SQLITE_UTF8, SQLITE_STATIC);
+  if( sqlite3VdbeMemTranslate(&m, enc) ){
+    assert( db->mallocFailed );
+    return 0;
+  }
+  assert( m.z==m.zMalloc );
+  *pnOut = m.n;
+  return m.z;
+}
+#endif
 
 /*
 ** pZ is a UTF-16 encoded unicode string. If nChar is less than zero,

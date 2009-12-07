@@ -1,7 +1,7 @@
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {

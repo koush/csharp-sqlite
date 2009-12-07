@@ -8,7 +8,7 @@ using u8 = System.Byte;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
   using sqlite_int64 = System.Int64;
@@ -33,11 +33,11 @@ namespace CS_SQLite3
     ** sqliteRegisterBuildinFunctions() found at the bottom of the file.
     ** All other code has file scope.
     **
-    ** $Id: func.c,v 1.239 2009/06/19 16:44:41 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
@@ -885,7 +885,7 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Implementation of the VERSION(*) function.  The result is the version
+    ** Implementation of the sqlite_version() function.  The result is the version
     ** of the SQLite library that is running.
     */
     static void versionFunc(
@@ -896,6 +896,21 @@ namespace CS_SQLite3
     {
       UNUSED_PARAMETER2( NotUsed, NotUsed2 );
       sqlite3_result_text( context, sqlite3_version, -1, SQLITE_STATIC );
+    }
+
+    /*
+    ** Implementation of the sqlite_source_id() function. The result is a string
+    ** that identifies the particular version of the source code used to build
+    ** SQLite.
+    */
+    static void sourceidFunc(
+      sqlite3_context context,
+      int NotUsed,
+      sqlite3_value[] NotUsed2
+    )
+    {
+      UNUSED_PARAMETER2( NotUsed, NotUsed2 );
+      sqlite3_result_text( context, SQLITE_SOURCE_ID, -1, SQLITE_STATIC );
     }
 
     /* Array for converting from half-bytes (nybbles) into ASCII hex
@@ -1120,14 +1135,14 @@ namespace CS_SQLite3
       //testcase( nOut-2==db->aLimit[SQLITE_LIMIT_LENGTH] );
       //if( nOut-1>db->aLimit[SQLITE_LIMIT_LENGTH] ){
       //      sqlite3_result_error_toobig(context);
-      //      //sqlite3DbFree(db,ref  zOut);
+      //      sqlite3DbFree(db,ref  zOut);
       //      return;
       //    }
       //    zOld = zOut;
       //    zOut = sqlite3_realloc(zOut, (int)nOut);
       //    if( zOut==0 ){
       //      sqlite3_result_error_nomem(context);
-      //      //sqlite3DbFree(db,ref  zOld);
+      //      sqlite3DbFree(db,ref  zOld);
       //      return;
       //    }
       //    memcpy(&zOut[j], zRep, nRep);
@@ -1340,7 +1355,7 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
       if ( zFile != null && sqlite3_load_extension( db, zFile, zProc, ref zErrMsg ) != 0 )
       {
         sqlite3_result_error( context, zErrMsg, -1 );
-        //sqlite3DbFree( db, ref  zErrMsg );
+        sqlite3DbFree( db, ref  zErrMsg );
       }
     }
 #endif
@@ -1836,15 +1851,16 @@ FUNCTION("round",              2, 0, 0, roundFunc        ),
 #endif
 FUNCTION("upper",              1, 0, 0, upperFunc        ),
 FUNCTION("lower",              1, 0, 0, lowerFunc        ),
-FUNCTION("coalesce",           1, 0, 0, null                ),
+FUNCTION("coalesce",           1, 0, 0, null             ),
 FUNCTION("coalesce",          -1, 0, 0, ifnullFunc       ),
-FUNCTION("coalesce",           0, 0, 0, null                ),
+FUNCTION("coalesce",           0, 0, 0, null             ),
 FUNCTION("hex",                1, 0, 0, hexFunc          ),
 FUNCTION("ifnull",             2, 0, 1, ifnullFunc       ),
 FUNCTION("random",             0, 0, 0, randomFunc       ),
 FUNCTION("randomblob",         1, 0, 0, randomBlob       ),
 FUNCTION("nullif",             2, 0, 1, nullifFunc       ),
 FUNCTION("sqlite_version",     0, 0, 0, versionFunc      ),
+FUNCTION("sqlite_source_id",   0, 0, 0, sourceidFunc     ),
 FUNCTION("quote",              1, 0, 0, quoteFunc        ),
 FUNCTION("last_insert_rowid",  0, 0, 0, last_insert_rowid),
 FUNCTION("changes",            0, 0, 0, changes          ),

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 
   using u8 = System.Byte;

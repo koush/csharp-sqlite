@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -32,6 +32,15 @@ namespace CS_SQLite3
     */
     //#include "sqliteInt.h"
 
+#if (SQLITE_DEBUG) && !(SQLITE_MUTEX_OMIT)
+/*
+** For debugging purposes, record when the mutex subsystem is initialized
+** and uninitialized so that we can assert() if there is an attempt to
+** allocate a mutex while the system is uninitialized.
+*/
+static SQLITE_WSD int mutexIsInit = 0;
+#endif //* SQLITE_DEBUG */
+
 #if !SQLITE_MUTEX_OMIT
 /*
 ** Initialize the mutex system.
@@ -59,6 +68,9 @@ sqlite3_mutex_methods pTo = sqlite3GlobalConfig.mutex;
 }
     rc =  sqlite3GlobalConfig.mutex.xMutexInit();
 }
+#if SQLITE_DEBUG
+  GLOBAL(int, mutexIsInit) = 1;
+#endif
 
 return rc;
 }
@@ -73,6 +85,9 @@ int rc = SQLITE_OK;
 if( sqlite3GlobalConfig.mutex.xMutexEnd ){
 rc = sqlite3GlobalConfig.mutex.xMutexEnd();
 }
+#if SQLITE_DEBUG
+  GLOBAL(int, mutexIsInit) = 0;
+#endif
 return rc;
 }
 
@@ -93,6 +108,7 @@ if ( ! sqlite3GlobalConfig.bCoreMutex   )
 {
 return null;
 }
+assert( GLOBAL(int, mutexIsInit) );
 return  sqlite3GlobalConfig.mutex.xMutexAlloc( id );
 }
 

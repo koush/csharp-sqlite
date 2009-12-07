@@ -18,7 +18,7 @@ using unsigned = System.UInt64;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -37,17 +37,44 @@ namespace CS_SQLite3
     *************************************************************************
     ** Internal interface definitions for SQLite.
     **
-    ** @(#) $Id: sqliteInt.h,v 1.898 2009/08/10 03:57:58 shane Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
     */
     //#if !_SQLITEINT_H_
     //#define _SQLITEINT_H_
+
+/*
+** These #defines should enable >2GB file support on POSIX if the
+** underlying operating system supports it.  If the OS lacks
+** large file support, or if the OS is windows, these should be no-ops.
+**
+** Ticket #2739:  The _LARGEFILE_SOURCE macro must appear before any
+** system #includes.  Hence, this block of code must be the very first
+** code in all source files.
+**
+** Large file support can be disabled using the -DSQLITE_DISABLE_LFS switch
+** on the compiler command line.  This is necessary if you are compiling
+** on a recent machine (ex: Red Hat 7.2) but you want your code to work
+** on an older machine (ex: Red Hat 6.0).  If you compile on Red Hat 7.2
+** without this option, LFS is enable.  But LFS does not exist in the kernel
+** in Red Hat 6.0, so the code won't work.  Hence, for maximum binary
+** portability you should omit LFS.
+**
+** Similar is true for Mac OS X.  LFS is only supported on Mac OS X 9 and later.
+*/
+//#ifndef SQLITE_DISABLE_LFS
+//# define _LARGE_FILE       1
+//# ifndef _FILE_OFFSET_BITS
+//#   define _FILE_OFFSET_BITS 64
+//# endif
+//# define _LARGEFILE_SOURCE 1
+//#endif
 
     /*
     ** Include the configuration header output by 'configure' if we're using the
@@ -81,6 +108,9 @@ namespace CS_SQLite3
 //#include <inttypes.h>
 #endif
 
+//#define SQLITE_INDEX_SAMPLES 10
+    public const int SQLITE_INDEX_SAMPLES = 10;
+
     /*
 ** This macro is used to "hide" some ugliness in casting an int
 ** value to a ptr value under the MSVC 64-bit compiler.   Casting
@@ -112,35 +142,6 @@ namespace CS_SQLite3
     //# define SQLITE_INT_TO_PTR(X)   ((void*)&((char*)0)[X])
     //# define SQLITE_PTR_TO_INT(X)   ((int)(((char*)X)-(char*)0))
     //#endif
-
-    /*
-    ** These #defines should enable >2GB file support on POSIX if the
-    ** underlying operating system supports it.  If the OS lacks
-    ** large file support, or if the OS is windows, these should be no-ops.
-    **
-    ** Ticket #2739:  The _LARGEFILE_SOURCE macro must appear before any
-    ** system #includes.  Hence, this block of code must be the very first
-    ** code in all source files.
-    **
-    ** Large file support can be disabled using the -DSQLITE_DISABLE_LFS switch
-    ** on the compiler command line.  This is necessary if you are compiling
-    ** on a recent machine (ex: RedHat 7.2) but you want your code to work
-    ** on an older machine (ex: RedHat 6.0).  If you compile on RedHat 7.2
-    ** without this option, LFS is enable.  But LFS does not exist in the kernel
-    ** in RedHat 6.0, so the code won't work.  Hence, for maximum binary
-    ** portability you should omit LFS.
-    **
-    ** Similar is true for Mac OS X.  LFS is only supported on Mac OS X 9 and later.
-    */
-#if !SQLITE_DISABLE_LFS
-const int _LARGE_FILE = 1;//# define _LARGE_FILE       1
-#if !_FILE_OFFSET_BITS
-const int _FILE_OFFSET_BITS = 64;//#   define _FILE_OFFSET_BITS 64
-# endif
-const int _LARGEFILE_SOURCE = 1; //# define _LARGEFILE_SOURCE 1
-#endif
-
-
 
 
     /*
@@ -363,7 +364,7 @@ static bool NEVER<T>(T X) { return false; }
 //# define double sqlite_int64
 //# define LONGDOUBLE_TYPE sqlite_int64
 //#if !SQLITE_BIG_DBL
-//#   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<60)
+//#   define SQLITE_BIG_DBL (((sqlite3_int64)1)<<50)
 //# endif
 //# define SQLITE_OMIT_DATETIME_FUNCS 1
 //# define SQLITE_OMIT_TRACE 1
@@ -406,9 +407,17 @@ static bool NEVER<T>(T X) { return false; }
     ** that the library can read.
     */
     static public int SQLITE_MAX_FILE_FORMAT = 4;//#define SQLITE_MAX_FILE_FORMAT 4
-#if !SQLITE_DEFAULT_FILE_FORMAT
+//#if !SQLITE_DEFAULT_FILE_FORMAT
     static int SQLITE_DEFAULT_FILE_FORMAT = 1;//# define SQLITE_DEFAULT_FILE_FORMAT 1
+//#endif
+
+#if !SQLITE_DEFAULT_RECURSIVE_TRIGGERS
+//# define SQLITE_DEFAULT_RECURSIVE_TRIGGERS 0
+    static public bool SQLITE_DEFAULT_RECURSIVE_TRIGGERS = false;
+#else
+        static public bool SQLITE_DEFAULT_RECURSIVE_TRIGGERS = true;
 #endif
+
 
     /*
 ** Provide a default value for SQLITE_TEMP_STORE in case it is not specified
@@ -590,10 +599,10 @@ const int ;//#define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
     static int ArraySize<T>( T[] x ) { return x.Length; }
 
     /*
-    ** The following value as a destructor means to use //sqlite3DbFree().
+    ** The following value as a destructor means to use sqlite3DbFree().
     ** This is an internal extension to SQLITE_STATIC and SQLITE_TRANSIENT.
     */
-    //#define SQLITE_DYNAMIC   ((sqlite3_destructor_type)//sqlite3DbFree)
+    //#define SQLITE_DYNAMIC   ((sqlite3_destructor_type)sqlite3DbFree)
     static dxDel SQLITE_DYNAMIC;
 
     /*
@@ -664,6 +673,7 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct FuncDef FuncDef;
     //typedef struct IdList IdList;
     //typedef struct Index Index;
+    //typedef struct IndexSample IndexSample;
     //typedef struct KeyClass KeyClass;
     //typedef struct KeyInfo KeyInfo;
     //typedef struct Lookaside Lookaside;
@@ -678,7 +688,7 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct Table Table;
     //typedef struct TableLock TableLock;
     //typedef struct Token Token;
-    //typedef struct TriggerStack TriggerStack;
+    //typedef struct TriggerPrg TriggerPrg;
     //typedef struct TriggerStep TriggerStep;
     //typedef struct Trigger Trigger;
     //typedef struct UnpackedRecord UnpackedRecord;
@@ -786,8 +796,8 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
     ** The number of different kinds of things that can be limited
     ** using the sqlite3_limit() interface.
     */
-    //#define SQLITE_N_LIMIT (SQLITE_LIMIT_VARIABLE_NUMBER+1)
-    const int SQLITE_N_LIMIT = SQLITE_LIMIT_VARIABLE_NUMBER + 1;
+    //#define SQLITE_N_LIMIT (SQLITE_LIMIT_TRIGGER_DEPTH+1)
+    const int SQLITE_N_LIMIT = SQLITE_LIMIT_TRIGGER_DEPTH + 1;
 
     /*
     ** Lookaside malloc is a set of fixed-size buffers that can be used
@@ -981,29 +991,49 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     ** executed a BEGIN.  On Db.flags, SQLITE_InTrans means a statement
     ** transaction is active on that particular database file.
     */
-    const int SQLITE_VdbeTrace = 0x00000001;//#define SQLITE_VdbeTrace      0x00000001  /* True to trace VDBE execution */
-    const int SQLITE_InTrans = 0x00000008;//#define SQLITE_InTrans        0x00000008  /* True if in a transaction */
-    const int SQLITE_InternChanges = 0x00000010;//#define SQLITE_InternChanges  0x00000010  /* Uncommitted Hash table changes */
-    const int SQLITE_FullColNames = 0x00000020;//#define SQLITE_FullColNames   0x00000020  /* Show full column names on SELECT */
-    const int SQLITE_ShortColNames = 0x00000040;//#define SQLITE_ShortColNames  0x00000040  /* Show short columns names */
-    const int SQLITE_CountRows = 0x00000080;//#define SQLITE_CountRows      0x00000080  /* Count rows changed by INSERT, */
-    //                                          /*   DELETE, or UPDATE and return */
-    //                                          /*   the count using a callback. */
-    const int SQLITE_NullCallback = 0x00000100;  //#define SQLITE_NullCallback   0x00000100  /* Invoke the callback once if the */
-    //                                          /*   result set is empty */
-    const int SQLITE_SqlTrace = 0x00000200;      //#define SQLITE_SqlTrace       0x00000200  /* Debug print SQL as it executes */
-    const int SQLITE_VdbeListing = 0x00000400;   //#define SQLITE_VdbeListing    0x00000400  /* Debug listings of VDBE programs */
-    const int SQLITE_WriteSchema = 0x00000800;   //#define SQLITE_WriteSchema    0x00000800  /* OK to update SQLITE_MASTER */
-    const int SQLITE_NoReadlock = 0x00001000;    //#define SQLITE_NoReadlock     0x00001000  /* Readlocks are omitted when
-    //                                          ** accessing read-only databases */
-    const int SQLITE_IgnoreChecks = 0x00002000;  //#define SQLITE_IgnoreChecks   0x00002000  /* Do not enforce check constraints */
-    const int SQLITE_ReadUncommitted = 0x00004000;//#define SQLITE_ReadUncommitted 0x00004000 /* For shared-cache mode */
-    const int SQLITE_LegacyFileFmt = 0x00008000; //#define SQLITE_LegacyFileFmt  0x00008000  /* Create new databases in format 1 */
-    const int SQLITE_FullFSync = 0x00010000;     //#define SQLITE_FullFSync      0x00010000  /* Use full fsync on the backend */
-    const int SQLITE_LoadExtension = 0x00020000; //#define SQLITE_LoadExtension  0x00020000  /* Enable load_extension */
+//#define SQLITE_VdbeTrace      0x00000001  /* True to trace VDBE execution */
+//#define SQLITE_InTrans        0x00000008  /* True if in a transaction */
+//#define SQLITE_InternChanges  0x00000010  /* Uncommitted Hash table changes */
+//#define SQLITE_FullColNames   0x00000020  /* Show full column names on SELECT */
+//#define SQLITE_ShortColNames  0x00000040  /* Show short columns names */
+//#define SQLITE_CountRows      0x00000080  /* Count rows changed by INSERT, */
+//                                          /*   DELETE, or UPDATE and return */
+//                                          /*   the count using a callback. */
+//#define SQLITE_NullCallback   0x00000100  /* Invoke the callback once if the */
+//                                          /*   result set is empty */
+//#define SQLITE_SqlTrace       0x00000200  /* Debug print SQL as it executes */
+//#define SQLITE_VdbeListing    0x00000400  /* Debug listings of VDBE programs */
+//#define SQLITE_WriteSchema    0x00000800  /* OK to update SQLITE_MASTER */
+//#define SQLITE_NoReadlock     0x00001000  /* Readlocks are omitted when 
+//                                          ** accessing read-only databases */
+//#define SQLITE_IgnoreChecks   0x00002000  /* Do not enforce check constraints */
+//#define SQLITE_ReadUncommitted 0x00004000 /* For shared-cache mode */
+//#define SQLITE_LegacyFileFmt  0x00008000  /* Create new databases in format 1 */
+//#define SQLITE_FullFSync      0x00010000  /* Use full fsync on the backend */
+//#define SQLITE_LoadExtension  0x00020000  /* Enable load_extension */
 
-    const int SQLITE_RecoveryMode = 0x00040000;  //#define SQLITE_RecoveryMode   0x00040000  /* Ignore schema errors */
-    const int SQLITE_ReverseOrder = 0x00100000;  //#define SQLITE_ReverseOrder   0x00100000  /* Reverse unordered SELECTs */
+//#define SQLITE_RecoveryMode   0x00040000  /* Ignore schema errors */
+//#define SQLITE_ReverseOrder   0x00100000  /* Reverse unordered SELECTs */
+//#define SQLITE_RecTriggers    0x00200000  /* Enable recursive triggers */
+    const int SQLITE_VdbeTrace = 0x00000001;
+    const int SQLITE_InTrans = 0x00000008;
+    const int SQLITE_InternChanges = 0x00000010;
+    const int SQLITE_FullColNames = 0x00000020;
+    const int SQLITE_ShortColNames = 0x00000040;
+    const int SQLITE_CountRows = 0x00000080;
+    const int SQLITE_NullCallback = 0x00000100;
+    const int SQLITE_SqlTrace = 0x00000200;
+    const int SQLITE_VdbeListing = 0x00000400;
+    const int SQLITE_WriteSchema = 0x00000800;
+    const int SQLITE_NoReadlock = 0x00001000;
+    const int SQLITE_IgnoreChecks = 0x00002000;
+    const int SQLITE_ReadUncommitted = 0x00004000;
+    const int SQLITE_LegacyFileFmt = 0x00008000;
+    const int SQLITE_FullFSync = 0x00010000;
+    const int SQLITE_LoadExtension = 0x00020000;
+    const int SQLITE_RecoveryMode = 0x00040000;
+    const int SQLITE_ReverseOrder = 0x00100000;
+    const int SQLITE_RecTriggers = 0x00200000;
 
     /*
     ** Possible values for the sqlite.magic field.
@@ -1675,6 +1705,7 @@ static bool IsVirtual( Column X) { return X.isHidden!=0;}
       public Schema pSchema;    /* Schema containing this index */
       public u8[] aSortOrder;   /* Array of size Index.nColumn. True==DESC, False==ASC */
       public string[] azColl;   /* Array of collation sequence names for index */
+      public IndexSample[] aSample;    /* Array of SQLITE_INDEX_SAMPLES samples */
 
       public Index Copy()
       {
@@ -1687,6 +1718,20 @@ static bool IsVirtual( Column X) { return X.isHidden!=0;}
         }
       }
     };
+/*
+** Each sample stored in the sqlite_stat2 table is represented in memory 
+** using a structure of this type.
+*/
+public struct IndexSample {
+  public struct _u { //union {
+    public string z;        /* Value if eType is SQLITE_TEXT */
+    public byte[] zBLOB;    /* Value if eType is SQLITE_BLOB */
+    public double r;        /* Value if eType is SQLITE_FLOAT or SQLITE_INTEGER */
+  } 
+  public _u u;
+  public u8 eType;         /* SQLITE_NULL, SQLITE_INTEGER ... etc. */
+  public u8 nByte;         /* Size in byte of text or blob. */
+};
 
     /*
     ** Each token coming out of the lexer is an instance of
@@ -1930,11 +1975,13 @@ public int iValue;            /* Integer value if EP_IntValue */
       *********************************************************************/
 
       public int iTable;            /* TK_COLUMN: cursor number of table holding column
-   ** TK_REGISTER: register number */
+                                    ** TK_REGISTER: register number
+                                    ** TK_TRIGGER: 1 -> new, 0 -> old */
       public i16 iColumn;           /* TK_COLUMN: column index.  -1 for rowid */
       public i16 iAgg;              /* Which entry in pAggInfo->aCol[] or ->aFunc[] */
       public i16 iRightJoinTable;   /* If EP_FromJoin, the right table of the join */
-      public u16 flags2;            /* Second set of flags.  EP2_... */
+      public u8 flags2;             /* Second set of flags.  EP2_... */
+      public u8 op2;                /* If a TK_REGISTER, the original value of Expr.op */
       public AggInfo pAggInfo;      /* Used by TK_AGG_COLUMN and TK_AGG_FUNCTION */
       public Table pTab;            /* Table for TK_COLUMN expressions. */
 #if SQLITE_MAX_EXPR_DEPTH //>0
@@ -1962,7 +2009,7 @@ set { _op = value; }
         iAgg = cf.iAgg;
         iRightJoinTable = cf.iRightJoinTable;
         flags2 = cf.flags2;
-        pTab = cf.pTab == null ? null : cf.pTab.Copy();
+        pTab = cf.pTab == null ? null : cf.pTab;
 #if SQLITE_TEST || SQLITE_MAX_EXPR_DEPTH //SQLITE_MAX_EXPR_DEPTH>0
         nHeight = cf.nHeight;
         pZombieTab = cf.pZombieTab;
@@ -2057,10 +2104,10 @@ set { _op = value; }
     /*
     ** The following are the meanings of bits in the Expr.flags2 field.
     */
-    //#define EP2_MallocedToken  0x0001  /* Need to //sqlite3DbFree() Expr.zToken */
+    //#define EP2_MallocedToken  0x0001  /* Need to sqlite3DbFree() Expr.zToken */
     //#define EP2_Irreducible    0x0002  /* Cannot EXPRDUP_REDUCE this Expr */
-    const ushort EP2_MallocedToken = 0x0001;
-    const ushort EP2_Irreducible = 0x0002;
+    const u8 EP2_MallocedToken = 0x0001;
+    const u8 EP2_Irreducible = 0x0002;
 
     /*
     ** The pseudo-routine sqlite3ExprSetIrreducible sets the EP2_Irreducible
@@ -2304,6 +2351,14 @@ static void ExprSetIrreducible( Expr X ) { }
         public sqlite3_index_info pVtabIdx; /* Virtual table index to use */
       }
       public _u u = new _u();
+      public void Clear()
+      {
+        wsFlags = 0;
+        nEq = 0;
+        u.pIdx = null;
+        u.pTerm = null;
+        u.pVtabIdx = null;
+      }
     };
 
     /*
@@ -2600,6 +2655,32 @@ static void ExprSetIrreducible( Expr X ) { }
 #endif
 
     /*
+** At least one instance of the following structure is created for each 
+** trigger that may be fired while parsing an INSERT, UPDATE or DELETE
+** statement. All such objects are stored in the linked list headed at
+** Parse.pTriggerPrg and deleted once statement compilation has been
+** completed.
+**
+** A Vdbe sub-program that implements the body and WHEN clause of trigger
+** TriggerPrg.pTrigger, assuming a default ON CONFLICT clause of
+** TriggerPrg.orconf, is stored in the TriggerPrg.pProgram variable.
+** The Parse.pTriggerPrg list never contains two entries with the same
+** values for both pTrigger and orconf.
+**
+** The TriggerPrg.oldmask variable is set to a mask of old.* columns
+** accessed (or set to 0 for triggers fired as a result of INSERT 
+** statements).
+*/
+    public class TriggerPrg
+    {
+      public Trigger pTrigger;      /* Trigger this program was coded from */
+      public int orconf;            /* Default ON CONFLICT policy */
+      public SubProgram pProgram;   /* Program implementing pTrigger/orconf */
+      public u32 oldmask;           /* Mask of old.* columns accessed */
+      public TriggerPrg pNext;      /* Next entry in Parse.pTriggerPrg list */
+    };
+
+    /*
 ** An SQL parser context.  A copy of this structure is passed through
 ** the parser and down into all the parser action routine in order to
 ** carry around information that is global to the entire parse.
@@ -2653,15 +2734,25 @@ static void ExprSetIrreducible( Expr X ) { }
       public yColCache[] aColCache = new yColCache[SQLITE_N_COLCACHE];     /* One for each valid column cache entry */
       public u32 writeMask;       /* Start a write transaction on these databases */
       public u32 cookieMask;      /* Bitmask of schema verified databases */
+      public u8 isMultiWrite;     /* True if statement may affect/insert multiple rows */
+      public u8 mayAbort;         /* True if statement may throw an ABORT exception */
       public int cookieGoto;      /* Address of OP_Goto to cookie verifier subroutine */
       public int[] cookieValue = new int[SQLITE_MAX_ATTACHED + 2];  /* Values of cookies to verify */
 #if !SQLITE_OMIT_SHARED_CACHE
 public int nTableLock;         /* Number of locks in aTableLock */
 public TableLock[] aTableLock; /* Required table locks for shared-cache mode */
 #endif
-      public int regRowid;           /* Register holding rowid of CREATE TABLE entry */
-      public int regRoot;            /* Register holding root page number for new objects */
-      public AutoincInfo pAinc;      /* Information about AUTOINCREMENT counters */
+      public int regRowid;        /* Register holding rowid of CREATE TABLE entry */
+      public int regRoot;         /* Register holding root page number for new objects */
+      public AutoincInfo pAinc;   /* Information about AUTOINCREMENT counters */
+      public int nMaxArg;         /* Max args passed to user function by sub-program */
+
+      /* Information used while coding trigger programs. */
+      public Parse pToplevel;     /* Parse structure for main program (or NULL) */
+      public Table pTriggerTab;   /* Table triggers are being coded for */
+      public u32 oldmask;         /* Mask of old.* columns referenced */
+      public u8 eTriggerOp;       /* TK_UPDATE, TK_INSERT or TK_DELETE */
+      public u8 eOrconf;          /* Default ON CONFLICT policy for trigger steps */
 
       /* Above is constant between recursions.  Below is reset before and after
       ** each recursion */
@@ -2679,7 +2770,6 @@ public TableLock[] aTableLock; /* Required table locks for shared-cache mode */
       public StringBuilder zTail;            /* All SQL text past the last semicolon parsed */
       public Table pNewTable;                /* A table being constructed by CREATE TABLE */
       public Trigger pNewTrigger;            /* Trigger under construct by a CREATE TRIGGER */
-      public TriggerStack trigStack;         /* Trigger actions being coded */
       public string zAuthContext;            /* The 6th parameter to db.xAuth callbacks */
 #if !SQLITE_OMIT_VIRTUALTABLE
 public Token sArg;                /* Complete text of a module argument */
@@ -2687,8 +2777,9 @@ public u8 declareVtab;            /* True if inside sqlite3_declare_vtab() */
 public int nVtabLock;             /* Number of virtual tables to lock */
 public Table[] apVtabLock;        /* Pointer to virtual tables needing locking */
 #endif
-      public int nHeight;             /* Expression tree height of current sub-select */
-      public Table pZombieTab;        /* List of Table objects to delete after code gen */
+      public int nHeight;                    /* Expression tree height of current sub-select */
+      public Table pZombieTab;               /* List of Table objects to delete after code gen */
+      public TriggerPrg pTriggerPrg;         /* Linked list of coded triggers */
 
       // We need to create instances of the col cache
       public Parse()
@@ -2711,7 +2802,6 @@ public Table[] apVtabLock;        /* Pointer to virtual tables needing locking *
         zTail.Length = 0;
         pNewTable = null;
         pNewTrigger = null;
-        trigStack = null;
         zAuthContext = null;
 #if !SQLITE_OMIT_VIRTUALTABLE
 sArg = new Token();
@@ -2721,6 +2811,7 @@ apVtabLoc = null;
 #endif
         nHeight = 0;
         pZombieTab = null;
+        pTriggerPrg = null;
       }
       Parse[] SaveBuf = new Parse[10];  //For Recursion Storage
       public void RestoreMembers()  // Need to clear all the following variables during each recursion
@@ -2739,7 +2830,6 @@ apVtabLoc = null;
         zTail = SaveBuf[nested].zTail;
         pNewTable = SaveBuf[nested].pNewTable;
         pNewTrigger = SaveBuf[nested].pNewTrigger;
-        trigStack = SaveBuf[nested].trigStack;
         zAuthContext = SaveBuf[nested].zAuthContext;
 #if !SQLITE_OMIT_VIRTUALTABLE
 sArg = SaveBuf[nested].sArg              ;
@@ -2749,6 +2839,7 @@ apVtabLock = SaveBuf[nested].apVtabLock;
 #endif
         nHeight = SaveBuf[nested].nHeight;
         pZombieTab = SaveBuf[nested].pZombieTab;
+        pTriggerPrg = SaveBuf[nested].pTriggerPrg;
         SaveBuf[nested] = null;
       }
       public void SaveMembers() // Need to clear all the following variables during each recursion
@@ -2767,7 +2858,6 @@ apVtabLock = SaveBuf[nested].apVtabLock;
         SaveBuf[nested].zTail = zTail;
         SaveBuf[nested].pNewTable = pNewTable;
         SaveBuf[nested].pNewTrigger = pNewTrigger;
-        SaveBuf[nested].trigStack = trigStack;
         SaveBuf[nested].zAuthContext = zAuthContext;
 #if !SQLITE_OMIT_VIRTUALTABLE
 SaveBuf[nested].sArg = sArg             ;
@@ -2777,6 +2867,7 @@ SaveBuf[nested].apVtabLock = apVtabLock ;
 #endif
         SaveBuf[nested].nHeight = nHeight;
         SaveBuf[nested].pZombieTab = pZombieTab;
+        SaveBuf[nested].pTriggerPrg = pTriggerPrg;
       }
     };
 
@@ -2799,16 +2890,18 @@ SaveBuf[nested].apVtabLock = apVtabLock ;
     /*
     ** Bitfield flags for P5 value in OP_Insert and OP_Delete
     */
-    //#define OPFLAG_NCHANGE   1    /* Set to update db->nChange */
-    //#define OPFLAG_LASTROWID 2    /* Set to update db->lastRowid */
-    //#define OPFLAG_ISUPDATE  4    /* This OP_Insert is an sql UPDATE */
-    //#define OPFLAG_APPEND    8    /* This is likely to be an append */
-    //#define OPFLAG_USESEEKRESULT 16    /* Try to avoid a seek in BtreeInsert() */
-    const byte OPFLAG_NCHANGE = 1;
-    const byte OPFLAG_LASTROWID = 2;
-    const byte OPFLAG_ISUPDATE = 4;
-    const byte OPFLAG_APPEND = 8;
-    const byte OPFLAG_USESEEKRESULT = 16;
+    //#define OPFLAG_NCHANGE       0x01    /* Set to update db->nChange */
+    //#define OPFLAG_LASTROWID     0x02    /* Set to update db->lastRowid */
+    //#define OPFLAG_ISUPDATE      0x04    /* This OP_Insert is an sql UPDATE */
+    //#define OPFLAG_APPEND        0x08    /* This is likely to be an append */
+    //#define OPFLAG_USESEEKRESULT 0x10    /* Try to avoid a seek in BtreeInsert() */
+    //#define OPFLAG_CLEARCACHE    0x20    /* Clear pseudo-table cache in OP_Column */
+    const byte OPFLAG_NCHANGE = 0x01;
+    const byte OPFLAG_LASTROWID = 0x02;
+    const byte OPFLAG_ISUPDATE = 0x04;
+    const byte OPFLAG_APPEND = 0x08;
+    const byte OPFLAG_USESEEKRESULT = 0x10;
+    const byte OPFLAG_CLEARCACHE = 0x20;
 
     /*
     * Each trigger present in the database schema is stored as an instance of
@@ -2827,7 +2920,7 @@ SaveBuf[nested].apVtabLock = apVtabLock ;
     */
     public class Trigger
     {
-      public string name;             /* The name of the trigger                        */
+      public string zName;            /* The name of the trigger                        */
       public string table;            /* The table or view to which the trigger applies */
       public u8 op;                   /* One of TK_DELETE, TK_UPDATE, TK_INSERT         */
       public u8 tr_tm;                /* One of TRIGGER_BEFORE, TRIGGER_AFTER */
@@ -2935,46 +3028,6 @@ the <column-list> is stored here */
     };
 
     /*
-    * An instance of struct TriggerStack stores information required during code
-    * generation of a single trigger program. While the trigger program is being
-    * coded, its associated TriggerStack instance is pointed to by the
-    * "pTriggerStack" member of the Parse structure.
-    *
-    * The pTab member points to the table that triggers are being coded on. The
-    * newIdx member contains the index of the vdbe cursor that points at the temp
-    * table that stores the new.* references. If new.* references are not valid
-    * for the trigger being coded (for example an ON DELETE trigger), then newIdx
-    * is set to -1. The oldIdx member is analogous to newIdx, for old.* references.
-    *
-    * The ON CONFLICT policy to be used for the trigger program steps is stored
-    * as the orconf member. If this is OE_Default, then the ON CONFLICT clause
-    * specified for individual triggers steps is used.
-    *
-    * struct TriggerStack has a "pNext" member, to allow linked lists to be
-    * constructed. When coding nested triggers (triggers fired by other triggers)
-    * each nested trigger stores its parent trigger's TriggerStack as the "pNext"
-    * pointer. Once the nested trigger has been coded, the pNext value is restored
-    * to the pTriggerStack member of the Parse stucture and coding of the parent
-    * trigger continues.
-    *
-    * Before a nested trigger is coded, the linked list pointed to by the
-    * pTriggerStack is scanned to ensure that the trigger is not about to be coded
-    * recursively. If this condition is detected, the nested trigger is not coded.
-    */
-    public class TriggerStack
-    {
-      public Table pTab;         /* Table that triggers are currently being coded on */
-      public int newIdx;          /* Index of vdbe cursor to "new" temp table */
-      public int oldIdx;          /* Index of vdbe cursor to "old" temp table */
-      public u32 newColMask;
-      public u32 oldColMask;
-      public int orconf;          /* Current orconf policy */
-      public int ignoreJump;      /* where to jump to for a RAISE(IGNORE) */
-      public Trigger pTrigger;   /* The trigger currently being coded */
-      public TriggerStack pNext; /* Next trigger down on the trigger stack */
-    };
-
-    /*
     ** The following structure contains information used by the sqliteFix...
     ** routines as they walk the parse tree to make database references
     ** explicit.
@@ -3050,7 +3103,9 @@ the <column-list> is stored here */
       ** initially be zero, however. */
       public int isInit;                       /* True after initialization has finished */
       public int inProgress;                   /* True while initialization in progress */
+      public int isMutexInit;                  /* True after mutexes are initialized */
       public int isMallocInit;                 /* True after malloc is initialized */
+      public int isPCacheInit;                 /* True after malloc is initialized */
       public sqlite3_mutex pInitMutex;         /* Mutex used by sqlite3_initialize() */
       public int nRefInitMutex;                /* Number of users of pInitMutex */
 
@@ -3071,7 +3126,9 @@ the <column-list> is stored here */
       , bool sharedCacheEnabled
       , int isInit
       , int inProgress
+      , int isMutexInit
       , int isMallocInit
+      , int isPCacheInit
       , sqlite3_mutex pInitMutex
       , int nRefInitMutex
       )
@@ -3099,7 +3156,9 @@ the <column-list> is stored here */
         this.sharedCacheEnabled = sharedCacheEnabled;
         this.isInit = isInit;
         this.inProgress = inProgress;
+        this.isMutexInit = isMutexInit;
         this.isMallocInit = isMallocInit;
+        this.isPCacheInit = isPCacheInit;
         this.pInitMutex = pInitMutex;
         this.nRefInitMutex = nRefInitMutex;
       }
@@ -3249,7 +3308,7 @@ const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
     //void *sqlite3Realloc(void*, int);
     //void *sqlite3DbReallocOrFree(sqlite3 *, void *, int);
     //void *sqlite3DbRealloc(sqlite3 *, void *, int);
-    //void //sqlite3DbFree(sqlite3*, void*);
+    //void sqlite3DbFree(sqlite3*, void*);
     //int sqlite3MallocSize(void*);
     //int sqlite3DbMallocSize(sqlite3*, void*);
     //void *sqlite3ScratchMalloc(int);
@@ -3271,14 +3330,14 @@ const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
 #if SQLITE_USE_ALLOCA
 //# define sqlite3StackAllocRaw(D,N)   alloca(N)
 //# define sqlite3StackAllocZero(D,N)  memset(alloca(N), 0, N)
-//# define //sqlite3StackFree(D,P)
+//# define sqlite3StackFree(D,P)
 #else
 #if FALSE
     //# define sqlite3StackAllocRaw(D,N)   sqlite3DbMallocRaw(D,N)
     static void sqlite3StackAllocRaw( sqlite3 D, int N ) { sqlite3DbMallocRaw( D, N ); }
     //# define sqlite3StackAllocZero(D,N)  sqlite3DbMallocZero(D,N)
     static void sqlite3StackAllocZero( sqlite3 D, int N ) { sqlite3DbMallocZero( D, N ); }
-    //# define //sqlite3StackFree(D,P)       //sqlite3DbFree(D,P)
+    //# define //sqlite3StackFree(D,P)       sqlite3DbFree(D,P)
     static void //sqlite3StackFree( sqlite3 D, object P ) {sqlite3DbFree( D, P ); }
 #endif
 #endif
@@ -3463,14 +3522,16 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //int sqlite3ExprIsConstantOrFunction(Expr*);
     //int sqlite3ExprIsInteger(Expr*, int*);
     //int sqlite3IsRowid(const char*);
-    //void sqlite3GenerateRowDelete(Parse*, Table*, int, int, int);
+    //void sqlite3GenerateRowDelete(Parse*, Table*, int, int, int, Trigger *, int);
     //void sqlite3GenerateRowIndexDelete(Parse*, Table*, int, int*);
     //int sqlite3GenerateIndexKey(Parse*, Index*, int, int, int);
     //void sqlite3GenerateConstraintChecks(Parse*,Table*,int,int,
     //                                     int*,int,int,int,int,int*);
-    //void sqlite3CompleteInsertion(Parse*, Table*, int, int, int*, int, int,int,int);
+    //void sqlite3CompleteInsertion(Parse*, Table*, int, int, int*, int, int, int);
     //int sqlite3OpenTableAndIndices(Parse*, Table*, int, int);
     //void sqlite3BeginWriteOperation(Parse*, int, int);
+    //void sqlite3MayAbort(Parse *);
+    //void sqlite3HaltConstraint(Parse*, int, char*, int);
     //Expr *sqlite3ExprDup(sqlite3*,Expr*,int);
     //ExprList *sqlite3ExprListDup(sqlite3*,ExprList*,int);
     //SrcList *sqlite3SrcListDup(sqlite3*,SrcList*,int);
@@ -3502,8 +3563,8 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //void sqlite3DropTrigger(Parse*, SrcList*, int);
     //Trigger *sqlite3TriggersExist(Parse *, Table*, int, ExprList*, int *pMask);
     //Trigger *sqlite3TriggerList(Parse *, Table *);
-    //int sqlite3CodeRowTrigger(Parse*, Trigger *, int, ExprList*, int, Table *,
-    //                          int, int, int, int, u32*, u32*);
+    //  void sqlite3CodeRowTrigger(Parse*, Trigger *, int, ExprList*, int, Table *,
+    //                        int, int, int, int);
     //void sqliteViewTriggers(Parse*, Table*, Expr*, int, ExprList*);
     //void sqlite3DeleteTriggerStep(sqlite3*, TriggerStep*);
     //TriggerStep *sqlite3TriggerSelectStep(sqlite3*,Select*);
@@ -3513,13 +3574,18 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //TriggerStep *sqlite3TriggerDeleteStep(sqlite3*,Token*, Expr*);
     //void sqlite3DeleteTrigger(sqlite3*, Trigger*);
     //void sqlite3UnlinkAndDeleteTrigger(sqlite3*,int,const char*);
+    //  u32 sqlite3TriggerOldmask(Parse*,Trigger*,int,ExprList*,Table*,int);
+//# define sqlite3ParseToplevel(p) ((p)->pToplevel ? (p)->pToplevel : (p))
+    static Parse sqlite3ParseToplevel( Parse p ) { return p.pToplevel != null ? p.pToplevel : p; }
 #else
 //# define sqlite3TriggersExist(B,C,D,E,F) 0
 //# define sqlite3DeleteTrigger(A,B)
 //# define sqlite3DropTriggerPtr(A,B)
 //# define sqlite3UnlinkAndDeleteTrigger(A,B,C)
-//# define sqlite3CodeRowTrigger(A,B,C,D,E,F,G,H,I,J,K,L) 0
+//# define sqlite3CodeRowTrigger(A,B,C,D,E,F,G,H,I,J)
 //# define sqlite3TriggerList(X, Y) 0
+//# define sqlite3ParseToplevel(p) p
+//# define sqlite3TriggerOldmask(A,B,C,D,E,F) 0
 #endif
 
     //int sqlite3JoinType(Parse*, Token*, Token*, Token*);
@@ -3533,9 +3599,15 @@ void sqlite3AuthContextPop(AuthContext*);
 #else
     //# define sqlite3AuthRead(a,b,c,d)
     static void sqlite3AuthRead( Parse a, Expr b, Schema c, SrcList d ) { }
-    static int sqlite3AuthCheck( Parse a, int b, string c, byte[] d, byte[] e ) { return SQLITE_OK; }//# define sqlite3AuthCheck(a,b,c,d,e)    SQLITE_OK
+
+    //# define sqlite3AuthCheck(a,b,c,d,e)    SQLITE_OK
+    static int sqlite3AuthCheck( Parse a, int b, string c, byte[] d, byte[] e ) { return SQLITE_OK; }
+
     //# define sqlite3AuthContextPush(a,b,c)
+    static void sqlite3AuthContextPush( Parse a, AuthContext b, string c ) { }
+
     //# define sqlite3AuthContextPop(a)  ((void)(a))
+    static Parse sqlite3AuthContextPop( Parse a ) { return a; }
 #endif
     //void sqlite3Attach(Parse*, Expr*, Expr*, Expr*);
     //void sqlite3Detach(Parse*, Expr*);
@@ -3590,7 +3662,7 @@ void sqlite3AuthContextPop(AuthContext*);
     //#define putVarint    sqlite3PutVarint
 
 
-    //void sqlite3IndexAffinityStr(Vdbe *, Index *);
+    //const char *sqlite3IndexAffinityStr(Vdbe *, Index *);
     //void sqlite3TableAffinityStr(Vdbe *, Table *);
     //char sqlite3CompareAffinity(Expr pExpr, char aff2);
     //int sqlite3IndexAffinityOk(Expr pExpr, char idx_affinity);
@@ -3616,6 +3688,9 @@ void sqlite3AuthContextPop(AuthContext*);
     //void sqlite3ValueFree(sqlite3_value*);
     //sqlite3_value *sqlite3ValueNew(sqlite3 *);
     //char *sqlite3Utf16to8(sqlite3 *, const void*, int);
+    //#ifdef SQLITE_ENABLE_STAT2
+    //char *sqlite3Utf8to16(sqlite3 *, u8, char *, int, int *);
+    //#endif
     //int sqlite3ValueFromExpr(sqlite3 *, Expr *, u8, u8, sqlite3_value **);
     //void sqlite3ValueApplyAffinity(sqlite3_value *, u8, u8);
     //#if !SQLITE_AMALGAMATION
@@ -3640,13 +3715,14 @@ void sqlite3AuthContextPop(AuthContext*);
     //void sqlite3ColumnDefault(Vdbe *, Table *, int, int);
     //void sqlite3AlterFinishAddColumn(Parse *, Token *);
     //void sqlite3AlterBeginAddColumn(Parse *, SrcList *);
-    //CollSeq *sqlite3GetCollSeq(sqlite3*, CollSeq *, const char*);
+    //CollSeq *sqlite3GetCollSeq(sqlite3*, u8, CollSeq *, const char*);
     //char sqlite3AffinityType(const char*);
     //void sqlite3Analyze(Parse*, Token*, Token*);
     //int sqlite3InvokeBusyHandler(BusyHandler*);
     //int sqlite3FindDb(sqlite3*, Token*);
     //int sqlite3FindDbName(sqlite3 *, const char *);
     //int sqlite3AnalysisLoad(sqlite3*,int iDB);
+    //void sqlite3DeleteIndexSamples(Index*);
     //void sqlite3DefaultRowEst(Index*);
     //void sqlite3RegisterLikeFunctions(sqlite3*, int);
     //int sqlite3IsLikeFunction(sqlite3*,Expr*,int*,char*);

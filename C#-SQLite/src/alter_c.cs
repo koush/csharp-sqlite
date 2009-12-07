@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -237,13 +237,13 @@ namespace CS_SQLite3
           {
             if ( zWhere == "" )
             {
-              zWhere = sqlite3MPrintf( db, "name=%Q", pTrig.name );
+              zWhere = sqlite3MPrintf( db, "name=%Q", pTrig.zName );
             }
             else
             {
               tmp = zWhere;
-              zWhere = sqlite3MPrintf( db, "%s OR name=%Q", zWhere, pTrig.name );
-              //sqlite3DbFree( db, ref tmp );
+              zWhere = sqlite3MPrintf( db, "%s OR name=%Q", zWhere, pTrig.zName );
+              sqlite3DbFree( db, ref tmp );
             }
           }
         }
@@ -280,7 +280,7 @@ namespace CS_SQLite3
       {
         int iTrigDb = sqlite3SchemaToIndex( pParse.db, pTrig.pSchema );
         Debug.Assert( iTrigDb == iDb || iTrigDb == 1 );
-        sqlite3VdbeAddOp4( v, OP_DropTrigger, iTrigDb, 0, 0, pTrig.name, 0 );
+        sqlite3VdbeAddOp4( v, OP_DropTrigger, iTrigDb, 0, 0, pTrig.zName, 0 );
       }
 #endif
 
@@ -413,6 +413,7 @@ if ( pVTab !=null)
 int i = ++pParse.nMem;
 sqlite3VdbeAddOp4( v, OP_String8, 0, i, 0, zName, 0 );
 sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pVtab, P4_VTAB );
+sqlite3MayAbort(pParse);
 }
 #endif
 
@@ -470,7 +471,7 @@ sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pVtab, P4_VTAB );
         "sql = sqlite_rename_trigger(sql, %Q), " +
         "tbl_name = %Q " +
         "WHERE %s;", zName, zName, zWhere );
-        //sqlite3DbFree( db, ref zWhere );
+        sqlite3DbFree( db, ref zWhere );
       }
 #endif
 
@@ -479,7 +480,7 @@ sqlite3VdbeAddOp4( v, OP_VRename, i, 0, 0, pVtab, P4_VTAB );
 
 exit_rename_table:
       sqlite3SrcListDelete( db, ref pSrc );
-      //sqlite3DbFree( db, ref zName );
+      sqlite3DbFree( db, ref zName );
     }
 
     /*
@@ -613,7 +614,7 @@ return;
         zDb, SCHEMA_TABLE( iDb ), pNew.addColOffset, zCol, pNew.addColOffset + 1,
         zTab
         );
-        //sqlite3DbFree( db, ref zCol );
+        sqlite3DbFree( db, ref zCol );
       }
 
       /* If the default value of the new column is NULL, then set the file

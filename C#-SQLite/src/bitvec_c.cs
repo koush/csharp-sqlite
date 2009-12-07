@@ -7,7 +7,7 @@ using i64 = System.Int64;
 using u32 = System.UInt32;
 using BITVEC_TELEM = System.Byte;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 
   public partial class csSQLite
@@ -60,12 +60,13 @@ namespace CS_SQLite3
     //#include "sqliteInt.h"
 
     /* Size of the Bitvec structure in bytes. */
-    const int BITVEC_SZ = 512;
+    static int BITVEC_SZ = IntPtr.Size * 128;//(sizeof(void*)*128)  /* 512 on 32bit.  1024 on 64bit */
+
 
     /* Round the union size down to the nearest pointer boundary, since that's how
     ** it will be aligned within the Bitvec struct. */
     //#define BITVEC_USIZE     (((BITVEC_SZ-(3*sizeof(u32)))/sizeof(Bitvec*))*sizeof(Bitvec*))
-    const int BITVEC_USIZE = ( ( ( BITVEC_SZ - ( 3 * sizeof( u32 ) ) ) / 4 ) * 4 );
+    static int BITVEC_USIZE = ( ( ( BITVEC_SZ - ( 3 * sizeof( u32 ) ) ) / 4 ) * 4 );
 
     /* Type of the array "element" for the bitmap representation.
     ** Should be a power of 2, and ideally, evenly divide into BITVEC_USIZE.
@@ -80,29 +81,29 @@ namespace CS_SQLite3
 
     /* Number of elements in a bitmap array. */
     //#define BITVEC_NELEM     (BITVEC_USIZE/sizeof(BITVEC_TELEM))
-    const int BITVEC_NELEM = ( BITVEC_USIZE / sizeof( BITVEC_TELEM ) );
+    static int BITVEC_NELEM = (int)( BITVEC_USIZE / sizeof( BITVEC_TELEM ) );
 
     /* Number of bits in the bitmap array. */
     //#define BITVEC_NBIT      (BITVEC_NELEM*BITVEC_SZELEM)
-    const int BITVEC_NBIT = ( BITVEC_NELEM * BITVEC_SZELEM );
+    static int BITVEC_NBIT = ( BITVEC_NELEM * BITVEC_SZELEM );
 
     /* Number of u32 values in hash table. */
     //#define BITVEC_NINT      (BITVEC_USIZE/sizeof(u32))
-    const int BITVEC_NINT = ( BITVEC_USIZE / sizeof( u32 ) );
+    static u32 BITVEC_NINT = (u32)( BITVEC_USIZE / sizeof( u32 ) );
 
     /* Maximum number of entries in hash table before
     ** sub-dividing and re-hashing. */
     //#define BITVEC_MXHASH    (BITVEC_NINT/2)
-    const int BITVEC_MXHASH = ( BITVEC_NINT / 2 );
+    static int BITVEC_MXHASH = (int)( BITVEC_NINT / 2 );
 
     /* Hashing function for the aHash representation.
     ** Empirical testing showed that the *37 multiplier
     ** (an arbitrary prime)in the hash function provided
     ** no fewer collisions than the no-op *1. */
     //#define BITVEC_HASH(X)   (((X)*1)%BITVEC_NINT)
-    static u32 BITVEC_HASH( u32 X ) { return ( ( ( X ) * 1 ) % BITVEC_NINT ); }
+    static u32 BITVEC_HASH( u32 X ) { return (u32)( ( ( X ) * 1 ) % BITVEC_NINT ); }
 
-    const int BITVEC_NPTR = ( BITVEC_USIZE / 4 );//sizeof(Bitvec *));
+    static int BITVEC_NPTR = (int)( BITVEC_USIZE / 4 );//sizeof(Bitvec *));
 
 
     /*
@@ -279,7 +280,7 @@ bitvec_set_rehash:
 
           Buffer.BlockCopy( p.u.aHash, 0, aiValues, 0, aiValues.Length * ( sizeof( u32 ) ) );// memcpy(aiValues, p->u.aHash, sizeof(p->u.aHash));
           p.u.apSub = new Bitvec[BITVEC_NPTR];//memset(p->u.apSub, 0, sizeof(p->u.apSub));
-          p.iDivisor = ( p.iSize + BITVEC_NPTR - 1 ) / BITVEC_NPTR;
+          p.iDivisor = (u32)(( p.iSize + BITVEC_NPTR - 1 ) / BITVEC_NPTR);
           rc = sqlite3BitvecSet( p, i );
           for ( j = 0 ; j < BITVEC_NINT ; j++ )
           {

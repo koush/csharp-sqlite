@@ -6,7 +6,7 @@ using Pgno = System.UInt32;
 using u8 = System.Byte;
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -57,9 +57,9 @@ namespace CS_SQLite3
     }
 
     /*
-    ** Set P4 of the most recently inserted opcode to a column affinity
-    ** string for index pIdx. A column affinity string has one character
-    ** for each column in the table, according to the affinity of the column:
+    ** Return a pointer to the column affinity string associated with index
+    ** pIdx. A column affinity string has one character for each column in 
+    ** the table, according to the affinity of the column:
     **
     **  Character      Column affinity
     **  ------------------------------
@@ -71,8 +71,12 @@ namespace CS_SQLite3
     **
     ** An extra 'b' is appended to the end of the string to cover the
     ** rowid that appears as the last column in every index.
+    **
+    ** Memory for the buffer containing the column index affinity string
+    ** is managed along with the rest of the Index structure. It will be
+    ** released when sqlite3DeleteIndex() is called.
     */
-    static void sqlite3IndexAffinityStr( Vdbe v, Index pIdx )
+    static string sqlite3IndexAffinityStr( Vdbe v, Index pIdx )
     {
       if ( pIdx.zColAff == null || pIdx.zColAff[0] == '\0' )
       {
@@ -87,12 +91,12 @@ namespace CS_SQLite3
         int n;
         Table pTab = pIdx.pTable;
         sqlite3 db = sqlite3VdbeDb( v );
-        StringBuilder pIdx_zColAff = new StringBuilder( pIdx.nColumn + 2 );// (char *)sqlite3Malloc(pIdx->nColumn+2);
-        if ( pIdx_zColAff == null )
-        {
-  ////        db.mallocFailed = 1;
-          return;
-        }
+        StringBuilder pIdx_zColAff = new StringBuilder( pIdx.nColumn + 2 );// (char *)sqlite3Malloc(pIdx.nColumn+2);
+  //      if ( pIdx_zColAff == null )
+  //      {
+  //        db.mallocFailed = 1;
+  //        return null;
+  //      }
         for ( n = 0 ; n < pIdx.nColumn ; n++ )
         {
           pIdx_zColAff.Append( pTab.aCol[pIdx.aiColumn[n]].affinity );
@@ -101,7 +105,7 @@ namespace CS_SQLite3
         pIdx_zColAff.Append( '\0' );
         pIdx.zColAff = pIdx_zColAff.ToString();
       }
-      sqlite3VdbeChangeP4( v, -1, pIdx.zColAff, 0 );
+      return pIdx.zColAff;
     }
 
     /*
@@ -229,21 +233,22 @@ return true;
       int memId = 0;      /* Register holding maximum rowid */
       if ( ( pTab.tabFlags & TF_Autoincrement ) != 0 )
       {
+        Parse pToplevel = sqlite3ParseToplevel( pParse );
         AutoincInfo pInfo;
 
-        pInfo = pParse.pAinc;
+        pInfo = pToplevel.pAinc;
         while ( pInfo != null && pInfo.pTab != pTab ) { pInfo = pInfo.pNext; }
         if ( pInfo == null )
         {
           pInfo = new AutoincInfo();//sqlite3DbMallocRaw(pParse.db, sizeof(*pInfo));
-          if ( pInfo == null ) return 0;
-          pInfo.pNext = pParse.pAinc;
-          pParse.pAinc = pInfo;
+          //if( pInfo==0 ) return 0;
+          pInfo.pNext = pToplevel.pAinc;
+          pToplevel.pAinc = pInfo;
           pInfo.pTab = pTab;
           pInfo.iDb = iDb;
-          pParse.nMem++;                  /* Register to hold name of table */
-          pInfo.regCtr = ++pParse.nMem;  /* Max rowid register */
-          pParse.nMem++;                  /* Rowid in sqlite_sequence */
+          pToplevel.nMem++;                  /* Register to hold name of table */
+          pInfo.regCtr = ++pToplevel.nMem;  /* Max rowid register */
+          pToplevel.nMem++;                  /* Rowid in sqlite_sequence */
         }
         memId = pInfo.regCtr;
       }
@@ -262,6 +267,11 @@ return true;
       int memId;                 /* Register holding max rowid */
       int addr;                  /* A VDBE address */
       Vdbe v = pParse.pVdbe;   /* VDBE under construction */
+
+      /* This routine is never called during trigger-generation.  It is
+      ** only called from the top-level */
+      Debug.Assert( pParse.pTriggerTab == null );
+      Debug.Assert( pParse == sqlite3ParseToplevel( pParse ) );
 
       Debug.Assert( v != null );   /* We failed long ago if this is not so */
       for ( p = pParse.pAinc ; p != null ; p = p.pNext )
@@ -499,7 +509,6 @@ return true;
       int addrCont = 0;     /* Top of insert loop. Label "C" in templates 3 and 4 */
       int addrSelect = 0;   /* Address of coroutine that implements the SELECT */
       SelectDest dest;      /* Destination for SELECT on rhs of INSERT */
-      int newIdx = -1;      /* VdbeCursor for the NEW pseudo-table */
       int iDb;              /* Index of database holding TABLE */
       Db pDb;               /* The database containing table being inserted into */
       bool appendFlag = false;   /* True if the insert is likely to be an append */
@@ -592,12 +601,6 @@ isView = false;
       if ( v == null ) goto insert_cleanup;
       if ( pParse.nested == 0 ) sqlite3VdbeCountChanges( v );
       sqlite3BeginWriteOperation( pParse, ( pSelect != null || pTrigger != null ) ? 1 : 0, iDb );
-
-      /* if there are row triggers, allocate a temp table for new.* references. */
-      if ( pTrigger != null )
-      {
-        newIdx = pParse.nTab++;
-      }
 
 #if !SQLITE_OMIT_XFER_OPT
       /* If the statement is of the form
@@ -832,13 +835,6 @@ isView = false;
         keyColumn = pTab.iPKey;
       }
 
-      /* Open the temp table for FOR EACH ROW triggers
-      */
-      if ( pTrigger != null )
-      {
-        sqlite3VdbeAddOp3( v, OP_OpenPseudo, newIdx, 0, pTab.nCol );
-      }
-
       /* Initialize the count of rows to be inserted
       */
       if ( ( db.flags & SQLITE_CountRows ) != 0 )
@@ -914,9 +910,7 @@ isView = false;
 #if !SQLITE_OMIT_TRIGGER
       if ( ( tmask & TRIGGER_BEFORE ) != 0 )
       {
-        int regTrigRowid;
-        int regCols;
-        int regRec;
+        int regCols = sqlite3GetTempRange( pParse, pTab.nCol + 1 );
 
         /* build the NEW.* reference row.  Note that if there is an INTEGER
         ** PRIMARY KEY into which a NULL is being inserted, that NULL will be
@@ -924,27 +918,26 @@ isView = false;
         ** we do not know what the unique ID will be (because the insert has
         ** not happened yet) so we substitute a rowid of -1
         */
-        regTrigRowid = sqlite3GetTempReg( pParse );
         if ( keyColumn < 0 )
         {
-          sqlite3VdbeAddOp2( v, OP_Integer, -1, regTrigRowid );
+          sqlite3VdbeAddOp2( v, OP_Integer, -1, regCols );
         }
         else
         {
           int j1;
           if ( useTempTable )
           {
-            sqlite3VdbeAddOp3( v, OP_Column, srcTab, keyColumn, regTrigRowid );
+            sqlite3VdbeAddOp3( v, OP_Column, srcTab, keyColumn, regCols );
           }
           else
           {
             Debug.Assert( pSelect == null );  /* Otherwise useTempTable is true */
-            sqlite3ExprCode( pParse, pList.a[keyColumn].pExpr, regTrigRowid );
+            sqlite3ExprCode( pParse, pList.a[keyColumn].pExpr, regCols );
           }
-          j1 = sqlite3VdbeAddOp1( v, OP_NotNull, regTrigRowid );
-          sqlite3VdbeAddOp2( v, OP_Integer, -1, regTrigRowid );
+          j1 = sqlite3VdbeAddOp1( v, OP_NotNull, regCols );
+          sqlite3VdbeAddOp2( v, OP_Integer, -1, regCols );
           sqlite3VdbeJumpHere( v, j1 );
-          sqlite3VdbeAddOp1( v, OP_MustBeInt, regTrigRowid );
+          sqlite3VdbeAddOp1( v, OP_MustBeInt, regCols );
         }
         /* Cannot have triggers on a virtual table. If it were possible,
         ** this block would have to account for hidden column.
@@ -952,7 +945,6 @@ isView = false;
         Debug.Assert( !IsVirtual( pTab ) );
         /* Create the new column data
         */
-        regCols = sqlite3GetTempRange( pParse, pTab.nCol );
         for ( i = 0 ; i < pTab.nCol ; i++ )
         {
           if ( pColumn == null )
@@ -968,20 +960,18 @@ isView = false;
           }
           if ( pColumn != null && j >= pColumn.nId )
           {
-            sqlite3ExprCode( pParse, pTab.aCol[i].pDflt, regCols + i );
+            sqlite3ExprCode( pParse, pTab.aCol[i].pDflt, regCols + i + 1 );
           }
           else if ( useTempTable )
           {
-            sqlite3VdbeAddOp3( v, OP_Column, srcTab, j, regCols + i );
+            sqlite3VdbeAddOp3( v, OP_Column, srcTab, j, regCols + i + 1 );
           }
           else
           {
             Debug.Assert( pSelect == null ); /* Otherwise useTempTable is true */
-            sqlite3ExprCodeAndCache( pParse, pList.a[j].pExpr, regCols + i );
+            sqlite3ExprCodeAndCache( pParse, pList.a[j].pExpr, regCols + i + 1 );
           }
         }
-        regRec = sqlite3GetTempReg( pParse );
-        sqlite3VdbeAddOp3( v, OP_MakeRecord, regCols, pTab.nCol, regRec );
 
         /* If this is an INSERT on a view with an INSTEAD OF INSERT trigger,
         ** do not attempt any conversions before assembling the record.
@@ -990,21 +980,15 @@ isView = false;
         */
         if ( !isView )
         {
+          sqlite3VdbeAddOp2( v, OP_Affinity, regCols + 1, pTab.nCol );
           sqlite3TableAffinityStr( v, pTab );
         }
-        sqlite3VdbeAddOp3( v, OP_Insert, newIdx, regRec, regTrigRowid );
-        sqlite3ReleaseTempReg( pParse, regRec );
-        sqlite3ReleaseTempReg( pParse, regTrigRowid );
-        sqlite3ReleaseTempRange( pParse, regCols, pTab.nCol );
 
         /* Fire BEFORE or INSTEAD OF triggers */
-        u32 Ref0_1 = 0;
-        u32 Ref0_2 = 0;
-        if ( sqlite3CodeRowTrigger( pParse, pTrigger, TK_INSERT, null, TRIGGER_BEFORE,
-        pTab, newIdx, -1, onError, endOfLoop, ref Ref0_1, ref Ref0_2 ) != 0 )
-        {
-          goto insert_cleanup;
-        }
+        sqlite3CodeRowTrigger( pParse, pTrigger, TK_INSERT, null, TRIGGER_BEFORE,
+            pTab, -1, regCols - pTab.nCol - 1, onError, endOfLoop );
+
+        sqlite3ReleaseTempRange( pParse, regCols, pTab.nCol + 1 );
       }
 #endif
 
@@ -1136,17 +1120,17 @@ isView = false;
     if( IsVirtual(pTab) ){
       const char *pVTab = (const char *)sqlite3GetVTable(db, pTab);
       sqlite3VtabMakeWritable(pParse, pTab);
-      sqlite3VdbeAddOp4(v, OP_VUpdate, 1, pTab->nCol+2, regIns, pVTab, P4_VTAB);
+      sqlite3VdbeAddOp4(v, OP_VUpdate, 1, pTab.nCol+2, regIns, pVTab, P4_VTAB);
+      sqlite3MayAbort(pParse);
     }else
 #endif
         {
           int isReplace = 0;    /* Set to true if constraints may cause a replace */
           sqlite3GenerateConstraintChecks( pParse, pTab, baseCur, regIns, aRegIdx,
-          keyColumn >= 0, false, onError, endOfLoop, ref isReplace
+            keyColumn >= 0?1:0, false, onError, endOfLoop, ref isReplace
           );
           sqlite3CompleteInsertion(
-          pParse, pTab, baseCur, regIns, aRegIdx, false,
-          ( tmask & TRIGGER_AFTER ) != 0 ? newIdx : -1, appendFlag, isReplace == 0
+         pParse, pTab, baseCur, regIns, aRegIdx, false, appendFlag, isReplace == 0
           );
         }
       }
@@ -1162,13 +1146,8 @@ isView = false;
       if ( pTrigger != null )
       {
         /* Code AFTER triggers */
-        u32 Ref0_1 = 0;
-        u32 Ref0_2 = 0;
-        if ( sqlite3CodeRowTrigger( pParse, pTrigger, TK_INSERT, null, TRIGGER_AFTER,
-        pTab, newIdx, -1, onError, endOfLoop, ref Ref0_1, ref Ref0_2 ) != 0 )
-        {
-          goto insert_cleanup;
-        }
+        sqlite3CodeRowTrigger( pParse, pTrigger, TK_INSERT, null, TRIGGER_AFTER,
+            pTab, -1, regData - 2 - pTab.nCol, onError, endOfLoop );
       }
 #endif
 
@@ -1203,7 +1182,7 @@ insert_end:
       ** maximum rowid counter values recorded while inserting into
       ** autoincrement tables.
       */
-      if ( pParse.nested == 0 && pParse.trigStack == null )
+      if ( pParse.nested == 0 && pParse.pTriggerTab == null )
       {
         sqlite3AutoincrementEnd( pParse );
       }
@@ -1213,7 +1192,7 @@ insert_end:
       ** generating code because of a call to sqlite3NestedParse(), do not
       ** invoke the callback function.
       */
-      if ( ( db.flags & SQLITE_CountRows ) != 0 && pParse.nested == 0 && pParse.trigStack == null )
+      if ( ( db.flags & SQLITE_CountRows ) !=0 && 0==pParse.nested && null==pParse.pTriggerTab )
       {
         sqlite3VdbeAddOp2( v, OP_ResultRow, regRowCount, 1 );
         sqlite3VdbeSetNumCols( v, 1 );
@@ -1225,7 +1204,7 @@ insert_cleanup:
       sqlite3ExprListDelete( db, ref pList );
       sqlite3SelectDelete( db, ref pSelect );
       sqlite3IdListDelete( db, ref pColumn );
-      //sqlite3DbFree( db, ref aRegIdx );
+      sqlite3DbFree( db, ref aRegIdx );
     }
 
     /*
@@ -1233,26 +1212,24 @@ insert_cleanup:
     **
     ** The input is a range of consecutive registers as follows:
     **
-    **    1.  The rowid of the row to be updated before the update.  This
-    **        value is omitted unless we are doing an UPDATE that involves a
-    **        change to the record number or writing to a virtual table.
+    **    1.  The rowid of the row after the update.
     **
-    **    2.  The rowid of the row after the update.
-    **
-    **    3.  The data in the first column of the entry after the update.
+    **    2.  The data in the first column of the entry after the update.
     **
     **    i.  Data from middle columns...
     **
     **    N.  The data in the last column of the entry after the update.
     **
-    ** The regRowid parameter is the index of the register containing (2).
+    ** The regRowid parameter is the index of the register containing (1).
     **
-    ** The old rowid shown as entry (1) above is omitted unless both isUpdate
-    ** and rowidChng are 1.  isUpdate is true for UPDATEs and false for
-    ** INSERTs.  RowidChng means that the new rowid is explicitly specified by
-    ** the update or insert statement.  If rowidChng is false, it means that
-    ** the rowid is computed automatically in an insert or that the rowid value
-    ** is not modified by the update.
+    ** If isUpdate is true and rowidChng is non-zero, then rowidChng contains
+    ** the address of a register containing the rowid before the update takes
+    ** place. isUpdate is true for UPDATEs and false for INSERTs. If isUpdate
+    ** is false, indicating an INSERT statement, then a non-zero rowidChng 
+    ** indicates that the rowid was explicitly specified as part of the
+    ** INSERT statement. If rowidChng is false, it means that  the rowid is
+    ** computed automatically in an insert or that the rowid value is not 
+    ** modified by an update.
     **
     ** The code generated by this routine store new index entries into
     ** registers identified by aRegIdx[].  No index entry is created for
@@ -1311,7 +1288,7 @@ insert_cleanup:
     int baseCur,        /* Index of a read/write cursor pointing at pTab */
     int regRowid,       /* Index of the range of input registers */
     int[] aRegIdx,      /* Register used by each index.  0 for unused indices */
-    bool rowidChng,     /* True if the rowid might collide with existing entry */
+    int rowidChng,      /* True if the rowid might collide with existing entry */
     bool isUpdate,      /* True for UPDATE, False for INSERT */
     int overrideError,  /* Override onError to this if not OE_Default */
     int ignoreDest,     /* Jump to this label on an OE_Ignore resolution */
@@ -1329,7 +1306,7 @@ insert_cleanup:
       int iCur;            /* Table cursor number */
       Index pIdx;         /* Pointer to one of the indices */
       bool seenReplace = false; /* True if REPLACE is used to resolve INT PK conflict */
-      bool hasTwoRowids = ( isUpdate && rowidChng );
+      int regOldRowid = (rowidChng !=0 && isUpdate) ? rowidChng : regRowid;
 
       v = sqlite3GetVdbe( pParse );
       Debug.Assert( v != null );
@@ -1364,8 +1341,12 @@ insert_cleanup:
         || onError == OE_Ignore || onError == OE_Replace );
         switch ( onError )
         {
-          case OE_Rollback:
           case OE_Abort:
+            { 
+              sqlite3MayAbort( pParse );
+              goto case OE_Fail;
+            }
+          case OE_Rollback:
           case OE_Fail:
             {
               string zMsg;
@@ -1407,7 +1388,7 @@ insert_cleanup:
         }
         else
         {
-          sqlite3VdbeAddOp2( v, OP_Halt, SQLITE_CONSTRAINT, onError );
+          sqlite3HaltConstraint( pParse, onError, (string)null, 0 );
         }
         sqlite3VdbeResolveLabel( v, allOk );
       }
@@ -1417,7 +1398,7 @@ insert_cleanup:
 ** of the new record does not previously exist.  Except, if this
 ** is an UPDATE and the primary key is not changing, that is OK.
 */
-      if ( rowidChng )
+      if ( rowidChng !=0)
       {
         onError = pTab.keyConf;
         if ( overrideError != OE_Default )
@@ -1433,7 +1414,7 @@ insert_cleanup:
         {
           if ( isUpdate )
           {
-            j2 = sqlite3VdbeAddOp3( v, OP_Eq, regRowid, 0, regRowid - 1 );
+            j2 = sqlite3VdbeAddOp3( v, OP_Eq, regRowid, 0, rowidChng );
           }
           j3 = sqlite3VdbeAddOp3( v, OP_NotExists, baseCur, 0, regRowid );
           switch ( onError )
@@ -1448,13 +1429,37 @@ insert_cleanup:
             case OE_Abort:
             case OE_Fail:
               {
-                sqlite3VdbeAddOp4( v, OP_Halt, SQLITE_CONSTRAINT, onError, 0,
-                   "PRIMARY KEY must be unique", P4_STATIC );
+                sqlite3HaltConstraint(
+                  pParse, onError, "PRIMARY KEY must be unique", P4_STATIC );
                 break;
               }
             case OE_Replace:
               {
-                sqlite3GenerateRowIndexDelete( pParse, pTab, baseCur, 0 );
+                /* If there are DELETE triggers on this table and the
+                ** recursive-triggers flag is set, call GenerateRowDelete() to
+                ** remove the conflicting row from the the table. This will fire
+                ** the triggers and remove both the table and index b-tree entries.
+                **
+                ** Otherwise, if there are no triggers or the recursive-triggers
+                ** flag is not set, call GenerateRowIndexDelete(). This removes
+                ** the index b-tree entries only. The table b-tree entry will be 
+                ** replaced by the new entry when it is inserted.  */
+                Trigger pTrigger = null;
+                if (( pParse.db.flags & SQLITE_RecTriggers )!=0)
+                {
+                  int iDummy = 0;
+                  pTrigger = sqlite3TriggersExist( pParse, pTab, TK_DELETE, null, ref iDummy );
+                }
+                if ( pTrigger !=null)
+                {
+                  sqlite3GenerateRowDelete(
+                      pParse, pTab, baseCur, regRowid, 0, pTrigger, OE_Replace
+                  );
+                }
+                else
+                {
+                  sqlite3GenerateRowIndexDelete( pParse, pTab, baseCur, 0 );
+                }
                 seenReplace = true;
                 break;
               }
@@ -1500,7 +1505,7 @@ insert_cleanup:
         }
         sqlite3VdbeAddOp2( v, OP_SCopy, regRowid, regIdx + i );
         sqlite3VdbeAddOp3( v, OP_MakeRecord, regIdx, pIdx.nColumn + 1, aRegIdx[iCur] );
-        sqlite3IndexAffinityStr( v, pIdx );
+        sqlite3VdbeChangeP4( v, -1, sqlite3IndexAffinityStr( v, pIdx ), 0 );
         sqlite3ExprCacheAffinityChange( pParse, regIdx, pIdx.nColumn + 1 );
 
         /* Find out what action to take in case there is an indexing conflict */
@@ -1528,7 +1533,7 @@ insert_cleanup:
 
         /* Check to see if the new index entry will be unique */
         regR = sqlite3GetTempReg( pParse );
-        sqlite3VdbeAddOp2( v, OP_SCopy, regRowid - ( hasTwoRowids ? 1 : 0 ), regR );
+        sqlite3VdbeAddOp2( v, OP_SCopy, regOldRowid, regR );
         j3 = sqlite3VdbeAddOp4( v, OP_IsUnique, baseCur + iCur + 1, 0,
         regR, regIdx,//regR, SQLITE_INT_TO_PTR(regIdx),
         P4_INT32 );
@@ -1561,8 +1566,8 @@ insert_cleanup:
               sqlite3StrAccumAppend( errMsg,
               pIdx.nColumn > 1 ? " are not unique" : " is not unique", -1 );
               zErr = sqlite3StrAccumFinish( errMsg );
-              sqlite3VdbeAddOp4( v, OP_Halt, SQLITE_CONSTRAINT, onError, 0, zErr, 0 );
-              //sqlite3DbFree( errMsg.db, zErr );
+              sqlite3HaltConstraint( pParse, onError, zErr, 0 );
+              sqlite3DbFree( errMsg.db, ref zErr );
               break;
             }
           case OE_Ignore:
@@ -1573,8 +1578,16 @@ insert_cleanup:
             }
           default:
             {
+              Trigger pTrigger = null;
               Debug.Assert( onError == OE_Replace );
-              sqlite3GenerateRowDelete( pParse, pTab, baseCur, regR, 0 );
+              if (( pParse.db.flags & SQLITE_RecTriggers )!=0)
+              {
+                int iDummy = 0;
+                pTrigger = sqlite3TriggersExist( pParse, pTab, TK_DELETE, null, ref iDummy );
+              }
+              sqlite3GenerateRowDelete(
+                  pParse, pTab, baseCur, regR, 0, pTrigger, OE_Replace
+              );
               seenReplace = true;
               break;
             }
@@ -1604,7 +1617,6 @@ insert_cleanup:
     int regRowid,       /* Range of content */
     int[] aRegIdx,      /* Register used by each index.  0 for unused indices */
     bool isUpdate,      /* True for UPDATE, False for INSERT */
-    int newIdx,         /* Index of NEW table for triggers.  -1 if none */
     bool appendBias,    /* True if this is likely to be an append */
     bool useSeekResult  /* True to set the USESEEKRESULT flag on OP_[Idx]Insert */
     )
@@ -1635,12 +1647,6 @@ insert_cleanup:
       sqlite3VdbeAddOp3( v, OP_MakeRecord, regData, pTab.nCol, regRec );
       sqlite3TableAffinityStr( v, pTab );
       sqlite3ExprCacheAffinityChange( pParse, regData, pTab.nCol );
-#if !SQLITE_OMIT_TRIGGER
-      if ( newIdx >= 0 )
-      {
-        sqlite3VdbeAddOp3( v, OP_Insert, newIdx, regRec, regRowid );
-      }
-#endif
       if ( pParse.nested != 0 )
       {
         pik_flags = 0;
@@ -2019,8 +2025,8 @@ insert_cleanup:
       {
         addr1 = sqlite3VdbeAddOp2( v, OP_Rowid, iSrc, regRowid );
         addr2 = sqlite3VdbeAddOp3( v, OP_NotExists, iDest, 0, regRowid );
-        sqlite3VdbeAddOp4( v, OP_Halt, SQLITE_CONSTRAINT, onError, 0,
-        "PRIMARY KEY must be unique", P4_STATIC );
+        sqlite3HaltConstraint(
+            pParse, onError, "PRIMARY KEY must be unique", P4_STATIC );
         sqlite3VdbeJumpHere( v, addr2 );
         autoIncStep( pParse, regAutoinc, regRowid );
       }

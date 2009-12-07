@@ -13,7 +13,7 @@ using u64 = System.UInt64;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -35,11 +35,11 @@ namespace CS_SQLite3
     ** other files are for internal use by SQLite and should not be
     ** accessed by users of the library.
     **
-    ** $Id: main.c,v 1.562 2009/07/20 11:32:03 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
@@ -62,6 +62,7 @@ namespace CS_SQLite3
     public static string sqlite3_version = SQLITE_VERSION;
 #endif
     public static string sqlite3_libversion() { return sqlite3_version; }
+    public static string sqlite3_sourceid(){ return SQLITE_SOURCE_ID; }
     public static int sqlite3_libversion_number() { return SQLITE_VERSION_NUMBER; }
     public static int sqlite3_threadsafe() { return SQLITE_THREADSAFE; }
 
@@ -162,6 +163,7 @@ return rc;
       */
       pMaster = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
       sqlite3_mutex_enter( pMaster );
+      sqlite3GlobalConfig.isMutexInit = 1;
       if ( sqlite3GlobalConfig.isMallocInit == 0 )
       {
         //rc = sqlite3MallocInit();
@@ -171,7 +173,8 @@ return rc;
         sqlite3GlobalConfig.isMallocInit = 1;
         if ( sqlite3GlobalConfig.pInitMutex == null )
         {
-          sqlite3GlobalConfig.pInitMutex = sqlite3MutexAlloc( SQLITE_MUTEX_RECURSIVE );
+          sqlite3GlobalConfig.pInitMutex = 
+            sqlite3MutexAlloc( SQLITE_MUTEX_RECURSIVE );
           if ( sqlite3GlobalConfig.bCoreMutex && sqlite3GlobalConfig.pInitMutex == null )
           {
             rc = SQLITE_NOMEM;
@@ -183,10 +186,9 @@ return rc;
         sqlite3GlobalConfig.nRefInitMutex++;
       }
       sqlite3_mutex_leave( pMaster );
-      /* If unable to initialize the malloc subsystem, then return early.
-      ** There is little hope of getting SQLite to run if the malloc
-      ** subsystem cannot be initialized.
-      */
+      /* If rc is not SQLITE_OK at this point, then either the malloc
+      ** subsystem could not be initialized or the system failed to allocate
+      ** the pInitMutex mutex. Return an error in either case.  */
       if ( rc != SQLITE_OK )
       {
         return rc;
@@ -210,9 +212,12 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
         FuncDefHash pHash = sqlite3GlobalFunctions;
 #endif
         sqlite3RegisterGlobalFunctions();
-        rc = sqlite3PcacheInitialize();
+        if( sqlite3GlobalConfig.isPCacheInit==0 ){
+          rc = sqlite3PcacheInitialize();
+        }
         if ( rc == SQLITE_OK )
         {
+          sqlite3GlobalConfig.isPCacheInit = 1;
           rc = sqlite3_os_init();
         }
         if ( rc == SQLITE_OK )
@@ -268,20 +273,28 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
     ** on when SQLite is already shut down.  If SQLite is already shut down
     ** when this routine is invoked, then this routine is a harmless no-op.
     */
-    static int sqlite3_shutdown()
-    {
-      if ( sqlite3GlobalConfig.isInit != 0 )
-      {
-        sqlite3GlobalConfig.isMallocInit = 0;
-        sqlite3PcacheShutdown();
-        sqlite3_os_end();
-        sqlite3_reset_auto_extension();
-        //sqlite3MallocEnd();
-        sqlite3MutexEnd();
-        sqlite3GlobalConfig.isInit = 0;
-      }
-      return SQLITE_OK;
-    }
+static int sqlite3_shutdown()
+{
+if ( sqlite3GlobalConfig.isInit != 0 )
+{
+sqlite3_os_end();
+sqlite3_reset_auto_extension();
+sqlite3GlobalConfig.isInit = 0;
+}
+if( sqlite3GlobalConfig.isPCacheInit !=0){
+sqlite3PcacheShutdown();
+sqlite3GlobalConfig.isPCacheInit = 0;
+}
+if( sqlite3GlobalConfig.isMallocInit !=0){
+//sqlite3MallocEnd();
+sqlite3GlobalConfig.isMallocInit = 0;
+}
+if( sqlite3GlobalConfig.isMutexInit!=0 ){
+sqlite3MutexEnd();
+sqlite3GlobalConfig.isMutexInit = 0;
+}
+return SQLITE_OK;
+}
 
     /*
     ** This API allows applications to modify the global configuration of
@@ -755,7 +768,7 @@ break;
       {
         Savepoint pTmp = db.pSavepoint;
         db.pSavepoint = pTmp.pNext;
-        //sqlite3DbFree( db, ref pTmp );
+        sqlite3DbFree( db, ref pTmp );
       }
       db.nSavepoint = 0;
       db.nStatement = 0;
@@ -847,7 +860,7 @@ break;
           while ( p != null )
           {
             pNext = p.pNext;
-            //sqlite3DbFree( db, p );
+            sqlite3DbFree( db, ref p );
             p = pNext;
           }
 
@@ -865,7 +878,7 @@ break;
             pColl[j].xDel( ref  pColl[j].pUser );
           }
         }
-        //sqlite3DbFree( db, ref pColl );
+        sqlite3DbFree( db, ref pColl );
       }
       sqlite3HashClear( db.aCollSeq );
 #if !SQLITE_OMIT_VIRTUALTABLE
@@ -874,7 +887,7 @@ Module pMod = (Module *)sqliteHashData(i);
 if( pMod.xDestroy ){
 pMod.xDestroy(pMod.pAux);
 }
-//sqlite3DbFree(db,ref pMod);
+sqlite3DbFree(db,ref pMod);
 }
 sqlite3HashClear(&db.aModule);
 #endif
@@ -896,7 +909,7 @@ sqlite3HashClear(&db.aModule);
       ** the same sqliteMalloc() as the one that allocates the database
       ** structure?
       */
-      //sqlite3DbFree( db, ref db.aDb[1].pSchema );
+      sqlite3DbFree( db, ref db.aDb[1].pSchema );
       sqlite3_mutex_leave( db.mutex );
       db.magic = SQLITE_MAGIC_CLOSED;
       sqlite3_mutex_free( ref db.mutex );
@@ -1274,7 +1287,7 @@ sqlite3_mutex_enter(db.mutex);
 Debug.Assert( 0==db.mallocFailed );
 zFunc8 = sqlite3Utf16to8(db, zFunctionName, -1);
 rc = sqlite3CreateFunc(db, zFunc8, nArg, eTextRep, p, xFunc, xStep, xFinal);
-//sqlite3DbFree(db,ref zFunc8);
+sqlite3DbFree(db,ref zFunc8);
 rc = sqlite3ApiExit(db, rc);
 sqlite3_mutex_leave(db.mutex);
 return rc;
@@ -1630,7 +1643,8 @@ return z;
     static int createCollation(
     sqlite3 db,
     string zName,
-    int enc,
+    u8 enc,
+    u8 collType,
     object pCtx,
     dxCompare xCompare,//)(void*,int,const void*,int,const void*),
     dxDelCollSeq xDel//)(void*)
@@ -1705,6 +1719,7 @@ return z;
         pColl.pUser = pCtx;
         pColl.xDel = xDel;
         pColl.enc = (u8)( enc2 | ( enc & SQLITE_UTF16_ALIGNED ) );
+        pColl.type = collType;
       }
       sqlite3Error( db, SQLITE_OK, 0 );
       return SQLITE_OK;
@@ -1726,6 +1741,7 @@ SQLITE_MAX_FUNCTION_ARG,
 SQLITE_MAX_ATTACHED,
 SQLITE_MAX_LIKE_PATTERN_LENGTH,
 SQLITE_MAX_VARIABLE_NUMBER,
+SQLITE_MAX_TRIGGER_DEPTH,
 };
 
     /*
@@ -1760,6 +1776,9 @@ SQLITE_MAX_VARIABLE_NUMBER,
     //#endif
     //#if SQLITE_MAX_COLUMN>32767
     //# error SQLITE_MAX_COLUMN must not exceed 32767
+    //#endif
+    //#if SQLITE_MAX_TRIGGER_DEPTH<1
+    //# error SQLITE_MAX_TRIGGER_DEPTH must be at least 1
     //#endif
 
     /*
@@ -1804,7 +1823,6 @@ SQLITE_MAX_VARIABLE_NUMBER,
     {
       sqlite3 db;
       int rc;
-      CollSeq pColl;
       int isThreadsafe;
 
       ppDb = null;
@@ -1828,6 +1846,14 @@ SQLITE_MAX_VARIABLE_NUMBER,
       else
       {
         isThreadsafe = sqlite3GlobalConfig.bFullMutex ? 1 : 0;
+      }
+      if (( flags & SQLITE_OPEN_PRIVATECACHE )!=0)
+      {
+        flags &= ~SQLITE_OPEN_SHAREDCACHE;
+      }
+      else if ( sqlite3GlobalConfig.sharedCacheEnabled)
+      {
+        flags |= SQLITE_OPEN_SHAREDCACHE;
       }
 
       /* Remove harmful bits from the flags parameter
@@ -1880,6 +1906,9 @@ SQLITE_MAX_VARIABLE_NUMBER,
 #if  SQLITE_ENABLE_LOAD_EXTENSION
 | SQLITE_LoadExtension
 #endif
+#if SQLITE_DEFAULT_RECURSIVE_TRIGGERS
+                 | SQLITE_RecTriggers
+#endif
 ;
       sqlite3HashInit( db.aCollSeq );
 #if !SQLITE_OMIT_VIRTUALTABLE
@@ -1897,10 +1926,14 @@ sqlite3HashInit( ref db.aModule );
       ** and UTF-16, so add a version for each to avoid any unnecessary
       ** conversions. The only error that can occur here is a malloc() failure.
       */
-      createCollation( db, "BINARY", SQLITE_UTF8, 0, (dxCompare)binCollFunc, null );
-      createCollation( db, "BINARY", SQLITE_UTF16BE, 0, (dxCompare)binCollFunc, null );
-      createCollation( db, "BINARY", SQLITE_UTF16LE, 0, (dxCompare)binCollFunc, null );
-      createCollation( db, "RTRIM", SQLITE_UTF8, 1, (dxCompare)binCollFunc, null );
+      createCollation( db, "BINARY", SQLITE_UTF8, SQLITE_COLL_BINARY, 0,
+                       binCollFunc, null );
+      createCollation( db, "BINARY", SQLITE_UTF16BE, SQLITE_COLL_BINARY, 0,
+                      binCollFunc, null );
+      createCollation( db, "BINARY", SQLITE_UTF16LE, SQLITE_COLL_BINARY, 0,
+                      binCollFunc, null );
+      createCollation( db, "RTRIM", SQLITE_UTF8, SQLITE_COLL_USER, 1,
+                      binCollFunc, null );
       //if ( db.mallocFailed != 0 )
       //{
       //  goto opendb_out;
@@ -1909,15 +1942,8 @@ sqlite3HashInit( ref db.aModule );
       Debug.Assert( db.pDfltColl != null );
 
       /* Also add a UTF-8 case-insensitive collation sequence. */
-      createCollation( db, "NOCASE", SQLITE_UTF8, 0, nocaseCollatingFunc, null );
-
-      /* Set flags on the built-in collating sequences */
-      db.pDfltColl.type = SQLITE_COLL_BINARY;
-      pColl = sqlite3FindCollSeq( db, SQLITE_UTF8, "NOCASE", 0 );
-      if ( pColl != null )
-      {
-        pColl.type = SQLITE_COLL_NOCASE;
-      }
+      createCollation( db, "NOCASE", SQLITE_UTF8, SQLITE_COLL_NOCASE, 0,
+                       nocaseCollatingFunc, null );
 
       /* Open the backend database driver */
       db.openFlags = flags;
@@ -2113,7 +2139,7 @@ return sqlite3ApiExit(0, rc);
       int rc;
       sqlite3_mutex_enter( db.mutex );
       //Debug.Assert( 0 == db.mallocFailed );
-      rc = createCollation( db, zName, enc, pCtx, xCompare, null );
+      rc = createCollation( db, zName, (u8)enc, SQLITE_COLL_USER, pCtx, xCompare, null );
       rc = sqlite3ApiExit( db, rc );
       sqlite3_mutex_leave( db.mutex );
       return rc;
@@ -2134,7 +2160,7 @@ return sqlite3ApiExit(0, rc);
       int rc;
       sqlite3_mutex_enter( db.mutex );
       //Debug.Assert( 0 == db.mallocFailed );
-      rc = createCollation( db, zName, enc, pCtx, xCompare, xDel );
+      rc = createCollation( db, zName, (u8)enc, SQLITE_COLL_USER, pCtx, xCompare, xDel );
       rc = sqlite3ApiExit( db, rc );
       sqlite3_mutex_leave( db.mutex );
       return rc;
@@ -2157,8 +2183,8 @@ return sqlite3ApiExit(0, rc);
 //  Debug.Assert( 0==db.mallocFailed );
 //  zName8 = sqlite3Utf16to8(db, zName, -1);
 //  if( zName8 ){
-//    rc = createCollation(db, zName8, enc, pCtx, xCompare, 0);
-//    //sqlite3DbFree(db,ref zName8);
+//    rc = createCollation(db, zName8, (u8)enc, SQLITE_COLL_USER, pCtx, xCompare, 0);
+//    sqlite3DbFree(db,ref zName8);
 //  }
 //  rc = sqlite3ApiExit(db, rc);
 //  sqlite3_mutex_leave(db.mutex);
@@ -2356,13 +2382,13 @@ if( pPrimaryKey ) pPrimaryKey = primarykey;
 if( pAutoinc ) pAutoinc = autoinc;
 
 if( SQLITE_OK==rc && !pTab ){
-//sqlite3DbFree(db, zErrMsg);
+sqlite3DbFree(db, ref zErrMsg);
 zErrMsg = sqlite3MPrintf(db, "no such table column: %s.%s", zTableName,
 zColumnName);
 rc = SQLITE_ERROR;
 }
 sqlite3Error(db, rc, (zErrMsg?"%s":0), zErrMsg);
-//sqlite3DbFree(db, zErrMsg);
+sqlite3DbFree(db, ref zErrMsg);
 rc = sqlite3ApiExit(db, rc);
 sqlite3_mutex_leave(db.mutex);
 return rc;

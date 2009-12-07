@@ -5,7 +5,7 @@ using System.Text;
 using Bitmask = System.UInt64;
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {

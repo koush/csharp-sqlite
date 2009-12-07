@@ -7,7 +7,7 @@ using Bitmask = System.UInt64;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -176,7 +176,7 @@ namespace CS_SQLite3
       }
       sqlite3TestBinToHex( zBuf, got );
       TCL.Tcl_AppendResult( interp, System.Text.Encoding.UTF8.GetString( zBuf ).Substring( 0, got * 2 ) );
-      zBuf = null;// //sqlite3DbFree( db, ref zBuf );
+      zBuf = null;// sqlite3DbFree( db, ref zBuf );
       return TCL.TCL_OK;
     }
 
@@ -228,7 +228,7 @@ namespace CS_SQLite3
       written = (int)_out.Position;
       _out.Write( aOut, 0, nOut );// written = fwrite( aOut, 1, nOut, _out );
       written = (int)_out.Position - written;
-      aOut = null;// //sqlite3DbFree( db, ref aOut );
+      aOut = null;// sqlite3DbFree( db, ref aOut );
       _out.Flush();
       _out.Close();// fclose( _out );
       TCL.Tcl_SetObjResult( interp, TCL.Tcl_NewIntObj( written ) );
@@ -283,7 +283,7 @@ namespace CS_SQLite3
         if ( nOut > 2 ) aNum[4 - nOut + 2] = aOut[2];
         if ( nOut > 3 ) aNum[4 - nOut + 3] = aOut[3];
       }
-      aOut = null;// //sqlite3DbFree( db, ref aOut );
+      aOut = null;// sqlite3DbFree( db, ref aOut );
       val = ( aNum[0] << 24 ) | ( aNum[1] << 16 ) | ( aNum[2] << 8 ) | aNum[3];
       TCL.Tcl_SetObjResult( interp, TCL.Tcl_NewIntObj( val ) );
       return TCL.TCL_OK;
@@ -378,7 +378,7 @@ namespace CS_SQLite3
     //  nOut = sqlite3Utf8To8(z);
     //  sqlite3TestBinToHex(z,nOut);
     //  TCL.Tcl_AppendResult(interp, (char*)z, 0);
-    //  //sqlite3DbFree(db,z);
+    //  sqlite3DbFree(db,z);
     //#endif
     //  return TCL.TCL_OK;
     //}

@@ -9,7 +9,7 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using sqlite3_int64 = System.Int64;
 using Pgno = System.UInt32;
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using DbPage = csSQLite.PgHdr;
 
@@ -1704,7 +1704,7 @@ return SQLITE_CORRUPT_BKPT;
           u16 next, size;
           if (pc < iCellFirst || pc > iCellLast)
           {
-            /* Free block is off the page */
+            /* Start of free block is off the page */
 #if SQLITE_DEBUG || DEBUG
             return SQLITE_CORRUPT_BKPT();
 #else
@@ -1713,9 +1713,10 @@ return SQLITE_CORRUPT_BKPT;
           }
           next = (u16)get2byte(data, pc);
           size = (u16)get2byte(data, pc + 2);
-          if (next > 0 && next <= pc + size + 3)
+          if ( ( next > 0 && next <= pc + size + 3 ) || pc + size > usableSize )
           {
-            /* Free blocks must be in ascending order */
+            /* Free blocks must be in ascending order. And the last byte of
+      ** the free-block must lie on the database page.  */
 #if SQLITE_DEBUG || DEBUG
             return SQLITE_CORRUPT_BKPT();
 #else
@@ -2022,7 +2023,7 @@ p.lock.iTable = 1;
 ** existing BtShared object that we can share with
 */
 if( isMemdb==null && zFilename && zFilename[0] ){
-if( sqlite3GlobalConfig.sharedCacheEnabled ){
+if( vfsFlags & SQLITE_OPEN_SHAREDCACHE ){
 int nFullPathname = pVfs.mxPathname+1;
 string zFullPathname = sqlite3Malloc(nFullPathname);
 sqlite3_mutex *mutexShared;
@@ -5051,9 +5052,13 @@ return SQLITE_CORRUPT_BKPT;
               //  goto moveto_finish;
               //}
               rc = accessPayload(pCur, 0, (u32)nCell, pCellKey, 0);
+              if ( rc !=0 )
+              {
+                pCellKey = null;// sqlite3_free( pCellKey );
+                goto moveto_finish;
+              }
               c = sqlite3VdbeRecordCompare(nCell, pCellKey, pIdxKey);
-              pCellKey = null;// sqlite3_free( ref pCellKey );
-              if (rc != 0) goto moveto_finish;
+              pCellKey = null;// sqlite3_free( pCellKey );
             }
           }
           if (c == 0)
@@ -6376,8 +6381,8 @@ pRC = SQLITE_CORRUPT_BKPT;
     ** in exchange for a larger degradation in INSERT and UPDATE performance.
     ** The value of NN appears to give the best results overall.
     */
-    public const int NN = 1;              /* Number of neighbors on either side of pPage */
-    public const int NB = (NN * 2 + 1);   /* Total pages involved in the balance */
+    static int NN = 1;              /* Number of neighbors on either side of pPage */
+    static int NB = (NN * 2 + 1);   /* Total pages involved in the balance */
 
 #if !SQLITE_OMIT_QUICKBALANCE
     /*
@@ -7568,21 +7573,23 @@ int balance_deeper_called = 0;
     ** a positive value if pCur points at an etry that is larger than
     ** (pKey, nKey)).
     **
-    ** If the seekResult parameter is 0, then cursor pCur may point to any
-    ** entry or to no entry at all. In this case this function has to seek
+    ** If the seekResult parameter is non-zero, then the caller guarantees that
+    ** cursor pCur is pointing at the existing copy of a row that is to be
+    ** overwritten.  If the seekResult parameter is 0, then cursor pCur may
+    ** point to any entry or to no entry at all and so this function has to seek
     ** the cursor before the new key can be inserted.
     */
     static int sqlite3BtreeInsert(
     BtCursor pCur,                /* Insert data into the table of this cursor */
     byte[] pKey, i64 nKey,        /* The key of the new record */
     byte[] pData, int nData,      /* The data of the new record */
-    int nZero,                     /* Number of extra 0 bytes to append to data */
-    int appendBias,                /* True if this is likely an append */
-    int seekResult                 /* Result of prior MovetoUnpacked() call */
+    int nZero,                    /* Number of extra 0 bytes to append to data */
+    int appendBias,               /* True if this is likely an append */
+    int seekResult                /* Result of prior MovetoUnpacked() call */
     )
     {
       int rc;
-      int loc = seekResult;
+      int loc = seekResult;       /* -1: before desired location  +1: after */
       int szNew = 0;
       int idx;
       MemPage pPage;
@@ -9113,5 +9120,6 @@ Debug.Assert(!pCur.aOverflow);
 pCur.isIncrblobHandle = 1;
 }
 #endif
+
   }
 }

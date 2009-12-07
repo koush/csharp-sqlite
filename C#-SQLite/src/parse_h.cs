@@ -1,16 +1,15 @@
 /*
+*************************************************************************
 **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
 **  C#-SQLite is an independent reimplementation of the SQLite software library
 **
-*************************************************************************
-**  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/parse_h.cs $
-**  Revision        : $Revision$
-**  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
-**  Last Changed By : $LastChangedBy: noah.hart $
+**  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
+**
+**  $Header$
 *************************************************************************
 */
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {

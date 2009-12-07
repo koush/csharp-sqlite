@@ -7,7 +7,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using Op = csSQLite.VdbeOp;
   using sqlite3_value = csSQLite.Mem;
@@ -109,7 +109,7 @@ sqlite3_mutex mutex = v.db.mutex;
         Vdbe v = (Vdbe)pStmt;
         sqlite3_mutex_enter( v.db.mutex );
         rc = sqlite3VdbeReset( v );
-        sqlite3VdbeMakeReady( v, -1, 0, 0, 0 );
+        sqlite3VdbeMakeReady( v, -1, 0, 0, 0, 0, 0 );
         Debug.Assert( ( rc & ( v.db.errMask ) ) == rc );
         rc = sqlite3ApiExit( v.db, rc );
         sqlite3_mutex_leave( v.db.mutex );
@@ -507,7 +507,7 @@ end_of_step:
           ** sqlite3_errmsg() and sqlite3_errcode().
           */
           string zErr = sqlite3_value_text( db.pErr );
-          //sqlite3DbFree( db, ref v.zErrMsg );
+          sqlite3DbFree( db, ref v.zErrMsg );
           //if ( 0 == db.mallocFailed )
           {
             v.zErrMsg = zErr;// sqlite3DbStrDup(db, zErr);
@@ -595,7 +595,7 @@ end_of_step:
           {
             pMem.z = null;
           }
-          pMem._Mem = new Mem();
+          pMem._Mem = Pool.Allocate_Mem();
           pMem._Mem.flags = 0;
           pMem._SumCtx = new SumCtx();
         }
@@ -748,7 +748,7 @@ failed:
 __attribute__((aligned(8)))
 #endif
         //
-        Mem nullMem = new Mem();//    static const Mem nullMem = {{0}, (double)0, 0, "", 0, MEM_Null, SQLITE_NULL, 0, 0, 0 };
+        Mem nullMem = Pool.Allocate_Mem();//    static const Mem nullMem = {{0}, (double)0, 0, "", 0, MEM_Null, SQLITE_NULL, 0, 0, 0 };
 
         if ( pVm != null && ALWAYS( pVm.db != null ) )
         {

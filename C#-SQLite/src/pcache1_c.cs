@@ -6,7 +6,7 @@ using u32 = System.UInt32;
 
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
   using sqlite3_pcache = csSQLite.PCache1;
@@ -525,6 +525,8 @@ namespace CS_SQLite3
 
     /*
     ** Implementation of the sqlite3_pcache.xShutdown method.
+    ** Note that the static mutex allocated in xInit does 
+    ** not need to be freed.
     */
     static void pcache1Shutdown( object NotUsed )
     {

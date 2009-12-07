@@ -11,7 +11,7 @@ using u64 = System.UInt64;
 using sqlite3_int64 = System.Int64;
 using Pgno = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using DbPage = csSQLite.PgHdr;
 

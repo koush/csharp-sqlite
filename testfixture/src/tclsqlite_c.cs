@@ -5,7 +5,7 @@ using u8 = System.Byte;
 using sqlite_u3264 = System.UInt64;
 using sqlite_int64 = System.Int64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -1701,7 +1701,7 @@ rc = TCL_ERROR;
             }
             nByte = strlen30( zSql );
             string Dummy = null; rc = sqlite3_prepare( pDb.db, zSql, -1, ref pStmt, ref Dummy );
-            //sqlite3DbFree( null, ref zSql );
+            sqlite3DbFree( null, ref zSql );
             if ( rc != 0 )
             {
               TCL.Tcl_AppendResult( interp, "Error: ", sqlite3_errmsg( pDb.db ) );
@@ -3207,7 +3207,7 @@ sqlite3_key(p.db, pKey, nKey);
       {
         TCL.Tcl_SetResult( interp, zErrMsg, TCL.TCL_VOLATILE );
         TCL.Tcl_Free( ref p );
-        zErrMsg = "";// //sqlite3DbFree( db, ref zErrMsg );
+        zErrMsg = "";// sqlite3DbFree( db, ref zErrMsg );
         return TCL.TCL_ERROR;
       }
       p.maxStmt = NUM_PREPARED_STMTS;

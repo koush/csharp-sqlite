@@ -6,7 +6,7 @@ using i16 = System.Int16;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -41,18 +41,17 @@ namespace CS_SQLite3
 
     /*
     ** Invoke the 'collation needed' callback to request a collation sequence
-    ** in the database text encoding of name zName, length nName.
-    ** If the collation sequence
+    ** in the encoding enc of name zName, length nName.
     */
-    static void callCollNeeded( sqlite3 db, string zName )
+    static void callCollNeeded( sqlite3 db, int enc, string zName )
     {
       Debug.Assert( db.xCollNeeded == null || db.xCollNeeded16 == null );
       if ( db.xCollNeeded != null )
       {
         string zExternal = zName;// sqlite3DbStrDup(db, zName);
         if ( zExternal == null ) return;
-        db.xCollNeeded( db.pCollNeededArg, db, db.aDb[0].pSchema.enc, zExternal );//(int)ENC(db), zExternal);
-        //sqlite3DbFree( db, ref  zExternal );
+        db.xCollNeeded( db.pCollNeededArg, db, enc, zExternal );
+        sqlite3DbFree( db, ref  zExternal );
       }
 #if !SQLITE_OMIT_UTF16
 if( db.xCollNeeded16!=null ){
@@ -97,8 +96,7 @@ sqlite3ValueFree(ref pTmp);
     /*
     ** This function is responsible for invoking the collation factory callback
     ** or substituting a collation sequence of a different encoding when the
-    ** requested collation sequence is not available in the database native
-    ** encoding.
+    ** requested collation sequence is not available in the desired encoding.
     **
     ** If it is not NULL, then pColl must point to the database native encoding
     ** collation sequence with name zName, length nName.
@@ -111,6 +109,7 @@ sqlite3ValueFree(ref pTmp);
     */
     static CollSeq sqlite3GetCollSeq(
     sqlite3 db,         /* The database connection */
+    u8 enc,             /* The desired encoding for the collating sequence */
     CollSeq pColl,      /* Collating sequence with native encoding, or NULL */
     string zName        /* Collating sequence name */
     )
@@ -120,15 +119,15 @@ sqlite3ValueFree(ref pTmp);
       p = pColl;
       if ( p == null )
       {
-        p = sqlite3FindCollSeq( db, ENC( db ), zName, 0 );
+        p = sqlite3FindCollSeq( db, enc, zName, 0 );
       }
       if ( p == null || p.xCmp == null )
       {
         /* No collation sequence of this type for this encoding is registered.
         ** Call the collation factory to see if it can supply us with one.
         */
-        callCollNeeded( db, zName );
-        p = sqlite3FindCollSeq( db, ENC( db ), zName, 0 );
+        callCollNeeded( db, enc, zName );
+        p = sqlite3FindCollSeq( db, enc, zName, 0 );
       }
       if ( p != null && p.xCmp == null && synthCollSeq( db, p ) != 0 )
       {
@@ -154,7 +153,8 @@ sqlite3ValueFree(ref pTmp);
       if ( pColl != null )
       {
         string zName = pColl.zName;
-        CollSeq p = sqlite3GetCollSeq( pParse.db, pColl, zName );
+        sqlite3 db = pParse.db;
+        CollSeq p = sqlite3GetCollSeq( db, ENC(db), pColl, zName );
         if ( null == p )
         {
           sqlite3ErrorMsg( pParse, "no such collation sequence: %s", zName );
@@ -228,7 +228,7 @@ sqlite3ValueFree(ref pTmp);
           if ( pDel != null )
           {
     ////        db.mallocFailed = 1;
-            pDel = null; //was  //sqlite3DbFree(db,ref  pDel);
+            pDel = null; //was  sqlite3DbFree(db,ref  pDel);
             pColl = null;
           }
         }
@@ -480,7 +480,7 @@ FuncDefHash pHash = GLOBAL( FuncDefHash, sqlite3GlobalFunctions );
 
     /*
     ** Free all resources held by the schema structure. The void* argument points
-    ** at a Schema struct. This function does not call //sqlite3DbFree(db, ) on the
+    ** at a Schema struct. This function does not call sqlite3DbFree(db, ) on the
     ** pointer itself, it just cleans up subsiduary resources (i.e. the contents
     ** of the schema hash tables).
     **

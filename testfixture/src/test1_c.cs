@@ -6,7 +6,7 @@ using Bitmask = System.UInt64;
 using i64 = System.Int64;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -422,12 +422,12 @@ namespace CS_SQLite3
       TCL.Tcl_DStringInit( ref str );
       zSql = sqlite3_mprintf( argv[2].ToString(), argv[3].ToString() );
       rc = sqlite3_exec( db, zSql, (dxCallback)exec_printf_cb, str, ref zErr );
-      //sqlite3DbFree( db, ref zSql );
+      sqlite3DbFree( db, ref zSql );
       sqlite3_snprintf( 30, ref zBuf, "%d", rc );
       TCL.Tcl_AppendElement( interp, zBuf );
       TCL.Tcl_AppendElement( interp, rc == SQLITE_OK ? str.ToString() : zErr ); //Tcl_DStringValue(ref str)
       TCL.Tcl_DStringFree( ref str );
-      if ( zErr != null ) //sqlite3DbFree( db, ref zErr );
+      if ( zErr != null ) sqlite3DbFree( db, ref zErr );
       if ( sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
       return TCL.TCL_OK;
     }
@@ -570,12 +570,12 @@ namespace CS_SQLite3
       }
       ////zSql[j] = 0;
       rc = sqlite3_exec( db, sb.ToString(), exec_printf_cb, str, ref zErr );
-      //sqlite3DbFree( db, zSql );
+      sqlite3DbFree( db, ref zSql );
       sqlite3_snprintf( 30, ref zBuf, "%d", rc );
       TCL.Tcl_AppendElement( interp, zBuf );
       TCL.Tcl_AppendElement( interp, rc == SQLITE_OK ? str.ToString() : zErr );
       //Tcl_DStringFree(&str);
-      if ( zErr != "" ) //sqlite3DbFree( db, zErr );
+      if ( zErr != "" ) sqlite3DbFree( db, ref zErr );
       if ( sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
       return TCL.TCL_OK;
     }
@@ -630,7 +630,7 @@ namespace CS_SQLite3
         zResult = sqlite3_mprintf( "%z%s%s", zResult, argv[1].ToString(), argv[i].ToString() );
       }
       TCL.Tcl_AppendResult( interp, zResult );
-      ////sqlite3DbFree( db, zResult );
+      //sqlite3DbFree( db, zResult );
       return TCL.TCL_OK;
     }
 
@@ -651,7 +651,7 @@ namespace CS_SQLite3
       int n = 0;
       zStr = sqlite3_mprintf( "%s%n", argv[1].ToString() );
       n = zStr.Length;
-      ////sqlite3DbFree( db, zStr );
+      //sqlite3DbFree( db, zStr );
       TCL.Tcl_SetObjResult( interp, TCL.Tcl_NewIntObj( n ) );
       return TCL.TCL_OK;
     }
@@ -725,7 +725,7 @@ rc = sqlite3_get_table(db, zSql, aResult, 0, 0, zErr);
 rc = sqlite3_get_table(db, zSql, aResult, nRow, nCol, zErr);
 resCount = (nRow+1)*nCol;
 }
-//sqlite3DbFree(db,zSql);
+sqlite3DbFree(db,zSql);
 sqlite3_snprintf(zBuf, "%d", rc);
 Tcl_AppendElement(interp, zBuf);
 if( rc==SQLITE_OK ){
@@ -742,7 +742,7 @@ Tcl_AppendElement(interp, aResult[i] ? aResult[i] : "NULL");
 Tcl_AppendElement(interp, zErr);
 }
 //sqlite3_free_table(aResult);
-if( zErr ) //sqlite3DbFree(db,zErr);
+if( zErr ) sqlite3DbFree(db,zErr);
 if( sqlite3TestErrCode(interp, db, rc) ) return TCL.TCL_ERROR;
 return TCL.TCL_OK;
 }
@@ -938,7 +938,7 @@ Debugger.Break ();    //TODO --
       p.z.Capacity = p.nAlloc;
       //    zNew = sqlite3_realloc(p.z, p.nAlloc);
       //    if( zNew==0 ){
-      //      //sqlite3DbFree(db,p.z);
+      //      sqlite3DbFree(db,p.z);
       //      memset(p, 0, sizeof(*p));
       //      return;
       //    }
@@ -998,7 +998,7 @@ Debugger.Break ();    //TODO --
       sqlite3_value_text( argv[0] ),
       (dxCallback)execFuncCallback, (object)x, ref sDummy );
       sqlite3_result_text( context, x.z.ToString(), x.nUsed, SQLITE_TRANSIENT );
-      x.z = null;// //sqlite3DbFree( db, ref x.z );
+      x.z = null;// sqlite3DbFree( db, ref x.z );
     }
 
     /*
@@ -1386,7 +1386,7 @@ Debugger.Break (); // TODO --
       }
       z = sqlite3_mprintf( argv[1].ToString(), a[0], a[1], a[2] );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1421,7 +1421,7 @@ Debugger.Break (); // TODO --
       }
       z = sqlite3_mprintf( argv[1].ToString(), a[0], a[1], a[2] );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1489,7 +1489,7 @@ Debugger.Break (); // TODO --
       }
       z = sqlite3_mprintf( argv[1].ToString(), a[0], a[1], argc > 4 ? argv[4].ToString() : null );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1528,7 +1528,7 @@ Debugger.Break (); // TODO --
       z = new StringBuilder( n + 1 );//sqlite3Malloc( n+1 );
       sqlite3_snprintf( n, ref z, argv[2].ToString(), a[0], a[1], argc > 4 ? argv[5].ToString() : null );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1561,7 +1561,7 @@ Debugger.Break (); // TODO --
       if ( TCL.Tcl_GetDouble( interp, argv[4], ref r ) ) return TCL.TCL_ERROR;
       z = sqlite3_mprintf( argv[1].ToString(), a[0], a[1], r );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1594,7 +1594,7 @@ Debugger.Break (); // TODO --
       }
       z = sqlite3_mprintf( argv[1].ToString(), r[0] * r[1] );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -1621,7 +1621,7 @@ Debugger.Break (); // TODO --
       }
       z = sqlite3_mprintf( argv[1].ToString(), argv[2].ToString() );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree( db, z );
+      //sqlite3DbFree( db, z );
       return TCL.TCL_OK;
     }
 
@@ -1662,7 +1662,7 @@ Debugger.Break (); // TODO --
       r = System.BitConverter.Int64BitsToDouble( d );// memcpy( &r, d, sizeof( r ) );
       z = sqlite3_mprintf( argv[1].ToString(), r );
       TCL.Tcl_AppendResult( interp, z );
-      ////sqlite3DbFree(db,z);
+      //sqlite3DbFree(db,z);
       return TCL.TCL_OK;
     }
 
@@ -2065,7 +2065,7 @@ return TCL.TCL_OK;
     //  }else{
     //    rc = TCL.TCL_OK;
     //  }
-    //  //sqlite3DbFree(db,zErr);
+    //  sqlite3DbFree(db,zErr);
 
     //  return rc;
     //}
@@ -2536,7 +2536,9 @@ error_out:
 //      Debug.Assert(0);
 //  }
 
-//  pVal = sqlite3ValueNew(0);
+ //sqlite3BeginBenignMalloc();
+ // pVal = sqlite3ValueNew(0);
+ // if( pVal ){
 //  sqlite3ValueSetStr(pVal, nA, zA, encin, SQLITE_STATIC);
 //  n = sqlite3_value_bytes(pVal);
 //  TCL.Tcl_ListObjAppendElement(i,pX,
@@ -2546,6 +2548,8 @@ error_out:
 //  TCL.Tcl_ListObjAppendElement(i,pX,
 //      TCL.Tcl_NewStringObj((char*)sqlite3_value_text(pVal),n));
 //  sqlite3ValueFree(pVal);
+  //}
+  //sqlite3EndBenignMalloc();
 
 //  TCL.Tcl_EvalObjEx(i, pX, 0);
 //  TCL.Tcl_DecrRefCount(pX);
@@ -5116,10 +5120,11 @@ new _aID( "SQLITE_LIMIT_FUNCTION_ARG",        SQLITE_LIMIT_FUNCTION_ARG         
 new _aID( "SQLITE_LIMIT_ATTACHED",            SQLITE_LIMIT_ATTACHED             ),
 new _aID( "SQLITE_LIMIT_LIKE_PATTERN_LENGTH", SQLITE_LIMIT_LIKE_PATTERN_LENGTH  ),
 new _aID( "SQLITE_LIMIT_VARIABLE_NUMBER",     SQLITE_LIMIT_VARIABLE_NUMBER      ),
-
+new _aID( "SQLITE_LIMIT_TRIGGER_DEPTH",       SQLITE_LIMIT_TRIGGER_DEPTH        ),
+ 
 /* Out of range test cases */
 new _aID(  "SQLITE_LIMIT_TOOSMALL",            -1                               ),
-new _aID(  "SQLITE_LIMIT_TOOBIG",              SQLITE_LIMIT_VARIABLE_NUMBER+1    ),
+new _aID(  "SQLITE_LIMIT_TOOBIG",              SQLITE_LIMIT_TRIGGER_DEPTH+1     ),
 };
       int i, id = 0;
       int val = 0;

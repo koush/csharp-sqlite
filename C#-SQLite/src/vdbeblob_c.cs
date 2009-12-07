@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_stmt = csSQLite.Vdbe;
 
@@ -112,7 +112,7 @@ sqlite3 db;            /* The associated database */
 //    memset(pParse, 0, sizeof(Parse));
 //    pParse->db = db;
 //if( sqlite3SafetyOn(db) ){
-//      sqlite3DbFree(db, zErr);
+//      sqlite3DbFree(db, ref zErr);
 //      sqlite3StackFree(db, pParse);
 //  sqlite3_mutex_leave(db.mutex);
 //  return SQLITE_MISUSE;
@@ -134,7 +134,7 @@ sqlite3 db;            /* The associated database */
 //      if( sParse.zErrMsg ){
 //        sqlite3_snprintf(sizeof(zErr), zErr, "%s", sParse.zErrMsg);
 //      if( pParse->zErrMsg ){
-//        //sqlite3DbFree(db, zErr);
+//        sqlite3DbFree(db, ref zErr);
 //        zErr = pParse->zErrMsg;
 //        pParse->zErrMsg = 0;
 //      }
@@ -151,7 +151,7 @@ sqlite3 db;            /* The associated database */
 //      }
 //    }
 //    if( iCol==pTab.nCol ){
-//      sqlite3DbFree(db, zErr);
+//      sqlite3DbFree(db, ref zErr);
 //      zErr = sqlite3MPrintf(db, "no such column: \"%s\"", zColumn);
 //      rc = SQLITE_ERROR;
 //      (void)sqlite3SafetyOff(db);
@@ -169,7 +169,7 @@ sqlite3 db;            /* The associated database */
 //        int j;
 //        for(j=0; j<pIdx.nColumn; j++){
 //          if( pIdx.aiColumn[j]==iCol ){
-//            sqlite3DbFree(db, zErr);
+//            sqlite3DbFree(db, ref zErr);
 //            zErr = sqlite3MPrintf(db,
 //                             "cannot open indexed column for writing");
 //            rc = SQLITE_ERROR;
@@ -220,7 +220,7 @@ sqlite3 db;            /* The associated database */
 //      sqlite3VdbeChangeP4(v, 3+flags, SQLITE_INT_TO_PTR(pTab->nCol+1),P4_INT32);
 //      sqlite3VdbeChangeP2(v, 7, pTab->nCol);
 //  if( !db->mallocFailed ){
-//    sqlite3VdbeMakeReady(v, 1, 1, 1, 0);
+//    sqlite3VdbeMakeReady(v, 1, 1, 1, 0, 0, 0);
 //  }
 //}
 
@@ -235,7 +235,7 @@ sqlite3 db;            /* The associated database */
 //    if( rc!=SQLITE_ROW ){
 //      nAttempt++;
 //      rc = sqlite3_finalize((sqlite3_stmt *)v);
-//      sqlite3DbFree(db, zErr);
+//      sqlite3DbFree(db, ref zErr);
 //      zErr = sqlite3MPrintf(db, sqlite3_errmsg(db));
 //      v = 0;
 //    }
@@ -250,7 +250,7 @@ sqlite3 db;            /* The associated database */
 //    u32 type = v.apCsr[0].aType[iCol];
 
 //    if( type<12 ){
-//      sqlite3DbFree(db, zErr);
+//      sqlite3DbFree(db, ref zErr);
 //      zErr = sqlite3MPrintf(db, "cannot open value of type %s",
 //          type==0?"null": type==7?"real": "integer"
 //      );
@@ -259,7 +259,7 @@ sqlite3 db;            /* The associated database */
 //    }
 //    pBlob = (Incrblob *)sqlite3DbMallocZero(db, sizeof(Incrblob));
 //    if( db.mallocFailed !=0{
-//      //sqlite3DbFree(db,pBlob);
+//      sqlite3DbFree(db,pBlob);
 //      goto blob_open_out;
 //    }
 //    pBlob.flags = flags;
@@ -274,7 +274,7 @@ sqlite3 db;            /* The associated database */
 //    ppBlob = (sqlite3_blob *)pBlob;
 //    rc = SQLITE_OK;
 //  }else if( rc==SQLITE_OK ){
-//    sqlite3DbFree(db, zErr);
+//    sqlite3DbFree(db, ref zErr);
 //    zErr = sqlite3MPrintf(db, "no such rowid: %lld", iRow);
 //    rc = SQLITE_ERROR;
 //  }
@@ -284,7 +284,7 @@ sqlite3 db;            /* The associated database */
 //    sqlite3VdbeFinalize(v);
 //  }
 //  sqlite3Error(db, rc, zErr);
-//  sqlite3DbFree(db, zErr);
+//  sqlite3DbFree(db, ref zErr);
 //  sqlite3StackFree(db, pParse);
 //  rc = sqlite3ApiExit(db, rc);
 //  sqlite3_mutex_leave(db->mutex);

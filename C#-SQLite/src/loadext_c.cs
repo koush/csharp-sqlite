@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using HANDLE = System.IntPtr;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -369,7 +369,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
     **
     ** If an error occurs and pzErrMsg is not 0, then fill pzErrMsg with
     ** error message text.  The calling function should free this memory
-    ** by calling //sqlite3DbFree(db, ).
+    ** by calling sqlite3DbFree(db, ).
     */
     static int sqlite3LoadExtension(
     sqlite3 db,           /* Load the extension into this database connection */
@@ -441,7 +441,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
       ////    if( pzErrMsg !=null){
       //      pzErrMsg = sqlite3_mprintf("error during initialization: %s", zErrmsg);
       //    //}
-      //    //sqlite3DbFree(db,ref zErrmsg);
+      //    sqlite3DbFree(db,ref zErrmsg);
       //    sqlite3OsDlClose(pVfs, ref handle);
       //    return SQLITE_ERROR;
       //  }
@@ -454,7 +454,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
       //  if( db.nExtension>0 ){
       //    memcpy(aHandle, db.aExtension, sizeof(handle)*(db.nExtension));
       //  }
-      //  //sqlite3DbFree(db,ref db.aExtension);
+      //  sqlite3DbFree(db,ref db.aExtension);
       //  db.aExtension = aHandle;
 
       //  db.aExtension[db.nExtension++] = handle;
@@ -488,7 +488,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
       {
         sqlite3OsDlClose( db.pVfs, (HANDLE)db.aExtension[i] );
       }
-      //sqlite3DbFree( db, ref db.aExtension );
+      sqlite3DbFree( db, ref db.aExtension );
     }
 
     /*
@@ -677,7 +677,7 @@ sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
           "automatic extension loading failed: %s", zErrmsg );
           go = false;
         }
-        //sqlite3DbFree( db, ref zErrmsg );
+        sqlite3DbFree( db, ref zErrmsg );
       }
     }
   }

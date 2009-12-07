@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_callback = csSQLite.dxCallback;
   using sqlite3_stmt = csSQLite.Vdbe;
@@ -180,13 +180,13 @@ namespace CS_SQLite3
           }
         }
 
-        //sqlite3DbFree( db, ref  azCols );
+        sqlite3DbFree( db, ref  azCols );
         azCols = null;
       }
 
 exec_out:
       if ( pStmt != null ) sqlite3VdbeFinalize( pStmt );
-      //sqlite3DbFree( db, ref  azCols );
+      sqlite3DbFree( db, ref  azCols );
 
       rc = sqlite3ApiExit( db, rc );
       if ( rc != SQLITE_OK && ALWAYS( rc == sqlite3_errcode( db ) ) && pzErrMsg != null )

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 using i64 = System.Int64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {

@@ -56,10 +56,10 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
+    <DefineConstants>DEBUG;SQLITE_ENABLE_STAT2 TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
     <DebugType>full</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
@@ -69,6 +69,24 @@
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
+    <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
+    <Optimize>true</Optimize>
+    <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
@@ -1130,180 +1148,6 @@
     </None>
     <None Include="..\test\format4.test">
       <Link>test\format4.test</Link>
-    </None>
-    <None Include="..\test\fts1a.test">
-      <Link>test\fts1a.test</Link>
-    </None>
-    <None Include="..\test\fts1b.test">
-      <Link>test\fts1b.test</Link>
-    </None>
-    <None Include="..\test\fts1c.test">
-      <Link>test\fts1c.test</Link>
-    </None>
-    <None Include="..\test\fts1d.test">
-      <Link>test\fts1d.test</Link>
-    </None>
-    <None Include="..\test\fts1e.test">
-      <Link>test\fts1e.test</Link>
-    </None>
-    <None Include="..\test\fts1f.test">
-      <Link>test\fts1f.test</Link>
-    </None>
-    <None Include="..\test\fts1i.test">
-      <Link>test\fts1i.test</Link>
-    </None>
-    <None Include="..\test\fts1j.test">
-      <Link>test\fts1j.test</Link>
-    </None>
-    <None Include="..\test\fts1k.test">
-      <Link>test\fts1k.test</Link>
-    </None>
-    <None Include="..\test\fts1l.test">
-      <Link>test\fts1l.test</Link>
-    </None>
-    <None Include="..\test\fts1m.test">
-      <Link>test\fts1m.test</Link>
-    </None>
-    <None Include="..\test\fts1n.test">
-      <Link>test\fts1n.test</Link>
-    </None>
-    <None Include="..\test\fts1o.test">
-      <Link>test\fts1o.test</Link>
-    </None>
-    <None Include="..\test\fts1porter.test">
-      <Link>test\fts1porter.test</Link>
-    </None>
-    <None Include="..\test\fts2.test">
-      <Link>test\fts2.test</Link>
-    </None>
-    <None Include="..\test\fts2a.test">
-      <Link>test\fts2a.test</Link>
-    </None>
-    <None Include="..\test\fts2b.test">
-      <Link>test\fts2b.test</Link>
-    </None>
-    <None Include="..\test\fts2c.test">
-      <Link>test\fts2c.test</Link>
-    </None>
-    <None Include="..\test\fts2d.test">
-      <Link>test\fts2d.test</Link>
-    </None>
-    <None Include="..\test\fts2e.test">
-      <Link>test\fts2e.test</Link>
-    </None>
-    <None Include="..\test\fts2f.test">
-      <Link>test\fts2f.test</Link>
-    </None>
-    <None Include="..\test\fts2g.test">
-      <Link>test\fts2g.test</Link>
-    </None>
-    <None Include="..\test\fts2h.test">
-      <Link>test\fts2h.test</Link>
-    </None>
-    <None Include="..\test\fts2i.test">
-      <Link>test\fts2i.test</Link>
-    </None>
-    <None Include="..\test\fts2j.test">
-      <Link>test\fts2j.test</Link>
-    </None>
-    <None Include="..\test\fts2k.test">
-      <Link>test\fts2k.test</Link>
-    </None>
-    <None Include="..\test\fts2l.test">
-      <Link>test\fts2l.test</Link>
-    </None>
-    <None Include="..\test\fts2m.test">
-      <Link>test\fts2m.test</Link>
-    </None>
-    <None Include="..\test\fts2n.test">
-      <Link>test\fts2n.test</Link>
-    </None>
-    <None Include="..\test\fts2o.test">
-      <Link>test\fts2o.test</Link>
-    </None>
-    <None Include="..\test\fts2p.test">
-      <Link>test\fts2p.test</Link>
-    </None>
-    <None Include="..\test\fts2q.test">
-      <Link>test\fts2q.test</Link>
-    </None>
-    <None Include="..\test\fts2r.test">
-      <Link>test\fts2r.test</Link>
-    </None>
-    <None Include="..\test\fts2token.test">
-      <Link>test\fts2token.test</Link>
-    </None>
-    <None Include="..\test\fts3.test">
-      <Link>test\fts3.test</Link>
-    </None>
-    <None Include="..\test\fts3aa.test">
-      <Link>test\fts3aa.test</Link>
-    </None>
-    <None Include="..\test\fts3ab.test">
-      <Link>test\fts3ab.test</Link>
-    </None>
-    <None Include="..\test\fts3ac.test">
-      <Link>test\fts3ac.test</Link>
-    </None>
-    <None Include="..\test\fts3ad.test">
-      <Link>test\fts3ad.test</Link>
-    </None>
-    <None Include="..\test\fts3ae.test">
-      <Link>test\fts3ae.test</Link>
-    </None>
-    <None Include="..\test\fts3af.test">
-      <Link>test\fts3af.test</Link>
-    </None>
-    <None Include="..\test\fts3ag.test">
-      <Link>test\fts3ag.test</Link>
-    </None>
-    <None Include="..\test\fts3ah.test">
-      <Link>test\fts3ah.test</Link>
-    </None>
-    <None Include="..\test\fts3ai.test">
-      <Link>test\fts3ai.test</Link>
-    </None>
-    <None Include="..\test\fts3aj.test">
-      <Link>test\fts3aj.test</Link>
-    </None>
-    <None Include="..\test\fts3ak.test">
-      <Link>test\fts3ak.test</Link>
-    </None>
-    <None Include="..\test\fts3al.test">
-      <Link>test\fts3al.test</Link>
-    </None>
-    <None Include="..\test\fts3am.test">
-      <Link>test\fts3am.test</Link>
-    </None>
-    <None Include="..\test\fts3an.test">
-      <Link>test\fts3an.test</Link>
-    </None>
-    <None Include="..\test\fts3ao.test">
-      <Link>test\fts3ao.test</Link>
-    </None>
-    <None Include="..\test\fts3atoken.test">
-      <Link>test\fts3atoken.test</Link>
-    </None>
-    <None Include="..\test\fts3b.test">
-      <Link>test\fts3b.test</Link>
-    </None>
-    <None Include="..\test\fts3c.test">
-      <Link>test\fts3c.test</Link>
-    </None>
-    <None Include="..\test\fts3d.test">
-      <Link>test\fts3d.test</Link>
-    </None>
-    <None Include="..\test\fts3e.test">
-      <Link>test\fts3e.test</Link>
-    </None>
-    <None Include="..\test\fts3expr.test">
-      <Link>test\fts3expr.test</Link>
-    </None>
-    <None Include="..\test\fts3expr2.test">
-      <Link>test\fts3expr2.test</Link>
-    </None>
-    <None Include="..\test\fts3near.test">
-      <Link>test\fts3near.test</Link>
     </None>
     <None Include="..\test\func.test">
       <Link>test\func.test</Link>

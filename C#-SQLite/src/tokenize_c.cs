@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -571,7 +571,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
             }
           case TK_ILLEGAL:
             {
-              //sqlite3DbFree( db, ref pzErrMsg );
+              sqlite3DbFree( db, ref pzErrMsg );
               pzErrMsg = sqlite3MPrintf( db, "unrecognized token: \"%T\"",
                 (object)pParse.sLastToken );
               nErr++;
@@ -635,13 +635,13 @@ sqlite3ParserStackPeak(pEngine)
 #if !SQLITE_OMIT_SHARED_CACHE
 if ( pParse.nested == 0 )
 {
-//sqlite3DbFree( db, ref pParse.aTableLock );
+sqlite3DbFree( db, ref pParse.aTableLock );
 pParse.aTableLock = null;
 pParse.nTableLock = 0;
 }
 #endif
 #if !SQLITE_OMIT_VIRTUALTABLE
-//sqlite3DbFree(db,pParse.apVtabLock);
+sqlite3DbFree(db,pParse.apVtabLock);
 #endif
       if ( !IN_DECLARE_VTAB )
       {
@@ -655,13 +655,13 @@ pParse.nTableLock = 0;
 #if !SQLITE_OMIT_TRIGGER
       sqlite3DeleteTrigger( db, ref pParse.pNewTrigger );
 #endif
-      //sqlite3DbFree( db, ref pParse.apVarExpr );
-      //sqlite3DbFree( db, ref pParse.aAlias );
+      sqlite3DbFree( db, ref pParse.apVarExpr );
+      sqlite3DbFree( db, ref pParse.aAlias );
       while ( pParse.pAinc != null )
       {
         AutoincInfo p = pParse.pAinc;
         pParse.pAinc = p.pNext;
-        //sqlite3DbFree( db, ref p );
+        sqlite3DbFree( db, ref p );
       }
       while ( pParse.pZombieTab != null )
       {

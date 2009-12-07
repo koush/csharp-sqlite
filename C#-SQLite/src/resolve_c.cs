@@ -3,11 +3,12 @@ using System.Diagnostics;
 using System.Text;
 
 using Bitmask = System.UInt64;
+using i16 = System.Int16;
 using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -121,7 +122,7 @@ namespace CS_SQLite3
       }
       sqlite3ExprClear( db, pExpr );
       pExpr.CopyFrom( pDup ); //memcpy(pExpr, pDup, sizeof(*pExpr));
-      //sqlite3DbFree( db, ref pDup );
+      sqlite3DbFree( db, ref pDup );
     }
 
     /*
@@ -168,6 +169,7 @@ namespace CS_SQLite3
       SrcList_item pMatch = null;  /* The matching pSrcList item */
       NameContext pTopNC = pNC;        /* First namecontext in the list */
       Schema pSchema = null;              /* Schema of the expression */
+      int isTrigger = 0;
 
       Debug.Assert( pNC != null ); /* the name context cannot be NULL. */
       Debug.Assert( zCol != null );    /* The Z in X.Y.Z cannot be NULL */
@@ -271,64 +273,67 @@ namespace CS_SQLite3
 
 #if !SQLITE_OMIT_TRIGGER
         /* If we have not already resolved the name, then maybe
-** it is a new.* or old.* trigger argument reference
-*/
-        if ( zDb == null && zTab != null && cnt == 0 && pParse.trigStack != null )
-        {
-          TriggerStack pTriggerStack = pParse.trigStack;
-          Table pTab = null;
-          u32 piColMask = 0;
-          bool bNew = false;
-          bool bOld = false;
-          if ( pTriggerStack.newIdx != -1 && sqlite3StrICmp( "new", zTab ) == 0 )
+        ** it is a new.* or old.* trigger argument reference
+        */
+        if ( zDb == null && zTab != null && cnt == 0 && pParse.pTriggerTab != null )
           {
-            pExpr.iTable = pTriggerStack.newIdx;
-            Debug.Assert( pTriggerStack.pTab != null );
-            pTab = pTriggerStack.pTab;
-            piColMask = pTriggerStack.newColMask;
-            bNew = true;
-          }
-          else if ( pTriggerStack.oldIdx != -1 && sqlite3StrICmp( "old", zTab ) == 0 )
-          {
-            pExpr.iTable = pTriggerStack.oldIdx;
-            Debug.Assert( pTriggerStack.pTab != null );
-            pTab = pTriggerStack.pTab;
-            piColMask = pTriggerStack.oldColMask;
-            bOld = true;
-          }
-
-          if ( pTab != null )
-          {
-            int iCol;
-            Column pCol;// = pTab.aCol;
-
-            pSchema = pTab.pSchema;
-            cntTab++;
-            for ( iCol = 0 ; iCol < pTab.nCol ; iCol++ )//, pCol++)
+            int op = pParse.eTriggerOp;
+            Table pTab = null;
+            Debug.Assert( op == TK_DELETE || op == TK_UPDATE || op == TK_INSERT );
+            if ( op != TK_DELETE && sqlite3StrICmp( "new", zTab ) == 0 )
             {
-              pCol = pTab.aCol[iCol];
-              if ( sqlite3StrICmp( pCol.zName, zCol ) == 0 )
+              pExpr.iTable = 1;
+              pTab = pParse.pTriggerTab;
+            }
+            else if ( op != TK_INSERT && sqlite3StrICmp( "old", zTab ) == 0 )
+            {
+              pExpr.iTable = 0;
+              pTab = pParse.pTriggerTab;
+            }
+
+            if ( pTab !=null)
+            {
+              int iCol;
+              pSchema = pTab.pSchema;
+              cntTab++;
+              if ( sqlite3IsRowid( zCol ) )
+              {
+                iCol = -1;
+              }
+              else
+              {
+                for ( iCol = 0; iCol < pTab.nCol; iCol++ )
+                {
+                  Column pCol = pTab.aCol[iCol];
+                  if ( sqlite3StrICmp( pCol.zName, zCol ) == 0 )
+                  {
+                    if ( iCol == pTab.iPKey )
+                    {
+                      iCol = -1;
+                    }
+                    break;
+                  }
+                }
+              }
+              if ( iCol < pTab.nCol )
               {
                 cnt++;
-                pExpr.iColumn = (short)( iCol == pTab.iPKey ? -1 : iCol );
+                if ( iCol < 0 )
+                {
+                  pExpr.affinity = SQLITE_AFF_INTEGER;
+                }
+                else if ( pExpr.iTable == 0 )
+                {
+                  testcase( iCol == 31 );
+                  testcase( iCol == 32 );
+                  pParse.oldmask |= ( iCol >= 32 ? 0xffffffff : ( ( (u32)1 ) << iCol ) );
+                }
+                pExpr.iColumn = (i16)iCol;
                 pExpr.pTab = pTab;
-                testcase( iCol == 31 );
-                testcase( iCol == 32 );
-                if ( iCol >= 32 )
-                {
-                  piColMask = 0xffffffff;
-                }
-                else
-                {
-                  piColMask |= ( (u32)1 ) << iCol;
-                }
-                break;
+                isTrigger = 1;
               }
             }
-            if ( bOld ) pTriggerStack.oldColMask = piColMask;
-            if ( bNew ) pTriggerStack.newColMask = piColMask;
           }
-        }
 #endif //* !SQLITE_OMIT_TRIGGER) */
 
         /*
@@ -452,7 +457,7 @@ namespace CS_SQLite3
       pExpr.pLeft = null;
       sqlite3ExprDelete( db, ref pExpr.pRight );
       pExpr.pRight = null;
-      pExpr.op = TK_COLUMN;
+      pExpr.op = (u8)( isTrigger!=0 ? TK_TRIGGER : TK_COLUMN );
 lookupname_end:
       if ( cnt == 1 )
       {

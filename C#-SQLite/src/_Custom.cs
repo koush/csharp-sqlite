@@ -18,7 +18,7 @@ using u32 = System.UInt32;
 using u64 = System.UInt64;
 using time_t = System.Int64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
   using sqlite_int64 = System.Int64;
@@ -320,9 +320,6 @@ namespace CS_SQLite3
       catch { }
       return 0;
     }
-    
-    [DllImport( "kernel32.dll" )]
-    public static extern bool GetSystemTimeAsFileTime( ref FILETIME sysfiletime );
 
     static void SWAP<T>( ref T A, ref T B ) { T t = A; A = B; B = t; }
 

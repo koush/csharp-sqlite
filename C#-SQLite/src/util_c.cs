@@ -11,7 +11,7 @@ using u64 = System.UInt64;
 using Pgno = System.UInt32;
 
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite_int64 = System.Int64;
   using System.Globalization;
@@ -34,11 +34,11 @@ namespace CS_SQLite3
     ** This file contains functions for allocating memory, comparing
     ** strings, and stuff like that.
     **
-    ** $Id: util.c,v 1.262 2009/07/28 16:44:26 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
     **
     **  $Header$
     *************************************************************************
@@ -160,7 +160,7 @@ rc = isnan(x);
     */
     //Overloads
     static void sqlite3Error( sqlite3 db, int err_code, int noString )
-    { sqlite3Error( db, err_code, err_code == 0 ?null :""); }
+    { sqlite3Error( db, err_code, err_code == 0 ? null : "" ); }
 
     static void sqlite3Error( sqlite3 db, int err_code, string zFormat, params object[] ap )
     {
@@ -204,7 +204,7 @@ rc = isnan(x);
       //va_list ap;
       sqlite3 db = pParse.db;
       pParse.nErr++;
-      //sqlite3DbFree( db, ref pParse.zErrMsg );
+      sqlite3DbFree( db, ref pParse.zErrMsg );
       va_start( ap, zFormat );
       pParse.zErrMsg = sqlite3VMPrintf( db, zFormat, ap );
       va_end( ap );
@@ -216,7 +216,7 @@ rc = isnan(x);
     */
     static void sqlite3ErrorClear( Parse pParse )
     {
-      //sqlite3DbFree( pParse.db, ref  pParse.zErrMsg );
+      sqlite3DbFree( pParse.db, ref  pParse.zErrMsg );
       pParse.nErr = 0;
     }
 
@@ -252,7 +252,7 @@ rc = isnan(x);
         default: return -1;
       }
       StringBuilder sbZ = new StringBuilder( z.Length );
-      for ( i = 1 ; i < z.Length ; i++ ) //z[i] != 0; i++)
+      for ( i = 1; i < z.Length; i++ ) //z[i] != 0; i++)
       {
         if ( z[i] == quote )
         {
@@ -292,18 +292,19 @@ rc = isnan(x);
       //while( *a!=0 && UpperToLower[*a]==UpperToLower[*b]){ a++; b++; }
       //return UpperToLower[*a] - UpperToLower[*b];
       int a = 0, b = 0;
-      while ( a < zLeft.Length && b < zRight.Length && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) { a++; b++; }
-      if ( a == zLeft.Length && b == zRight.Length ) return 0;
-      else
-      {
-        if ( a == zLeft.Length ) return -UpperToLower[zRight[b]];
-        if ( b == zRight.Length ) return UpperToLower[zLeft[a]];
-        return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
+      if ( zRight == null ) return 0;
+        while ( a < zLeft.Length && b < zRight.Length && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) { a++; b++; }
+        if ( a == zLeft.Length && b == zRight.Length ) return 0;
+        else
+        {
+          if ( a == zLeft.Length ) return -UpperToLower[zRight[b]];
+          if ( b == zRight.Length ) return UpperToLower[zLeft[a]];
+          return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
+        }
       }
-    }
 
     static int sqlite3_strnicmp( string zLeft, int offsetLeft, string zRight, int N )
-    { return sqlite3StrNICmp(  zLeft,  offsetLeft,  zRight,  N );}
+    { return sqlite3StrNICmp( zLeft, offsetLeft, zRight, N ); }
 
     static int sqlite3StrNICmp( string zLeft, int offsetLeft, string zRight, int N )
     {
@@ -373,7 +374,7 @@ rc = isnan(x);
     }
 
     /*
-    ** The string z[] is an ascii representation of a real number.
+    ** The string z[] is an ASCII representation of a real number.
     ** Convert this string to a double.
     **
     ** This routine assumes that z[] really is a valid number.  If it
@@ -387,94 +388,165 @@ rc = isnan(x);
     static int sqlite3AtoF( string z, ref double pResult )
     {
 #if !SQLITE_OMIT_FLOATING_POINT
-      z = z.Trim() + " ";
+      if ( String.IsNullOrEmpty( z ) ) { pResult = 0; return 0; }
+      z = z.Trim() + " ";//const char *zBegin = z;
+
+      /* sign * significand * (10 ^ (esign * exponent)) */
+      int sign = 1;   /* sign of significand */
+      i64 s = 0;      /* significand */
+      int d = 0;      /* adjust exponent for shifting decimal point */
+      int esign = 1;  /* sign of exponent */
+      int e = 0;      /* exponent */
+      double result = 0;
+      int nDigits = 0;
+
       int zDx = 0;
-      int sign = 1;
-      double v1 = 0.0;
-      int nSignificant = 0;
-      if ( z.Length > 1 )
+      while ( sqlite3Isspace( z[zDx] ) ) zDx++;
+      /* get sign of significand */
+      if ( z[zDx] == '-' )
       {
-        while ( sqlite3Isspace( z[zDx] ) ) zDx++;
+        sign = -1;
+        zDx++;
+      }
+      else if ( z[zDx] == '+' )
+      {
+        zDx++;
+      }
+      /* skip leading zeroes */
+      while ( z[zDx] == '0' )
+      {
+        zDx++;
+        nDigits++;
+      }
+      /* copy max significant digits to significand */
+      while ( sqlite3Isdigit( z[zDx] ) && s < ( ( LARGEST_INT64 - 9 ) / 10 ) )
+      {
+        s = s * 10 + ( z[zDx] - '0' );
+        zDx++; nDigits++;
+      }
+      /* skip non-significant significand digits
+      ** (increase exponent by d to shift decimal left) */
+      while ( sqlite3Isdigit( z[zDx] ) ) { zDx++; nDigits++; d++; }
+
+      /* if decimal point is present */
+      if ( z[zDx] == '.' )
+      {
+        zDx++;
+        /* copy digits from after decimal to significand
+        ** (decrease exponent by d to shift decimal right) */
+        while ( sqlite3Isdigit( z[zDx] ) && s < ( ( LARGEST_INT64 - 9 ) / 10 ) )
+        {
+          s = s * 10 + ( z[zDx] - '0' );
+          zDx++; nDigits++; d--;
+        }
+        /* skip non-significant digits */
+        while ( sqlite3Isdigit( z[zDx] ) ) { zDx++; nDigits++; }
+      }
+
+      /* if exponent is present */
+      if ( z[zDx] == 'e' || z[zDx] == 'E' )
+      {
+        zDx++;
+        /* get sign of exponent */
         if ( z[zDx] == '-' )
         {
-          sign = -1;
+          esign = -1;
           zDx++;
         }
         else if ( z[zDx] == '+' )
         {
           zDx++;
         }
-        while ( z[zDx] == '0' )
-        {
-          zDx++;
-        }
+        /* copy digits to exponent */
         while ( sqlite3Isdigit( z[zDx] ) )
         {
-          v1 = v1 * 10.0 + ( z[zDx] - '0' );
+          e = e * 10 + ( z[zDx] - '0' );
           zDx++;
-          nSignificant++;
         }
-        if ( z[zDx] == '.' )
+      }
+
+      /* adjust exponent by d, and update sign */
+      e = ( e * esign ) + d;
+      if ( e < 0 )
+      {
+        esign = -1;
+        e *= -1;
+      }
+      else
+      {
+        esign = 1;
+      }
+
+      /* if 0 significand */
+      if ( 0 == s )
+      {
+        /* In the IEEE 754 standard, zero is signed.
+        ** Add the sign if we've seen at least one digit */
+        result = ( sign < 0 && nDigits != 0 ) ? -(double)0 : (double)0;
+      }
+      else
+      {
+        /* attempt to reduce exponent */
+        if ( esign > 0 )
         {
-          double divisor = 1.0;
-          zDx++;
-          if ( nSignificant == 0 )
-          {
-            while ( z[zDx] == '0' )
-            {
-              divisor *= 10.0;
-              zDx++;
-            }
-          }
-          while ( sqlite3Isdigit( z[zDx] ) )
-          {
-            if ( nSignificant < 18 )
-            {
-              v1 = v1 * 10.0 + ( z[zDx] - '0' );
-              divisor *= 10.0;
-              nSignificant++;
-            }
-            zDx++;
-          }
-          if ( Double.IsInfinity( divisor ) )
-          { if ( !Double.TryParse( z.Substring( 0, zDx ), out v1 ) ) v1 = 0; }
-          else v1 /= divisor;
+          while ( s < ( LARGEST_INT64 / 10 ) && e > 0 ) { e--; s *= 10; }
         }
-        if ( z[zDx] == 'e' || z[zDx] == 'E' )
+        else
         {
-          int esign = 1;
-          int eval = 0;
+          while ( 0 == ( s % 10 ) && e > 0 )
+          {
+            e--; s /= 10;
+          }
+        }
+
+        /* adjust the sign of significand */
+        s = sign < 0 ? -s : s;
+
+        /* if exponent, scale significand as appropriate
+        ** and store in result. */
+        if ( e != 0 )
+        {
           double scale = 1.0;
-          zDx++;
-          if ( z[zDx] == '-' )
+          /* attempt to handle extremely small/large numbers better */
+          if ( e > 307 && e < 342 )
           {
-            esign = -1;
-            zDx++;
-          }
-          else if ( z[zDx] == '+' )
-          {
-            zDx++;
-          }
-          while ( sqlite3Isdigit( z[zDx] ) )
-          {
-            eval = eval * 10 + z[zDx] - '0';
-            zDx++;
-          }
-          while ( eval >= 64 ) { scale *= 1.0e+64; eval -= 64; }
-          while ( eval >= 16 ) { scale *= 1.0e+16; eval -= 16; }
-          while ( eval >= 4 ) { scale *= 1.0e+4; eval -= 4; }
-          while ( eval >= 1 ) { scale *= 1.0e+1; eval -= 1; }
-          if ( esign < 0 )
-          {
-            v1 /= scale;
+            while ( ( e % 308 ) != 0 ) { scale *= 1.0e+1; e -= 1; }
+            if ( esign < 0 )
+            {
+              result = s / scale;
+              result /= 1.0e+308;
+            }
+            else
+            {
+              result = s * scale;
+              result *= 1.0e+308;
+            }
           }
           else
           {
-            v1 *= scale;
+            /* 1.0e+22 is the largest power of 10 than can be 
+            ** represented exactly. */
+            while ( ( e % 22 ) != 0 ) { scale *= 1.0e+1; e -= 1; }
+            while ( e > 0 ) { scale *= 1.0e+22; e -= 22; }
+            if ( esign < 0 )
+            {
+              result = s / scale;
+            }
+            else
+            {
+              result = s * scale;
+            }
           }
         }
+        else
+        {
+          result = (double)s;
+        }
       }
-      pResult = (double)( sign < 0 ? -v1 : v1 );
+      /* store the result */
+      pResult = result;
+
+      /* return number of characters used */
       return (int)( zDx );
 #else
 return sqlite3Atoi64(z, pResult);
@@ -525,7 +597,7 @@ return sqlite3Atoi64(z, pResult);
     {
       zNum = zNum.Trim() + " ";
       int i;
-      for ( i = 1 ; i < zNum.Length ; i++ ) if ( !sqlite3Isdigit( zNum[i] ) ) break;
+      for ( i = 1; i < zNum.Length; i++ ) if ( !sqlite3Isdigit( zNum[i] ) ) break;
       return Int64.TryParse( zNum.Substring( 0, i ), out pNum
       );
       //i64 v = 0;
@@ -636,7 +708,7 @@ return sqlite3Atoi64(z, pResult);
         iZnum++;
       }
       while ( iZnum < zNum.Length && zNum[iZnum] == '0' ) iZnum++;
-      for ( i = 0 ; i < 11 && i + iZnum < zNum.Length && ( c = zNum[iZnum + i] - '0' ) >= 0 && c <= 9 ; i++ )
+      for ( i = 0; i < 11 && i + iZnum < zNum.Length && ( c = zNum[iZnum + i] - '0' ) >= 0 && c <= 9; i++ )
       {
         v = v * 10 + c;
       }
@@ -802,7 +874,7 @@ return sqlite3Atoi64(z, pResult);
       {
         p[offset + 8] = (byte)v;
         v >>= 8;
-        for ( i = 7 ; i >= 0 ; i-- )
+        for ( i = 7; i >= 0; i-- )
         {
           p[offset + i] = (byte)( ( v & 0x7f ) | 0x80 );
           v >>= 7;
@@ -817,7 +889,7 @@ return sqlite3Atoi64(z, pResult);
       } while ( v != 0 );
       buf[0] &= 0x7f;
       Debug.Assert( n <= 9 );
-      for ( i = 0, j = n - 1 ; j >= 0 ; j--, i++ )
+      for ( i = 0, j = n - 1; j >= 0; j--, i++ )
       {
         p[offset + i] = buf[j];
       }
@@ -1253,7 +1325,7 @@ return n;
 #if !SQLITE_OMIT_BLOB_LITERAL || SQLITE_HAS_CODEC
     /*
 ** Translate a single byte of Hex into an integer.
-** This routinen only works if h really is a valid hexadecimal
+** This routine only works if h really is a valid hexadecimal
 ** character:  0..9a..fA..F
 */
     static int hexToInt( int h )
@@ -1285,7 +1357,7 @@ h += 9*(1&~(h>>4));
       n--;
       if ( zBlob != null )
       {
-        for ( i = 0 ; i < n ; i += 2 )
+        for ( i = 0; i < n; i += 2 )
         {
           zBlob.Append( Convert.ToChar( ( hexToInt( z[i] ) << 4 ) | hexToInt( z[i + 1] ) ) );
         }

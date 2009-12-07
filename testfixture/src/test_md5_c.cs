@@ -7,7 +7,7 @@ using Bitmask = System.UInt64;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;

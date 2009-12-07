@@ -7,7 +7,7 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
 
@@ -124,7 +124,7 @@ return rc;
       }
       else
       {
-        //  //sqlite3DbFree(pMem->db,ref pMem.zMalloc);
+        //  sqlite3DbFree(pMem->db,ref pMem.zMalloc);
         pMem.z = "";//   sqlite3DbMallocRaw( pMem.db, n );
       }
       //}
@@ -324,7 +324,7 @@ return SQLITE_OK;
         ctx.pFunc = pFunc;
         pFunc.xFinalize( ctx );
         Debug.Assert( 0 == ( pMem.flags & MEM_Dyn ) && pMem.xDel == null );
-        //sqlite3DbFree(pMem.db,ref pMem.zMalloc);
+        //sqlite3DbFree( pMem.db, ref pMem.zMalloc );
         ctx.s.CopyTo( pMem );//memcpy(pMem, &ctx.s, sizeof(ctx.s));
         rc = ctx.isError;
       }
@@ -339,7 +339,11 @@ return SQLITE_OK;
     static void sqlite3VdbeMemReleaseExternal( Mem p )
     {
       Debug.Assert( p.db == null || sqlite3_mutex_held( p.db.mutex ) );
-      if ( ( p.flags & ( MEM_Agg | MEM_Dyn | MEM_RowSet ) ) != 0 )
+      testcase( p.flags & MEM_Agg );
+      testcase( p.flags & MEM_Dyn );
+      testcase( p.flags & MEM_RowSet );
+      testcase( p.flags & MEM_Frame );
+      if ( ( p.flags & ( MEM_Agg | MEM_Dyn | MEM_RowSet | MEM_Frame ) ) != 0 )
       {
         if ( ( p.flags & MEM_Agg ) != 0 )
         {
@@ -356,6 +360,10 @@ return SQLITE_OK;
         else if ( ( p.flags & MEM_RowSet ) != 0 )
         {
           sqlite3RowSetClear( p.u.pRowSet );
+        }
+        else if ( ( p.flags & MEM_Frame ) != 0 )
+        {
+          sqlite3VdbeMemSetNull( p );
         }
       }
       p.n = 0;
@@ -377,7 +385,7 @@ return SQLITE_OK;
     static void sqlite3VdbeMemRelease( Mem p )
     {
       sqlite3VdbeMemReleaseExternal( p );
-      //sqlite3DbFree(p.db,ref p.zMalloc);
+      //sqlite3DbFree( p.db, ref p.zMalloc );
       p.zBLOB = null;
       p.z = null;
       //p.zMalloc = null;
@@ -501,7 +509,7 @@ return SQLITE_OK;
           return (double)0;
         }
         if ( pMem.zBLOB != null ) sqlite3AtoF( Encoding.UTF8.GetString( pMem.zBLOB ), ref val );
-        else if ( pMem.z != null ) sqlite3AtoF( pMem.z, ref val );
+        else if ( !String.IsNullOrEmpty(pMem.z )) sqlite3AtoF( pMem.z, ref val );
         else val = 0.0;
         return val;
       }
@@ -531,11 +539,14 @@ return SQLITE_OK;
       **    (2) The integer is neither the largest nor the smallest
       **        possible integer (ticket #3922)
       **
-      ** The second term in the following conditional enforces the second
-      ** condition under the assumption that additional overflow causes
-      ** values to wrap around.
+      ** The second and third terms in the following conditional enforces
+      ** the second condition under the assumption that addition overflow causes
+      ** values to wrap around.  On x86 hardware, the third term is always
+      ** true and could be omitted.  But we leave it in because other
+      ** architectures might behave differently.
       */
-      if ( pMem.r == (double)pMem.u.i && ( pMem.u.i - 1 ) < ( pMem.u.i + 1 ) )
+      if ( pMem.r == (double)pMem.u.i && pMem.u.i > SMALLEST_INT64
+          && ALWAYS( pMem.u.i < LARGEST_INT64 ) )
       {
         pMem.flags |= MEM_Int;
       }
@@ -600,6 +611,10 @@ return SQLITE_OK;
     */
     static void sqlite3VdbeMemSetNull( Mem pMem )
     {
+      if ( ( pMem.flags & MEM_Frame ) != 0 )
+      {
+        sqlite3VdbeFrameDelete( pMem.u.pFrame );
+      }
       if ( ( pMem.flags & MEM_RowSet ) != 0 )
       {
         sqlite3RowSetClear( pMem.u.pRowSet );
@@ -624,12 +639,12 @@ return SQLITE_OK;
       pMem.u.nZero = n;
       pMem.enc = SQLITE_UTF8;
 #if SQLITE_OMIT_INCRBLOB
-  sqlite3VdbeMemGrow(pMem, n, 0);
-  //if( pMem.z!= null ){
-   pMem.n = n;
-   pMem.z = null;//memset(pMem.z, 0, n);
-   pMem.zBLOB = new byte[n];
-   //}
+      sqlite3VdbeMemGrow( pMem, n, 0 );
+      //if( pMem.z!= null ){
+      pMem.n = n;
+      pMem.z = null;//memset(pMem.z, 0, n);
+      pMem.zBLOB = new byte[n];
+      //}
 #endif
     }
 
@@ -832,11 +847,11 @@ return SQLITE_OK;
         Debug.Assert( enc != 0 );
         if ( enc == SQLITE_UTF8 )
         {
-          for ( nByte = 0 ; nByte <= iLimit && nByte < z.Length && z[nByte] != 0 ; nByte++ ) { }
+          for ( nByte = 0; nByte <= iLimit && nByte < z.Length && z[nByte] != 0; nByte++ ) { }
         }
         else
         {
-          for ( nByte = 0 ; nByte <= iLimit && z[nByte] != 0 || z[nByte + 1] != 0 ; nByte += 2 ) { }
+          for ( nByte = 0; nByte <= iLimit && z[nByte] != 0 || z[nByte + 1] != 0; nByte += 2 ) { }
         }
         flags |= MEM_Term;
       }
@@ -867,7 +882,7 @@ return SQLITE_OK;
         {
           pMem.z = null;
           pMem.zBLOB = new byte[n];
-          for ( int i = 0 ; i < n && i < z.Length ; i++ ) pMem.zBLOB[i] = (byte)z[i];
+          for ( int i = 0; i < n && i < z.Length; i++ ) pMem.zBLOB[i] = (byte)z[i];
         }
         else
         {
@@ -1042,8 +1057,8 @@ return SQLITE_NOMEM;
             int n1, n2;
             Mem c1;
             Mem c2;
-            c1 = new Mem();// memset( &c1, 0, sizeof( c1 ) );
-            c2 = new Mem();//memset( &c2, 0, sizeof( c2 ) );
+            c1 = Pool.Allocate_Mem();// memset( &c1, 0, sizeof( c1 ) );
+            c2 = Pool.Allocate_Mem();//memset( &c2, 0, sizeof( c2 ) );
             sqlite3VdbeMemShallowCopy( c1, pMem1, MEM_Ephem );
             sqlite3VdbeMemShallowCopy( c2, pMem2, MEM_Ephem );
             v1 = sqlite3ValueText( (sqlite3_value)c1, pColl.enc );
@@ -1098,10 +1113,10 @@ return SQLITE_NOMEM;
       int available = 0; /* Number of bytes available on the local btree page */
       int rc = SQLITE_OK; /* Return code */
 
-      Debug.Assert( sqlite3BtreeCursorIsValid(pCur) );
+      Debug.Assert( sqlite3BtreeCursorIsValid( pCur ) );
 
-	/* Note: the calls to BtreeKeyFetch() and DataFetch() below assert()
-      ** that both the BtShared and database handle mutexes are held. */
+      /* Note: the calls to BtreeKeyFetch() and DataFetch() below assert()
+          ** that both the BtShared and database handle mutexes are held. */
       Debug.Assert( ( pMem.flags & MEM_RowSet ) == 0 );
       int outOffset = -1;
       if ( key )
@@ -1130,7 +1145,7 @@ return SQLITE_NOMEM;
         pMem.flags = MEM_Blob | MEM_Dyn | MEM_Term;
         if ( key )
         {
-          rc = sqlite3BtreeKey( pCur, (u32)offset, (u32)amt,  pMem.zBLOB );
+          rc = sqlite3BtreeKey( pCur, (u32)offset, (u32)amt, pMem.zBLOB );
         }
         else
         {
@@ -1193,7 +1208,7 @@ return SQLITE_NOMEM;
         //  assert( 0==(1&SQLITE_PTR_TO_INT(pVal->z)) );
       }
       Debug.Assert( pVal.enc == ( enc & ~SQLITE_UTF16_ALIGNED ) || pVal.db == null
-      //|| pVal.db.mallocFailed != 0
+        //|| pVal.db.mallocFailed != 0
       );
       if ( pVal.enc == ( enc & ~SQLITE_UTF16_ALIGNED ) )
       {
@@ -1210,13 +1225,13 @@ return SQLITE_NOMEM;
     */
     static sqlite3_value sqlite3ValueNew( sqlite3 db )
     {
-      Mem p = new Mem();//sqlite3DbMallocZero(db, sizeof(*p));
-      if ( p != null )
-      {
-        p.flags = MEM_Null;
-        p.type = SQLITE_NULL;
-        p.db = db;
-      }
+      Mem p = Pool.Allocate_Mem();//sqlite3DbMallocZero(db, sizeof(*p));
+      //if ( p != null )
+      //{
+      p.flags = MEM_Null;
+      p.type = SQLITE_NULL;
+      p.db = db;
+      //}
       return p;
     }
 
@@ -1248,6 +1263,10 @@ return SQLITE_NOMEM;
         return SQLITE_OK;
       }
       op = pExpr.op;
+      if ( op == TK_REGISTER )
+      {
+        op = pExpr.op2;
+      }
 
       if ( op == TK_STRING || op == TK_FLOAT || op == TK_INTEGER )
       {
@@ -1260,8 +1279,9 @@ return SQLITE_NOMEM;
         else
         {
           zVal = pExpr.u.zToken;// sqlite3DbStrDup( db, pExpr.u.zToken );
-          if ( zVal == null ) goto no_mem;
+          //if ( zVal == null ) goto no_mem;
           sqlite3ValueSetStr( pVal, -1, zVal, SQLITE_UTF8, SQLITE_DYNAMIC );
+          if ( op == TK_FLOAT ) pVal.type = SQLITE_FLOAT;
         }
         if ( ( op == TK_INTEGER || op == TK_FLOAT ) && affinity == SQLITE_AFF_NONE )
         {
@@ -1308,9 +1328,9 @@ return SQLITE_NOMEM;
       ppVal = pVal;
       return SQLITE_OK;
 
-no_mem:
+    no_mem:
       //db.mallocFailed = 1;
-      //sqlite3DbFree( db, ref zVal );
+      sqlite3DbFree( db, ref zVal );
       pVal = null;// sqlite3ValueFree(pVal);
       ppVal = null;
       return SQLITE_NOMEM;
@@ -1337,7 +1357,7 @@ no_mem:
     {
       if ( v == null ) return;
       sqlite3VdbeMemRelease( v );
-      //sqlite3DbFree( v.db, ref v );
+      sqlite3DbFree( v.db, ref v );
     }
 
     /*
@@ -1360,5 +1380,71 @@ no_mem:
       }
       return 0;
     }
+
+    // An attempt to reduce garbage collection through Mem object reuse
+    public class Pool
+    {
+      static Mem[] poolMem = null;
+      static int poolCount = 0;
+
+      static public Mem Allocate_Mem()
+      {
+        Mem pMem = null;
+        for ( int i = poolCount-1; i > 0; i-- )
+          if ( poolMem[i] != null ) { pMem = poolMem[i]; poolMem[i] = null; break; }
+        if ( pMem == null ) pMem = new Mem();
+        return pMem;
+      }
+      static public void Release_Mem( Mem pMem )
+      {
+        MemSetTypeFlag( pMem, MEM_Null );
+        pMem.type = SQLITE_NULL;
+        for ( int i = poolCount-1; i > 0; i-- )
+          if ( poolMem[i] == null )
+          {
+            poolMem[i] = pMem;
+            pMem = null; break;
+          }
+        if ( pMem != null )
+        {
+          Array.Resize( ref poolMem, poolCount * 2 + 1 );
+          poolMem[poolCount] = pMem;
+          poolCount = poolCount * 2 + 1;
+        }
+      }
+    }
+    
+    //static void sqlite3DbFree( sqlite3 db, ref AggInfo_col[] pAggInfo_col ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref AggInfo_func[] pAggInfo_func ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Db[] pDb ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Column pColumn ) { }   
+    //static void sqlite3DbFree( sqlite3 db, ref Expr[] pExpr ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Expr pExpr ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref FuncDef pFuncDef ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Index pIndex ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref InLoop[] pInLoop ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref int[] pint ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref RowSetChunk pRowSetChunk ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Savepoint pSavepoint ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref Select pSelect ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref string[] pString ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref string pString ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref StringBuilder pStringBuilder ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref SubProgram pSubProgram ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref sqlite3 psqlite3 ) { }    
+    //static void sqlite3DbFree( sqlite3 db, ref Trigger pTrigger ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref TriggerPrg pTriggerPrg ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref TriggerStep pTriggerStep ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref VdbeFunc pVdbeFunc ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref WhereAndInfo pWhereAndInfo ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref WhereInfo pWhereInfo ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref WhereOrInfo pWhereOrInfo ) { }
+    //static void sqlite3DbFree( sqlite3 db, ref WhereTerm pWhereTerm ) { }
+    
+    static void sqlite3DbFree( sqlite3 db, ref Mem pMem )
+    {
+      Pool.Release_Mem( pMem );
+    }
+  static void sqlite3DbFree<T>( sqlite3 db, ref T pT ) where T : class { }
   }
 }

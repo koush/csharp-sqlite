@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -10,7 +10,7 @@ namespace CS_SQLite3
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
 
-  using sqlite3_stmt = CS_SQLite3.csSQLite.Vdbe;
+  using sqlite3_stmt = Community.Data.SQLite.csSQLite.Vdbe;
 
   public partial class csSQLite
   {

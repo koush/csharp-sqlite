@@ -5,7 +5,7 @@ using System.Text;
 using i64 = System.Int64;
 using u8 = System.Byte;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -240,6 +240,7 @@ new sPragmaType( "omit_readlock",            SQLITE_NoReadlock    ),
 /* TODO: Maybe it shouldn't be possible to change the ReadUncommitted
 ** flag if there are any active statements. */
 new sPragmaType( "read_uncommitted",         SQLITE_ReadUncommitted ),
+new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
 };
       int i;
       sPragmaType p;
@@ -1696,8 +1697,8 @@ sqlite3_activate_cerod(&zRight[6]);
       }
 #endif
     pragma_out:
-      //sqlite3DbFree( db, ref zLeft );
-      //sqlite3DbFree( db, ref zRight );
+      sqlite3DbFree( db, ref zLeft );
+      sqlite3DbFree( db, ref zRight );
       ;
     }
 

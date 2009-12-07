@@ -16,7 +16,7 @@ using sqlite3_int64 = System.Int64;
 using Pgno = System.UInt32;
 
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
   using Op = csSQLite.VdbeOp;
@@ -236,7 +236,7 @@ namespace CS_SQLite3
     int iCur,             /* Index of the new VdbeCursor */
     int nField,           /* Number of fields in the table or index */
     int iDb,              /* When database the cursor belongs to, or -1 */
-    int isBtreeCursor     /* True for B-Tree vs. pseudo-table or vtab */
+    int isBtreeCursor     /* True for B-Tree.  False for pseudo-table or vtab */
     )
     {
       /* Find the memory cell that will be used to store the blob of memory
@@ -257,7 +257,7 @@ namespace CS_SQLite3
       ** space. Memory cell (p.nMem) corresponds to cursor 0. Space for
       ** cursor 1 is managed by memory cell (p.nMem-1), etc.
       */
-      Mem pMem = p.aMem[p.nMem - iCur];
+      //Mem pMem = p.aMem[p.nMem - iCur];
 
       int nByte;
       VdbeCursor pCx = null;
@@ -272,7 +272,7 @@ namespace CS_SQLite3
         sqlite3VdbeFreeCursor( p, p.apCsr[iCur] );
         p.apCsr[iCur] = null;
       }
-      if ( SQLITE_OK == sqlite3VdbeMemGrow( pMem, nByte, 0 ) )
+      //if ( SQLITE_OK == sqlite3VdbeMemGrow( pMem, nByte, 0 ) )
       {
         p.apCsr[iCur] = pCx = new VdbeCursor();// (VdbeCursor*)pMem.z;
         //memset( pMem.z, 0, nByte );
@@ -811,7 +811,7 @@ start = sqlite3Hwtime();
         }
 #endif
 
-        /* Do common setup processing for any opcode that is marked
+/* Do common setup processing for any opcode that is marked
 ** with the "out2-prerelease" tag.  Such opcodes have a single
 ** output which is specified by the P2 parameter.  The P2 register
 ** is initialized to a NULL.
@@ -851,21 +851,19 @@ start = sqlite3Hwtime();
               Debug.Assert( pOp.p2 <= p.nMem );
               pIn2 = p.aMem[pOp.p2];
               REGISTER_TRACE( p, pOp.p2, pIn2 );
-              if ( ( opProperty & OPFLG_OUT3 ) != 0 )
-              {
-                Debug.Assert( pOp.p3 > 0 );
-                Debug.Assert( pOp.p3 <= p.nMem );
-                pOut = p.aMem[pOp.p3];
-              }
+              /* As currently implemented, in2 implies out3.  There is no reason
+              ** why this has to be, it just worked out that way. */
+              Debug.Assert( (opProperty & OPFLG_OUT3)!=0 );
+              Debug.Assert( pOp.p3 > 0 );
+              Debug.Assert( pOp.p3 <= p.nMem );
+              pOut = p.aMem[pOp.p3];
             }
             else if ( ( opProperty & OPFLG_IN3 ) != 0 )
             {
               Debug.Assert( pOp.p3 > 0 );
               Debug.Assert( pOp.p3 <= p.nMem );
               pIn3 = p.aMem[pOp.p3];
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p3, pIn3 );
-#endif
             }
           }
           else if ( ( opProperty & OPFLG_IN2 ) != 0 )
@@ -873,18 +871,14 @@ start = sqlite3Hwtime();
             Debug.Assert( pOp.p2 > 0 );
             Debug.Assert( pOp.p2 <= p.nMem );
             pIn2 = p.aMem[pOp.p2];
-#if SQLITE_DEBUG
             REGISTER_TRACE( p, pOp.p2, pIn2 );
-#endif
           }
           else if ( ( opProperty & OPFLG_IN3 ) != 0 )
           {
             Debug.Assert( pOp.p3 > 0 );
             Debug.Assert( pOp.p3 <= p.nMem );
             pIn3 = p.aMem[pOp.p3];
-#if SQLITE_DEBUG
             REGISTER_TRACE( p, pOp.p3, pIn3 );
-#endif
           }
 
         switch ( pOp.opcode )
@@ -1018,9 +1012,28 @@ start = sqlite3Hwtime();
           */
           case OP_Halt:
             {
+              if ( pOp.p1 == SQLITE_OK && p.pFrame !=null)
+              {
+                /* Halt the sub-program. Return control to the parent frame. */
+                VdbeFrame pFrame = p.pFrame;
+                p.pFrame = pFrame.pParent;
+                p.nFrame--;
+                sqlite3VdbeSetChanges( db, p.nChange );
+                pc = sqlite3VdbeFrameRestore( pFrame );
+                if ( pOp.p2 == OE_Ignore )
+                {
+                  /* Instruction pc is the OP_Program that invoked the sub-program 
+                  ** currently being halted. If the p2 instruction of this OP_Halt
+                  ** instruction is set to OE_Ignore, then the sub-program is throwing
+                  ** an IGNORE exception. In this case jump to the address specified
+                  ** as the p2 of the calling OP_Program.  */
+                  pc = p.aOp[pc].p2 - 1;
+                }
+                break;
+              }
               p.rc = pOp.p1;
-              p.pc = pc;
               p.errorAction = (u8)pOp.p2;
+              p.pc = pc;
               if ( pOp.p4.z != null )
               {
                 sqlite3SetString( ref p.zErrMsg, db, "%s", pOp.p4.z );
@@ -1097,7 +1110,7 @@ pOut->zMalloc = 0;
 pOut->flags |= MEM_Static;
 pOut->flags &= ~MEM_Dyn;
 if( pOp->p4type==P4_DYNAMIC ){
-//sqlite3DbFree(db, pOp->p4.z);
+sqlite3DbFree(db, pOp->p4.z);
 }
 pOp->p4type = P4_DYNAMIC;
 pOp->p4.z = pOut->z;
@@ -1253,9 +1266,7 @@ pOp->p1 = pOut->n;
               Debug.Assert( pOut != pIn1 );
               sqlite3VdbeMemShallowCopy( pOut, pIn1, MEM_Ephem );
               if ( ( pOut.flags & MEM_Ephem ) != 0 && sqlite3VdbeMemMakeWriteable( pOut ) != 0 ) { goto no_mem; }//Deephemeralize( pOut );
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p2, pOut );
-#endif
               break;
             }
 
@@ -1273,17 +1284,13 @@ pOp->p1 = pOut->n;
           */
           case OP_SCopy:
             {            /* in1 */
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p1, pIn1 );
-#endif
               Debug.Assert( pOp.p2 > 0 );
               Debug.Assert( pOp.p2 <= p.nMem );
               pOut = p.aMem[pOp.p2];
               Debug.Assert( pOut != pIn1 );
               sqlite3VdbeMemShallowCopy( pOut, pIn1, MEM_Ephem );
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p2, pOut );
-#endif
               break;
             }
 
@@ -1429,9 +1436,9 @@ pOp->p1 = pOut->n;
           /* Opcode: Divide P1 P2 P3 * *
           **
           ** Divide the value in register P1 by the value in register P2
-          ** and store the result in register P3.  If the value in register P2
-          ** is zero, then the result is NULL.
-          ** If either input is NULL, the result is NULL.
+          ** and store the result in register P3 (P3=P2/P1). If the value in 
+          ** register P1 is zero, then the result is NULL. If either input is 
+          ** NULL, the result is NULL.
           */
           /* Opcode: Remainder P1 P2 P3 * *
           **
@@ -1587,9 +1594,7 @@ arithmetic_result_is_null:
                 pArg = p.aMem[pOp.p2 + i];
                 apVal[i] = pArg;
                 storeTypeInfo( pArg, encoding );
-#if SQLITE_DEBUG
                 REGISTER_TRACE( p, pOp.p2, pArg );
-#endif
               }
 
               Debug.Assert( pOp.p4type == P4_FUNCDEF || pOp.p4type == P4_VDBEFUNC );
@@ -1676,9 +1681,7 @@ arithmetic_result_is_null:
               {
                 goto too_big;
               }
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p3, pOut );
-#endif
 #if SQLITE_TEST
               UPDATE_MAX_BLOBSIZE( pOut );
 #endif
@@ -2029,9 +2032,7 @@ arithmetic_result_is_null:
                 pOut = p.aMem[pOp.p2];
                 MemSetTypeFlag( pOut, MEM_Int );
                 pOut.u.i = res;
-#if SQLITE_DEBUG
                 REGISTER_TRACE( p, pOp.p2, pOut );
-#endif
               }
               else if ( res != 0 )
               {
@@ -2295,43 +2296,25 @@ c = sqlite3VdbeIntValue(pIn1)!=0;
               break;
             }
 
-          /* Opcode: SetNumColumns * P2 * * *
-          **
-          ** This opcode sets the number of columns for the cursor opened by the
-          ** following instruction to P2.
-          **
-          ** An OP_SetNumColumns is only useful if it occurs immediately before
-          ** one of the following opcodes:
-          **
-          **     OpenRead
-          **     OpenWrite
-          **     OpenPseudo
-          **
-          ** If the OP_Column opcode is to be executed on a cursor, then
-          ** this opcode must be present immediately before the opcode that
-          ** opens the cursor.
-          */
-#if FALSE
-case OP_SetNumColumns:
-{
-break;
-}
-#endif
-
           /* Opcode: Column P1 P2 P3 P4 *
-**
-** Interpret the data that cursor P1 points to as a structure built using
-** the MakeRecord instruction.  (See the MakeRecord opcode for additional
-** information about the format of the data.)  Extract the P2-th column
-** from this record.  If there are less that (P2+1)
-** values in the record, extract a NULL.
-**
-** The value extracted is stored in register P3.
-**
-** If the column contains fewer than P2 fields, then extract a NULL.  Or,
-** if the P4 argument is a P4_MEM use the value of the P4 argument as
-** the result.
-*/
+          **
+          ** Interpret the data that cursor P1 points to as a structure built using
+          ** the MakeRecord instruction.  (See the MakeRecord opcode for additional
+          ** information about the format of the data.)  Extract the P2-th column
+          ** from this record.  If there are less that (P2+1)
+          ** values in the record, extract a NULL.
+          **
+          ** The value extracted is stored in register P3.
+          **
+          ** If the column contains fewer than P2 fields, then extract a NULL.  Or,
+          ** if the P4 argument is a P4_MEM use the value of the P4 argument as
+          ** the result.
+          **
+          ** If the OPFLAG_CLEARCACHE bit is set on P5 and P1 is a pseudo-table cursor,
+          ** then the cache of the cursor is reset prior to extracting the column.
+          ** The first OP_Column against a pseudo-table after the value of the content
+          ** register has changed should have this bit set.
+          */
           case OP_Column:
             {
               u32 payloadSize;   /* Number of bytes in the record */
@@ -2355,7 +2338,7 @@ break;
               u64 offset64;      /* 64-bit offset.  64 bits needed to catch overflow */
               int szHdr;         /* Size of the header size field at start of record */
               int avail;         /* Number of bytes of available data */
-
+              Mem pReg;         /* PseudoTable input register */
 
               p1 = pOp.p1;
               p2 = pOp.p2;
@@ -2365,7 +2348,7 @@ break;
               payloadSize64 = 0;
               offset = 0;
 
-              sMem = new Mem();//  memset(&sMem, 0, sizeof(sMem));
+              sMem = Pool.Allocate_Mem();//  memset(&sMem, 0, sizeof(sMem));
               Debug.Assert( p1 < p.nCursor );
               Debug.Assert( pOp.p3 > 0 && pOp.p3 <= p.nMem );
               pDest = p.aMem[pOp.p3];
@@ -2423,12 +2406,14 @@ Debug.Assert( pC.pVtabCursor==0 );
                   Debug.Assert( rc == SQLITE_OK );   /* DataSize() cannot fail */
                 }
               }
-              else if ( pC.pseudoTable )
+              else if ( pC.pseudoTableReg > 0 )
               {
                 /* The record is the sole entry of a pseudo-table */
-                payloadSize = (Pgno)pC.nData;
-                zRec = pC.pData;
-                pC.cacheStatus = CACHE_STALE;
+                pReg = p.aMem[pC.pseudoTableReg];
+                Debug.Assert( (pReg.flags & MEM_Blob )!=0);
+                payloadSize = (u32)pReg.n;
+                zRec = pReg.zBLOB;
+                pC.cacheStatus = ( pOp.p5 & OPFLAG_CLEARCACHE )!=0 ? CACHE_STALE : p.cacheCtr;
                 Debug.Assert( payloadSize == 0 || zRec != null );
               }
               else
@@ -2670,9 +2655,7 @@ op_column_out:
 #if SQLITE_TEST
               UPDATE_MAX_BLOBSIZE( pDest );
 #endif
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p3, pDest );
-#endif
               break;
             }
 
@@ -2850,9 +2833,7 @@ op_column_out:
                 pOut.flags |= MEM_Zero;
               }
               pOut.enc = SQLITE_UTF8;  /* In case the blob is ever converted to text */
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p3, pOut );
-#endif
 #if SQLITE_TEST
               UPDATE_MAX_BLOBSIZE( pOut );
 #endif
@@ -2883,49 +2864,6 @@ op_column_out:
               break;
             }
 #endif
-
-          /* Opcode: Statement P1 * * * *
-**
-** Begin an individual statement transaction which is part of a larger
-** transaction.  This is needed so that the statement
-** can be rolled back after an error without having to roll back the
-** entire transaction.  The statement transaction will automatically
-** commit when the VDBE halts.
-**
-** If the database connection is currently in autocommit mode (that
-** is to say, if it is in between BEGIN and COMMIT)
-** and if there are no other active statements on the same database
-** connection, then this operation is a no-op.  No statement transaction
-** is needed since any error can use the normal ROLLBACK process to
-** undo changes.
-**
-** If a statement transaction is started, then a statement journal file
-** will be allocated and initialized.
-**
-** The statement is begun on the database file with index P1.  The main
-** database file has an index of 0 and the file used for temporary tables
-** has an index of 1.
-*/
-          case OP_Statement:
-            {
-              Btree pBt;
-              if ( db.autoCommit == 0 || db.activeVdbeCnt > 1 )
-              {
-                Debug.Assert( pOp.p1 >= 0 && pOp.p1 < db.nDb );
-                Debug.Assert( db.aDb[pOp.p1].pBt != null );
-                pBt = db.aDb[pOp.p1].pBt;
-                Debug.Assert( sqlite3BtreeIsInTrans( pBt ) );
-                Debug.Assert( ( p.btreeMask & ( 1 << pOp.p1 ) ) != 0 );
-                if ( p.iStatement == 0 )
-                {
-                  Debug.Assert( db.nStatement >= 0 && db.nSavepoint >= 0 );
-                  db.nStatement++;
-                  p.iStatement = db.nSavepoint + db.nStatement;
-                }
-                rc = sqlite3BtreeBeginStmt( pBt, p.iStatement );
-              }
-              break;
-            }
 
           /* Opcode: Savepoint P1 * * P4 *
           **
@@ -3074,7 +3012,7 @@ op_column_out:
                   {
                     pTmp = db.pSavepoint;
                     db.pSavepoint = pTmp.pNext;
-                    //sqlite3DbFree( db, pTmp );
+                    sqlite3DbFree( db, ref pTmp );
                     db.nSavepoint--;
                   }
 
@@ -3083,7 +3021,7 @@ op_column_out:
                   {
                     Debug.Assert( pSavepoint == db.pSavepoint );
                     db.pSavepoint = pSavepoint.pNext;
-                    //sqlite3DbFree( db, pSavepoint );
+                    sqlite3DbFree( db, ref pSavepoint );
                     if ( 0 == isTransaction )
                     {
                       db.nSavepoint--;
@@ -3198,6 +3136,16 @@ op_column_out:
           ** database.  If P2 is 2 or greater then an EXCLUSIVE lock is also obtained
           ** on the file.
           **
+          ** If a write-transaction is started and the Vdbe.usesStmtJournal flag is
+          ** true (this flag is set if the Vdbe may modify more than one row and may
+          ** throw an ABORT exception), a statement transaction may also be opened.
+          ** More specifically, a statement transaction is opened iff the database
+          ** connection is currently not in autocommit mode, or if there are other
+          ** active statements. A statement transaction allows the affects of this
+          ** VDBE to be rolled back after an error without having to roll back the
+          ** entire transaction. If no error is encountered, the statement transaction
+          ** will automatically commit when the VDBE halts.
+          **
           ** If P2 is zero, then a read-lock is obtained on the database file.
           */
           case OP_Transaction:
@@ -3220,6 +3168,19 @@ op_column_out:
                 if ( rc != SQLITE_OK && rc != SQLITE_READONLY /* && rc!=SQLITE_BUSY */ )
                 {
                   goto abort_due_to_error;
+                }
+                if ( pOp.p2 !=0 && p.usesStmtJournal
+                 && ( db.autoCommit == 0 || db.activeVdbeCnt > 1 )
+                )
+                {
+                  Debug.Assert( sqlite3BtreeIsInTrans( pBt ) );
+                  if ( p.iStatement == 0 )
+                  {
+                    Debug.Assert( db.nStatement >= 0 && db.nSavepoint >= 0 );
+                    db.nStatement++;
+                    p.iStatement = db.nSavepoint + db.nStatement;
+                  }
+                  rc = sqlite3BtreeBeginStmt( pBt, p.iStatement );
                 }
               }
               break;
@@ -3331,7 +3292,7 @@ op_column_out:
               }
               if ( iMeta != pOp.p2 )
               {
-                //sqlite3DbFree(db,ref p.zErrMsg);
+                sqlite3DbFree(db,ref p.zErrMsg);
                 p.zErrMsg = "database schema has changed";// sqlite3DbStrDup(db, "database schema has changed");
                 /* If the schema-cookie from the database file matches the cookie
                 ** stored with the in-memory representation of the schema, do
@@ -3568,22 +3529,14 @@ rc = SQLITE_CORRUPT_BKPT;
           /* Opcode: OpenPseudo P1 P2 P3 * *
           **
           ** Open a new cursor that points to a fake table that contains a single
-          ** row of data.  Any attempt to write a second row of data causes the
-          ** first row to be deleted.  All data is deleted when the cursor is
-          ** closed.
+          ** row of data.  The content of that one row in the content of memory
+          ** register P2.  In other words, cursor P1 becomes an alias for the 
+          ** MEM_Blob content contained in register P2.
           **
-          ** A pseudo-table created by this opcode is useful for holding the
-          ** NEW or OLD tables in a trigger.  Also used to hold the a single
+          ** A pseudo-table created by this opcode is used to hold the a single
           ** row output from the sorter so that the row can be decomposed into
-          ** individual columns using the OP_Column opcode.
-          **
-          ** When OP_Insert is executed to insert a row in to the pseudo table,
-          ** the pseudo-table cursor may or may not make it's own copy of the
-          ** original row data. If P2 is 0, then the pseudo-table will copy the
-          ** original row data. Otherwise, a pointer to the original memory cell
-          ** is stored. In this case, the vdbe program must ensure that the
-          ** memory cell containing the row data is not overwritten until the
-          ** pseudo table is closed (or a new row is inserted into it).
+          ** individual columns using the OP_Column opcode.  The OP_Column opcode
+          ** is the only cursor opcode that works with a pseudo-table.
           **
           ** P3 is the number of fields in the records that will be stored by
           ** the pseudo-table.
@@ -3595,8 +3548,7 @@ rc = SQLITE_CORRUPT_BKPT;
               pCx = allocateCursor( p, pOp.p1, pOp.p3, -1, 0 );
               if ( pCx == null ) goto no_mem;
               pCx.nullRow = true;
-              pCx.pseudoTable = true;
-              pCx.ephemPseudoTable = pOp.p2 != 0 ? true : false;
+              pCx.pseudoTableReg = pOp.p2;
               pCx.isTable = true;
               pCx.isIndex = false;
               break;
@@ -3686,6 +3638,7 @@ rc = SQLITE_CORRUPT_BKPT;
               Debug.Assert( pOp.p2 != 0 );
               pC = p.apCsr[pOp.p1];
               Debug.Assert( pC != null );
+              Debug.Assert( pC.pseudoTableReg == 0 );
               if ( pC.pCursor != null )
               {
                 oc = pOp.opcode;
@@ -3835,7 +3788,6 @@ rc = SQLITE_CORRUPT_BKPT;
                 ** for read access returns SQLITE_EMPTY. In this case always
                 ** take the jump (since there are no records in the table).
                 */
-                Debug.Assert( pC.pseudoTable == false );
                 pc = pOp.p2 - 1;
               }
               break;
@@ -4013,7 +3965,7 @@ rc = SQLITE_CORRUPT_BKPT;
                   break;
                 }
               }
-              aMem[nField] = new Mem();
+              aMem[nField] = Pool.Allocate_Mem();
               //Debug.Assert( ( aMem[nField].flags & MEM_Null ) == 0 );
 
               if ( pCrsr != null )
@@ -4071,6 +4023,7 @@ rc = SQLITE_CORRUPT_BKPT;
               pC = p.apCsr[pOp.p1];
               Debug.Assert( pC != null );
               Debug.Assert( pC.isTable );
+              Debug.Assert( pC.pseudoTableReg == 0 );
               pCrsr = pC.pCursor;
               if ( pCrsr != null )
               {
@@ -4094,8 +4047,6 @@ rc = SQLITE_CORRUPT_BKPT;
                 /* This happens when an attempt to open a read cursor on the
                 ** sqlite_master table returns SQLITE_EMPTY.
                 */
-                Debug.Assert( !pC.pseudoTable );
-                Debug.Assert( pC.isTable );
                 pc = pOp.p2 - 1;
                 Debug.Assert( !pC.rowidIsValid );
                 pC.seekResult = 0;
@@ -4127,11 +4078,11 @@ rc = SQLITE_CORRUPT_BKPT;
           ** table that cursor P1 points to.  The new record number is written
           ** written to register P2.
           **
-          ** If P3>0 then P3 is a register that holds the largest previously
-          ** generated record number.  No new record numbers are allowed to be less
-          ** than this value.  When this value reaches its maximum, a SQLITE_FULL
-          ** error is generated.  The P3 register is updated with the generated
-          ** record number.  This P3 mechanism is used to help implement the
+          ** If P3>0 then P3 is a register in the root frame of this VDBE that holds 
+          ** the largest previously generated record number. No new record numbers are
+          ** allowed to be less than this value. When this value reaches its maximum, 
+          ** a SQLITE_FULL error is generated. The P3 register is updated with the '
+          ** generated record number. This P3 mechanism is used to help implement the
           ** AUTOINCREMENT feature.
           */
           case OP_NewRowid:
@@ -4141,6 +4092,7 @@ rc = SQLITE_CORRUPT_BKPT;
               int res;               /* Result of an sqlite3BtreeLast() */
               int cnt;               /* Counter to limit the number of searches */
               Mem pMem;              /* Register holding largest rowid for AUTOINCREMENT */
+              VdbeFrame pFrame;      /* Root frame of VDBE */
 
               v = 0;
               res = 0;
@@ -4213,10 +4165,19 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
                   if ( pOp.p3 != 0 )
                   {
                     Debug.Assert( pOp.p3 > 0 && pOp.p3 <= p.nMem ); /* P3 is a valid memory cell */
+        /* Assert that P3 is a valid memory cell. */
+                    Debug.Assert( pOp.p3 > 0 );
+        if( p.pFrame!=null ){
+          for(pFrame=p.pFrame; pFrame.pParent!=null; pFrame=pFrame.pParent);
+          /* Assert that P3 is a valid memory cell. */
+          Debug.Assert( pOp.p3 <= pFrame.nMem );
+          pMem = pFrame.aMem[pOp.p3];
+        }else{
+          /* Assert that P3 is a valid memory cell. */
+          Debug.Assert( pOp.p3 <= p.nMem );
                     pMem = p.aMem[pOp.p3];
-#if SQLITE_DEBUG
+        }
                     REGISTER_TRACE( p, pOp.p3, pMem );
-#endif
                     sqlite3VdbeMemIntegerify( pMem );
                     Debug.Assert( ( pMem.flags & MEM_Int ) != 0 );  /* mem(P3) holds an integer */
                     if ( pMem.u.i == MAX_ROWID || pC.useRandomRowid )
@@ -4273,17 +4234,30 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
           **
           ** Write an entry into the table of cursor P1.  A new entry is
           ** created if it doesn't already exist or the data for an existing
-          ** entry is overwritten.  The data is the value stored register
+          ** entry is overwritten.  The data is the value MEM_Blob stored in register
           ** number P2. The key is stored in register P3. The key must
-          ** be an integer.
+          ** be a MEM_Int.
           **
           ** If the OPFLAG_NCHANGE flag of P5 is set, then the row change count is
           ** incremented (otherwise not).  If the OPFLAG_LASTROWID flag of P5 is set,
           ** then rowid is stored for subsequent return by the
           ** sqlite3_last_insert_rowid() function (otherwise it is unmodified).
           **
+          ** If the OPFLAG_USESEEKRESULT flag of P5 is set and if the result of
+          ** the last seek operation (OP_NotExists) was a success, then this
+          ** operation will not attempt to find the appropriate row before doing
+          ** the insert but will instead overwrite the row that the cursor is
+          ** currently pointing to.  Presumably, the prior OP_NotExists opcode
+          ** has already positioned the cursor correctly.  This is an optimization
+          ** that boosts performance by avoiding redundant seeks.
+          **
+          ** If the OPFLAG_ISUPDATE flag is set, then this opcode is part of an
+          ** UPDATE operation.  Otherwise (if the flag is clear) then this opcode
+          ** is part of an INSERT operation.  The difference is only important to
+          ** the update hook.
+          **
           ** Parameter P4 may point to a string containing the table-name, or
-          ** may be NULL. If it is not NULL, then the update-hook
+          ** may be NULL. If it is not NULL, then the update-hook 
           ** (sqlite3.xUpdateCallback) is invoked following a successful insert.
           **
           ** (WARNING/TODO: If P1 is a pseudo-cursor and P2 is dynamically
@@ -4297,30 +4271,27 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
           */
           case OP_Insert:
             {
-              Mem pData;
-              Mem pKey;
-
-              i64 iKey;   /* The integer ROWID or key for the record to be inserted */
-
-              VdbeCursor pC;
-              int nZero;
-              int seekResult;
-              string zDb;
-              string zTbl;
-              int op;
+              Mem pData;        /* MEM cell holding data for the record to be inserted */
+              Mem pKey;         /* MEM cell holding key  for the record */
+              i64 iKey;         /* The integer ROWID or key for the record to be inserted */
+              VdbeCursor pC;    /* Cursor to table into which insert is written */
+              int nZero;        /* Number of zero-bytes to append */
+              int seekResult;   /* Result of prior seek or 0 if no USESEEKRESULT flag */
+              string zDb;       /* database name - used by the update hook */
+              string zTbl;      /* Table name - used by the opdate hook */
+              int op;           /* Opcode for update hook: SQLITE_UPDATE or SQLITE_INSERT */
 
               pData = p.aMem[pOp.p2];
               pKey = p.aMem[pOp.p3];
               Debug.Assert( pOp.p1 >= 0 && pOp.p1 < p.nCursor );
               pC = p.apCsr[pOp.p1];
               Debug.Assert( pC != null );
-              Debug.Assert( pC.pCursor != null || pC.pseudoTable );
+              Debug.Assert( pC.pCursor != null );
+              Debug.Assert( pC.pseudoTableReg == 0 );
               Debug.Assert( ( pKey.flags & MEM_Int ) != 0 );
               Debug.Assert( pC.isTable );
-#if SQLITE_DEBUG
               REGISTER_TRACE( p, pOp.p2, pData );
               REGISTER_TRACE( p, pOp.p3, pKey );
-#endif
               iKey = pKey.u.i;
               if ( ( pOp.p5 & OPFLAG_NCHANGE ) != 0 ) p.nChange++;
               if ( ( pOp.p5 & OPFLAG_LASTROWID ) != 0 ) db.lastRowid = pKey.u.i;
@@ -4334,57 +4305,20 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
               {
                 Debug.Assert( ( pData.flags & ( MEM_Blob | MEM_Str ) ) != 0 );
               }
-              if ( pC.pseudoTable )
+              seekResult = ( ( pOp.p5 & OPFLAG_USESEEKRESULT ) != 0 ? pC.seekResult : 0 );
+              if ( ( pData.flags & MEM_Zero ) != 0 )
               {
-                if ( !pC.ephemPseudoTable )
-                {
-                  //sqlite3DbFree( db, ref pC.pData );
-                }
-                pC.iKey = iKey;
-                pC.nData = pData.n;
-                if ( pC.ephemPseudoTable )//|| pData->z==pData->zMalloc )
-                {
-                  if ( pData.zBLOB != null )
-                  {
-                    pC.pData = new byte[pC.nData + 2];// sqlite3Malloc(pC.nData + 2);
-                    Buffer.BlockCopy( pData.zBLOB, 0, pC.pData, 0, pC.nData );
-                  }
-                  else
-                    pC.pData = Encoding.UTF8.GetBytes( pData.z );
-                  //if ( !pC.ephemPseudoTable )
-                  //{
-                  //  pData.flags &= ~MEM_Dyn;
-                  //  pData.flags |= MEM_Ephem;
-                  //  pData.zMalloc = null;
-                  //}
-                }
-                else
-                {
-                  pC.pData = new byte[pC.nData + 2];// sqlite3Malloc(pC.nData + 2);
-                  if ( pC.pData == null ) goto no_mem;
-                  if ( pC.nData > 0 ) Buffer.BlockCopy( pData.zBLOB, 0, pC.pData, 0, pC.nData );// memcpy(pC.pData, pData.z, pC.nData);
-                  //pC.pData[pC.nData] = 0;
-                  //pC.pData[pC.nData + 1] = 0;
-                }
-                pC.nullRow = false;
+                nZero = pData.u.nZero;
               }
               else
               {
-                seekResult = ( ( pOp.p5 & OPFLAG_USESEEKRESULT ) != 0 ? pC.seekResult : 0 );
-                if ( ( pData.flags & MEM_Zero ) != 0 )
-                {
-                  nZero = pData.u.nZero;
-                }
-                else
-                {
-                  nZero = 0;
-                }
-                rc = sqlite3BtreeInsert( pC.pCursor, null, iKey,
-                pData.zBLOB
-                , pData.n, nZero,
-                ( pOp.p5 & OPFLAG_APPEND ) != 0?1:0, seekResult
-                );
+                nZero = 0;
               }
+              rc = sqlite3BtreeInsert( pC.pCursor, null, iKey,
+              pData.zBLOB
+              , pData.n, nZero,
+              ( pOp.p5 & OPFLAG_APPEND ) != 0 ? 1 : 0, seekResult
+              );
 
               pC.rowidIsValid = false;
               pC.deferredMoveto = false;
@@ -4472,17 +4406,14 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
 
           /* Opcode: ResetCount P1 * *
           **
-          ** This opcode resets the VMs internal change counter to 0. If P1 is true,
-          ** then the value of the change counter is copied to the database handle
-          ** change counter (returned by subsequent calls to sqlite3_changes())
-          ** before it is reset. This is used by trigger programs.
+          ** The value of the change counter is copied to the database handle
+          ** change counter (returned by subsequent calls to sqlite3_changes()).
+          ** Then the VMs internal change counter resets to 0.
+          ** This is used by trigger programs.
           */
           case OP_ResetCount:
             {
-              if ( pOp.p1 != 0 )
-              {
-                sqlite3VdbeSetChanges( db, p.nChange );
-              }
+              sqlite3VdbeSetChanges( db, p.nChange );
               p.nChange = 0;
               break;
             }
@@ -4526,8 +4457,8 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
               Debug.Assert( pC.isTable || pOp.opcode == OP_RowKey );
               Debug.Assert( pC.isIndex || pOp.opcode == OP_RowData );
               Debug.Assert( pC != null );
-              Debug.Assert( !pC.nullRow );
-              Debug.Assert( !pC.pseudoTable );
+              Debug.Assert( pC.nullRow == false );
+              Debug.Assert( pC.pseudoTableReg == 0 );
               Debug.Assert( pC.pCursor != null );
               pCrsr = pC.pCursor;
               Debug.Assert( sqlite3BtreeCursorIsValid( pCrsr ) );
@@ -4604,6 +4535,7 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
               Debug.Assert( pOp.p1 >= 0 && pOp.p1 < p.nCursor );
               pC = p.apCsr[pOp.p1];
               Debug.Assert( pC != null );
+              Debug.Assert( pC.pseudoTableReg == 0 );
               if ( pC.nullRow )
               {
                 /* Do nothing so that reg[P2] remains NULL */
@@ -4612,10 +4544,6 @@ const int MAX_ROWID = i32.MaxValue;//#   define MAX_ROWID 0x7fffffff
               else if ( pC.deferredMoveto )
               {
                 v = pC.movetoTarget;
-              }
-              else if ( pC.pseudoTable )
-              {
-                v = pC.iKey;
 #if !SQLITE_OMIT_VIRTUALTABLE
 }else if( pC.pVtabCursor ){
 pVtab = pC.pVtabCursor.pVtab;
@@ -4623,7 +4551,7 @@ pModule = pVtab.pModule;
 assert( pModule.xRowid );
 if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 rc = pModule.xRowid(pC.pVtabCursor, &v);
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
@@ -5241,7 +5169,7 @@ iCnt++;
                   //Debug.Assert( 0 == db.mallocFailed );
                   rc = sqlite3_exec( db, zSql, (dxCallback)sqlite3InitCallback, (object)initData, 0 );
                   if ( rc == SQLITE_OK ) rc = initData.rc;
-                  //sqlite3DbFree( db, ref zSql );
+                  sqlite3DbFree( db, ref zSql );
                   db.init.busy = 0;
 #if SQLITE_DEBUG
                   sqlite3SafetyOn( db );
@@ -5359,7 +5287,7 @@ iCnt++;
               Debug.Assert( ( p.btreeMask & ( 1 << pOp.p5 ) ) != 0 );
               z = sqlite3BtreeIntegrityCheck( db.aDb[pOp.p5].pBt, aRoot, nRoot,
               (int)pnErr.u.i, ref nErr );
-              //sqlite3DbFree( db, ref aRoot );
+              sqlite3DbFree( db, ref aRoot );
               pnErr.u.i -= nErr;
               sqlite3VdbeMemSetNull( pIn1 );
               if ( nErr == 0 )
@@ -5499,71 +5427,182 @@ iCnt++;
             }
 
 #if !SQLITE_OMIT_TRIGGER
-          /* Opcode: ContextPush * * *
-**
-** Save the current Vdbe context such that it can be restored by a ContextPop
-** opcode. The context stores the last insert row id, the last statement change
-** count, and the current statement change count.
-*/
-          case OP_ContextPush:
-            {
-              int i;
-              Context pContext;
 
-              i = p.contextStackTop++;
-              Debug.Assert( i >= 0 );
-              /* FIX ME: This should be allocated as part of the vdbe at compile-time */
-              if ( i >= p.contextStackDepth )
+          /* Opcode: Program P1 P2 P3 P4 *
+**
+** Execute the trigger program passed as P4 (type P4_SUBPROGRAM). 
+**
+** P1 contains the address of the memory cell that contains the first memory 
+** cell in an array of values used as arguments to the sub-program. P2 
+** contains the address to jump to if the sub-program throws an IGNORE 
+** exception using the RAISE() function. Register P3 contains the address 
+** of a memory cell in this (the parent) VM that is used to allocate the 
+** memory required by the sub-vdbe at runtime.
+**
+** P4 is a pointer to the VM containing the trigger program.
+*/
+          case OP_Program:
+            {        /* jump */
+              int nMem;              /* Number of memory registers for sub-program */
+              int nByte;             /* Bytes of runtime space required for sub-program */
+              Mem pRt;               /* Register to allocate runtime space */
+              Mem pMem;              /* Used to iterate through memory cells */
+              //Mem pEnd;              /* Last memory cell in new array */
+              VdbeFrame pFrame;      /* New vdbe frame to execute in */
+              SubProgram pProgram;   /* Sub-program to execute */
+              int t;                 /* Token identifying trigger */
+
+              pProgram = pOp.p4.pProgram;
+              pRt = p.aMem[pOp.p3];
+              Debug.Assert( pProgram.nOp > 0 );
+
+              /* If the SQLITE_RecTriggers flag is clear, then recursive invocation of
+              ** triggers is disabled for backwards compatibility (flag set/cleared by
+              ** the "PRAGMA recursive_triggers" command). 
+              ** 
+              ** It is recursive invocation of triggers, at the SQL level, that is 
+              ** disabled. In some cases a single trigger may generate more than one 
+              ** SubProgram (if the trigger may be executed with more than one different 
+              ** ON CONFLICT algorithm). SubProgram structures associated with a
+              ** single trigger all have the same value for the SubProgram.token 
+              ** variable.
+              */
+              if ( 0 == ( db.flags & SQLITE_RecTriggers ) )
               {
-                p.contextStackDepth = i + 1;
-                if ( i == 0 )
-                  p.contextStack = new Context[i + 1];// sqlite3DbReallocOrFree( db, p.contextStack,
-                //        sizeof(Context) * ( i + 1 ) );
-                else
-                  Array.Resize( ref p.contextStack, i + 1 );
-                if ( p.contextStack == null ) goto no_mem;
+                t = pProgram.token;
+                for ( pFrame = p.pFrame ; pFrame != null && pFrame.token != t ; pFrame = pFrame.pParent ) ;
+                if ( pFrame!=null ) break;
               }
-              p.contextStack[i] = new Context();
-              pContext = p.contextStack[i];
-              pContext.lastRowid = db.lastRowid;
-              pContext.nChange = p.nChange;
+
+              if ( p.nFrame > db.aLimit[SQLITE_LIMIT_TRIGGER_DEPTH] )
+              {
+                rc = SQLITE_ERROR;
+                sqlite3SetString( ref p.zErrMsg, db, "too many levels of trigger recursion" );
+                break;
+              }
+
+              /* Register pRt is used to store the memory required to save the state
+              ** of the current program, and the memory required at runtime to execute
+              ** the trigger program. If this trigger has been fired before, then pRt 
+              ** is already allocated. Otherwise, it must be initialized.  */
+              if ( ( pRt.flags & MEM_Frame ) == 0 )
+              {
+                /* SubProgram.nMem is set to the number of memory cells used by the 
+                ** program stored in SubProgram.aOp. As well as these, one memory
+                ** cell is required for each cursor used by the program. Set local
+                ** variable nMem (and later, VdbeFrame.nChildMem) to this value.
+                */
+                nMem = pProgram.nMem + pProgram.nCsr + 1;
+                //nByte = ROUND8( sizeof( VdbeFrame ) )
+                          //+ nMem * sizeof( Mem )
+                          //+ pProgram.nCsr * sizeof( VdbeCursor* );
+                pFrame = new VdbeFrame();// sqlite3DbMallocZero( db, nByte );
+                //if ( !pFrame )
+                //{
+                //  goto no_mem;
+                //}
+                sqlite3VdbeMemRelease( pRt );
+                pRt.flags = MEM_Frame;
+                pRt.u.pFrame = pFrame;
+
+                pFrame.v = p;
+                pFrame.nChildMem = nMem;
+                pFrame.aChildMem = new Mem[pFrame.nChildMem];
+                pFrame.nChildCsr = pProgram.nCsr;
+                pFrame.aChildCsr = new VdbeCursor[pFrame.nChildCsr];
+                pFrame.pc = pc;
+                pFrame.aMem = p.aMem;
+                pFrame.nMem = p.nMem;
+                pFrame.apCsr = p.apCsr;
+                pFrame.nCursor = p.nCursor;
+                pFrame.aOp = p.aOp;
+                pFrame.nOp = p.nOp;
+                pFrame.token = pProgram.token;
+
+                // &VdbeFrameMem( pFrame )[pFrame.nChildMem];
+                for ( int i = 0; i < pFrame.nChildMem; i++ )//pMem = VdbeFrameMem( pFrame ) ; pMem != pEnd ; pMem++ )
+                {
+                  //pFrame.aMem[i] = pFrame.aMem[pFrame.nMem+i];
+                  pMem = new Mem();
+                  pMem.flags = MEM_Null;
+                  pMem.db = db;
+                  pFrame.aChildMem[i] = pMem;
+                }
+              }
+              else
+              {
+                pFrame = pRt.u.pFrame;
+                Debug.Assert( pProgram.nMem + pProgram.nCsr + 1 == pFrame.nChildMem );
+                Debug.Assert( pProgram.nCsr == pFrame.nChildCsr );
+                Debug.Assert( pc == pFrame.pc );
+              }
+
+              p.nFrame++;
+              pFrame.pParent = p.pFrame;
+              pFrame.lastRowid = db.lastRowid;
+              pFrame.nChange = p.nChange;
+              p.nChange = 0;
+              p.pFrame = pFrame;
+              p.aMem = pFrame.aChildMem; // &VdbeFrameMem( pFrame )[-1];
+              p.nMem = pFrame.nChildMem;
+              p.nCursor = (u16)pFrame.nChildCsr;
+              p.apCsr = pFrame.aChildCsr;// (VdbeCursor**)&p.aMem[p.nMem + 1];
+              p.aOp = pProgram.aOp;
+              p.nOp = pProgram.nOp;
+              pc = -1;
+
               break;
             }
 
-          /* Opcode: ContextPop * * *
+          /* Opcode: Param P1 P2 * * *
           **
-          ** Restore the Vdbe context to the state it was in when contextPush was last
-          ** executed. The context stores the last insert row id, the last statement
-          ** change count, and the current statement change count.
+          ** This opcode is only ever present in sub-programs called via the 
+          ** OP_Program instruction. Copy a value currently stored in a memory 
+          ** cell of the calling (parent) frame to cell P2 in the current frames 
+          ** address space. This is used by trigger programs to access the new.* 
+          ** and old.* values.
+          **
+          ** The address of the cell in the parent frame is determined by adding
+          ** the value of the P1 argument to the value of the P1 argument to the
+          ** calling OP_Program instruction.
           */
-          case OP_ContextPop:
-            {
-              Context pContext;
-
-              pContext = p.contextStack[--p.contextStackTop];
-              Debug.Assert( p.contextStackTop >= 0 );
-              db.lastRowid = pContext.lastRowid;
-              p.nChange = pContext.nChange;
+          case OP_Param:
+            {           /* out2-prerelease */
+              VdbeFrame pFrame;
+              Mem pIn;
+              pFrame = p.pFrame;
+              pIn = pFrame.aMem[pOp.p1 + pFrame.aOp[pFrame.pc].p1];
+              sqlite3VdbeMemShallowCopy( pOut, pIn, MEM_Ephem );
               break;
             }
 #endif // * #if !SQLITE_OMIT_TRIGGER */
 
 #if !SQLITE_OMIT_AUTOINCREMENT
           /* Opcode: MemMax P1 P2 * * *
-**
-** Set the value of register P1 to the maximum of its current value
-** and the value in register P2.
-**
-** This instruction throws an error if the memory cell is not initially
-** an integer.
-*/
+          **
+          ** P1 is a register in the root frame of this VM (the root frame is
+          ** different from the current frame if this instruction is being executed
+          ** within a sub-program). Set the value of register P1 to the maximum of 
+          ** its current value and the value in register P2.
+          **
+          ** This instruction throws an error if the memory cell is not initially
+          ** an integer.
+          */
           case OP_MemMax:
-            {        /* in1, in2 */
-              sqlite3VdbeMemIntegerify( pIn1 );
+            {        /* in2 */
+              Mem _pIn1;
+              VdbeFrame pFrame;
+              if( p.pFrame !=null ){
+                for(pFrame=p.pFrame; pFrame.pParent!=null ; pFrame=pFrame.pParent);
+                _pIn1 = pFrame.aMem[pOp.p1];
+              }else{
+                _pIn1 = p.aMem[pOp.p1];
+              }
+              sqlite3VdbeMemIntegerify( _pIn1 );
               sqlite3VdbeMemIntegerify( pIn2 );
-              if ( pIn1.u.i < pIn2.u.i )
+              if ( _pIn1.u.i < pIn2.u.i )
               {
-                pIn1.u.i = pIn2.u.i;
+                _pIn1.u.i = pIn2.u.i;
               }
               break;
             }
@@ -5883,7 +5922,7 @@ pModule = (sqlite3_module *)pVtab.pModule;
 Debug.Assert(pVtab && pModule);
 if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 rc = pModulE.xOpen(pVtab, pVtabCursor);
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
@@ -5964,7 +6003,7 @@ if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 p.inVtabMethod = 1;
 rc = pModulE.xFilter(pVtabCursor, iQuery, pOp.p4.z, nArg, apArg);
 p.inVtabMethod = 0;
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( rc==SQLITE_OK ){
@@ -6017,7 +6056,7 @@ MemSetTypeFlag(&sContext.s, MEM_Null);
 
 if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 rc = pModulE.xColumn(pCur.pVtabCursor, sContext, pOp.p2);
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( sContext.isError ){
@@ -6076,7 +6115,7 @@ if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 p.inVtabMethod = 1;
 rc = pModulE.xNext(pCur.pVtabCursor);
 p.inVtabMethod = 0;
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( rc==SQLITE_OK ){
@@ -6110,7 +6149,7 @@ REGISTER_TRACE(pOp.p1, pName);
 Debug.Assert( pName.flags & MEM_Str );
 if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 rc = pVtab.pModulE.xRename(pVtab, pName.z);
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
@@ -6166,7 +6205,7 @@ pX++;
 }
 if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
 rc = pModule.xUpdate(pVtab, nArg, apArg, &rowid);
-//sqlite3DbFree(db, p.zErrMsg);
+sqlite3DbFree(db, p.zErrMsg);
 p.zErrMsg = pVtab.zErrMsg;
 pVtab.zErrMsg = 0;
 if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;

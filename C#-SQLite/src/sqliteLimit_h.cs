@@ -1,4 +1,4 @@
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   public partial class csSQLite
   {
@@ -196,8 +196,19 @@ const int SQLITE_MAX_DEFAULT_PAGE_SIZE SQLITE_MAX_PAGE_SIZE
 ** Maximum length (in bytes) of the pattern in a LIKE or GLOB
 ** operator.
 */
-#if !SQLITE_MAX_LIKE_PATTERN_LENGTH
+//#if !SQLITE_MAX_LIKE_PATTERN_LENGTH
     const int SQLITE_MAX_LIKE_PATTERN_LENGTH = 50000;
+//#endif
+
+    /*
+** Maximum depth of recursion for triggers.
+*/
+//#if !SQLITE_MAX_TRIGGER_DEPTH
+#if (SQLITE_SMALL_STACK)
+const int SQLITE_MAX_TRIGGER_DEPTH = 10;//# define SQLITE_MAX_TRIGGER_DEPTH 10
+#else
+    const int SQLITE_MAX_TRIGGER_DEPTH = 1000;//# define SQLITE_MAX_TRIGGER_DEPTH 1000
 #endif
-  }
+//#endif
+}
 }

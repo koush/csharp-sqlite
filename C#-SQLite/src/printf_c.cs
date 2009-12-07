@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using etByte = System.Boolean;
   using i64 = System.Int64;
@@ -961,7 +961,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
           }
         }
         //if( zExtra ){
-        //  //sqlite3DbFree(db,ref  zExtra);
+        //  sqlite3DbFree(db,ref  zExtra);
         //}
       }/* End for loop over the format string */
     } /* End of function */
@@ -1066,7 +1066,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     {
       if ( p.zText.ToString() != p.zBase.ToString() )
       {
-        //sqlite3DbFree( p.db, ref p.zText );
+        sqlite3DbFree( p.db, ref p.zText );
       }
       p.zText = new StringBuilder();
     }
@@ -1125,7 +1125,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     }
 
     /*
-    ** Like sqlite3MPrintf(), but call //sqlite3DbFree() on zStr after formatting
+    ** Like sqlite3MPrintf(), but call sqlite3DbFree() on zStr after formatting
     ** the string and before returnning.  This routine is intended to be used
     ** to modify an existing string.  For example:
     **
@@ -1139,7 +1139,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       va_start( ap, zFormat );
       z = sqlite3VMPrintf( db, zFormat, ap );
       va_end( ap );
-      //sqlite3DbFree( db, zStr );
+      sqlite3DbFree( db, ref zStr );
       return z;
     }
 

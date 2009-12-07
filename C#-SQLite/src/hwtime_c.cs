@@ -1,4 +1,4 @@
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite_u3264 = System.UInt64;
 

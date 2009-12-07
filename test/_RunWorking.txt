@@ -111,6 +111,7 @@ set EXCLUDE {
 	types3.test
 
 #Not implemented in C# port for TCL
+	init.test
 	lock2.test
 	lock4.test
 	memsubsys2.test

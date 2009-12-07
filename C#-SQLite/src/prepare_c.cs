@@ -7,7 +7,7 @@ using u16 = System.UInt16;
 using u32 = System.UInt32;
 using sqlite3_int64 = System.Int64;
 
-namespace CS_SQLite3
+namespace Community.Data.SQLite
 {
   using sqlite3_stmt = csSQLite.Vdbe;
 
@@ -139,7 +139,7 @@ SQLITE_CORRUPT;
             {
               corruptSchema( pData, argv[0], zErr );
             }
-          }          //sqlite3DbFree( db, ref zErr );
+          }          sqlite3DbFree( db, ref zErr );
         }
       }
       else if ( argv[0] == null || argv[0] == "" )
@@ -408,7 +408,7 @@ db.xAuth = xAuth;
 #endif
         if ( rc == SQLITE_OK ) rc = initData.rc;
         sqlite3SafetyOn( db );
-        //sqlite3DbFree( db, ref zSql );
+        sqlite3DbFree( db, ref zSql );
 #if !SQLITE_OMIT_ANALYZE
         if ( rc == SQLITE_OK )
         {
@@ -710,7 +710,7 @@ error_out:
         if ( zSqlCopy != null )
         {
           sqlite3RunParser( pParse, zSqlCopy, ref zErrMsg );
-          //sqlite3DbFree( db, ref zSqlCopy );
+          sqlite3DbFree( db, ref zSqlCopy );
           //pParse->zTail = &zSql[pParse->zTail-zSqlCopy];
         }
         else
@@ -797,14 +797,23 @@ error_out:
       if ( zErrMsg != "" )
       {
         sqlite3Error( db, rc, "%s", zErrMsg );
-        //sqlite3DbFree( db, ref zErrMsg );
+        sqlite3DbFree( db, ref zErrMsg );
       }
       else
       {
         sqlite3Error( db, rc, 0 );
       }
 
-end_prepare:
+      /* Delete any TriggerPrg structures allocated while parsing this statement. */
+      while ( pParse.pTriggerPrg!=null )
+      {
+        TriggerPrg pT = pParse.pTriggerPrg;
+        pParse.pTriggerPrg = pT.pNext;
+        sqlite3VdbeProgramDelete( db, pT.pProgram, 0 );
+        pT = null;sqlite3DbFree( db, ref pT );
+      }
+    
+      end_prepare:
 
       //sqlite3StackFree( db, pParse );
       rc = sqlite3ApiExit( db, rc );
@@ -976,7 +985,7 @@ Debugger.Break (); // TODO --
 //  int chars_parsed = sqlite3Utf8CharLen(zSql8, (int)(zTail8-zSql8));
 //  pzTail = (u8 *)zSql + sqlite3Utf16ByteLen(zSql, chars_parsed);
 }
-//sqlite3DbFree(db,ref zSql8);
+sqlite3DbFree(db,ref zSql8);
 rc = sqlite3ApiExit(db, rc);
 sqlite3_mutex_leave(db.mutex);
 return rc;
