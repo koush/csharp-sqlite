@@ -29,12 +29,11 @@ namespace Community.Data.SQLite
     ** This file contains obscure tests of the C-interface required
     ** for completeness. Test code is written in C for these cases
     ** as there is not much point in binding to Tcl.
-    **
-    ** $Id: test9.c,v 1.7 2009/04/02 18:32:27 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

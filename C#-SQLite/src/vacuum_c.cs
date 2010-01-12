@@ -27,12 +27,11 @@ namespace Community.Data.SQLite
     **
     ** Most of the code in this file may be omitted by defining the
     ** SQLITE_OMIT_VACUUM macro.
-    **
-    ** $Id: vacuum.c,v 1.91 2009/07/02 07:47:33 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -128,6 +127,7 @@ sqlite3_step(pStmt);
       int saved_flags;        /* Saved value of the db.flags */
       int saved_nChange;      /* Saved value of db.nChange */
       int saved_nTotalChange; /* Saved value of db.nTotalChange */
+      dxTrace saved_xTrace;   //void (*saved_xTrace)(void*,const char*);  /* Saved db->xTrace */
       Db pDb = null;          /* Database to detach at end of vacuum */
       bool isMemDb;           /* True if vacuuming a :memory: database */
       int nRes;
@@ -138,11 +138,16 @@ sqlite3_step(pStmt);
         return SQLITE_ERROR;
       }
 
-      /* Save the current value of the write-schema flag before setting it. */
+      /* Save the current value of the database flags so that it can be 
+      ** restored before returning. Then set the writable-schema flag, and
+      ** disable CHECK and foreign key constraints.  */
       saved_flags = db.flags;
       saved_nChange = db.nChange;
       saved_nTotalChange = db.nTotalChange;
+      saved_xTrace = db.xTrace;
       db.flags |= SQLITE_WriteSchema | SQLITE_IgnoreChecks;
+      db.flags &= ~SQLITE_ForeignKeys;
+      db.xTrace = null;
 
       pMain = db.aDb[0].pBt;
       isMemDb = sqlite3PagerIsMemdb( sqlite3BtreePager( pMain ) );
@@ -168,6 +173,12 @@ sqlite3_step(pStmt);
       Debug.Assert( db.aDb[db.nDb - 1].zName == "vacuum_db" );
       pTemp = db.aDb[db.nDb - 1].pBt;
 
+      /* The call to execSql() to attach the temp database has left the file
+      ** locked (as there was more than one active statement when the transaction
+      ** to read the schema was concluded. Unlock it here so that this doesn't
+      ** cause problems for the call to BtreeSetPageSize() below.  */
+      sqlite3BtreeCommit( pTemp );
+
       nRes = sqlite3BtreeGetReserve( pMain );
 
       /* A VACUUM cannot change the pagesize of an encrypted database. */
@@ -183,7 +194,7 @@ if( nKey ) db.nextPagesize = 0;
 
       if ( sqlite3BtreeSetPageSize( pTemp, sqlite3BtreeGetPageSize( pMain ), nRes, 0 ) != 0
       || ( !isMemDb && sqlite3BtreeSetPageSize( pTemp, db.nextPagesize, nRes, 0 ) != 0 )
-      //|| NEVER( db.mallocFailed != 0 )
+        //|| NEVER( db.mallocFailed != 0 )
       )
       {
         rc = SQLITE_NOMEM;
@@ -223,13 +234,13 @@ if( nKey ) db.nextPagesize = 0;
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
 
       /* Loop through the tables in the main database. For each, do
-      ** an "INSERT INTO vacuum_db.xxx SELECT * FROM xxx;" to copy
+      ** an "INSERT INTO vacuum_db.xxx SELECT * FROM main.xxx;" to copy
       ** the contents to the temporary database.
       */
       rc = execExecSql( db,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
-      "|| ' SELECT * FROM ' || quote(name) || ';'" +
-      "FROM sqlite_master " +
+      "|| ' SELECT * FROM main.' || quote(name) || ';'" +
+      "FROM main.sqlite_master " +
       "WHERE type = 'table' AND name!='sqlite_sequence' " +
       "  AND rootpage>0"
 
@@ -245,7 +256,7 @@ if( nKey ) db.nextPagesize = 0;
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
       rc = execExecSql( db,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
-      "|| ' SELECT * FROM ' || quote(name) || ';' " +
+      "|| ' SELECT * FROM main.' || quote(name) || ';' " +
       "FROM vacuum_db.sqlite_master WHERE name=='sqlite_sequence';"
       );
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
@@ -259,7 +270,7 @@ if( nKey ) db.nextPagesize = 0;
       rc = execSql( db,
       "INSERT INTO vacuum_db.sqlite_master " +
       "  SELECT type, name, tbl_name, rootpage, sql" +
-      "    FROM sqlite_master" +
+      "    FROM main.sqlite_master" +
       "   WHERE type='view' OR type='trigger'" +
       "      OR (type='table' AND rootpage=0)"
       );
@@ -294,7 +305,7 @@ BTREE_USER_VERSION,       0,  /* Preserve the user version */
         Debug.Assert( sqlite3BtreeIsInTrans( pMain ) );
 
         /* Copy Btree meta values */
-        for ( i = 0 ; i < ArraySize( aCopy ) ; i += 2 )
+        for ( i = 0; i < ArraySize( aCopy ); i += 2 )
         {
           /* GetMeta() and UpdateMeta() cannot fail in this context because
           ** we already have page 1 loaded into cache and marked dirty. */
@@ -314,11 +325,12 @@ BTREE_USER_VERSION,       0,  /* Preserve the user version */
       Debug.Assert( rc == SQLITE_OK );
       rc = sqlite3BtreeSetPageSize( pMain, sqlite3BtreeGetPageSize( pTemp ), nRes, 1 );
 
-end_of_vacuum:
+    end_of_vacuum:
       /* Restore the original value of db.flags */
       db.flags = saved_flags;
       db.nChange = saved_nChange;
       db.nTotalChange = saved_nTotalChange;
+      db.xTrace = saved_xTrace;
 
       /* Currently there is an SQL level transaction open on the vacuum
       ** database. No locks are held on any other files (since the main file

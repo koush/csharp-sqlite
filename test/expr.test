@@ -165,6 +165,31 @@ if {[working_64bit_int]} {
   test_expr expr-1.110 {i1=0} {-9223372036854775807/-1} 9223372036854775807
 }
 
+test_expr expr-1.111 {i1=NULL, i2=8} {i1 IS i2} 0
+test_expr expr-1.112 {i1=NULL, i2=NULL} {i1 IS i2} 1
+test_expr expr-1.113 {i1=6, i2=NULL} {i1 IS i2} 0
+test_expr expr-1.114 {i1=6, i2=6} {i1 IS i2} 1
+test_expr expr-1.115 {i1=NULL, i2=8} \
+  {CASE WHEN i1 IS i2 THEN 'yes' ELSE 'no' END} no
+test_expr expr-1.116 {i1=NULL, i2=NULL} \
+  {CASE WHEN i1 IS i2 THEN 'yes' ELSE 'no' END} yes
+test_expr expr-1.117 {i1=6, i2=NULL} \
+  {CASE WHEN i1 IS i2 THEN 'yes' ELSE 'no' END} no
+test_expr expr-1.118 {i1=8, i2=8} \
+  {CASE WHEN i1 IS i2 THEN 'yes' ELSE 'no' END} yes
+test_expr expr-1.119 {i1=NULL, i2=8} {i1 IS NOT i2} 1
+test_expr expr-1.120 {i1=NULL, i2=NULL} {i1 IS NOT i2} 0
+test_expr expr-1.121 {i1=6, i2=NULL} {i1 IS NOT i2} 1
+test_expr expr-1.122 {i1=6, i2=6} {i1 IS NOT i2} 0
+test_expr expr-1.123 {i1=NULL, i2=8} \
+  {CASE WHEN i1 IS NOT i2 THEN 'yes' ELSE 'no' END} yes
+test_expr expr-1.124 {i1=NULL, i2=NULL} \
+  {CASE WHEN i1 IS NOT i2 THEN 'yes' ELSE 'no' END} no
+test_expr expr-1.125 {i1=6, i2=NULL} \
+  {CASE WHEN i1 IS NOT i2 THEN 'yes' ELSE 'no' END} yes
+test_expr expr-1.126 {i1=8, i2=8} \
+  {CASE WHEN i1 IS NOT i2 THEN 'yes' ELSE 'no' END} no
+
 ifcapable floatingpoint {
   test_expr expr-2.1 {r1=1.23, r2=2.34} {r1+r2} 3.57
   test_expr expr-2.2 {r1=1.23, r2=2.34} {r1-r2} -1.11
@@ -310,7 +335,7 @@ test_expr expr-5.14  {t1='AB'} {t1 LIKE 'A%b' ESCAPE 'b'} 0
 
 # The following tests only work on versions of TCL that support Unicode
 #
-if {"UNICODE NOT IMPLEMENTED"=="ON TCL C# PORT" &&  "\u1234"!="u1234"} {
+if {"UNICODE NOT IMPLEMENTED"=="ON TCL C# PORT" && "\u1234"!="u1234"} {
   test_expr expr-5.13a "t1='a\u0080c', t2='a_c'" {t1 LIKE t2} 1
   test_expr expr-5.13b "t1='a\u0080c', t2='A_C'" {t1 LIKE t2} $NCSL
   test_expr expr-5.14a "t1='a\u07FFc', t2='a_c'" {t1 LIKE t2} 1
@@ -364,7 +389,7 @@ test_expr expr-5.68b {t1='abc7', t2='A%7_'} {t1 LIKE t2 ESCAPE '7'} 0
 
 # These are the same test as the block above, but using a multi-byte 
 # character as the escape character.
-if {"UNICODE NOT IMPLEMENTED"=="ON C# PORT" &&  "\u1234"!="u1234"} {
+if {"UNICODE NOT IMPLEMENTED"=="ON TCL C# PORT" && "\u1234"!="u1234"} {
   test_expr expr-5.69a "t1='abc', t2='a_c'" \
       "t1 LIKE t2 ESCAPE '\u1234'" 1
   test_expr expr-5.69b "t1='abc', t2='A_C'" \
@@ -447,7 +472,7 @@ test_expr expr-6.28 {t1='a[c', t2='a[[]c'} {t1 GLOB t2} 1
 
 # These tests only work on versions of TCL that support Unicode
 #
-if {"UNICODE NOT IMPLEMENTED"=="ON C# PORT" &&  "\u1234"!="u1234"} {
+if {"UNICODE NOT IMPLEMENTED"=="ON TCL C# PORT" && "\u1234"!="u1234"} {
   test_expr expr-6.26 "t1='a\u0080c', t2='a?c'" {t1 GLOB t2} 1
   test_expr expr-6.27 "t1='a\u07ffc', t2='a?c'" {t1 GLOB t2} 1
   test_expr expr-6.28 "t1='a\u0800c', t2='a?c'" {t1 GLOB t2} 1

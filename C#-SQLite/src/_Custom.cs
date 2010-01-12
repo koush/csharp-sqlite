@@ -1,8 +1,8 @@
-    /*
-    *************************************************************************
-    **  $Header$
-    *************************************************************************
-    */
+/*
+*************************************************************************
+**  $Header$
+*************************************************************************
+*/
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -32,7 +32,7 @@ namespace Community.Data.SQLite
     static int atoi( string inStr )
     {
       int i;
-      for ( i = 0 ; i < inStr.Length ; i++ )
+      for ( i = 0; i < inStr.Length; i++ )
       {
         if ( !sqlite3Isdigit( inStr[i] ) && inStr[i] != '-' ) break;
       }
@@ -51,7 +51,7 @@ namespace Community.Data.SQLite
     {
       if ( bA.Length < Limit ) return ( bA.Length < bB.Length ) ? -1 : +1;
       if ( bB.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( bA[i] != bB[i] ) return ( bA[i] < bB[i] ) ? -1 : 1;
       }
@@ -63,7 +63,7 @@ namespace Community.Data.SQLite
     {
       if ( bA.Length < Limit ) return ( bA.Length < B.Length ) ? -1 : +1;
       if ( B.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( bA[i] != B[i] ) return ( bA[i] < B[i] ) ? -1 : 1;
       }
@@ -75,7 +75,7 @@ namespace Community.Data.SQLite
     {
       if ( A.Length < Limit ) return ( A.Length < bB.Length ) ? -1 : +1;
       if ( bB.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( A[i] != bB[i] ) return ( A[i] < bB[i] ) ? -1 : 1;
       }
@@ -87,7 +87,7 @@ namespace Community.Data.SQLite
     {
       if ( a.Length < Offset + Limit ) return ( a.Length - Offset < b.Length ) ? -1 : +1;
       if ( b.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( a[i + Offset] != b[i] ) return ( a[i + Offset] < b[i] ) ? -1 : 1;
       }
@@ -98,7 +98,7 @@ namespace Community.Data.SQLite
     {
       if ( a.Length < Offset + Limit ) return ( a.Length - Offset < b.Length ) ? -1 : +1;
       if ( b.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( a[i + Offset] != b[i] ) return ( a[i + Offset] < b[i] ) ? -1 : 1;
       }
@@ -109,7 +109,7 @@ namespace Community.Data.SQLite
     {
       if ( a.Length < Offset + Limit ) return ( a.Length - Offset < b.Length ) ? -1 : +1;
       if ( b.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( a[i + Offset] != b[i] ) return ( a[i + Offset] < b[i] ) ? -1 : 1;
       }
@@ -122,7 +122,7 @@ namespace Community.Data.SQLite
     {
       if ( A.Length < Limit ) return ( A.Length < B.Length ) ? -1 : +1;
       if ( B.Length < Limit ) return +1;
-      for ( int i = 0 ; i < Limit ; i++ )
+      for ( int i = 0; i < Limit; i++ )
       {
         if ( A[i] != B[i] ) return ( A[i] < B[i] ) ? -1 : 1;
       }
@@ -305,7 +305,7 @@ namespace Community.Data.SQLite
     // Example (C#)
     public static int GetbytesPerSector( StringBuilder diskPath )
     {
-      ManagementObjectSearcher mosLogicalDisks = new ManagementObjectSearcher( "select * from Win32_LogicalDisk where DeviceID = '" + diskPath.ToString().Remove( diskPath.Length - 1, 1 ) + "'");
+      ManagementObjectSearcher mosLogicalDisks = new ManagementObjectSearcher( "select * from Win32_LogicalDisk where DeviceID = '" + diskPath.ToString().Remove( diskPath.Length - 1, 1 ) + "'" );
       try
       {
         foreach ( ManagementObject moLogDisk in mosLogicalDisks.Get() )
@@ -333,7 +333,7 @@ namespace Community.Data.SQLite
 
       int type;
       Debug.Assert( argc <= 1 );
-      Mem pMem = sqlite3_aggregate_context( context, -1 );//sizeof(*p));
+      Mem pMem = sqlite3_aggregate_context( context, 1 );//sizeof(*p));
       if ( pMem._SumCtx == null ) pMem._SumCtx = new SumCtx();
       p = pMem._SumCtx;
       if ( p.Context == null ) p.Context = pMem;

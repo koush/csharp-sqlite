@@ -5,6 +5,7 @@ using System.Text;
 using i64 = System.Int64;
 using u8 = System.Byte;
 using u16 = System.UInt16;
+using u32 = System.UInt32;
 using u64 = System.UInt64;
 
 namespace Community.Data.SQLite
@@ -30,12 +31,11 @@ namespace Community.Data.SQLite
     **
     ** This file contains code use to implement APIs that are part of the
     ** VDBE.
-    **
-    ** $Id: vdbeapi.c,v 1.167 2009/06/25 01:47:12 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -129,10 +129,14 @@ sqlite3_mutex mutex = v.db.mutex;
 sqlite3_mutex mutex = ( (Vdbe)pStmt ).db.mutex;
 #endif
       sqlite3_mutex_enter( mutex );
-      for ( i = 0 ; i < p.nVar ; i++ )
+      for ( i = 0; i < p.nVar; i++ )
       {
         sqlite3VdbeMemRelease( p.aVar[i] );
         p.aVar[i].flags = MEM_Null;
+      }
+      if ( p.isPrepareV2 && p.expmask != 0 )
+      {
+        p.expired = true;
       }
       sqlite3_mutex_leave( mutex );
       return rc;
@@ -155,7 +159,7 @@ sqlite3_mutex mutex = ( (Vdbe)pStmt ).db.mutex;
           else
           {
             p.zBLOB = new byte[p.z.Length];
-            for ( int i = 0 ; i < p.zBLOB.Length ; i++ ) p.zBLOB[i] = (u8)p.z[i];
+            for ( int i = 0; i < p.zBLOB.Length; i++ ) p.zBLOB[i] = (u8)p.z[i];
           } p.z = null;
         }
         p.flags = (u16)( p.flags & ~MEM_Str );
@@ -218,6 +222,20 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
     static void setResultStrOrError(
     sqlite3_context pCtx,   /* Function context */
     string z,               /* String pointer */
+    int o,                  /* offset into string */
+    int n,                  /* Bytes in string, or negative */
+    u8 enc,                 /* Encoding of z.  0 for BLOBs */
+    dxDel xDel //void (*xDel)(void*)     /* Destructor function */
+    )
+    {
+      if ( sqlite3VdbeMemSetStr( pCtx.s, z, o, n, enc, xDel ) == SQLITE_TOOBIG )
+      {
+        sqlite3_result_error_toobig( pCtx );
+      }
+    }
+    static void setResultStrOrError(
+    sqlite3_context pCtx,   /* Function context */
+    string z,               /* String pointer */
     int n,                  /* Bytes in string, or negative */
     u8 enc,                 /* Encoding of z.  0 for BLOBs */
     dxDel xDel //void (*xDel)(void*)     /* Destructor function */
@@ -271,6 +289,18 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
     {
       Debug.Assert( sqlite3_mutex_held( pCtx.s.db.mutex ) );
       sqlite3VdbeMemSetNull( pCtx.s );
+    }
+
+    static public void sqlite3_result_text(
+    sqlite3_context pCtx,
+    string z,
+    int o,    //Offset
+    int n,
+    dxDel xDel
+    )
+    {
+      Debug.Assert( sqlite3_mutex_held( pCtx.s.db.mutex ) );
+      setResultStrOrError( pCtx, z, o, n, SQLITE_UTF8, xDel );
     }
 
     static public void sqlite3_result_text(
@@ -379,7 +409,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
 
       if ( p.pc <= 0 && p.expired )
       {
-        if ( ALWAYS( p.rc == SQLITE_OK ) )
+        if ( ALWAYS( p.rc == SQLITE_OK ) || p.rc == SQLITE_SCHEMA )
         {
           p.rc = SQLITE_SCHEMA;
         }
@@ -402,6 +432,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
           db.u1.isInterrupted = false;
         }
 
+        Debug.Assert( db.writeVdbeCnt > 0 || db.autoCommit == 0 || db.nDeferredCons == 0 );
 #if  !SQLITE_OMIT_TRACE
         if ( db.xProfile != null && 0 == db.init.busy )
         {
@@ -452,7 +483,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
       {
         p.rc = SQLITE_NOMEM;
       }
-end_of_step:
+    end_of_step:
       /* At this point local variable rc holds the value that should be
       ** returned if this statement was compiled using the legacy
       ** sqlite3_prepare() interface. According to the docs, this can only
@@ -578,9 +609,10 @@ end_of_step:
       Debug.Assert( p != null && p.pFunc != null && p.pFunc.xStep != null );
       Debug.Assert( sqlite3_mutex_held( p.s.db.mutex ) );
       pMem = p.pMem;
+      testcase( nByte < 0 );
       if ( ( pMem.flags & MEM_Agg ) == 0 )
       {
-        if ( nByte == 0 )
+        if ( nByte <= 0 )
         {
           sqlite3VdbeMemReleaseExternal( pMem );
           pMem.flags = MEM_Null;
@@ -595,9 +627,13 @@ end_of_step:
           {
             pMem.z = null;
           }
+#if !SQLITE_POOL_MEM
+          pMem._Mem = new Mem();
+          pMem._Mem.db = pMem.db;
+#else
           pMem._Mem = Pool.Allocate_Mem();
+#endif
           pMem._Mem.flags = 0;
-          pMem._SumCtx = new SumCtx();
         }
       }
       return pMem._Mem;
@@ -666,7 +702,7 @@ end_of_step:
       pAuxData.xDelete = xDelete;
       return;
 
-failed:
+    failed:
       if ( xDelete != null )
       {
         xDelete( ref pAux );
@@ -748,8 +784,12 @@ failed:
 __attribute__((aligned(8)))
 #endif
         //
-        Mem nullMem = Pool.Allocate_Mem();//    static const Mem nullMem = {{0}, (double)0, 0, "", 0, MEM_Null, SQLITE_NULL, 0, 0, 0 };
-
+        //    static const Mem nullMem = {{0}, (double)0, 0, "", 0, MEM_Null, SQLITE_NULL, 0, 0, 0 };
+#if !SQLITE_POOL_MEM
+        Mem nullMem = new Mem();
+#else
+        Mem nullMem = Pool.Allocate_Mem();
+#endif
         if ( pVm != null && ALWAYS( pVm.db != null ) )
         {
           sqlite3_mutex_enter( pVm.db.mutex );
@@ -821,7 +861,7 @@ __attribute__((aligned(8)))
       columnMallocFailure( pStmt );
       return val;
     }
-    public static double sqlite3_column_double(sqlite3_stmt pStmt, int i)
+    public static double sqlite3_column_double( sqlite3_stmt pStmt, int i )
     {
       double val = sqlite3_value_double( columnMem( pStmt, i ) );
       columnMallocFailure( pStmt );
@@ -1059,6 +1099,17 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       sqlite3VdbeMemRelease( pVar );
       pVar.flags = MEM_Null;
       sqlite3Error( p.db, SQLITE_OK, 0 );
+
+      /* If the bit corresponding to this variable in Vdbe.expmask is set, then 
+      ** binding a new value to this variable invalidates the current query plan.
+      */
+      if ( p.isPrepareV2 &&
+         ( ( i < 32 && p.expmask != 0 & ( (u32)1 << i ) != 0 ) || p.expmask == 0xffffffff )
+      )
+      {
+        p.expired = true;
+      }
+
       return SQLITE_OK;
     }
 
@@ -1257,7 +1308,7 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
         ** work but it results in the same answer.
         */
         p.azVar = new string[p.nOp];
-        for ( j = 0 ; j < p.nOp ; j++ )//, pOp++ )
+        for ( j = 0; j < p.nOp; j++ )//, pOp++ )
         {
           pOp = p.aOp[j];
           if ( pOp.opcode == OP_Variable )
@@ -1293,9 +1344,8 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
     ** with that name.  If there is no variable with the given name,
     ** return 0.
     */
-    static int sqlite3_bind_parameter_index( sqlite3_stmt pStmt, string zName )
+    static int sqlite3VdbeParameterIndex( Vdbe p, string zName, int nName )
     {
-      Vdbe p = (Vdbe)pStmt;
       int i;
       if ( p == null )
       {
@@ -1304,16 +1354,20 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
       createVarMap( p );
       if ( zName != null && zName != "" )
       {
-        for ( i = 0 ; i < p.nVar ; i++ )
+        for ( i = 0; i < p.nVar; i++ )
         {
           string z = p.azVar[i];
-          if ( z != null && z == zName )//&& strcmp(z, zName) == 0)
+          if ( z != null && z == zName )//&& memcmp(z,zName,nName)==0 && z[nName]==0)
           {
             return i + 1;
           }
         }
       }
       return 0;
+    }
+    static int sqlite3_bind_parameter_index( sqlite3_stmt pStmt, string zName )
+    {
+      return sqlite3VdbeParameterIndex( (Vdbe)pStmt, zName, sqlite3Strlen30( zName ) );
     }
 
     /*
@@ -1327,7 +1381,7 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
       Debug.Assert( pTo.db == pFrom.db );
       Debug.Assert( pTo.nVar == pFrom.nVar );
       sqlite3_mutex_enter( pTo.db.mutex );
-      for ( i = 0 ; i < pFrom.nVar ; i++ )
+      for ( i = 0; i < pFrom.nVar; i++ )
       {
         sqlite3VdbeMemMove( pTo.aVar[i], pFrom.aVar[i] );
       }
@@ -1355,6 +1409,12 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
       if ( pFrom.nVar != pTo.nVar )
       {
         return SQLITE_ERROR;
+        }
+        if( pTo.isPrepareV2 && pTo.expmask ){
+          pTo.expired = 1;
+        }
+        if( pFrom.isPrepareV2 && pFrom.expmask ){
+          pFrom.expired = 1;
       }
       return sqlite3TransferBindings( pFromStmt, pToStmt );
     }

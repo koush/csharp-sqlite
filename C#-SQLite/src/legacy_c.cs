@@ -9,7 +9,6 @@ namespace Community.Data.SQLite
 
   public partial class csSQLite
   {
-
     /*
     ** 2001 September 15
     **
@@ -25,12 +24,11 @@ namespace Community.Data.SQLite
     ** implement the programmer interface to the library.  Routines in
     ** other files are for internal use by SQLite and should not be
     ** accessed by users of the library.
-    **
-    ** $Id: legacy.c,v 1.35 2009/08/07 16:56:00 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -130,7 +128,7 @@ namespace Community.Data.SQLite
               {
                 goto exec_out;
               }
-              for ( i = 0 ; i < nCol ; i++ )
+              for ( i = 0; i < nCol; i++ )
               {
                 azCols[i] = sqlite3_column_name( pStmt, i );
                 /* sqlite3VdbeSetColName() installs column names as UTF8
@@ -142,12 +140,12 @@ namespace Community.Data.SQLite
             if ( rc == SQLITE_ROW )
             {
               azVals = new string[nCol];// azCols[nCol];
-              for ( i = 0 ; i < nCol ; i++ )
+              for ( i = 0; i < nCol; i++ )
               {
                 azVals[i] = sqlite3_column_text( pStmt, i );
                 if ( azVals[i] == null && sqlite3_column_type( pStmt, i ) != SQLITE_NULL )
                 {
-          ////        db.mallocFailed = 1;
+                  ////        db.mallocFailed = 1;
                   goto exec_out;
                 }
               }
@@ -184,7 +182,7 @@ namespace Community.Data.SQLite
         azCols = null;
       }
 
-exec_out:
+    exec_out:
       if ( pStmt != null ) sqlite3VdbeFinalize( pStmt );
       sqlite3DbFree( db, ref  azCols );
 

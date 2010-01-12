@@ -24,12 +24,11 @@ namespace Community.Data.SQLite
     **
     ** These routines are in a separate files so that they will not be linked
     ** if they are not used.
-    **
-    ** $Id: table.c,v 1.39 2009/01/19 20:49:10 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

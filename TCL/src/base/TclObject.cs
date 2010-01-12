@@ -189,6 +189,7 @@ namespace tcl.lang
 			internalRep = rep;
 			stringRep = null;
 			refCount = 0;
+      typePtr = rep.GetType().Name.Replace("Tcl", "");
 		}
 		
 		/// <summary> Creates a TclObject with the given InternalRep and stringRep.

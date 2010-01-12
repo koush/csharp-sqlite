@@ -26,12 +26,11 @@ namespace Community.Data.SQLite
     **
     ** Random numbers are used by some of the database backends in order
     ** to generate random integer keys for tables or random filenames.
-    **
-    ** $Id: random.c,v 1.29 2008/12/10 19:26:24 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -109,11 +108,11 @@ struct sqlite3PrngType *p = &GLOBAL(struct sqlite3PrngType, sqlite3Prng);
         wsdPrng.j = 0;
         wsdPrng.i = 0;
         sqlite3OsRandomness( sqlite3_vfs_find( "" ), 256, ref k );
-        for ( i = 0 ; i < 255 ; i++ )
+        for ( i = 0; i < 255; i++ )
         {
           wsdPrng.s[i] = (u8)i;
         }
-        for ( i = 0 ; i < 255 ; i++ )
+        for ( i = 0; i < 255; i++ )
         {
           wsdPrng.j = (u8)( wsdPrng.j + wsdPrng.s[i] + k[i] );
           t = wsdPrng.s[wsdPrng.j];

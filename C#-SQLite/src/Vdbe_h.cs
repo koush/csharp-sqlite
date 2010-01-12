@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     ** This header defines the interface to the virtual database engine
     ** or VDBE.  The VDBE implements an abstract machine that runs a
     ** simple program to access and modify the underlying database.
-    **
-    ** $Id: vdbe.h,v 1.142 2009/07/24 17:58:53 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -78,7 +77,7 @@ namespace Community.Data.SQLite
     {
       public u8 opcode;           /* What operation to perform */
       public int p4type;          /* One of the P4_xxx constants for p4 */
-      public u8 opflags;          /* Not currently used */
+      public u8 opflags;          /* Mask of the OPFLG_* flags in opcodes.h */
       public u8 p5;               /* Fifth parameter is an unsigned character */
 #if DEBUG_CLASS_VDBEOP || DEBUG_CLASS_ALL
 public int _p1;              /* First operand */
@@ -242,6 +241,7 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
     //int sqlite3VdbeAddOp2(Vdbe*,int,int,int);
     //int sqlite3VdbeAddOp3(Vdbe*,int,int,int,int);
     //int sqlite3VdbeAddOp4(Vdbe*,int,int,int,int,const char *zP4,int);
+    //int sqlite3VdbeAddOp4Int(Vdbe*,int,int,int,int,int);
     //int sqlite3VdbeAddOpList(Vdbe*, int nOp, VdbeOpList const *aOp);
     //void sqlite3VdbeChangeP1(Vdbe*, int addr, int P1);
     //void sqlite3VdbeChangeP2(Vdbe*, int addr, int P2);
@@ -258,7 +258,7 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
     //int sqlite3VdbeFinalize(Vdbe*);
     //void sqlite3VdbeResolveLabel(Vdbe*, int);
     //int sqlite3VdbeCurrentAddr(Vdbe*);
-    #if SQLITE_DEBUG
+#if SQLITE_DEBUG
     //int sqlite3VdbeAssertMayAbort(Vdbe *, int);
     //void sqlite3VdbeTrace(Vdbe*,FILE*);
 #else
@@ -274,9 +274,12 @@ const int COLNAME_N = 1;     /* Number of COLNAME_xxx symbols */
     //void sqlite3VdbeSwap(Vdbe*,Vdbe*);
     //VdbeOp *sqlite3VdbeTakeOpArray(Vdbe*, int*, int*);
     //void sqlite3VdbeProgramDelete(sqlite3 *, SubProgram *, int);
-    
-#if SQLITE_ENABLE_MEMORY_MANAGEMENT
-//int sqlite3VdbeReleaseMemory(int);
+    //sqlite3_value *sqlite3VdbeGetValue(Vdbe*, int, u8);
+    //void sqlite3VdbeSetVarmask(Vdbe*, int);
+#if !SQLITE_OMIT_TRACE
+    //char *sqlite3VdbeExpandSql(Vdbe*, const char*);
+#else
+    static string sqlite3VdbeExpandSql(Vdbe P, string S) {return null;}
 #endif
     //UnpackedRecord *sqlite3VdbeRecordUnpack(KeyInfo*,int,const void*,char*,int);
     //void sqlite3VdbeDeleteUnpackedRecord(UnpackedRecord*);

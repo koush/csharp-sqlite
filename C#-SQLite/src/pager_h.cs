@@ -18,17 +18,15 @@ namespace Community.Data.SQLite
     ** This header file defines the interface that the sqlite page cache
     ** subsystem.  The page cache subsystem reads and writes a file a page
     ** at a time and provides a journal for rollback.
-    **
-    ** @(#) $Id: pager.h,v 1.104 2009/07/24 19:01:19 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
     **  $Header$
     *************************************************************************
     */
-
     //#if !_PAGER_H_
     //#define _PAGER_H_
 

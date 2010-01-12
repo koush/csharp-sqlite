@@ -411,10 +411,10 @@ do_test memdb-8.2 {
   }
 } 0
 
-ifcapable malloc {
 # Test that auto-vacuum works with in-memory databases.
 # 
 ifcapable autovacuum {
+ifcapable malloc {
   do_test memdb-9.1 {
     db close
     sqlite3 db test.db

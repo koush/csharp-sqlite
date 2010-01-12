@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This is the implementation of generic hash-tables
     ** used in SQLite.
-    **
-    ** $Id: hash.c,v 1.38 2009/05/09 23:29:12 drh Exp
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -151,7 +150,7 @@ if( new_size==pH->htsize ) return false;
 */
       sqlite3BeginBenignMalloc();
       new_ht = new _ht[new_size]; //(struct _ht *)sqlite3Malloc( new_size*sizeof(struct _ht) );
-      for ( int i = 0 ; i < new_size ; i++ ) new_ht[i] = new _ht();
+      for ( int i = 0; i < new_size; i++ ) new_ht[i] = new _ht();
       sqlite3EndBenignMalloc();
 
       if ( new_ht == null ) return false;
@@ -161,7 +160,7 @@ if( new_size==pH->htsize ) return false;
       //memset(new_ht, 0, new_size*sizeof(struct _ht));
       pH.htsize = new_size;
 
-      for ( elem = pH.first, pH.first = null ; elem != null ; elem = next_elem )
+      for ( elem = pH.first, pH.first = null; elem != null; elem = next_elem )
       {
         u32 h = strHash( elem.pKey, elem.nKey ) % new_size;
         next_elem = elem.next;

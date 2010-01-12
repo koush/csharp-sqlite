@@ -280,7 +280,6 @@ do_test memsubsys1-8.3 {
   }
   expr {[lindex [sqlite3_status SQLITE_STATUS_SCRATCH_OVERFLOW 0] 2]>0}
 } 0
-
 db close
 sqlite3_shutdown
 #sqlite3_config_memstatus 0

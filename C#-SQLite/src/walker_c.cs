@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This file contains routines used for walking the parser tree for
     ** an SQL statement.
-    **
-    ** $Id: walker.c,v 1.7 2009/06/15 23:15:59 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -90,7 +89,7 @@ namespace Community.Data.SQLite
       ExprList_item pItem;
       if ( p != null )
       {
-        for ( i = p.nExpr ; i > 0 ; i-- )
+        for ( i = p.nExpr; i > 0; i-- )
         {//, pItem++){
           pItem = p.a[p.nExpr - i];
           if ( sqlite3WalkExpr( pWalker, ref pItem.pExpr ) != 0 ) return WRC_Abort;
@@ -133,7 +132,7 @@ namespace Community.Data.SQLite
       pSrc = p.pSrc;
       if ( ALWAYS( pSrc ) )
       {
-        for ( i = pSrc.nSrc ; i > 0 ; i-- )// pItem++ )
+        for ( i = pSrc.nSrc; i > 0; i-- )// pItem++ )
         {
           pItem = pSrc.a[pSrc.nSrc - i];
           if ( sqlite3WalkSelect( pWalker, pItem.pSelect ) != 0 )

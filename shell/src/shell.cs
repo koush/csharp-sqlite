@@ -3,14 +3,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using CS_SQLite3;
-using dxCallback = CS_SQLite3.csSQLite.dxCallback;
-using sqlite3 = CS_SQLite3.csSQLite.sqlite3;
-using sqlite3_backup = CS_SQLite3.csSQLite.sqlite3_backup;
-using sqlite3_context = CS_SQLite3.csSQLite.sqlite3_context;
+using Community.Data.SQLite;
+using dxCallback = Community.Data.SQLite.csSQLite.dxCallback;
+using sqlite3 = Community.Data.SQLite.csSQLite.sqlite3;
+using sqlite3_backup = Community.Data.SQLite.csSQLite.sqlite3_backup;
+using sqlite3_context = Community.Data.SQLite.csSQLite.sqlite3_context;
 using sqlite3_int64 = System.Int64;
-using sqlite3_stmt = CS_SQLite3.csSQLite.Vdbe;
-using sqlite3_value = CS_SQLite3.csSQLite.Mem;
+using sqlite3_stmt = Community.Data.SQLite.csSQLite.Vdbe;
+using sqlite3_value = Community.Data.SQLite.csSQLite.Mem;
 using va_list = System.Object;
 
   class Shell

@@ -21,12 +21,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     **
     ** Memory allocation functions used throughout sqlite.
-    **
-    ** $Id: malloc.c,v 1.66 2009/07/17 11:44:07 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -93,9 +92,6 @@ namespace Community.Data.SQLite
     {
 #if  SQLITE_ENABLE_MEMORY_MANAGEMENT
 int nRet = 0;
-#if FALSE
-nRet += sqlite3VdbeReleaseMemory(n);
-#endif
 nRet += sqlite3PcacheReleaseMemory(n-nRet);
 return nRet;
 #else

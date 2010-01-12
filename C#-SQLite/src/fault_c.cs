@@ -14,20 +14,8 @@ namespace Community.Data.SQLite
     **    May you do good and not evil.
     **    May you find forgiveness for yourself and forgive others.
     **    May you share freely, never taking more than you give.
-    **
     *************************************************************************
     **
-    ** $Id: fault.c,v 1.11 2008/09/02 00:52:52 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    */
-
-    /*
     ** This file contains code to support the concept of "benign"
     ** malloc failures (when the xMalloc() or xRealloc() method of the
     ** sqlite3_mem_methods structure fails to allocate a block of memory
@@ -40,8 +28,15 @@ namespace Community.Data.SQLite
     ** is completely recoverable simply by not carrying out the resize. The
     ** hash table will continue to function normally.  So a malloc failure
     ** during a hash table resize is a benign fault.
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
-
     //#include "sqliteInt.h"
 
 #if !SQLITE_OMIT_BUILTIN_TEST

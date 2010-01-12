@@ -29,12 +29,11 @@ namespace Community.Data.SQLite
     ** of the SQLITE_CONFIG_PAGECACHE and sqlite3_release_memory() features.
     ** If the default page cache implementation is overriden, then neither of
     ** these two features are available.
-    **
-    ** @(#) $Id: pcache1.c,v 1.19 2009/07/17 11:44:07 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -248,7 +247,7 @@ namespace Community.Data.SQLite
     {
       Debug.Assert( sqlite3_mutex_held( pcache1.mutex ) );
       if ( p == null ) return;
-      if (p.CacheAllocated) //if ( p >= pcache1.pStart && p < pcache1.pEnd )
+      if ( p.CacheAllocated ) //if ( p >= pcache1.pStart && p < pcache1.pEnd )
       {
         PgFreeslot pSlot = new PgFreeslot();
         sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_USED, -1 );
@@ -326,7 +325,7 @@ namespace Community.Data.SQLite
     /*
     ** Free an allocated buffer obtained from sqlite3PageMalloc().
     */
-    static void sqlite3PageFree( ref PgHdr p)
+    static void sqlite3PageFree( ref PgHdr p )
     {
       pcache1EnterMutex();
       pcache1Free( ref p );
@@ -364,7 +363,7 @@ namespace Community.Data.SQLite
       if ( apNew != null )
       {
         //memset(apNew, 0, sizeof(PgHdr1 *)*nNew);
-        for ( i = 0 ; i < p.nHash ; i++ )
+        for ( i = 0; i < p.nHash; i++ )
         {
           PgHdr1 pPage;
           PgHdr1 pNext = p.apHash[i];
@@ -433,7 +432,7 @@ namespace Community.Data.SQLite
 
       h = pPage.iKey % pCache.nHash;
       pPrev = null;
-      for ( pp = pCache.apHash[h] ; pp != pPage ; pPrev = pp, pp = pp.pNext ) ;
+      for ( pp = pCache.apHash[h]; pp != pPage; pPrev = pp, pp = pp.pNext ) ;
       if ( pPrev == null ) pCache.apHash[h] = pp.pNext; else pPrev.pNext = pp.pNext; // pCache.apHash[h] = pp.pNext;
 
       pCache.nPage--;
@@ -473,7 +472,7 @@ namespace Community.Data.SQLite
 #endif
       u32 h;
       Debug.Assert( sqlite3_mutex_held( pcache1.mutex ) );
-      for ( h = 0 ; h < pCache.nHash ; h++ )
+      for ( h = 0; h < pCache.nHash; h++ )
       {
         PgHdr1 pp = pCache.apHash[h];
         PgHdr1 pPage;
@@ -654,7 +653,7 @@ namespace Community.Data.SQLite
       if ( pCache.nHash > 0 )
       {
         u32 h = iKey % pCache.nHash;
-        for ( pPage = pCache.apHash[h] ; pPage != null && pPage.iKey != iKey ; pPage = pPage.pNext ) ;
+        for ( pPage = pCache.apHash[h]; pPage != null && pPage.iKey != iKey; pPage = pPage.pNext ) ;
       }
 
       if ( pPage != null || createFlag == 0 )
@@ -719,7 +718,7 @@ namespace Community.Data.SQLite
         pCache.apHash[h] = pPage;
       }
 
-fetch_out:
+    fetch_out:
       if ( pPage != null && iKey > pCache.iMaxKey )
       {
         pCache.iMaxKey = iKey;
@@ -810,15 +809,7 @@ fetch_out:
       pPage.iKey = iNew;
       pPage.pNext = pCache.apHash[h];
       pCache.apHash[h] = pPage;
-
-      /* The xRekey() interface is only used to move pages earlier in the
-      ** database file (in order to move all free pages to the end of the
-      ** file where they can be truncated off.)  Hence, it is not possible
-      ** for the new page number to be greater than the largest previously
-      ** fetched page.  But we retain the following test in case xRekey()
-      ** begins to be used in different ways in the future.
-      */
-      if ( NEVER( iNew > pCache.iMaxKey ) )
+      if ( iNew > pCache.iMaxKey )
       {
         pCache.iMaxKey = iNew;
       }
@@ -927,7 +918,7 @@ return nFree;
     {
       PgHdr1 p;
       int nRecyclable = 0;
-      for ( p = pcache1.pLruHead ; p != null ; p = p.pLruNext )
+      for ( p = pcache1.pLruHead; p != null; p = p.pLruNext )
       {
         nRecyclable++;
       }

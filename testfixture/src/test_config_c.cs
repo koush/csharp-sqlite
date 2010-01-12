@@ -26,12 +26,11 @@ namespace Community.Data.SQLite
     **
     ** The focus of this file is providing the TCL testing layer
     ** access to compile-time constants.
-    **
-    ** $Id: test_config.c,v 1.50 2009/06/19 14:06:03 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -560,6 +559,7 @@ TCL.Tcl_SetVar2(interp, "sqlite_options", "yytrackmaxstackdepth", "1", TCL.TCL_G
       //LINKVAR( MAX_PAGE_SIZE );
       //LINKVAR( MAX_PAGE_COUNT );
       //LINKVAR( MAX_LIKE_PATTERN_LENGTH );
+      //LINKVAR( MAX_TRIGGER_DEPTH );
       //LINKVAR( DEFAULT_TEMP_CACHE_SIZE );
       //LINKVAR( DEFAULT_CACHE_SIZE );
       //LINKVAR( DEFAULT_PAGE_SIZE );
@@ -577,6 +577,7 @@ TCL.Tcl_SetVar2(interp, "sqlite_options", "yytrackmaxstackdepth", "1", TCL.TCL_G
       TCL.Tcl_LinkVar( interp, "SQLITE_MAX_PAGE_SIZE", SQLITE_MAX_PAGE_SIZE, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
       TCL.Tcl_LinkVar( interp, "SQLITE_MAX_PAGE_COUNT", SQLITE_MAX_PAGE_COUNT, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
       TCL.Tcl_LinkVar( interp, "SQLITE_MAX_LIKE_PATTERN_LENGTH", SQLITE_MAX_LIKE_PATTERN_LENGTH, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
+      TCL.Tcl_LinkVar( interp, "SQLITE_MAX_TRIGGER_DEPTH", SQLITE_MAX_TRIGGER_DEPTH, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
       TCL.Tcl_LinkVar( interp, "SQLITE_DEFAULT_TEMP_CACHE_SIZE", SQLITE_DEFAULT_TEMP_CACHE_SIZE, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
       TCL.Tcl_LinkVar( interp, "SQLITE_DEFAULT_CACHE_SIZE", SQLITE_DEFAULT_CACHE_SIZE, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );
       TCL.Tcl_LinkVar( interp, "SQLITE_DEFAULT_PAGE_SIZE", SQLITE_DEFAULT_PAGE_SIZE, VarFlags.SQLITE3_LINK_INT | VarFlags.SQLITE3_LINK_READ_ONLY );

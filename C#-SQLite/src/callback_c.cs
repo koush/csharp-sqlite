@@ -26,12 +26,11 @@ namespace Community.Data.SQLite
     **
     ** This file contains functions used to access the internal hash tables
     ** of user defined functions and collation sequences.
-    **
-    ** $Id: callback.c,v 1.42 2009/06/17 00:35:31 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -80,7 +79,7 @@ sqlite3ValueFree(ref pTmp);
       string z = pColl.zName;
       int i;
       byte[] aEnc = { SQLITE_UTF16BE, SQLITE_UTF16LE, SQLITE_UTF8 };
-      for ( i = 0 ; i < 3 ; i++ )
+      for ( i = 0; i < 3; i++ )
       {
         pColl2 = sqlite3FindCollSeq( db, aEnc[i], z, 0 );
         if ( pColl2.xCmp != null )
@@ -154,23 +153,23 @@ sqlite3ValueFree(ref pTmp);
       {
         string zName = pColl.zName;
         sqlite3 db = pParse.db;
-        CollSeq p = sqlite3GetCollSeq( db, ENC(db), pColl, zName );
+        CollSeq p = sqlite3GetCollSeq( db, ENC( db ), pColl, zName );
         if ( null == p )
         {
           sqlite3ErrorMsg( pParse, "no such collation sequence: %s", zName );
           pParse.nErr++;
           return SQLITE_ERROR;
         }
-//
+        //
         //Debug.Assert(p == pColl);
-        if (p != pColl) // Had to lookup appropriate sequence
+        if ( p != pColl ) // Had to lookup appropriate sequence
         {
           pColl.enc = p.enc;
-          pColl.pUser= p.pUser;
+          pColl.pUser = p.pUser;
           pColl.type = p.type;
           pColl.xCmp = p.xCmp;
           pColl.xDel = p.xDel;
-        } 
+        }
 
       }
       return SQLITE_OK;
@@ -227,7 +226,7 @@ sqlite3ValueFree(ref pTmp);
           Debug.Assert( pDel == null || pDel == pColl[0] );
           if ( pDel != null )
           {
-    ////        db.mallocFailed = 1;
+            ////        db.mallocFailed = 1;
             pDel = null; //was  sqlite3DbFree(db,ref  pDel);
             pColl = null;
           }
@@ -336,7 +335,7 @@ sqlite3ValueFree(ref pTmp);
     )
     {
       FuncDef p;
-      for ( p = pHash.a[h] ; p != null ; p = p.pHash )
+      for ( p = pHash.a[h]; p != null; p = p.pHash )
       {
         if ( sqlite3StrNICmp( p.zName, zFunc, nFunc ) == 0 && p.zName.Length == nFunc )
         {
@@ -497,20 +496,21 @@ FuncDefHash pHash = GLOBAL( FuncDefHash, sqlite3GlobalFunctions );
       temp2 = pSchema.trigHash;
       sqlite3HashInit( pSchema.trigHash );
       sqlite3HashClear( pSchema.idxHash );
-      for ( pElem = sqliteHashFirst( temp2 ) ; pElem != null ; pElem = sqliteHashNext( pElem ) )
+      for ( pElem = sqliteHashFirst( temp2 ); pElem != null; pElem = sqliteHashNext( pElem ) )
       {
         Trigger pTrigger = (Trigger)sqliteHashData( pElem );
         sqlite3DeleteTrigger( null, ref pTrigger );
       }
       sqlite3HashClear( temp2 );
       sqlite3HashInit( pSchema.trigHash );
-      for ( pElem = temp1.first ; pElem != null ; pElem = pElem.next )//sqliteHashFirst(&temp1); pElem; pElem = sqliteHashNext(pElem))
+      for ( pElem = temp1.first; pElem != null; pElem = pElem.next )//sqliteHashFirst(&temp1); pElem; pElem = sqliteHashNext(pElem))
       {
         Table pTab = (Table)pElem.data; //sqliteHashData(pElem);
         Debug.Assert( pTab.dbMem == null );
         sqlite3DeleteTable( ref pTab );
       }
       sqlite3HashClear( temp1 );
+      sqlite3HashClear( pSchema.fkeyHash );
       pSchema.pSeqTab = null;
       pSchema.flags = (u16)( pSchema.flags & ~DB_SchemaLoaded );
     }
@@ -532,13 +532,14 @@ FuncDefHash pHash = GLOBAL( FuncDefHash, sqlite3GlobalFunctions );
       }
       if ( p == null )
       {
-////        db.mallocFailed = 1;
+        ////        db.mallocFailed = 1;
       }
       else if ( 0 == p.file_format )
       {
         sqlite3HashInit( p.tblHash );
         sqlite3HashInit( p.idxHash );
         sqlite3HashInit( p.trigHash );
+        sqlite3HashInit( p.fkeyHash );
         p.enc = SQLITE_UTF8;
       }
       return p;

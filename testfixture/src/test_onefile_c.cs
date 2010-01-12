@@ -31,15 +31,6 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     **
-    ** $Id: test_onefile.c,v 1.12 2009/04/07 11:21:29 danielk1977 Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    **
     ** OVERVIEW:
     **
     **   This file contains some example code demonstrating how the SQLite
@@ -107,6 +98,14 @@ namespace Community.Data.SQLite
     **
     **   File locking is a no-op. Only one connection may be open at any one
     **   time using this demo vfs.
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
 
     //#include "sqlite3.h"

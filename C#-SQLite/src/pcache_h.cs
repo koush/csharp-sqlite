@@ -23,12 +23,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This header file defines the interface that the sqlite page cache
     ** subsystem.
-    **
-    ** @(#) $Id: pcache.h,v 1.20 2009/07/25 11:46:49 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

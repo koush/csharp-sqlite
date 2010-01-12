@@ -28,14 +28,6 @@ namespace Community.Data.SQLite
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    ** $Id: btreeInt.h,v 1.52 2009/07/15 17:25:46 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
     **
     ** This file implements a external (disk-based) database using BTrees.
     ** For a detailed discussion of BTrees, refer to
@@ -74,9 +66,9 @@ namespace Community.Data.SQLite
     **
     ** The file is divided into pages.  The first page is called page 1,
     ** the second is page 2, and so forth.  A page number of zero indicates
-    ** "no such page".  The page size can be anything between 512 and 65536.
-    ** Each page can be either a btree page, a freelist page or an overflow
-    ** page.
+    ** "no such page".  The page size can be any power of 2 between 512 and 32768.
+    ** Each page can be either a btree page, a freelist page, an overflow
+    ** page, or a pointer-map page.
     **
     ** The first page is always a btree page.  The first 100 bytes of the first
     ** page contain a special header (the "file header") that describes the file.
@@ -239,6 +231,14 @@ namespace Community.Data.SQLite
     **      4     Page number of next trunk page
     **      4     Number of leaf pointers on this page
     **      *     zero or more pages numbers of leaves
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#include "sqliteInt.h"
 
@@ -341,7 +341,7 @@ namespace Community.Data.SQLite
         if ( aOvfl != null )
         {
           cp.aOvfl = new _OvflCell[aOvfl.Length];
-          for ( int i = 0 ; i < aOvfl.Length ; i++ ) cp.aOvfl[i] = aOvfl[i].Copy();
+          for ( int i = 0; i < aOvfl.Length; i++ ) cp.aOvfl[i] = aOvfl[i].Copy();
         }
         if ( aData != null )
         {
@@ -366,7 +366,8 @@ namespace Community.Data.SQLite
     ** from this list when a transaction is committed or rolled back, or when
     ** a btree handle is closed.
     */
-    public class BtLock {
+    public class BtLock
+    {
       Btree pBtree;         /* Btree handle holding this lock */
       Pgno iTable;          /* Root page of table */
       u8 eLock;             /* READ_LOCK or WRITE_LOCK */
@@ -388,8 +389,8 @@ namespace Community.Data.SQLite
     ** this structure.
     **
     ** For some database files, the same underlying database cache might be
-    ** shared between multiple connections.  In that case, each contection
-    ** has it own pointer to this object.  But each instance of this object
+    ** shared between multiple connections.  In that case, each connection
+    ** has it own instance of this object.  But each instance of this object
     ** points to the same BtShared object.  The database cache and the
     ** schema associated with the database file are all contained within
     ** the BtShared object.
@@ -543,7 +544,7 @@ public u8 isPending;            /* If waiting for read-locks to clear */
     ** The entry is identified by its MemPage and the index in
     ** MemPage.aCell[] of the entry.
     **
-    ** When a single database file can shared by two more database connections,
+    ** A single database file can shared by two more database connections,
     ** but cursors cannot be shared.  Each cursor is associated with a
     ** particular database connection identified BtCursor.pBtree.db.
     **
@@ -575,6 +576,27 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
       public MemPage[] apPage = new MemPage[BTCURSOR_MAX_DEPTH]; /* Pages from root to current page */
       public u16[] aiIdx = new u16[BTCURSOR_MAX_DEPTH];           /* Current index in apPage[i] */
 
+      public void Clear()
+      {
+        pNext = null;
+        pPrev = null;
+        pKeyInfo = null;
+        pgnoRoot = 0;
+        cachedRowid = 0;
+        info = new CellInfo();
+        wrFlag = 0;
+        atLast = 0;
+        validNKey = false;
+        eState = 0;
+        pKey = null;
+        nKey = 0;
+        skipNext = 0;
+#if !SQLITE_OMIT_INCRBLOB
+      isIncrblobHandle=false;
+      aOverflow= null;
+#endif
+        iPage = 0;
+      }
       public BtCursor Copy()
       {
         BtCursor cp = (BtCursor)MemberwiseClone();

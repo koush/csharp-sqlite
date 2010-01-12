@@ -24,7 +24,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
+    <DefineConstants>TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_TRIGGER SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
@@ -47,8 +47,6 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SQLiteDatabase.cs" />
-    <Compile Include="SQLiteVdbe.cs" />
     <Compile Include="src\alter_c.cs">
     </Compile>
     <Compile Include="src\analyze_c.cs">
@@ -85,6 +83,7 @@
     </Compile>
     <Compile Include="src\fault_c.cs">
     </Compile>
+    <Compile Include="src\fkey_c.cs" />
     <Compile Include="src\func_c.cs">
     </Compile>
     <Compile Include="src\global_c.cs">
@@ -110,8 +109,6 @@
     <Compile Include="src\malloc_c.cs">
     </Compile>
     <Compile Include="src\mem0_c.cs">
-    </Compile>
-    <Compile Include="src\mem1_c.cs">
     </Compile>
     <Compile Include="src\memjournal_c.cs">
     </Compile>
@@ -201,6 +198,7 @@
     </Compile>
     <Compile Include="src\vdbemem_c.cs">
     </Compile>
+    <Compile Include="src\vdbetrace_c.cs" />
     <Compile Include="src\vdbe_c.cs">
     </Compile>
     <Compile Include="src\Vdbe_h.cs">

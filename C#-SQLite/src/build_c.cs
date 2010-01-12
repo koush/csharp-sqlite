@@ -37,12 +37,11 @@ namespace Community.Data.SQLite
     **     BEGIN TRANSACTION
     **     COMMIT
     **     ROLLBACK
-    **
-    ** $Id: build.c,v 1.557 2009/07/24 17:58:53 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -165,7 +164,7 @@ p.zName, P4_STATIC );
       Vdbe v;
 
       db = pParse.db;
-//      if ( db.mallocFailed != 0 ) return;
+      //      if ( db.mallocFailed != 0 ) return;
       if ( pParse.nested != 0 ) return;
       if ( pParse.nErr != 0 ) return;
 
@@ -173,8 +172,8 @@ p.zName, P4_STATIC );
       ** vdbe program
       */
       v = sqlite3GetVdbe( pParse );
-      Debug.Assert( 0==pParse.isMultiWrite
-     || sqlite3VdbeAssertMayAbort( v, pParse.mayAbort )!=0 );
+      Debug.Assert( 0 == pParse.isMultiWrite
+     || sqlite3VdbeAssertMayAbort( v, pParse.mayAbort ) != 0 );
       if ( v != null )
       {
         sqlite3VdbeAddOp0( v, OP_Halt );
@@ -190,7 +189,7 @@ p.zName, P4_STATIC );
           u32 mask;
           int iDb;
           sqlite3VdbeJumpHere( v, pParse.cookieGoto - 1 );
-          for ( iDb = 0, mask = 1 ; iDb < db.nDb ; mask <<= 1, iDb++ )
+          for ( iDb = 0, mask = 1; iDb < db.nDb; mask <<= 1, iDb++ )
           {
             if ( ( mask & pParse.cookieMask ) == 0 ) continue;
             sqlite3VdbeUsesBtree( v, iDb );
@@ -236,9 +235,12 @@ pParse.nVtabLock = 0;
         sqlite3VdbeTrace( v, trace );
 #endif
         Debug.Assert( pParse.iCacheLevel == 0 );  /* Disables and re-enables match */
+        /* A minimum of one cursor is required if autoincrement is used
+        *  See ticket [a696379c1f08866] */
+        if ( pParse.pAinc != null && pParse.nTab == 0 ) pParse.nTab = 1;
         sqlite3VdbeMakeReady( v, pParse.nVar, pParse.nMem,
                          pParse.nTab, pParse.nMaxArg, pParse.explain,
-                         (pParse.isMultiWrite != 0 && pParse.mayAbort != 0 )?1:0);
+                         ( pParse.isMultiWrite != 0 && pParse.mayAbort != 0 ) ? 1 : 0 );
         pParse.rc = SQLITE_DONE;
         pParse.colNamesSet = 0;
       }
@@ -312,7 +314,7 @@ pParse.nVtabLock = 0;
       int nName;
       Debug.Assert( zName != null );
       nName = sqlite3Strlen30( zName );
-      for ( i = OMIT_TEMPDB ; i < db.nDb ; i++ )
+      for ( i = OMIT_TEMPDB; i < db.nDb; i++ )
       {
         int j = ( i < 2 ) ? i ^ 1 : i;   /* Search TEMP before MAIN */
         if ( zDatabase != null && sqlite3StrICmp( zDatabase, db.aDb[j].zName ) != 0 ) continue;
@@ -382,7 +384,7 @@ pParse.nVtabLock = 0;
       Index p = null;
       int i;
       int nName = sqlite3Strlen30( zName );
-      for ( i = OMIT_TEMPDB ; i < db.nDb ; i++ )
+      for ( i = OMIT_TEMPDB; i < db.nDb; i++ )
       {
         int j = ( i < 2 ) ? i ^ 1 : i;  /* Search TEMP before MAIN */
         Schema pSchema = db.aDb[j].pSchema;
@@ -401,7 +403,7 @@ pParse.nVtabLock = 0;
     {
       sqlite3 db = p.pTable.dbMem;
 #if !SQLITE_OMIT_ANALYZE
-  sqlite3DeleteIndexSamples(p);
+      sqlite3DeleteIndexSamples( p );
 #endif
       sqlite3DbFree( db, ref p.zColAff );
       sqlite3DbFree( db, ref p );
@@ -483,7 +485,7 @@ pParse.nVtabLock = 0;
       {
         sqlite3BtreeEnterAll( db );
       }
-      for ( i = iDb ; i < db.nDb ; i++ )
+      for ( i = iDb; i < db.nDb; i++ )
       {
         Db pDb = db.aDb[i];
         if ( pDb.pSchema != null )
@@ -504,7 +506,7 @@ pParse.nVtabLock = 0;
       ** schema hash tables and therefore do not have to make any changes
       ** to any of those tables.
       */
-      for ( i = j = 2 ; i < db.nDb ; i++ )
+      for ( i = j = 2; i < db.nDb; i++ )
       {
         Db pDb = db.aDb[i];
         if ( pDb.pBt == null )
@@ -523,7 +525,7 @@ pParse.nVtabLock = 0;
       if ( db.nDb <= 2 && db.aDb != db.aDbStatic )
       {
         Array.Copy( db.aDb, db.aDbStatic, 2 );// memcpy(db.aDbStatic, db.aDb, 2*sizeof(db.aDb[0]));
-        sqlite3DbFree(db,ref db.aDb);
+        sqlite3DbFree( db, ref db.aDb );
         //db.aDb = db.aDbStatic;
       }
     }
@@ -546,7 +548,7 @@ pParse.nVtabLock = 0;
       sqlite3 db = pTable.dbMem;
       testcase( db == null );
       Debug.Assert( pTable != null );
-      for ( i = 0 ; i < pTable.nCol ; i++ )
+      for ( i = 0; i < pTable.nCol; i++ )
       {
         pCol = pTable.aCol[i];
         if ( pCol != null )
@@ -574,7 +576,6 @@ pParse.nVtabLock = 0;
     static void sqlite3DeleteTable( ref Table pTable )
     {
       Index pIndex; Index pNext;
-      FKey pFKey; FKey pNextFKey;
       sqlite3 db;
 
       if ( pTable == null ) return;
@@ -591,21 +592,15 @@ pParse.nVtabLock = 0;
 
       /* Delete all indices associated with this table
       */
-      for ( pIndex = pTable.pIndex ; pIndex != null ; pIndex = pNext )
+      for ( pIndex = pTable.pIndex; pIndex != null; pIndex = pNext )
       {
         pNext = pIndex.pNext;
         Debug.Assert( pIndex.pSchema == pTable.pSchema );
         sqlite3DeleteIndex( pIndex );
       }
 
-#if !SQLITE_OMIT_FOREIGN_KEY
-      /* Delete all foreign keys associated with this table. */
-      for ( pFKey = pTable.pFKey ; pFKey != null ; pFKey = pNextFKey )
-      {
-        pNextFKey = pFKey.pNextFrom;
-        pFKey = null;// sqlite3DbFree(db,ref pFKey);
-      }
-#endif
+      /* Delete any foreign keys attached to this table. */
+      sqlite3FkDelete( pTable );
 
       /* Delete the Table structure itself.
 */
@@ -631,7 +626,8 @@ pParse.nVtabLock = 0;
 
       Debug.Assert( db != null );
       Debug.Assert( iDb >= 0 && iDb < db.nDb );
-      Debug.Assert( zTabName != null && zTabName[0] != '\0' );
+      Debug.Assert( zTabName != null );
+      testcase( zTabName.Length == 0 );  /* Zero-length table names are allowed */
       pDb = db.aDb[iDb];
       p = (Table)sqlite3HashInsert( ref pDb.pSchema.tblHash, zTabName,
       sqlite3Strlen30( zTabName ), null );
@@ -696,7 +692,7 @@ pParse.nVtabLock = 0;
       {
         Db pDb;
         int n = sqlite3Strlen30( zName );
-        for ( i = ( db.nDb - 1 ) ; i >= 0 ; i-- )
+        for ( i = ( db.nDb - 1 ); i >= 0; i-- )
         {
           pDb = db.aDb[i];
           if ( ( OMIT_TEMPDB == 0 || i != 1 ) && n == sqlite3Strlen30( pDb.zName ) &&
@@ -923,7 +919,7 @@ goto begin_table_error;
       pTable = new Table();// sqlite3DbMallocZero(db, Table).Length;
       if ( pTable == null )
       {
-//        db.mallocFailed = 1;
+        //        db.mallocFailed = 1;
         pParse.rc = SQLITE_NOMEM;
         pParse.nErr++;
         goto begin_table_error;
@@ -1013,7 +1009,7 @@ goto begin_table_error;
       return;
 
       /* If an error occurs, we jump here */
-begin_table_error:
+    begin_table_error:
       sqlite3DbFree( db, ref zName );
       return;
     }
@@ -1056,7 +1052,7 @@ begin_table_error:
 #endif
       z = sqlite3NameFromToken( db, pName );
       if ( z == null ) return;
-      for ( i = 0 ; i < p.nCol ; i++ )
+      for ( i = 0; i < p.nCol; i++ )
       {
         if ( 0 == sqlite3StrICmp( z, p.aCol[i].zName ) )
         {//STRICMP(z, p.aCol[i].zName) ){
@@ -1281,9 +1277,9 @@ begin_table_error:
       }
       else
       {
-        for ( i = 0 ; i < pList.nExpr ; i++ )
+        for ( i = 0; i < pList.nExpr; i++ )
         {
-          for ( iCol = 0 ; iCol < pTab.nCol ; iCol++ )
+          for ( iCol = 0; iCol < pTab.nCol; iCol++ )
           {
             if ( sqlite3StrICmp( pList.a[i].zName, pTab.aCol[iCol].zName ) == 0 )
             {
@@ -1292,7 +1288,7 @@ begin_table_error:
           }
           if ( iCol < pTab.nCol )
           {
-            pTab.aCol[iCol].isPrimKey = 0;
+            pTab.aCol[iCol].isPrimKey = 1;
           }
         }
         if ( pList.nExpr > 1 ) iCol = -1;
@@ -1318,11 +1314,16 @@ begin_table_error:
       }
       else
       {
-        sqlite3CreateIndex( pParse, null, null, null, pList, onError, null, null, sortOrder, 0 );
+        Index p;
+        p = sqlite3CreateIndex( pParse, 0, 0, 0, pList, onError, 0, 0, sortOrder, 0 );
+        if ( p != null )
+        {
+          p.autoIndex = 2;
+        }
         pList = null;
       }
 
-primary_key_exit:
+    primary_key_exit:
       sqlite3ExprListDelete( pParse.db, ref pList );
       return;
     }
@@ -1374,7 +1375,7 @@ primary_key_exit:
         ** then an index may have been created on this column before the
         ** collation type was added. Correct this if it is the case.
         */
-        for ( pIdx = p.pIndex ; pIdx != null ; pIdx = pIdx.pNext )
+        for ( pIdx = p.pIndex; pIdx != null; pIdx = pIdx.pNext )
         {
           Debug.Assert( pIdx.nColumn == 1 );
           if ( pIdx.aiColumn[0] == i )
@@ -1467,7 +1468,7 @@ primary_key_exit:
     static int identLength( string z )
     {
       int n;
-      for ( n = 0 ; n < z.Length ; n++ )
+      for ( n = 0; n < z.Length; n++ )
       {
         if ( z[n] == (byte)'"' ) { n++; }
       }
@@ -1493,7 +1494,7 @@ primary_key_exit:
       string zIdent = zSignedIdent;
       int i; int j; bool needQuote;
       i = pIdx;
-      for ( j = 0 ; j < zIdent.Length ; j++ )
+      for ( j = 0; j < zIdent.Length; j++ )
       {
         if ( !sqlite3Isalnum( zIdent[j] ) && zIdent[j] != '_' ) break;
       }
@@ -1503,7 +1504,7 @@ primary_key_exit:
         needQuote = ( j < zIdent.Length && zIdent[j] != 0 );
       }
       if ( needQuote ) { if ( i == z.Length ) z.Append( '\0' ); z[i++] = '"'; }
-      for ( j = 0 ; j < zIdent.Length ; j++ )
+      for ( j = 0; j < zIdent.Length; j++ )
       {
         if ( i == z.Length ) z.Append( '\0' );
         z[i++] = zIdent[j];
@@ -1526,7 +1527,7 @@ primary_key_exit:
       string zSep; string zSep2; string zEnd;
       Column pCol;
       n = 0;
-      for ( i = 0 ; i < p.nCol ; i++ )
+      for ( i = 0; i < p.nCol; i++ )
       {//, pCol++){
         pCol = p.aCol[i];
         n += identLength( pCol.zName ) + 5;
@@ -1556,7 +1557,7 @@ primary_key_exit:
       k = sqlite3Strlen30( zStmt );
       identPut( zStmt, ref k, p.zName );
       zStmt.Append( '(' );//zStmt[k++] = '(';
-      for ( i = 0 ; i < p.nCol ; i++ )
+      for ( i = 0; i < p.nCol; i++ )
       {//, pCol++){
         pCol = p.aCol[i];
         string[] azType = new string[]  {
@@ -1819,7 +1820,7 @@ primary_key_exit:
         if ( pOld != null )
         {
           Debug.Assert( p == pOld );  /* Malloc must have failed inside HashInsert() */
-  //        db.mallocFailed = 1;
+          //        db.mallocFailed = 1;
           return;
         }
         pParse.pNewTable = null;
@@ -2042,7 +2043,7 @@ db.xAuth = xAuth;
       HashElem i;
       if ( !DbHasProperty( db, idx, DB_UnresetViews ) ) return;
       //for(i=sqliteHashFirst(&db.aDb[idx].pSchema.tblHash); i;i=sqliteHashNext(i)){
-      for ( i = db.aDb[idx].pSchema.tblHash.first ; i != null ; i = i.next )
+      for ( i = db.aDb[idx].pSchema.tblHash.first; i != null; i = i.next )
       {
         Table pTab = (Table)i.data;// sqliteHashData( i );
         if ( pTab.pSelect != null )
@@ -2080,7 +2081,7 @@ db.xAuth = xAuth;
       Hash pHash;
 
       pHash = pDb.pSchema.tblHash;
-      for ( pElem = pHash.first ; pElem != null ; pElem = pElem.next )// ( pElem = sqliteHashFirst( pHash ) ; pElem ; pElem = sqliteHashNext( pElem ) )
+      for ( pElem = pHash.first; pElem != null; pElem = pElem.next )// ( pElem = sqliteHashFirst( pHash ) ; pElem ; pElem = sqliteHashNext( pElem ) )
       {
         Table pTab = (Table)pElem.data;// sqliteHashData( pElem );
         if ( pTab.tnum == iFrom )
@@ -2089,7 +2090,7 @@ db.xAuth = xAuth;
         }
       }
       pHash = pDb.pSchema.idxHash;
-      for ( pElem = pHash.first ; pElem != null ; pElem = pElem.next )// ( pElem = sqliteHashFirst( pHash ) ; pElem ; pElem = sqliteHashNext( pElem ) )
+      for ( pElem = pHash.first; pElem != null; pElem = pElem.next )// ( pElem = sqliteHashFirst( pHash ) ; pElem ; pElem = sqliteHashNext( pElem ) )
       {
         Index pIdx = (Index)pElem.data;// sqliteHashData( pElem );
         if ( pIdx.tnum == iFrom )
@@ -2174,7 +2175,7 @@ destroyRootPage( pParse, pIdx.tnum, iDb );
         {
           iLargest = iTab;
         }
-        for ( pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext )
+        for ( pIdx = pTab.pIndex; pIdx != null; pIdx = pIdx.pNext )
         {
           int iIdx = pIdx.tnum;
           Debug.Assert( pIdx.pSchema == pTab.pSchema );
@@ -2300,10 +2301,13 @@ goto exit_drop_table;
         Db pDb = db.aDb[iDb];
         sqlite3BeginWriteOperation( pParse, 1, iDb );
 
+#if !SQLITE_OMIT_VIRTUALTABLE
         if ( IsVirtual( pTab ) )
         {
           sqlite3VdbeAddOp0( v, OP_VBegin );
         }
+#endif
+        sqlite3FkDropTable( pParse, pName, pTab );
 
         /* Drop all triggers associated with the table being dropped. Code
         ** is generated to remove entries from sqlite_master and/or
@@ -2369,7 +2373,7 @@ goto exit_drop_table;
       }
       sqliteViewResetAll( db, iDb );
 
-exit_drop_table:
+    exit_drop_table:
       sqlite3SrcListDelete( db, ref pName );
     }
 
@@ -2403,6 +2407,7 @@ exit_drop_table:
       sqlite3 db = pParse.db;
 #if !SQLITE_OMIT_FOREIGN_KEY
       FKey pFKey = null;
+      FKey pNextTo;
       Table p = pParse.pNewTable;
       int nByte;
       int i;
@@ -2462,11 +2467,11 @@ exit_drop_table:
       }
       else
       {
-        for ( i = 0 ; i < nCol ; i++ )
+        for ( i = 0; i < nCol; i++ )
         {
           if ( pFKey.aCol[i] == null ) pFKey.aCol[i] = new FKey.sColMap();
           int j;
-          for ( j = 0 ; j < p.nCol ; j++ )
+          for ( j = 0; j < p.nCol; j++ )
           {
             if ( sqlite3StrICmp( p.aCol[j].zName, pFromCol.a[i].zName ) == 0 )
             {
@@ -2485,7 +2490,7 @@ exit_drop_table:
       }
       if ( pToCol != null )
       {
-        for ( i = 0 ; i < nCol ; i++ )
+        for ( i = 0; i < nCol; i++ )
         {
           int n = sqlite3Strlen30( pToCol.a[i].zName );
           if ( pFKey.aCol[i] == null ) pFKey.aCol[i] = new FKey.sColMap();
@@ -2496,16 +2501,28 @@ exit_drop_table:
         }
       }
       pFKey.isDeferred = 0;
-      pFKey.deleteConf = (u8)( flags & 0xff );
-      pFKey.updateConf = (u8)( ( flags >> 8 ) & 0xff );
-      pFKey.insertConf = (u8)( ( flags >> 16 ) & 0xff );
+      pFKey.aAction[0] = (u8)( flags & 0xff );            /* ON DELETE action */
+      pFKey.aAction[1] = (u8)( ( flags >> 8 ) & 0xff );    /* ON UPDATE action */
 
+      pNextTo = (FKey)sqlite3HashInsert( ref p.pSchema.fkeyHash,
+          pFKey.zTo, sqlite3Strlen30( pFKey.zTo ), pFKey
+      );
+      //if( pNextTo==pFKey ){
+      //  db.mallocFailed = 1;
+      //  goto fk_end;
+      //}
+      if ( pNextTo != null )
+      {
+        Debug.Assert( pNextTo.pPrevTo == null );
+        pFKey.pNextTo = pNextTo;
+        pNextTo.pPrevTo = pFKey;
+      }
       /* Link the foreign key to the table as the last step.
       */
       p.pFKey = pFKey;
       pFKey = null;
 
-fk_end:
+    fk_end:
       sqlite3DbFree( db, ref pFKey );
 #endif // * !SQLITE_OMIT_FOREIGN_KEY) */
       sqlite3ExprListDelete( db, ref pFromCol );
@@ -2525,7 +2542,7 @@ fk_end:
       Table pTab;
       FKey pFKey;
       if ( ( pTab = pParse.pNewTable ) == null || ( pFKey = pTab.pFKey ) == null ) return;
-      Debug.Assert( isDeferred == 0 || isDeferred == 1 );
+      Debug.Assert( isDeferred == 0 || isDeferred == 1 ); /* EV: R-30323-21917 */
       pFKey.isDeferred = (u8)isDeferred;
 #endif
     }
@@ -2625,13 +2642,17 @@ return;
     ** pList is a list of columns to be indexed.  pList will be NULL if this
     ** is a primary key or unique-constraint on the most recent column added
     ** to the table currently under construction.
+    **
+    ** If the index is created successfully, return a pointer to the new Index
+    ** structure. This is used by sqlite3AddPrimaryKey() to mark the index
+    ** as the tables primary key (Index.autoIndex==2).
     */
     // OVERLOADS, so I don't need to rewrite parse.c
-    static void sqlite3CreateIndex( Parse pParse, int null_2, int null_3, int null_4, int null_5, int onError, int null_7, int null_8, int sortOrder, int ifNotExist )
-    { sqlite3CreateIndex( pParse, null, null, null, null, onError, null, null, sortOrder, ifNotExist ); }
-    static void sqlite3CreateIndex( Parse pParse, int null_2, int null_3, int null_4, ExprList pList, int onError, int null_7, int null_8, int sortOrder, int ifNotExist )
-    { sqlite3CreateIndex( pParse, null, null, null, pList, onError, null, null, sortOrder, ifNotExist ); }
-    static void sqlite3CreateIndex(
+    static Index sqlite3CreateIndex( Parse pParse, int null_2, int null_3, int null_4, int null_5, int onError, int null_7, int null_8, int sortOrder, int ifNotExist )
+    { return sqlite3CreateIndex( pParse, null, null, null, null, onError, null, null, sortOrder, ifNotExist ); }
+    static Index sqlite3CreateIndex( Parse pParse, int null_2, int null_3, int null_4, ExprList pList, int onError, int null_7, int null_8, int sortOrder, int ifNotExist )
+    { return sqlite3CreateIndex( pParse, null, null, null, pList, onError, null, null, sortOrder, ifNotExist ); }
+    static Index sqlite3CreateIndex(
     Parse pParse,     /* All information about this Parse */
     Token pName1,     /* First part of index name. May be NULL */
     Token pName2,     /* Second part of index name. May be NULL */
@@ -2644,6 +2665,7 @@ return;
     int ifNotExist    /* Omit error if index already exists */
     )
     {
+      Index pRet = null;            /* Pointer to return */
       Table pTab = null;            /* Table to be indexed */
       Index pIndex = null;          /* The index to be created */
       string zName = null;          /* Name of the index */
@@ -2786,7 +2808,7 @@ return;
       {
         int n = 0;
         Index pLoop;
-        for ( pLoop = pTab.pIndex, n = 1 ; pLoop != null ; pLoop = pLoop.pNext, n++ ) { }
+        for ( pLoop = pTab.pIndex, n = 1; pLoop != null; pLoop = pLoop.pNext, n++ ) { }
         zName = sqlite3MPrintf( db, "sqlite_autoindex_%s_%d", pTab.zName, n );
         if ( zName == null )
         {
@@ -2827,7 +2849,7 @@ goto exit_create_index;
       /* Figure out how many bytes of space are required to store explicitly
       ** specified collation sequence names.
       */
-      for ( i = 0 ; i < pList.nExpr ; i++ )
+      for ( i = 0; i < pList.nExpr; i++ )
       {
         Expr pExpr = pList.a[i].pExpr;
         if ( pExpr != null )
@@ -2896,7 +2918,7 @@ goto exit_create_index;
       ** same column more than once cannot be an error because that would
       ** break backwards compatibility - it needs to be a warning.
       */
-      for ( i = 0 ; i < pList.nExpr ; i++ )
+      for ( i = 0; i < pList.nExpr; i++ )
       {//, pListItem++){
         pListItem = pList.a[i];
         string zColName = pListItem.zName;
@@ -2904,7 +2926,7 @@ goto exit_create_index;
         byte requestedSortOrder;
         string zColl;                   /* Collation sequence name */
 
-        for ( j = 0 ; j < pTab.nCol ; j++ )
+        for ( j = 0; j < pTab.nCol; j++ )
         {//, pTabCol++){
           pTabCol = pTab.aCol[j];
           if ( sqlite3StrICmp( zColName, pTabCol.zName ) == 0 ) break;
@@ -2974,7 +2996,7 @@ goto exit_create_index;
         ** considered distinct and both result in separate indices.
         */
         Index pIdx;
-        for ( pIdx = pTab.pIndex ; pIdx != null ; pIdx = pIdx.pNext )
+        for ( pIdx = pTab.pIndex; pIdx != null; pIdx = pIdx.pNext )
         {
           int k;
           Debug.Assert( pIdx.onError != OE_None );
@@ -2982,7 +3004,7 @@ goto exit_create_index;
           Debug.Assert( pIndex.onError != OE_None );
 
           if ( pIdx.nColumn != pIndex.nColumn ) continue;
-          for ( k = 0 ; k < pIdx.nColumn ; k++ )
+          for ( k = 0; k < pIdx.nColumn; k++ )
           {
             string z1;
             string z2;
@@ -3029,7 +3051,7 @@ goto exit_create_index;
         if ( p != null )
         {
           Debug.Assert( p == pIndex );  /* Malloc must have failed */
-  //        db.mallocFailed = 1;
+          //        db.mallocFailed = 1;
           goto exit_create_index;
         }
         db.flags |= SQLITE_InternChanges;
@@ -3137,11 +3159,12 @@ goto exit_create_index;
           pIndex.pNext = pOther.pNext;
           pOther.pNext = pIndex;
         }
+        pRet = pIndex;
         pIndex = null;
       }
 
         /* Clean up before exiting */
-exit_create_index:
+    exit_create_index:
       if ( pIndex != null )
       {
         //sqlite3_free( ref pIndex.zColAff );
@@ -3150,7 +3173,7 @@ exit_create_index:
       sqlite3ExprListDelete( db, ref pList );
       sqlite3SrcListDelete( db, ref pTblName );
       sqlite3DbFree( db, ref zName );
-      return;
+      return pRet;
     }
 
     /*
@@ -3177,7 +3200,7 @@ exit_create_index:
       int i;
       Debug.Assert( a != null );
       a[0] = 1000000;
-      for ( i = pIdx.nColumn ; i >= 5 ; i-- )
+      for ( i = pIdx.nColumn; i >= 5; i-- )
       {
         a[i] = 5;
       }
@@ -3268,7 +3291,7 @@ goto exit_drop_index;
         sqlite3VdbeAddOp4( v, OP_DropIndex, iDb, 0, 0, pIndex.zName, 0 );
       }
 
-exit_drop_index:
+    exit_drop_index:
       sqlite3SrcListDelete( db, ref pName );
     }
 
@@ -3364,7 +3387,7 @@ exit_drop_index:
     {
       int i;
       if ( pList == null ) return;
-      for ( i = 0 ; i < pList.nId ; i++ )
+      for ( i = 0; i < pList.nId; i++ )
       {
         sqlite3DbFree( db, ref pList.a[i].zName );
       }
@@ -3380,7 +3403,7 @@ exit_drop_index:
     {
       int i;
       if ( pList == null ) return -1;
-      for ( i = 0 ; i < pList.nId ; i++ )
+      for ( i = 0; i < pList.nId; i++ )
       {
         if ( sqlite3StrICmp( pList.a[i].zName, zName ) == 0 ) return i;
       }
@@ -3436,7 +3459,7 @@ exit_drop_index:
 
       /* Move existing slots that come after the newly inserted slots
       ** out of the way */
-      for ( i = pSrc.nSrc - 1 ; i >= iStart ; i-- )
+      for ( i = pSrc.nSrc - 1; i >= iStart; i-- )
       {
         pSrc.a[i + nExtra] = pSrc.a[i];
       }
@@ -3444,7 +3467,7 @@ exit_drop_index:
 
       /* Zero the newly allocated slots */
       //memset(&pSrc.a[iStart], 0, sizeof(pSrc.a[0])*nExtra);
-      for ( i = iStart ; i < iStart + nExtra ; i++ )
+      for ( i = iStart; i < iStart + nExtra; i++ )
       {
         pSrc.a[i] = new SrcList_item();
         pSrc.a[i].iCursor = -1;
@@ -3521,7 +3544,7 @@ exit_drop_index:
       //  return null;
       //}
       pItem = pList.a[pList.nSrc - 1];
-      if ( pDatabase != null && String.IsNullOrEmpty(pDatabase.z))
+      if ( pDatabase != null && String.IsNullOrEmpty( pDatabase.z ) )
       {
         pDatabase = null;
       }
@@ -3546,7 +3569,7 @@ exit_drop_index:
       Debug.Assert( pList != null /* || pParse.db.mallocFailed != 0 */ );
       if ( pList != null )
       {
-        for ( i = 0 ; i < pList.nSrc ; i++ )
+        for ( i = 0; i < pList.nSrc; i++ )
         {
           pItem = pList.a[i];
           if ( pItem.iCursor >= 0 ) break;
@@ -3567,7 +3590,7 @@ exit_drop_index:
       int i;
       SrcList_item pItem;
       if ( pList == null ) return;
-      for ( i = 0 ; i < pList.nSrc ; i++ )
+      for ( i = 0; i < pList.nSrc; i++ )
       {//, pItem++){
         pItem = pList.a[i];
         sqlite3DbFree( db, ref pItem.zDatabase );
@@ -3642,7 +3665,7 @@ exit_drop_index:
       pItem.pOn = pOn;
       pItem.pUsing = pUsing;
       return p;
-append_from_error:
+    append_from_error:
       Debug.Assert( p == null );
       sqlite3ExprDelete( db, ref pOn );
       sqlite3IdListDelete( db, ref pUsing );
@@ -3694,7 +3717,7 @@ append_from_error:
       if ( p != null && p.a != null )
       {
         int i;
-        for ( i = p.nSrc - 1 ; i > 0 ; i-- )
+        for ( i = p.nSrc - 1; i > 0; i-- )
         {
           p.a[i].jointype = p.a[i - 1].jointype;
         }
@@ -3723,7 +3746,7 @@ append_from_error:
       if ( v == null ) return;
       if ( type != TK_DEFERRED )
       {
-        for ( i = 0 ; i < db.nDb ; i++ )
+        for ( i = 0; i < db.nDb; i++ )
         {
           sqlite3VdbeAddOp2( v, OP_Transaction, i, ( type == TK_EXCLUSIVE ) ? 2 : 1 );
           sqlite3VdbeUsesBtree( v, i );
@@ -3831,7 +3854,6 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
           pParse.rc = rc;
           return 1;
         }
-        Debug.Assert( ( db.flags & SQLITE_InTrans ) == 0 || db.autoCommit != 0 );
         Debug.Assert( db.aDb[1].pSchema != null );
         sqlite3PagerJournalMode( sqlite3BtreePager( db.aDb[1].pBt ),
         db.dfltJournalMode );
@@ -3883,7 +3905,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
         {
           pToplevel.cookieMask |= (u32)mask;
           pToplevel.cookieValue[iDb] = db.aDb[iDb].pSchema.schema_cookie;
-          if ( 0==OMIT_TEMPDB && iDb == 1 )
+          if ( 0 == OMIT_TEMPDB && iDb == 1 )
           {
             sqlite3OpenTempDatabase( pToplevel );
           }
@@ -3908,13 +3930,38 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
     {
       Parse pToplevel = sqlite3ParseToplevel( pParse );
       sqlite3CodeVerifySchema( pParse, iDb );
-      pToplevel.writeMask |= (u32)(1 << iDb);
+      pToplevel.writeMask |= (u32)( 1 << iDb );
       pToplevel.isMultiWrite |= (u8)setStatement;
     }
 
+    /*
+    ** Indicate that the statement currently under construction might write
+    ** more than one entry (example: deleting one row then inserting another,
+    ** inserting multiple rows in a table, or inserting a row and index entries.)
+    ** If an abort occurs after some of these writes have completed, then it will
+    ** be necessary to undo the completed writes.
+    */
+    static void sqlite3MultiWrite( Parse pParse )
+    {
+      Parse pToplevel = sqlite3ParseToplevel( pParse );
+      pToplevel.isMultiWrite = 1;
+    }
+
     /* 
-    ** Set the "may throw abort exception" flag for the statement currently 
-    ** being coded.
+    ** The code generator calls this routine if is discovers that it is
+    ** possible to abort a statement prior to completion.  In order to 
+    ** perform this abort without corrupting the database, we need to make
+    ** sure that the statement is protected by a statement transaction.
+    **
+    ** Technically, we only need to set the mayAbort flag if the
+    ** isMultiWrite flag was previously set.  There is a time dependency
+    ** such that the abort must occur after the multiwrite.  This makes
+    ** some statements involving the REPLACE conflict resolution algorithm
+    ** go a little faster.  But taking advantage of this time dependency
+    ** makes it more difficult to prove that the code is correct (in 
+    ** particular, it prevents us from writing an effective
+    ** implementation of sqlite3AssertMayAbort()) and so we have chosen
+    ** to take the safe route and skip the optimization.
     */
     static void sqlite3MayAbort( Parse pParse )
     {
@@ -3946,7 +3993,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
       }
       sqlite3VdbeAddOp4( v, OP_Halt, SQLITE_CONSTRAINT, onError, 0, p4, p4type );
     }
-    
+
     /*
     ** Check to see if pIndex uses the collating sequence pColl.  Return
     ** true if it does and false if it does not.
@@ -3956,7 +4003,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
     {
       int i;
       Debug.Assert( zColl != null );
-      for ( i = 0 ; i < pIndex.nColumn ; i++ )
+      for ( i = 0; i < pIndex.nColumn; i++ )
       {
         string z = pIndex.azColl[i];
         Debug.Assert( z != null );
@@ -3978,7 +4025,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
     {
       Index pIndex;              /* An index associated with pTab */
 
-      for ( pIndex = pTab.pIndex ; pIndex != null ; pIndex = pIndex.pNext )
+      for ( pIndex = pTab.pIndex; pIndex != null; pIndex = pIndex.pNext )
       {
         if ( zColl == null || collationMatch( zColl, pIndex ) )
         {
@@ -4004,11 +4051,11 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
       HashElem k;                /* For looping over tables in pDb */
       Table pTab;                /* A table in the database */
 
-      for ( iDb = 0 ; iDb < db.nDb ; iDb++ )//, pDb++ )
+      for ( iDb = 0; iDb < db.nDb; iDb++ )//, pDb++ )
       {
         pDb = db.aDb[iDb];
         Debug.Assert( pDb != null );
-        for ( k = pDb.pSchema.tblHash.first ; k != null ; k = k.next ) //for ( k = sqliteHashFirst( pDb.pSchema.tblHash ) ; k != null ; k = sqliteHashNext( k ) )
+        for ( k = pDb.pSchema.tblHash.first; k != null; k = k.next ) //for ( k = sqliteHashFirst( pDb.pSchema.tblHash ) ; k != null ; k = sqliteHashNext( k ) )
         {
           pTab = (Table)k.data;// sqliteHashData( k );
           reindexTable( pParse, pTab, zColl );
@@ -4120,7 +4167,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
         pKey.aSortOrder = new byte[nCol];
         pKey.aColl = new CollSeq[nCol];// (u8*)&(pKey.aColl[nCol]);
         //        Debug.Assert(pKey.aSortOrder[nCol] == &(((u8*)pKey)[nBytes]));
-        for ( i = 0 ; i < nCol ; i++ )
+        for ( i = 0; i < nCol; i++ )
         {
           string zColl = pIdx.azColl[i];
           Debug.Assert( zColl != null );
@@ -4132,7 +4179,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
 
       if ( pParse.nErr != 0 )
       {
-        pKey = null;sqlite3DbFree( db, ref pKey );
+        pKey = null; sqlite3DbFree( db, ref pKey );
       }
       return pKey;
     }

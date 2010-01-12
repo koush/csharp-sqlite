@@ -18,12 +18,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This is the header file for the generic hash-table implemenation
     ** used in SQLite.
-    **
-    ** $Id: hash.h,v 1.15 2009/05/02 13:29:38 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

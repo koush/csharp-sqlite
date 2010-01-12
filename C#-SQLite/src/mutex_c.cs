@@ -20,12 +20,11 @@ namespace Community.Data.SQLite
     ** This file contains the C functions that implement mutexes.
     **
     ** This file contains code that is common across all mutex implementations.
-    **
-    ** $Id: mutex.c,v 1.31 2009/07/16 18:21:18 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -178,6 +177,6 @@ return ( p == null ||  sqlite3GlobalConfig.mutex.xMutexNotheld( p ) != 0 ) ;
 }
 #endif
 
-#endif //* SQLITE_OMIT_MUTEX */
+#endif //* SQLITE_MUTEX_OMIT */
   }
 }

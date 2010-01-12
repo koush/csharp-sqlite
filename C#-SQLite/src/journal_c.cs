@@ -14,36 +14,30 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     **
-    ** @(#) $Id: journal.c,v 1.9 2009/01/20 17:06:27 danielk1977 Exp $
+    ** This file implements a special kind of sqlite3_file object used
+    ** by SQLite to create journal files if the atomic-write optimization
+    ** is enabled.
     **
+    ** The distinctive characteristic of this sqlite3_file is that the
+    ** actual on disk file is created lazily. When the file is created,
+    ** the caller specifies a buffer size for an in-memory buffer to
+    ** be used to service read() and write() requests. The actual file
+    ** on disk is not created or populated until either:
+    **
+    **   1) The in-memory representation grows too large for the allocated
+    **      buffer, or
+    **   2) The sqlite3JournalCreate() function is called.
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
     **  $Header$
     *************************************************************************
     */
-
 #if SQLITE_ENABLE_ATOMIC_WRITE
-
-/*
-** This file implements a special kind of sqlite3_file object used
-** by SQLite to create journal files if the atomic-write optimization
-** is enabled.
-**
-** The distinctive characteristic of this sqlite3_file is that the
-** actual on disk file is created lazily. When the file is created,
-** the caller specifies a buffer size for an in-memory buffer to
-** be used to service read() and write() requests. The actual file
-** on disk is not created or populated until either:
-**
-**   1) The in-memory representation grows too large for the allocated
-**      buffer, or
-**   2) The sqlite3JournalCreate() function is called.
-*/
-
-//#include "sqliteInt.h"
-
+    //#include "sqliteInt.h"
 
 /*
 ** A JournalFile object is a subclass of sqlite3_file used by

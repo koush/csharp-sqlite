@@ -18,12 +18,11 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     ** This file contains the C functions that implement mutexes for win32
-    **
-    ** $Id: mutex_w32.c,v 1.18 2009/08/10 03:23:21 shane Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

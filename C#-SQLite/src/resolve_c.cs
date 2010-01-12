@@ -8,6 +8,12 @@ using u8 = System.Byte;
 using u16 = System.UInt16;
 using u32 = System.UInt32;
 
+#if !SQLITE_MAX_VARIABLE_NUMBER
+using ynVar = System.Int16;
+#else
+using ynVar = System.Int32; 
+#endif
+
 namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
@@ -29,12 +35,11 @@ namespace Community.Data.SQLite
     ** This file contains routines used for walking the parser tree and
     ** resolve all identifiers by associating them with a particular
     ** table and column.
-    **
-    ** $Id: resolve.c,v 1.30 2009/06/15 23:15:59 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -120,7 +125,13 @@ namespace Community.Data.SQLite
         pDup.pColl = pExpr.pColl;
         pDup.flags |= EP_ExpCollate;
       }
-      sqlite3ExprClear( db, pExpr );
+
+      /* Before calling sqlite3ExprDelete(), set the EP_Static flag. This 
+      ** prevents ExprDelete() from deleting the Expr structure itself,
+      ** allowing it to be repopulated by the memcpy() on the following line.
+      */
+      ExprSetProperty( pExpr, EP_Static );
+      sqlite3ExprDelete( db, ref pExpr );
       pExpr.CopyFrom( pDup ); //memcpy(pExpr, pDup, sizeof(*pExpr));
       sqlite3DbFree( db, ref pDup );
     }
@@ -188,7 +199,7 @@ namespace Community.Data.SQLite
 
         if ( pSrcList != null )
         {
-          for ( i = 0 ; i < pSrcList.nSrc ; i++ )//, pItem++ )
+          for ( i = 0; i < pSrcList.nSrc; i++ )//, pItem++ )
           {
             pItem = pSrcList.a[i];
             Table pTab;
@@ -226,7 +237,7 @@ namespace Community.Data.SQLite
               pSchema = pTab.pSchema;
               pMatch = pItem;
             }
-            for ( j = 0 ; j < pTab.nCol ; j++ )//, pCol++ )
+            for ( j = 0; j < pTab.nCol; j++ )//, pCol++ )
             {
               pCol = pTab.aCol[j];
               if ( sqlite3StrICmp( pCol.zName, zCol ) == 0 )
@@ -254,7 +265,7 @@ namespace Community.Data.SQLite
                     ** of a join, skip the search of the right table of the join
                     ** to avoid a duplicate match there. */
                     int k;
-                    for ( k = 0 ; k < pUsing.nId ; k++ )
+                    for ( k = 0; k < pUsing.nId; k++ )
                     {
                       if ( sqlite3StrICmp( pUsing.a[k].zName, zCol ) == 0 )
                       {
@@ -296,12 +307,6 @@ namespace Community.Data.SQLite
               int iCol;
               pSchema = pTab.pSchema;
               cntTab++;
-              if ( sqlite3IsRowid( zCol ) )
-              {
-                iCol = -1;
-              }
-              else
-              {
                 for ( iCol = 0; iCol < pTab.nCol; iCol++ )
                 {
                   Column pCol = pTab.aCol[iCol];
@@ -314,6 +319,8 @@ namespace Community.Data.SQLite
                     break;
                   }
                 }
+        if( iCol>=pTab.nCol && sqlite3IsRowid(zCol) ){
+          iCol = -1;        /* IMP: R-44911-55124 */
               }
               if ( iCol < pTab.nCol )
               {
@@ -327,6 +334,10 @@ namespace Community.Data.SQLite
                   testcase( iCol == 31 );
                   testcase( iCol == 32 );
                   pParse.oldmask |= ( iCol >= 32 ? 0xffffffff : ( ( (u32)1 ) << iCol ) );
+                  }else{
+                    testcase( iCol==31 );
+                    testcase( iCol==32 );
+                    pParse.newmask |= (iCol>=32 ? 0xffffffff : (((u32)1)<<iCol));
                 }
                 pExpr.iColumn = (i16)iCol;
                 pExpr.pTab = pTab;
@@ -337,12 +348,12 @@ namespace Community.Data.SQLite
 #endif //* !SQLITE_OMIT_TRIGGER) */
 
         /*
-** Perhaps the name is a reference to the ROWID
-*/
+        ** Perhaps the name is a reference to the ROWID
+        */
         if ( cnt == 0 && cntTab == 1 && sqlite3IsRowid( zCol ) )
         {
           cnt = 1;
-          pExpr.iColumn = -1;
+          pExpr.iColumn = -1; /* IMP: R-44911-55124 */
           pExpr.affinity = SQLITE_AFF_INTEGER;
         }
 
@@ -360,7 +371,7 @@ namespace Community.Data.SQLite
         */
         if ( cnt == 0 && ( pEList = pNC.pEList ) != null && zTab == null )
         {
-          for ( j = 0 ; j < pEList.nExpr ; j++ )
+          for ( j = 0; j < pEList.nExpr; j++ )
           {
             string zAs = pEList.a[j].zName;
             if ( zAs != null && sqlite3StrICmp( zAs, zCol ) == 0 )
@@ -457,8 +468,8 @@ namespace Community.Data.SQLite
       pExpr.pLeft = null;
       sqlite3ExprDelete( db, ref pExpr.pRight );
       pExpr.pRight = null;
-      pExpr.op = (u8)( isTrigger!=0 ? TK_TRIGGER : TK_COLUMN );
-lookupname_end:
+      pExpr.op = (u8)( isTrigger != 0 ? TK_TRIGGER : TK_COLUMN );
+    lookupname_end:
       if ( cnt == 1 )
       {
         Debug.Assert( pNC != null );
@@ -478,6 +489,32 @@ lookupname_end:
       {
         return WRC_Abort;
       }
+    }
+
+    /*
+    ** Allocate and return a pointer to an expression to load the column iCol
+    ** from datasource iSrc datasource in SrcList pSrc.
+    */
+    static Expr sqlite3CreateColumnExpr( sqlite3 db, SrcList pSrc, int iSrc, int iCol )
+    {
+      Expr p = sqlite3ExprAlloc( db, TK_COLUMN, null, 0 );
+      if ( p != null )
+      {
+        SrcList_item pItem = pSrc.a[iSrc];
+        p.pTab = pItem.pTab;
+        p.iTable = pItem.iCursor;
+        if ( p.pTab.iPKey == iCol )
+        {
+          p.iColumn = -1;
+        }
+        else
+        {
+          p.iColumn = (ynVar)iCol;
+          pItem.colUsed |= ( (Bitmask)1 ) << ( iCol >= BMS ? BMS - 1 : iCol );
+        }
+        ExprSetProperty( p, EP_Resolved );
+      }
+      return p;
     }
 
     /*
@@ -508,7 +545,7 @@ lookupname_end:
       {
         SrcList pSrcList = pNC.pSrcList;
         int i;
-        for ( i = 0 ; i < pNC.pSrcList.nSrc ; i++ )
+        for ( i = 0; i < pNC.pSrcList.nSrc; i++ )
         {
           Debug.Assert( pSrcList.a[i].iCursor >= 0 && pSrcList.a[i].iCursor < pParse.nTab );
         }
@@ -721,7 +758,7 @@ return WRC_Prune;
       {
         string zCol = pE.u.zToken;
 
-        for ( i = 0 ; i < pEList.nExpr ; i++ )
+        for ( i = 0; i < pEList.nExpr; i++ )
         {
           string zAs = pEList.a[i].zName;
           if ( zAs != null && sqlite3StrICmp( zAs, zCol ) == 0 )
@@ -782,9 +819,9 @@ return WRC_Prune;
       ** in the result set.  Return an 1-based index of the matching
       ** result-set entry.
       */
-      for ( i = 0 ; i < pEList.nExpr ; i++ )
+      for ( i = 0; i < pEList.nExpr; i++ )
       {
-        if ( sqlite3ExprCompare( pEList.a[i].pExpr, pE ) )
+        if ( sqlite3ExprCompare( pEList.a[i].pExpr, pE ) < 2 )
         {
           return i + 1;
         }
@@ -844,7 +881,7 @@ sqlite3ErrorMsg(pParse, "too many terms in ORDER BY clause");
 return 1;
 }
 #endif
-      for ( i = 0 ; i < pOrderBy.nExpr ; i++ )
+      for ( i = 0; i < pOrderBy.nExpr; i++ )
       {
         pOrderBy.a[i].done = 0;
       }
@@ -860,7 +897,7 @@ return 1;
         moreToDo = 0;
         pEList = pSelect.pEList;
         Debug.Assert( pEList != null );
-        for ( i = 0 ; i < pOrderBy.nExpr ; i++ )//, pItem++)
+        for ( i = 0; i < pOrderBy.nExpr; i++ )//, pItem++)
         {
           pItem = pOrderBy.a[i];
           int iCol = -1;
@@ -909,7 +946,7 @@ return 1;
         }
         pSelect = pSelect.pNext;
       }
-      for ( i = 0 ; i < pOrderBy.nExpr ; i++ )
+      for ( i = 0; i < pOrderBy.nExpr; i++ )
       {
         if ( pOrderBy.a[i].done == 0 )
         {
@@ -952,7 +989,7 @@ return 1;
 #endif
       pEList = pSelect.pEList;
       Debug.Assert( pEList != null );  /* sqlite3SelectNew() guarantees this */
-      for ( i = 0 ; i < pOrderBy.nExpr ; i++ )//, pItem++)
+      for ( i = 0; i < pOrderBy.nExpr; i++ )//, pItem++)
       {
         pItem = pOrderBy.a[i];
         if ( pItem.iCol != 0 )
@@ -1002,7 +1039,7 @@ return 1;
       if ( pOrderBy == null ) return 0;
       nResult = pSelect.pEList.nExpr;
       pParse = pNC.pParse;
-      for ( i = 0 ; i < pOrderBy.nExpr ; i++ )//, pItem++ )
+      for ( i = 0; i < pOrderBy.nExpr; i++ )//, pItem++ )
       {
         pItem = pOrderBy.a[i];
         Expr pE = pItem.pExpr;
@@ -1110,7 +1147,7 @@ return 1;
         /* Resolve names in the result set. */
         pEList = p.pEList;
         Debug.Assert( pEList != null );
-        for ( i = 0 ; i < pEList.nExpr ; i++ )
+        for ( i = 0; i < pEList.nExpr; i++ )
         {
           Expr pX = pEList.a[i].pExpr;
           if ( sqlite3ResolveExprNames( sNC, ref pX ) != 0 )
@@ -1121,7 +1158,7 @@ return 1;
 
         /* Recursively resolve names in all subqueries
         */
-        for ( i = 0 ; i < p.pSrc.nSrc ; i++ )
+        for ( i = 0; i < p.pSrc.nSrc; i++ )
         {
           SrcList_item pItem = p.pSrc.a[i];
           if ( pItem.pSelect != null )
@@ -1203,7 +1240,7 @@ return 1;
           {
             return WRC_Abort;
           }
-          for ( i = 0 ; i < pGroupBy.nExpr ; i++ )//, pItem++)
+          for ( i = 0; i < pGroupBy.nExpr; i++ )//, pItem++)
           {
             pItem = pGroupBy.a[i];
             if ( ( pItem.pExpr.flags & EP_Agg ) != 0 )//HasProperty(pItem.pExpr, EP_Agg) )

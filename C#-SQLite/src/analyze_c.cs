@@ -23,17 +23,11 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     ** This file contains code associated with the ANALYZE command.
-    **
-    ** @(#) $Id: analyze.c,v 1.52 2009/04/16 17:45:48 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  $Header$
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -598,7 +592,7 @@ return;
         pIdx.aSample = null;
       }
 #else
-UNUSED_PARAMETER( pIdx );
+      UNUSED_PARAMETER( pIdx );
 #endif
     }
 

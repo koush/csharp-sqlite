@@ -47,12 +47,11 @@ namespace Community.Data.SQLite
     ** Bitvec object is the number of pages in the database file at the
     ** start of a transaction, and is thus usually less than a few thousand,
     ** but can be as large as 2 billion for a really big database.
-    **
-    ** @(#) $Id: bitvec.c,v 1.17 2009/07/25 17:33:26 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -262,10 +261,10 @@ namespace Community.Data.SQLite
         h++;
         if ( h >= BITVEC_NINT ) h = 0;
       } while ( p.u.aHash[h] != 0 );
-/* we didn't find it in the hash.  h points to the first */
-/* available free spot. check to see if this is going to */
-/* make our hash too "full".  */
-bitvec_set_rehash:
+    /* we didn't find it in the hash.  h points to the first */
+    /* available free spot. check to see if this is going to */
+    /* make our hash too "full".  */
+    bitvec_set_rehash:
       if ( p.nSet >= BITVEC_MXHASH )
       {
         u32 j;
@@ -280,9 +279,9 @@ bitvec_set_rehash:
 
           Buffer.BlockCopy( p.u.aHash, 0, aiValues, 0, aiValues.Length * ( sizeof( u32 ) ) );// memcpy(aiValues, p->u.aHash, sizeof(p->u.aHash));
           p.u.apSub = new Bitvec[BITVEC_NPTR];//memset(p->u.apSub, 0, sizeof(p->u.apSub));
-          p.iDivisor = (u32)(( p.iSize + BITVEC_NPTR - 1 ) / BITVEC_NPTR);
+          p.iDivisor = (u32)( ( p.iSize + BITVEC_NPTR - 1 ) / BITVEC_NPTR );
           rc = sqlite3BitvecSet( p, i );
-          for ( j = 0 ; j < BITVEC_NINT ; j++ )
+          for ( j = 0; j < BITVEC_NINT; j++ )
           {
             if ( aiValues[j] != 0 ) rc |= sqlite3BitvecSet( p, aiValues[j] );
           }
@@ -290,7 +289,7 @@ bitvec_set_rehash:
           return rc;
         }
       }
-bitvec_set_end:
+    bitvec_set_end:
       p.nSet++;
       p.u.aHash[h] = i;
       return SQLITE_OK;
@@ -304,7 +303,7 @@ bitvec_set_end:
     */
     static void sqlite3BitvecClear( Bitvec p, u32 i, u32[] pBuf )
     {
-      if ( p == null ) return; 
+      if ( p == null ) return;
       Debug.Assert( i > 0 );
       i--;
       while ( p.iDivisor != 0 )
@@ -328,7 +327,7 @@ bitvec_set_end:
         Array.Copy( p.u.aHash, aiValues, p.u.aHash.Length );//memcpy(aiValues, p->u.aHash, sizeof(p->u.aHash));
         p.u.aHash = new u32[aiValues.Length];// memset(p->u.aHash, 0, sizeof(p->u.aHash));
         p.nSet = 0;
-        for ( j = 0 ; j < BITVEC_NINT ; j++ )
+        for ( j = 0; j < BITVEC_NINT; j++ )
         {
           if ( aiValues[j] != 0 && aiValues[j] != ( i + 1 ) )
           {
@@ -354,7 +353,7 @@ bitvec_set_end:
       if ( p.iDivisor != 0 )
       {
         u32 i;
-        for ( i = 0 ; i < BITVEC_NPTR ; i++ )
+        for ( i = 0; i < BITVEC_NPTR; i++ )
         {
           sqlite3BitvecDestroy( ref p.u.apSub[i] );
         }
@@ -489,7 +488,7 @@ bitvec_set_end:
       rc = sqlite3BitvecTest( null, 0 ) + sqlite3BitvecTest( pBitvec, sz + 1 )
       + sqlite3BitvecTest( pBitvec, 0 )
       + (int)( sqlite3BitvecSize( pBitvec ) - sz );
-      for ( i = 1 ; i <= sz ; i++ )
+      for ( i = 1; i <= sz; i++ )
       {
         if ( ( TESTBIT( pV, i ) ) != sqlite3BitvecTest( pBitvec, (u32)i ) )
         {
@@ -499,7 +498,7 @@ bitvec_set_end:
       }
 
           /* Free allocated structure */
-bitvec_end:
+    bitvec_end:
       //sqlite3_free( ref pTmpSpace );
       //sqlite3_free( ref pV );
       sqlite3BitvecDestroy( ref pBitvec );

@@ -68,9 +68,9 @@ do_test capi3d-1.1 {
   sqlite3_next_stmt db 0
 } {}
 
-# Run the following tests for between 1 and 100 prepared statements.
+# Run the following tests for between 1 and 10 prepared statements.
 #
-for {set i 1} {$i<=100} {incr i} {
+for {set i 1} {$i<=10} {incr i} {
   set stmtlist [make_prepared_statements $i]
   do_test capi3d-1.2.$i.1 {
     set p [sqlite3_next_stmt db 0]

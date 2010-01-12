@@ -32,12 +32,11 @@ namespace Community.Data.SQLite
     ** If compiled with SQLITE_DEBUG, then additional logic is inserted
     ** that does error checking on mutexes to make sure they are being
     ** called correctly.
-    **
-    ** $Id: mutex_noop.c,v 1.3 2008/12/05 17:17:08 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

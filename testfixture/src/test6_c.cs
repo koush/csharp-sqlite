@@ -33,12 +33,11 @@ namespace Community.Data.SQLite
     ** This file contains code that modified the OS layer in order to simulate
     ** the effect on the database file of an OS crash or power failure.  This
     ** is used to test the ability of SQLite to recover from those situations.
-    **
-    ** $Id: test6.c,v 1.43 2009/02/11 14:27:04 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

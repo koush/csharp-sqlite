@@ -10,14 +10,14 @@
 #***********************************************************************
 # This file implements some common TCL routines used for regression
 # testing the SQLite library
+########################################################################
+#  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+#  C#-SQLite is an independent reimplementation of the SQLite software library
 #
-# $Id: tester.tcl,v 1.143 2009/04/09 01:23:49 drh Exp $
-#########################################################################################
-# Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-# C#-SQLite is an independent reimplementation of the SQLite software library
+#  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
 #
-# $Header: test/tester.tcl,v de00c40da114 2009/08/10 20:32:00 Noah $
-######################################################################################
+#  $Header: C#-SQLite/test/tester.tcl,v 2009/12/11 20:47:52 Noah $
+#
 
 #
 # What for user input before continuing.  This gives an opportunity
@@ -427,7 +427,7 @@ proc execsql {sql {db db}} {
 #
 proc catchsql {sql {db db}} {
   # puts "SQL = $sql"
-  set r [catch {$db eval $sql} msg]
+  set r [catch [list uplevel [list $db eval $sql]] msg]
   lappend r $msg
   return $r
 }
@@ -970,6 +970,23 @@ proc copy_file {from to} {
     puts -nonewline $t [read $f [file size $from]]
     close $t
     close $f
+  }
+}
+
+# Drop all tables in database [db]
+proc drop_all_tables {{db db}} {
+  ifcapable trigger&&foreignkey {
+    set pk [$db one "PRAGMA foreign_keys"]
+    $db eval "PRAGMA foreign_keys = OFF"
+  }
+  foreach {t type} [$db eval {
+    SELECT name, type FROM sqlite_master 
+    WHERE type IN('table', 'view') AND name NOT like 'sqlite_%'
+  }] {
+    $db eval "DROP $type $t"
+  }
+  ifcapable trigger&&foreignkey {
+    $db eval " PRAGMA foreign_keys = $pk "
   }
 }
 

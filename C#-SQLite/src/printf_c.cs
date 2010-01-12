@@ -21,15 +21,6 @@ namespace Community.Data.SQLite
     ** an historical reference.  Most of the "enhancements" have been backed
     ** out so that the functionality is now the same as standard printf().
     **
-    ** $Id: printf.c,v 1.104 2009/06/03 01:24:54 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    **
     **************************************************************************
     **
     ** The following modules is an enhanced replacement for the "printf" subroutines
@@ -74,6 +65,14 @@ namespace Community.Data.SQLite
     **
     **      +  All functions are fully reentrant.
     **
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#include "sqliteInt.h"
 
@@ -333,7 +332,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
       int _fmt = 0; // Work around string pointer
       fmt += '\0';
 
-      for ( ; _fmt <= fmt.Length && ( c = fmt[_fmt] ) != 0 ; ++_fmt )
+      for ( ; _fmt <= fmt.Length && ( c = fmt[_fmt] ) != 0; ++_fmt )
       {
         if ( c != '%' )
         {
@@ -436,7 +435,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
         /* Fetch the info entry for the field */
         infop = fmtinfo[0];
         xtype = etINVALID;
-        for ( idx = 0 ; idx < ArraySize( fmtinfo ) ; idx++ )
+        for ( idx = 0; idx < ArraySize( fmtinfo ); idx++ )
         {
           if ( c == fmtinfo[idx].fmttype )
           {
@@ -592,7 +591,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
               //} while (longvalue > 0);
             }
             length = buf.Length - bufpt;//length = (int)(&buf[etBUFSIZE-1]-bufpt);
-            for ( idx = precision - length ; idx > 0 ; idx-- )
+            for ( idx = precision - length; idx > 0; idx-- )
             {
               buf[( --bufpt )] = '0';                             /* Zero pad */
             }
@@ -602,7 +601,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
               int pre;
               char x;
               pre = infop.prefix;
-              for ( ; ( x = aPrefix[pre] ) != 0 ; pre++ ) buf[--bufpt] = x;
+              for ( ; ( x = aPrefix[pre] ) != 0; pre++ ) buf[--bufpt] = x;
             }
             length = buf.Length - bufpt;//length = (int)(&buf[etBUFSIZE-1]-bufpt);
             break;
@@ -630,7 +629,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
 for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
 #else
             /* It makes more sense to use 0.5 */
-            for ( idx = precision, rounder = 0.5 ; idx > 0 ; idx--, rounder *= 0.1 ) { }
+            for ( idx = precision, rounder = 0.5; idx > 0; idx--, rounder *= 0.1 ) { }
 #endif
             if ( xtype == etFLOAT ) realvalue += rounder;
             /* Normalize realvalue to within 10.0 > realvalue >= 1.0 */
@@ -721,7 +720,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             }
             else
             {
-              for ( ; e2 >= 0 ; e2-- )
+              for ( ; e2 >= 0; e2-- )
               {
                 buf[bufpt++] = (char)( et_getdigit( ref realvalue, ref nsd ) + '0' ); // *(bufpt++) = et_getdigit(ref realvalue, ref nsd);
               }
@@ -734,7 +733,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             }
             /* "0" digits after the decimal point but before the first
             ** significant digit of the number */
-            for ( e2++ ; e2 < 0 ; precision--, e2++ )
+            for ( e2++; e2 < 0; precision--, e2++ )
             {
               Debug.Assert( precision > 0 );
               buf[bufpt++] = '0';
@@ -795,7 +794,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             {
               int i;
               int nPad = width - length;
-              for ( i = width ; i >= nPad ; i-- )
+              for ( i = width; i >= nPad; i-- )
               {
                 buf[bufpt + i] = buf[bufpt + i - nPad];
               }
@@ -820,7 +819,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             buf[0] = (char)c;
             if ( precision >= 0 )
             {
-              for ( idx = 1 ; idx < precision ; idx++ ) buf[idx] = (char)c;
+              for ( idx = 1; idx < precision; idx++ ) buf[idx] = (char)c;
               length = precision;
             }
             else
@@ -846,7 +845,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             }
             if ( precision >= 0 )
             {
-              for ( length = 0 ; length < precision && length < bufStr.Length && buf[length] != 0 ; length++ ) { }
+              for ( length = 0; length < precision && length < bufStr.Length && buf[length] != 0; length++ ) { }
               //length += precision;
             }
             else
@@ -859,7 +858,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
           case etSQLESCAPE2:
           case etSQLESCAPE3:
             {
-              int i; int j; int n;
+              int i; int j; int k; int n;
               bool isnull;
               bool needQuote;
               char ch;
@@ -867,7 +866,8 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
               string escarg = (string)va_arg( ap, "char*" ) + '\0';
               isnull = ( escarg == "" || escarg == "NULL\0" );
               if ( isnull ) escarg = ( xtype == etSQLESCAPE2 ) ? "NULL\0" : "(NULL)\0";
-              for ( i = n = 0 ; ( ch = escarg[i] ) != 0 ; i++ )
+              k = precision;
+              for ( i = n = 0; ( ch = escarg[i] ) != 0 && k != 0; i++, k-- )
               {
                 if ( ch == q ) n++;
               }
@@ -890,16 +890,18 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
               }
               j = 0;
               if ( needQuote ) buf[bufpt + j++] = q;
-              for ( i = 0 ; ( ch = escarg[i] ) != 0 ; i++ )
+              k = i;
+              for ( i = 0; i < k; i++ )
               {
-                buf[bufpt + j++] = ch;
+                buf[bufpt + j++] = ch = escarg[i];
                 if ( ch == q ) buf[bufpt + j++] = ch;
               }
               if ( needQuote ) buf[bufpt + j++] = q;
               buf[bufpt + j] = '\0';
               length = j;
-              /* The precision is ignored on %q and %Q */
-              /* if( precision>=0 && precision<length ) length = precision; */
+              /* The precision in %q and %Q means how many input characters to
+              ** consume, not the length of the output...
+              ** if( precision>=0 && precision<length ) length = precision; */
               break;
             }
           case etTOKEN:
@@ -1103,10 +1105,10 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       acc.db = db;
       sqlite3VXPrintf( acc, 1, zFormat, ap );
       z = sqlite3StrAccumFinish( acc );
-//      if ( acc.mallocFailed != 0 )
-//      {
-//////        db.mallocFailed = 1;
-//      }
+      //      if ( acc.mallocFailed != 0 )
+      //      {
+      //////        db.mallocFailed = 1;
+      //      }
       return z;
     }
 
@@ -1246,5 +1248,18 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       //fflush(stdout);
     }
 #endif
+#if !SQLITE_OMIT_TRACE
+    /*
+** variable-argument wrapper around sqlite3VXPrintf().
+*/
+    static void sqlite3XPrintf( StrAccum p, string zFormat, params object[] ap )
+    {
+      //va_list ap;
+      va_start( ap, zFormat );
+      sqlite3VXPrintf( p, 1, zFormat, ap );
+      va_end( ap );
+    }
+#endif
+
   }
 }

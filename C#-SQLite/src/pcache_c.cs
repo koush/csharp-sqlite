@@ -24,12 +24,11 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     ** This file implements that page cache.
-    **
-    ** @(#) $Id: pcache.c,v 1.47 2009/07/25 11:46:49 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -306,13 +305,13 @@ expensive_assert( pcacheCheckSynced(p) );
 #if SQLITE_ENABLE_EXPENSIVE_ASSERT
 expensive_assert( pcacheCheckSynced(pCache) );
 #endif
-        for ( pPg = pCache.pSynced ;
-        pPg != null && ( pPg.nRef != 0 || ( pPg.flags & PGHDR_NEED_SYNC ) != 0 ) ;
+        for ( pPg = pCache.pSynced;
+        pPg != null && ( pPg.nRef != 0 || ( pPg.flags & PGHDR_NEED_SYNC ) != 0 );
         pPg = pPg.pDirtyPrev
         ) ;
         if ( null == pPg )
         {
-          for ( pPg = pCache.pDirtyTail ; pPg != null && pPg.nRef != 0 ; pPg = pPg.pDirtyPrev ) ;
+          for ( pPg = pCache.pDirtyTail; pPg != null && pPg.nRef != 0; pPg = pPg.pDirtyPrev ) ;
         }
         if ( pPg != null )
         {
@@ -460,7 +459,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
     static void sqlite3PcacheClearSyncFlags( PCache pCache )
     {
       PgHdr p;
-      for ( p = pCache.pDirty ; p != null ; p = p.pDirtyNext )
+      for ( p = pCache.pDirty; p != null; p = p.pDirtyNext )
       {
         p.flags &= ~PGHDR_NEED_SYNC;
       }
@@ -499,7 +498,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
       {
         PgHdr p;
         PgHdr pNext;
-        for ( p = pCache.pDirty ; p != null ; p = pNext )
+        for ( p = pCache.pDirty; p != null; p = pNext )
         {
           pNext = p.pDirtyNext;
           if ( p.pgno > pgno )
@@ -598,7 +597,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
         p = pIn;
         pIn = p.pDirty;
         p.pDirty = null;
-        for ( i = 0 ; ALWAYS(i <N_SORT_BUCKET - 1) ; i++ )
+        for ( i = 0; ALWAYS( i < N_SORT_BUCKET - 1 ); i++ )
         {
           if ( a[i] == null )
           {
@@ -611,7 +610,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
             a[i] = null;
           }
         }
-        if ( NEVER(i ==N_SORT_BUCKET - 1 ))
+        if ( NEVER( i == N_SORT_BUCKET - 1 ) )
         {
           /* To get here, there need to be 2^(N_SORT_BUCKET) elements in
           ** the input list.  But that is impossible.
@@ -620,7 +619,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
         }
       }
       p = a[0];
-      for ( i = 1 ; i <N_SORT_BUCKET ; i++ )
+      for ( i = 1; i < N_SORT_BUCKET; i++ )
       {
         p = pcacheMergeDirtyList( p, a[i] );
       }
@@ -633,7 +632,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
     static PgHdr sqlite3PcacheDirtyList( PCache pCache )
     {
       PgHdr p;
-      for ( p = pCache.pDirty ; p != null ; p = p.pDirtyNext )
+      for ( p = pCache.pDirty; p != null; p = p.pDirtyNext )
       {
         p.pDirty = p.pDirtyNext;
       }
@@ -692,7 +691,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
     }
 
 #if SQLITE_CHECK_PAGES  || (SQLITE_DEBUG)
-/*
+    /*
 ** For all dirty pages currently in the cache, invoke the specified
 ** callback. This is only used if the SQLITE_CHECK_PAGES macro is
 ** defined.
@@ -700,7 +699,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
     static void sqlite3PcacheIterateDirty( PCache pCache, dxIter xIter )
     {
       PgHdr pDirty;
-      for ( pDirty = pCache.pDirty ; pDirty != null ; pDirty = pDirty.pDirtyNext )
+      for ( pDirty = pCache.pDirty; pDirty != null; pDirty = pDirty.pDirtyNext )
       {
         xIter( pDirty );
       }

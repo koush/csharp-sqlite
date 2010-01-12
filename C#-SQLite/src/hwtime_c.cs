@@ -96,6 +96,6 @@ return retval;
 
 #endif
 
-    //#endif /* !_HWTIME_H_) */
+    //#endif //* !_HWTIME_H_) */
   }
 }

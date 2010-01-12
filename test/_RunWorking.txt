@@ -41,7 +41,7 @@ rename finish_test really_finish_test
 proc finish_test {} {
   catch {db close}
 }
-set ISQUICK 1
+set ISQUICK 0
 set ISVERYQUICK 0
 
 set EXCLUDE {
@@ -60,7 +60,10 @@ set EXCLUDE {
   crash6.test
   crash7.test
   delete3.test
+  e_fts3.test
   fts3.test
+  fts3rnd.test
+  fkey_malloc.test
   fuzz.test
   fuzz3.test
   in2.test
@@ -143,9 +146,14 @@ mallocJ.test
 mallocK.test
 malloc_common.tcl
 
-#broken to fix in C# port; 3.6.17
+#No pipes implemented in C# port for TCL
+tkt4018.test
+
+
+#broken to fix in C# port; 3.6.22
   autovacuum.test
-	tclsqlite.test
+  tclsqlite.test
+  tkt-78e04e52ea.test
 }
 
 if {[sqlite3 -has-codec]} {

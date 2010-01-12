@@ -8,7 +8,7 @@ using System.Text;
 using System.Data;
 using System.Data.SQLite;
 
-using CS_SQLite3;
+using Community.Data.SQLite;
 
 /*
  * Benchmark Test for both SQLite and C#-SQLite

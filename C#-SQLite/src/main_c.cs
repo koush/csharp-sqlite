@@ -34,12 +34,11 @@ namespace Community.Data.SQLite
     ** implement the programmer interface to the library.  Routines in
     ** other files are for internal use by SQLite and should not be
     ** accessed by users of the library.
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -62,7 +61,7 @@ namespace Community.Data.SQLite
     public static string sqlite3_version = SQLITE_VERSION;
 #endif
     public static string sqlite3_libversion() { return sqlite3_version; }
-    public static string sqlite3_sourceid(){ return SQLITE_SOURCE_ID; }
+    public static string sqlite3_sourceid() { return SQLITE_SOURCE_ID; }
     public static int sqlite3_libversion_number() { return SQLITE_VERSION_NUMBER; }
     public static int sqlite3_threadsafe() { return SQLITE_THREADSAFE; }
 
@@ -120,9 +119,10 @@ static void sqlite3IoTrace( string X, params object[] ap ) {  }
     static int sqlite3_initialize()
     {
       //--------------------------------------------------------------------
-      // Under C#, Need to initialize some global structures
+      // Under C#, Need to initialize some static variables
       //
-      if ( opcodeProperty == null ) opcodeProperty = OPFLG_INITIALIZER;
+      if ( sqlite3_version == null ) sqlite3_version = SQLITE_VERSION;
+      if ( sqlite3OpcodeProperty == null ) sqlite3OpcodeProperty = OPFLG_INITIALIZER;
       if ( sqlite3GlobalConfig == null ) sqlite3GlobalConfig = sqlite3Config;
       if ( UpperToLower == null ) UpperToLower = sqlite3UpperToLower;
       //--------------------------------------------------------------------
@@ -173,7 +173,7 @@ return rc;
         sqlite3GlobalConfig.isMallocInit = 1;
         if ( sqlite3GlobalConfig.pInitMutex == null )
         {
-          sqlite3GlobalConfig.pInitMutex = 
+          sqlite3GlobalConfig.pInitMutex =
             sqlite3MutexAlloc( SQLITE_MUTEX_RECURSIVE );
           if ( sqlite3GlobalConfig.bCoreMutex && sqlite3GlobalConfig.pInitMutex == null )
           {
@@ -212,7 +212,8 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
         FuncDefHash pHash = sqlite3GlobalFunctions;
 #endif
         sqlite3RegisterGlobalFunctions();
-        if( sqlite3GlobalConfig.isPCacheInit==0 ){
+        if ( sqlite3GlobalConfig.isPCacheInit == 0 )
+        {
           rc = sqlite3PcacheInitialize();
         }
         if ( rc == SQLITE_OK )
@@ -273,28 +274,31 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
     ** on when SQLite is already shut down.  If SQLite is already shut down
     ** when this routine is invoked, then this routine is a harmless no-op.
     */
-static int sqlite3_shutdown()
-{
-if ( sqlite3GlobalConfig.isInit != 0 )
-{
-sqlite3_os_end();
-sqlite3_reset_auto_extension();
-sqlite3GlobalConfig.isInit = 0;
-}
-if( sqlite3GlobalConfig.isPCacheInit !=0){
-sqlite3PcacheShutdown();
-sqlite3GlobalConfig.isPCacheInit = 0;
-}
-if( sqlite3GlobalConfig.isMallocInit !=0){
-//sqlite3MallocEnd();
-sqlite3GlobalConfig.isMallocInit = 0;
-}
-if( sqlite3GlobalConfig.isMutexInit!=0 ){
-sqlite3MutexEnd();
-sqlite3GlobalConfig.isMutexInit = 0;
-}
-return SQLITE_OK;
-}
+    static int sqlite3_shutdown()
+    {
+      if ( sqlite3GlobalConfig.isInit != 0 )
+      {
+        sqlite3_os_end();
+        sqlite3_reset_auto_extension();
+        sqlite3GlobalConfig.isInit = 0;
+      }
+      if ( sqlite3GlobalConfig.isPCacheInit != 0 )
+      {
+        sqlite3PcacheShutdown();
+        sqlite3GlobalConfig.isPCacheInit = 0;
+      }
+      if ( sqlite3GlobalConfig.isMallocInit != 0 )
+      {
+        //sqlite3MallocEnd();
+        sqlite3GlobalConfig.isMallocInit = 0;
+      }
+      if ( sqlite3GlobalConfig.isMutexInit != 0 )
+      {
+        sqlite3MutexEnd();
+        sqlite3GlobalConfig.isMutexInit = 0;
+      }
+      return SQLITE_OK;
+    }
 
     /*
     ** This API allows applications to modify the global configuration of
@@ -370,7 +374,7 @@ return SQLITE_OK;
       return rc;
     }
 
-#if SQLITE_THREADSAFE
+#if SQLITE_THREADSAFE // && SQLITE_THREADSAFE>0
 static int sqlite3_config( int op,  sqlite3_mutex_methods ap )
 {
 //  va_list ap;
@@ -820,7 +824,7 @@ break;
       }
       Debug.Assert( sqlite3SafetyCheckSickOrOk( db ) );
 
-      for ( j = 0 ; j < db.nDb ; j++ )
+      for ( j = 0; j < db.nDb; j++ )
       {
         Btree pBt = db.aDb[j].pBt;
         if ( pBt != null && sqlite3BtreeIsInBackup( pBt ) )
@@ -835,7 +839,7 @@ break;
       /* Free any outstanding Savepoint structures. */
       sqlite3CloseSavepoints( db );
 
-      for ( j = 0 ; j < db.nDb ; j++ )
+      for ( j = 0; j < db.nDb; j++ )
       {
         Db pDb = db.aDb[j];
         if ( pDb.pBt != null )
@@ -851,10 +855,10 @@ break;
       sqlite3ResetInternalSchema( db, 0 );
       Debug.Assert( db.nDb <= 2 );
       Debug.Assert( db.aDb[0].Equals( db.aDbStatic[0] ) );
-      for ( j = 0 ; j < ArraySize( db.aFunc.a ) ; j++ )
+      for ( j = 0; j < ArraySize( db.aFunc.a ); j++ )
       {
         FuncDef pNext, pHash, p;
-        for ( p = db.aFunc.a[j] ; p != null ; p = pHash )
+        for ( p = db.aFunc.a[j]; p != null; p = pHash )
         {
           pHash = p.pHash;
           while ( p != null )
@@ -867,11 +871,11 @@ break;
         }
       }
 
-      for ( i = db.aCollSeq.first ; i != null ; i = i.next )
+      for ( i = db.aCollSeq.first; i != null; i = i.next )
       {//sqliteHashFirst(db.aCollSeq); i!=null; i=sqliteHashNext(i)){
         CollSeq[] pColl = (CollSeq[])i.data;// sqliteHashData(i);
         /* Invoke any destructors registered for collation sequence user data. */
-        for ( j = 0 ; j < 3 ; j++ )
+        for ( j = 0; j < 3; j++ )
         {
           if ( pColl[j].xDel != null )
           {
@@ -931,7 +935,7 @@ sqlite3HashClear(&db.aModule);
       int inTrans = 0;
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
       sqlite3BeginBenignMalloc();
-      for ( i = 0 ; i < db.nDb ; i++ )
+      for ( i = 0; i < db.nDb; i++ )
       {
         if ( db.aDb[i].pBt != null )
         {
@@ -951,6 +955,9 @@ sqlite3HashClear(&db.aModule);
         sqlite3ExpirePreparedStatements( db );
         sqlite3ResetInternalSchema( db, 0 );
       }
+
+      /* Any deferred constraint violations have now been resolved. */
+      db.nDeferredCons = 0;
 
       /* If one has been configured, invoke the rollback-hook callback */
       if ( db.xRollbackCallback != null && ( inTrans != 0 || 0 == db.autoCommit ) )
@@ -1552,7 +1559,7 @@ return rc;
       {
         z = sqlite3_value_text( db.pErr );
         //Debug.Assert( 0 == db.mallocFailed );
-        if ( String.IsNullOrEmpty( z ))
+        if ( String.IsNullOrEmpty( z ) )
         {
           z = sqlite3ErrStr( db.errCode );
         }
@@ -1697,7 +1704,7 @@ return z;
         {
           CollSeq[] aColl = (CollSeq[])sqlite3HashFind( db.aCollSeq, zName, nName );
           int j;
-          for ( j = 0 ; j < 3 ; j++ )
+          for ( j = 0; j < 3; j++ )
           {
             CollSeq p = aColl[j];
             if ( p.enc == pColl.enc )
@@ -1770,9 +1777,6 @@ SQLITE_MAX_TRIGGER_DEPTH,
     //#endif
     //#if SQLITE_MAX_LIKE_PATTERN_LENGTH<1
     //# error SQLITE_MAX_LIKE_PATTERN_LENGTH must be at least 1
-    //#endif
-    //#if SQLITE_MAX_VARIABLE_NUMBER<1
-    //# error SQLITE_MAX_VARIABLE_NUMBER must be at least 1
     //#endif
     //#if SQLITE_MAX_COLUMN>32767
     //# error SQLITE_MAX_COLUMN must not exceed 32767
@@ -1847,11 +1851,11 @@ SQLITE_MAX_TRIGGER_DEPTH,
       {
         isThreadsafe = sqlite3GlobalConfig.bFullMutex ? 1 : 0;
       }
-      if (( flags & SQLITE_OPEN_PRIVATECACHE )!=0)
+      if ( ( flags & SQLITE_OPEN_PRIVATECACHE ) != 0 )
       {
         flags &= ~SQLITE_OPEN_SHAREDCACHE;
       }
-      else if ( sqlite3GlobalConfig.sharedCacheEnabled)
+      else if ( sqlite3GlobalConfig.sharedCacheEnabled )
       {
         flags |= SQLITE_OPEN_SHAREDCACHE;
       }
@@ -2044,7 +2048,7 @@ SQLITE_DEFAULT_LOCKING_MODE);
       setupLookaside( db, null, sqlite3GlobalConfig.szLookaside,
       sqlite3GlobalConfig.nLookaside );
 
-opendb_out:
+    opendb_out:
       if ( db != null )
       {
         Debug.Assert( db.mutex != null || isThreadsafe == 0 || !sqlite3GlobalConfig.bFullMutex );
@@ -2437,7 +2441,7 @@ return rc;
       }
       else
       {
-        for ( iDb = 0 ; iDb < db.nDb ; iDb++ )
+        for ( iDb = 0; iDb < db.nDb; iDb++ )
         {
           if ( db.aDb[iDb].zName == zDbName ) break;
         }
@@ -2627,14 +2631,51 @@ return rc;
         ** Set the nReserve size to N for the main database on the database
         ** connection db.
         */
-        case SQLITE_TESTCTRL_RESERVE: {
-          sqlite3 db = (sqlite3)va_arg(ap, "sqlite3");
-          int x = (int)va_arg(ap,"int");
-          sqlite3_mutex_enter(db.mutex);
-          sqlite3BtreeSetPageSize(db.aDb[0].pBt, 0, x, 0);
-          sqlite3_mutex_leave(db.mutex);
-          break;
-        }
+        case SQLITE_TESTCTRL_RESERVE:
+          {
+            sqlite3 db = (sqlite3)va_arg( ap, "sqlite3" );
+            int x = (int)va_arg( ap, "int" );
+            sqlite3_mutex_enter( db.mutex );
+            sqlite3BtreeSetPageSize( db.aDb[0].pBt, 0, x, 0 );
+            sqlite3_mutex_leave( db.mutex );
+            break;
+          }
+
+        /*  sqlite3_test_control(SQLITE_TESTCTRL_OPTIMIZATIONS, sqlite3 *db, int N)
+        **
+        ** Enable or disable various optimizations for testing purposes.  The 
+        ** argument N is a bitmask of optimizations to be disabled.  For normal
+        ** operation N should be 0.  The idea is that a test program (like the
+        ** SQL Logic Test or SLT test module) can run the same SQL multiple times
+        ** with various optimizations disabled to verify that the same answer
+        ** is obtained in every case.
+        */
+        case SQLITE_TESTCTRL_OPTIMIZATIONS:
+          {
+            sqlite3 db = (sqlite3)va_arg( ap, "sqlite3" );//sqlite3 *db = va_arg(ap, sqlite3*);
+            int x = (int)va_arg( ap, "int" );//int x = va_arg(ap,int);
+            db.flags = ( x & SQLITE_OptMask ) | ( db.flags & ~SQLITE_OptMask );
+            break;
+          }
+
+        //#ifdef SQLITE_N_KEYWORD
+        /* sqlite3_test_control(SQLITE_TESTCTRL_ISKEYWORD, const char *zWord)
+        **
+        ** If zWord is a keyword recognized by the parser, then return the
+        ** number of keywords.  Or if zWord is not a keyword, return 0.
+        ** 
+        ** This test feature is only available in the amalgamation since
+        ** the SQLITE_N_KEYWORD macro is not defined in this file if SQLite
+        ** is built using separate source files.
+        */
+        case SQLITE_TESTCTRL_ISKEYWORD:
+          {
+            string zWord = (string)va_arg( ap, "char*" );
+            int n = sqlite3Strlen30( zWord );
+            rc = ( sqlite3KeywordCode( zWord, n ) != TK_ID ) ? SQLITE_N_KEYWORD : 0;
+            break;
+          }
+        //#endif 
       }
       va_end( ap );
 #endif //* SQLITE_OMIT_BUILTIN_TEST */

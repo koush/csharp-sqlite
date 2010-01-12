@@ -30,12 +30,12 @@ namespace Community.Data.SQLite
     **    May you share freely, never taking more than you give.
     **
     *************************************************************************
-    **
-    ** $Id: test_mutex.c,v 1.15 2009/03/20 13:15:30 drh Exp $
-    **
+    ** This file contains test logic for the sqlite3_mutex interfaces.
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

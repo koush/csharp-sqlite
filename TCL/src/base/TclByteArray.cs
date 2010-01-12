@@ -52,7 +52,7 @@ namespace tcl.lang
 		/// <summary> Create a new Tcl binary data.</summary>
 		private TclByteArray(byte[] b, int position, int length)
 		{
-			used = length;
+      used = length;
 			bytes = new byte[used];
 			Array.Copy(b, position, bytes, 0, used);
 		}

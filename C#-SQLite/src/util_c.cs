@@ -293,15 +293,15 @@ rc = isnan(x);
       //return UpperToLower[*a] - UpperToLower[*b];
       int a = 0, b = 0;
       if ( zRight == null ) return 0;
-        while ( a < zLeft.Length && b < zRight.Length && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) { a++; b++; }
-        if ( a == zLeft.Length && b == zRight.Length ) return 0;
-        else
-        {
-          if ( a == zLeft.Length ) return -UpperToLower[zRight[b]];
-          if ( b == zRight.Length ) return UpperToLower[zLeft[a]];
-          return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
-        }
+      while ( a < zLeft.Length && b < zRight.Length && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) { a++; b++; }
+      if ( a == zLeft.Length && b == zRight.Length ) return 0;
+      else
+      {
+        if ( a == zLeft.Length ) return -UpperToLower[zRight[b]];
+        if ( b == zRight.Length ) return UpperToLower[zLeft[a]];
+        return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
       }
+    }
 
     static int sqlite3_strnicmp( string zLeft, int offsetLeft, string zRight, int N )
     { return sqlite3StrNICmp( zLeft, offsetLeft, zRight, N ); }
@@ -312,7 +312,7 @@ rc = isnan(x);
       //a = (unsigned char *)zLeft;
       //b = (unsigned char *)zRight;
       int a = 0, b = 0;
-      while ( N-- > 0 && zLeft[a + offsetLeft] != 0 && UpperToLower[zLeft[a + offsetLeft]] == UpperToLower[zRight[b]] ) { a++; b++; }
+      while ( N-- > 0 && a < zLeft.Length - offsetLeft && b < zRight.Length && zLeft[a + offsetLeft] != 0 && UpperToLower[zLeft[a + offsetLeft]] == UpperToLower[zRight[b]] ) { a++; b++; }
       return N < 0 ? 0 : UpperToLower[zLeft[a + offsetLeft]] - UpperToLower[zRight[b]];
     }
 
@@ -322,10 +322,12 @@ rc = isnan(x);
       //a = (unsigned char *)zLeft;
       //b = (unsigned char *)zRight;
       int a = 0, b = 0;
-      while ( N-- > 0 && ( zLeft[a] == zRight[b] || ( zLeft[a] != 0 && zLeft[a] < 256 && zRight[b] < 256 && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) ) ) { a++; b++; }
+      while ( N-- > 0 && a < zLeft.Length && b < zRight.Length && ( zLeft[a] == zRight[b] || ( zLeft[a] != 0 && zLeft[a] < 256 && zRight[b] < 256 && UpperToLower[zLeft[a]] == UpperToLower[zRight[b]] ) ) ) { a++; b++; }
       if ( N < 0 ) return 0;
-      else if ( zLeft[a] < 256 && zRight[b] < 256 ) return UpperToLower[zLeft[a]] - UpperToLower[zRight[b]];
-      else return zLeft[a] - zRight[b];
+      if ( a == zLeft.Length && b == zRight.Length ) return 0;
+      if ( a == zLeft.Length ) return -UpperToLower[zRight[b]];
+      if ( b == zRight.Length ) return UpperToLower[zLeft[a]];
+      return ( zLeft[a] < 256 ? UpperToLower[zLeft[a]] : zLeft[a] ) - ( zRight[b] < 256 ? UpperToLower[zRight[b]] : zRight[b] );
     }
 
     /*
@@ -693,9 +695,10 @@ return sqlite3Atoi64(z, pResult);
     ** input number to be zero-terminated.
     */
     static bool sqlite3GetInt32( string zNum, ref int pValue )
+    { return sqlite3GetInt32( zNum, 0, ref pValue ); }
+    static bool sqlite3GetInt32( string zNum, int iZnum, ref int pValue )
     {
       sqlite_int64 v = 0;
-      int iZnum = 0;
       int i, c;
       int neg = 0;
       if ( zNum[iZnum] == '-' )

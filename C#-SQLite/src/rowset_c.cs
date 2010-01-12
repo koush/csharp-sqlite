@@ -75,13 +75,11 @@ namespace Community.Data.SQLite
     **
     ** There is an added cost of O(N) when switching between TEST and
     ** SMALLEST primitives.
-    **
-    **
-    ** $Id: rowset.c,v 1.7 2009/05/22 01:00:13 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -190,7 +188,7 @@ namespace Community.Data.SQLite
     static void sqlite3RowSetClear( RowSet p )
     {
       RowSetChunk pChunk, pNextChunk;
-      for ( pChunk = p.pChunk ; pChunk != null ; pChunk = pNextChunk )
+      for ( pChunk = p.pChunk; pChunk != null; pChunk = pNextChunk )
       {
         pNextChunk = pChunk.pNextChunk;
         sqlite3DbFree( p.db, ref pChunk );
@@ -314,7 +312,7 @@ namespace Community.Data.SQLite
         pEntry = p.pEntry;
         p.pEntry = pEntry.pRight;
         pEntry.pRight = null;
-        for ( i = 0 ; aBucket[i] != null ; i++ )
+        for ( i = 0; aBucket[i] != null; i++ )
         {
           pEntry = rowSetMerge( aBucket[i], pEntry );
           aBucket[i] = null;
@@ -322,7 +320,7 @@ namespace Community.Data.SQLite
         aBucket[i] = pEntry;
       }
       pEntry = null;
-      for ( i = 0 ; i < aBucket.Length ; i++ )//sizeof(aBucket)/sizeof(aBucket[0])
+      for ( i = 0; i < aBucket.Length; i++ )//sizeof(aBucket)/sizeof(aBucket[0])
       {
         pEntry = rowSetMerge( pEntry, aBucket[i] );
       }
@@ -422,7 +420,7 @@ namespace Community.Data.SQLite
       p = pList;
       pList = p.pRight;
       p.pLeft = p.pRight = null;
-      for ( iDepth = 1 ; pList != null ; iDepth++ )
+      for ( iDepth = 1; pList != null; iDepth++ )
       {
         pLeft = p;
         p = pList;

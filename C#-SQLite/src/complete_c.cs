@@ -24,12 +24,11 @@ namespace Community.Data.SQLite
     ** This code used to be part of the tokenizer.c source file.  But by
     ** separating it out, the code will be automatically omitted from
     ** static links that do not use it.
-    **
-    ** $Id: complete.c,v 1.8 2009/04/28 04:46:42 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -42,9 +41,8 @@ namespace Community.Data.SQLite
 */
 #if !SQLITE_AMALGAMATION
 #if  SQLITE_ASCII
-    //extern const char sqlite3IsAsciiIdChar[];
-    //#define IdChar(C)  (((c=C)&0x80)!=0 || (c>0x1f && sqlite3IsAsciiIdChar[c-0x20]))
-    static bool IdChar( u8 C ) { u8 c; return ( ( c = C ) & 0x80 ) != 0 || ( c > 0x1f && sqlite3IsAsciiIdChar[c - 0x20] ); }
+    //#define IdChar(C)  ((sqlite3CtypeMap[(unsigned char)C]&0x46)!=0)
+    static bool IdChar( u8 C ) { return ( sqlite3CtypeMap[(char)C] & 0x46 ) != 0; }
 #endif
 #if  SQLITE_EBCDIC
 //extern const char sqlite3IsEbcdicIdChar[];
@@ -60,91 +58,99 @@ namespace Community.Data.SQLite
     const int tkSEMI = 0;
     const int tkWS = 1;
     const int tkOTHER = 2;
+#if !SQLITE_OMIT_TRIGGER
     const int tkEXPLAIN = 3;
     const int tkCREATE = 4;
     const int tkTEMP = 5;
     const int tkTRIGGER = 6;
     const int tkEND = 7;
+#endif
 
     /*
-    ** Return TRUE if the given SQL string ends in a semicolon.
-    **
-    ** Special handling is require for CREATE TRIGGER statements.
-    ** Whenever the CREATE TRIGGER keywords are seen, the statement
-    ** must end with ";END;".
-    **
-    ** This implementation uses a state machine with 7 states:
-    **
-    **   (0) START     At the beginning or end of an SQL statement.  This routine
-    **                 returns 1 if it ends in the START state and 0 if it ends
-    **                 in any other state.
-    **
-    **   (1) NORMAL    We are in the middle of statement which ends with a single
-    **                 semicolon.
-    **
-    **   (2) EXPLAIN   The keyword EXPLAIN has been seen at the beginning of
-    **                 a statement.
-    **
-    **   (3) CREATE    The keyword CREATE has been seen at the beginning of a
-    **                 statement, possibly preceeded by EXPLAIN and/or followed by
-    **                 TEMP or TEMPORARY
-    **
-    **   (4) TRIGGER   We are in the middle of a trigger definition that must be
-    **                 ended by a semicolon, the keyword END, and another semicolon.
-    **
-    **   (5) SEMI      We've seen the first semicolon in the ";END;" that occurs at
-    **                 the end of a trigger definition.
-    **
-    **   (6) END       We've seen the ";END" of the ";END;" that occurs at the end
-    **                 of a trigger difinition.
-    **
-    ** Transitions between states above are determined by tokens extracted
-    ** from the input.  The following tokens are significant:
-    **
-    **   (0) tkSEMI      A semicolon.
-    **   (1) tkWS        Whitespace
-    **   (2) tkOTHER     Any other SQL token.
-    **   (3) tkEXPLAIN   The "explain" keyword.
-    **   (4) tkCREATE    The "create" keyword.
-    **   (5) tkTEMP      The "temp" or "temporary" keyword.
-    **   (6) tkTRIGGER   The "trigger" keyword.
-    **   (7) tkEND       The "end" keyword.
-    **
-    ** Whitespace never causes a state transition and is always ignored.
-    **
-    ** If we compile with SQLITE_OMIT_TRIGGER, all of the computation needed
-    ** to recognize the end of a trigger can be omitted.  All we have to do
-    ** is look for a semicolon that is not part of an string or comment.
-    */
+** Return TRUE if the given SQL string ends in a semicolon.
+**
+** Special handling is require for CREATE TRIGGER statements.
+** Whenever the CREATE TRIGGER keywords are seen, the statement
+** must end with ";END;".
+**
+** This implementation uses a state machine with 8 states:
+**
+**   (0) INVALID   We have not yet seen a non-whitespace character.
+**
+**   (1) START     At the beginning or end of an SQL statement.  This routine
+**                 returns 1 if it ends in the START state and 0 if it ends
+**                 in any other state.
+**
+**   (2) NORMAL    We are in the middle of statement which ends with a single
+**                 semicolon.
+**
+**   (3) EXPLAIN   The keyword EXPLAIN has been seen at the beginning of 
+**                 a statement.
+**
+**   (4) CREATE    The keyword CREATE has been seen at the beginning of a
+**                 statement, possibly preceeded by EXPLAIN and/or followed by
+**                 TEMP or TEMPORARY
+**
+**   (5) TRIGGER   We are in the middle of a trigger definition that must be
+**                 ended by a semicolon, the keyword END, and another semicolon.
+**
+**   (6) SEMI      We've seen the first semicolon in the ";END;" that occurs at
+**                 the end of a trigger definition.
+**
+**   (7) END       We've seen the ";END" of the ";END;" that occurs at the end
+**                 of a trigger difinition.
+**
+** Transitions between states above are determined by tokens extracted
+** from the input.  The following tokens are significant:
+**
+**   (0) tkSEMI      A semicolon.
+**   (1) tkWS        Whitespace.
+**   (2) tkOTHER     Any other SQL token.
+**   (3) tkEXPLAIN   The "explain" keyword.
+**   (4) tkCREATE    The "create" keyword.
+**   (5) tkTEMP      The "temp" or "temporary" keyword.
+**   (6) tkTRIGGER   The "trigger" keyword.
+**   (7) tkEND       The "end" keyword.
+**
+** Whitespace never causes a state transition and is always ignored.
+** This means that a SQL string of all whitespace is invalid.
+**
+** If we compile with SQLITE_OMIT_TRIGGER, all of the computation needed
+** to recognize the end of a trigger can be omitted.  All we have to do
+** is look for a semicolon that is not part of an string or comment.
+*/
+
     static public int sqlite3_complete( string zSql )
     {
       int state = 0;   /* Current state, using numbers defined in header comment */
       int token;       /* Value of the next token */
 
 #if !SQLITE_OMIT_TRIGGER
-      /* A complex statement machine used to detect the end of a CREATE TRIGGER
+/* A complex statement machine used to detect the end of a CREATE TRIGGER
 ** statement.  This is the normal case.
 */
       u8[][] trans = new u8[][]       {
-/* Token:                                                */
-/* State:       **  SEMI  WS  OTHER EXPLAIN  CREATE  TEMP  TRIGGER  END  */
-/* 0   START: */ new u8[] {    0,  0,     1,      2,      3,    1,       1,   1,  },
-/* 1  NORMAL: */  new u8[]{    0,  1,     1,      1,      1,    1,       1,   1,  },
-/* 2 EXPLAIN: */  new u8[]{    0,  2,     2,      1,      3,    1,       1,   1,  },
-/* 3  CREATE: */  new u8[]{    0,  3,     1,      1,      1,    3,       4,   1,  },
-/* 4 TRIGGER: */  new u8[]{    5,  4,     4,      4,      4,    4,       4,   4,  },
-/* 5    SEMI: */  new u8[]{    5,  5,     4,      4,      4,    4,       4,   6,  },
-/* 6     END: */  new u8[]{    0,  6,     4,      4,      4,    4,       4,   4,  },
+                     /* Token:                                                */
+     /* State:       **  SEMI  WS  OTHER  EXPLAIN  CREATE  TEMP  TRIGGER  END */
+     /* 0 INVALID: */ new u8[]{    1,  0,     2,       3,      4,    2,       2,   2, },
+     /* 1   START: */ new u8[]{    1,  1,     2,       3,      4,    2,       2,   2, },
+     /* 2  NORMAL: */ new u8[]{    1,  2,     2,       2,      2,    2,       2,   2, },
+     /* 3 EXPLAIN: */ new u8[]{    1,  3,     3,       2,      4,    2,       2,   2, },
+     /* 4  CREATE: */ new u8[]{    1,  4,     2,       2,      2,    4,       5,   2, },
+     /* 5 TRIGGER: */ new u8[]{    6,  5,     5,       5,      5,    5,       5,   5, },
+     /* 6    SEMI: */ new u8[]{    6,  6,     5,       5,      5,    5,       5,   7, },
+     /* 7     END: */ new u8[]{    1,  7,     5,       5,      5,    5,       5,   5, },
 };
 #else
-/* If triggers are not suppored by this compile then the statement machine
-** used to detect the end of a statement is much simplier
-*/
-static const u8 trans[2][3] = {
-/* Token:           */
-/* State:       **  SEMI  WS  OTHER */
-/* 0   START: */ {    0,  0,     1, },
-/* 1  NORMAL: */ {    0,  1,     1, },
+      /* If triggers are not supported by this compile then the statement machine
+  ** used to detect the end of a statement is much simplier
+  */
+      u8[][] trans = new u8[][]   {
+     /* Token:           */
+     /* State:       **  SEMI  WS  OTHER */
+     /* 0 INVALID: */new u8[]  {    1,  0,     2, },
+     /* 1   START: */new u8[]  {    1,  1,     2, },
+     /* 2  NORMAL: */new u8[] {    1,  2,     2, },
 };
 #endif // * SQLITE_OMIT_TRIGGER */
 
@@ -189,7 +195,7 @@ static const u8 trans[2][3] = {
                 break;
               }
               while ( zIdx < zSql.Length && zSql[zIdx] != '\n' ) { zIdx++; }
-              if ( zIdx == zSql.Length ) return state == 0 ? 1 : 0;
+              if ( zIdx == zSql.Length ) return state == 1 ? 1 : 0;//if( *zSql==0 ) return state==1;
               token = tkWS;
               break;
             }
@@ -214,14 +220,16 @@ static const u8 trans[2][3] = {
             }
           default:
             {
-              int c;
+#if SQLITE_EBCDIC
+        unsigned char c;
+#endif
               if ( IdChar( (u8)zSql[zIdx] ) )
               {
                 /* Keywords and unquoted identifiers */
                 int nId;
-                for ( nId = 1 ; ( zIdx + nId ) < zSql.Length && IdChar( (u8)zSql[zIdx + nId] ) ; nId++ ) { }
+                for ( nId = 1; ( zIdx + nId ) < zSql.Length && IdChar( (u8)zSql[zIdx + nId] ); nId++ ) { }
 #if  SQLITE_OMIT_TRIGGER
-token = tkOTHER;
+                token = tkOTHER;
 #else
                 switch ( zSql[zIdx] )
                 {
@@ -299,7 +307,7 @@ token = tkOTHER;
         state = trans[state][token];
         zIdx++;
       }
-      return ( state == 0 ) ? 1 : 0;
+      return ( state == 1 ) ? 1 : 0;//return state==1;
     }
 
 #if ! SQLITE_OMIT_UTF16

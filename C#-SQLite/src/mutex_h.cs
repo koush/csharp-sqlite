@@ -24,12 +24,11 @@ namespace Community.Data.SQLite
     ** NOTE:  source files should *not* #include this header file directly.
     ** Source files should #include the sqliteInt.h file and let that file
     ** include this one indirectly.
-    **
-    ** $Id: mutex.h,v 1.9 2008/10/07 15:25:48 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -87,6 +86,6 @@ namespace Community.Data.SQLite
     static bool sqlite3_mutex_notheld( sqlite3_mutex m ) { return true; }   //#define sqlite3_mutex_notheld(X)  1
     static int sqlite3MutexInit() { return SQLITE_OK; }              //#define sqlite3MutexInit()        SQLITE_OK
     static void sqlite3MutexEnd() { }                                //#define sqlite3MutexEnd()
-#endif //* defined(SQLITE_OMIT_MUTEX) */
+#endif //* defined(SQLITE_MUTEX_OMIT) */
   }
 }

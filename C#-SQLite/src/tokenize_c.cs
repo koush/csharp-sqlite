@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     ** This file contains C code that splits an SQL input string up into
     ** individual tokens and sends those tokens one-by-one over to the
     ** parser for analysis.
-    **
-    ** $Id: tokenize.c,v 1.163 2009/07/03 22:54:37 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -99,16 +98,7 @@ namespace Community.Data.SQLite
     ** But the feature is undocumented.
     */
 #if SQLITE_ASCII
-    static bool[] sqlite3IsAsciiIdChar = {
-/* x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF */
-false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false,  /* 2x */
-true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false,  /* 3x */
-false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,  /* 4x */
-true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, true,  /* 5x */
-false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,  /* 6x */
-true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, false,  /* 7x */
-};
-    //#define IdChar(C)  (((c=C)&0x80)!=0 || (c>0x1f && sqlite3IsAsciiIdChar[c-0x20]))
+    //#define IdChar(C)  ((sqlite3CtypeMap[(unsigned char)C]&0x46)!=0)
 #endif
 #if SQLITE_EBCDIC
 //const char sqlite3IsEbcdicIdChar[] = {
@@ -131,7 +121,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
 
 
     /*
-** Return the length of the token that begins at z[0].
+** Return the length of the token that begins at z[iOffset + 0].
 ** Store the token type in *tokenType before returning.
 */
     static int sqlite3GetToken( string z, int iOffset, ref int tokenType )
@@ -146,12 +136,12 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
         case '\f':
         case '\r':
           {
-            testcase( z[0] == ' ' );
-            testcase( z[0] == '\t' );
-            testcase( z[0] == '\n' );
-            testcase( z[0] == '\f' );
-            testcase( z[0] == '\r' );
-            for ( i = 1 ; z.Length > iOffset + i && sqlite3Isspace( z[iOffset + i] ) ; i++ ) { }
+            testcase( z[iOffset + 0] == ' ' );
+            testcase( z[iOffset + 0] == '\t' );
+            testcase( z[iOffset + 0] == '\n' );
+            testcase( z[iOffset + 0] == '\f' );
+            testcase( z[iOffset + 0] == '\r' );
+            for ( i = 1; z.Length > iOffset + i && sqlite3Isspace( z[iOffset + i] ); i++ ) { }
             tokenType = TK_SPACE;
             return i;
           }
@@ -159,8 +149,9 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
           {
             if ( z.Length > iOffset + 1 && z[iOffset + 1] == '-' )
             {
-              for ( i = 2 ; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0 && c != '\n' ; i++ ) { }
-              tokenType = TK_SPACE;
+              /* IMP: R-15891-05542 -- syntax diagram for comments */
+              for ( i = 2; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0 && c != '\n'; i++ ) { }
+              tokenType = TK_SPACE;   /* IMP: R-22934-25134 */
               return i;
             }
             tokenType = TK_MINUS;
@@ -198,10 +189,11 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
               tokenType = TK_SLASH;
               return 1;
             }
-            for ( i = 3, c = (byte)z[iOffset + 2] ; iOffset + i < z.Length && ( c != '*' || ( z[iOffset + i] != '/' ) && ( c != 0 ) ) ; i++ ) { c = (byte)z[iOffset + i]; }
+            /* IMP: R-15891-05542 -- syntax diagram for comments */
+            for ( i = 3, c = (byte)z[iOffset + 2]; iOffset + i < z.Length && ( c != '*' || ( z[iOffset + i] != '/' ) && ( c != 0 ) ); i++ ) { c = (byte)z[iOffset + i]; }
             if ( iOffset + i == z.Length ) c = 0;
             if ( c != 0 ) i++;
-            tokenType = TK_SPACE;
+            tokenType = TK_SPACE; /* IMP: R-22934-25134 */
             return i;
           }
         case '%':
@@ -304,7 +296,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
             testcase( delim == '`' );
             testcase( delim == '\'' );
             testcase( delim == '"' );
-            for ( i = 1 ; ( iOffset + i ) < z.Length && ( c = (byte)z[iOffset + i] ) != 0 ; i++ )
+            for ( i = 1; ( iOffset + i ) < z.Length && ( c = (byte)z[iOffset + i] ) != 0; i++ )
             {
               if ( c == delim )
               {
@@ -363,12 +355,12 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
         case '8':
         case '9':
           {
-            testcase( z[0] == '0' ); testcase( z[0] == '1' ); testcase( z[0] == '2' );
-            testcase( z[0] == '3' ); testcase( z[0] == '4' ); testcase( z[0] == '5' );
-            testcase( z[0] == '6' ); testcase( z[0] == '7' ); testcase( z[0] == '8' );
-            testcase( z[0] == '9' );
+            testcase( z[iOffset] == '0' ); testcase( z[iOffset] == '1' ); testcase( z[iOffset] == '2' );
+            testcase( z[iOffset] == '3' ); testcase( z[iOffset] == '4' ); testcase( z[iOffset] == '5' );
+            testcase( z[iOffset] == '6' ); testcase( z[iOffset] == '7' ); testcase( z[iOffset] == '8' );
+            testcase( z[iOffset] == '9' );
             tokenType = TK_INTEGER;
-            for ( i = 0 ; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ) ; i++ ) { }
+            for ( i = 0; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ); i++ ) { }
 #if !SQLITE_OMIT_FLOATING_POINT
             if ( z.Length > iOffset + i && z[iOffset + i] == '.' )
             {
@@ -387,28 +379,29 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
               tokenType = TK_FLOAT;
             }
 #endif
-            while ( z.Length > iOffset + i && ( ( ( c = (byte)z[iOffset + i] ) & 0x80 ) != 0 || ( c > 0x1f && sqlite3IsAsciiIdChar[c - 0x20] ) ) )
-            {// IdChar(z[iOffset+i]) ){
+            while ( iOffset + i < z.Length && IdChar( (byte)z[iOffset + i] ) )
+            {
               tokenType = TK_ILLEGAL;
               i++;
             }
             return i;
           }
+
         case '[':
           {
-            for ( i = 1, c = (byte)z[iOffset + 0] ; c != ']' && ( iOffset + i ) < z.Length && ( c = (byte)z[iOffset + i] ) != 0 ; i++ ) { }
+            for ( i = 1, c = (byte)z[iOffset + 0]; c != ']' && ( iOffset + i ) < z.Length && ( c = (byte)z[iOffset + i] ) != 0; i++ ) { }
             tokenType = c == ']' ? TK_ID : TK_ILLEGAL;
             return i;
           }
         case '?':
           {
             tokenType = TK_VARIABLE;
-            for ( i = 1 ; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ) ; i++ ) { }
+            for ( i = 1; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ); i++ ) { }
             return i;
           }
         case '#':
           {
-            for ( i = 1 ; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ) ; i++ ) { }
+            for ( i = 1; z.Length > iOffset + i && sqlite3Isdigit( z[iOffset + i] ); i++ ) { }
             if ( i > 1 )
             {
               /* Parameters of the form #NNN (where NNN is a number) are used
@@ -427,12 +420,12 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
         case ':':
           {
             int n = 0;
-            testcase( z[0] == '$' ); testcase( z[0] == '@' ); testcase( z[0] == ':' );
+            testcase( z[iOffset + 0] == '$' ); testcase( z[iOffset + 0] == '@' ); testcase( z[iOffset + 0] == ':' );
             tokenType = TK_VARIABLE;
-            for ( i = 1 ; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0 ; i++ )
+            for ( i = 1; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0; i++ )
             {
-              if ( ( ( c & 0x80 ) != 0 || ( c > 0x1f && sqlite3IsAsciiIdChar[c - 0x20] ) ) )
-              {//IdChar(c) ){
+              if ( IdChar( c ) )
+              {
                 n++;
 #if !SQLITE_OMIT_TCL_VARIABLE
               }
@@ -469,11 +462,11 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
         case 'x':
         case 'X':
           {
-            testcase( z[0] == 'x' ); testcase( z[0] == 'X' );
+            testcase( z[iOffset + 0] == 'x' ); testcase( z[iOffset + 0] == 'X' );
             if ( z.Length > iOffset + 1 && z[iOffset + 1] == '\'' )
             {
               tokenType = TK_BLOB;
-              for ( i = 2 ; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0 && c != '\'' ; i++ )
+              for ( i = 2; z.Length > iOffset + i && ( c = (byte)z[iOffset + i] ) != 0 && c != '\''; i++ )
               {
                 if ( !sqlite3Isxdigit( c ) )
                 {
@@ -490,11 +483,11 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
 #endif
         default:
           {
-            if ( !( ( ( c = (byte)z[iOffset + 0] ) & 0x80 ) != 0 || ( c > 0x1f && sqlite3IsAsciiIdChar[c - 0x20] ) ) )
-            {//IdChar(*z) ){
+            if ( !IdChar( (byte)z[iOffset] ) )
+            {
               break;
             }
-            for ( i = 1 ; z.Length > iOffset + i && ( ( ( c = (byte)z[iOffset + i] ) & 0x80 ) != 0 || ( c > 0x1f && sqlite3IsAsciiIdChar[c - 0x20] ) ) ; i++ ) { }//IdChar(z[iOffset+i]); i++){}
+            for ( i = 1; i < z.Length - iOffset && IdChar( (byte)z[iOffset + i] ); i++ ) { }
             tokenType = keywordCode( z, iOffset, i );
             return i;
           }
@@ -534,7 +527,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
       pEngine = sqlite3ParserAlloc();//sqlite3ParserAlloc((void*(*)(size_t))sqlite3Malloc);
       if ( pEngine == null )
       {
-////        db.mallocFailed = 1;
+        ////        db.mallocFailed = 1;
         return SQLITE_NOMEM;
       }
       Debug.Assert( pParse.pNewTable == null );
@@ -595,7 +588,7 @@ true, true, true, true, true, true, true, true, true, true, true, false, false, 
             }
         }
       }
-abort_parse:
+    abort_parse:
       pParse.zTail = new StringBuilder( zSql.Length <= i ? "" : zSql.Substring( i, zSql.Length - i ) );
       if ( zSql.Length >= i && nErr == 0 && pParse.rc == SQLITE_OK )
       {
@@ -610,7 +603,7 @@ sqlite3StatusSet(SQLITE_STATUS_PARSER_STACK,
 sqlite3ParserStackPeak(pEngine)
 );
 #endif //* YYDEBUG */
-      sqlite3ParserFree(pEngine, null);//sqlite3_free );
+      sqlite3ParserFree( pEngine, null );//sqlite3_free );
       db.lookaside.bEnabled = enableLookaside;
       //if ( db.mallocFailed != 0 )
       //{

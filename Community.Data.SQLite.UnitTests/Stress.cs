@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 
-using CS_SQLite3;
+using Community.Data.SQLite;
 using Xunit;
 
 namespace Community.Data.SQLite.UnitTests

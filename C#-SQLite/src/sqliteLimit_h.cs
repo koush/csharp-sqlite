@@ -15,17 +15,15 @@ namespace Community.Data.SQLite
     *************************************************************************
     **
     ** This file defines various limits of what SQLite can process.
-    **
-    ** @(#) $Id: sqliteLimit.h,v 1.10 2009/01/10 16:15:09 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
     **  $Header$
     *************************************************************************
     */
-
     /*
     ** The maximum length of a TEXT or BLOB in bytes.   This also
     ** limits the size of a row in a table or index.
@@ -196,19 +194,21 @@ const int SQLITE_MAX_DEFAULT_PAGE_SIZE SQLITE_MAX_PAGE_SIZE
 ** Maximum length (in bytes) of the pattern in a LIKE or GLOB
 ** operator.
 */
-//#if !SQLITE_MAX_LIKE_PATTERN_LENGTH
+    //#if !SQLITE_MAX_LIKE_PATTERN_LENGTH
     const int SQLITE_MAX_LIKE_PATTERN_LENGTH = 50000;
-//#endif
+    //#endif
 
     /*
-** Maximum depth of recursion for triggers.
-*/
-//#if !SQLITE_MAX_TRIGGER_DEPTH
-#if (SQLITE_SMALL_STACK)
-const int SQLITE_MAX_TRIGGER_DEPTH = 10;//# define SQLITE_MAX_TRIGGER_DEPTH 10
+    ** Maximum depth of recursion for triggers.
+    **
+    ** A value of 1 means that a trigger program will not be able to itself
+    ** fire any triggers. A value of 0 means that no trigger programs at all 
+    ** may be executed.
+    */
+#if !SQLITE_MAX_TRIGGER_DEPTH
+    const int SQLITE_MAX_TRIGGER_DEPTH = 100;  // # define SQLITE_MAX_TRIGGER_DEPTH 1000
 #else
-    const int SQLITE_MAX_TRIGGER_DEPTH = 1000;//# define SQLITE_MAX_TRIGGER_DEPTH 1000
+  const int SQLITE_MAX_TRIGGER_DEPTH=1;
 #endif
-//#endif
-}
+  }
 }

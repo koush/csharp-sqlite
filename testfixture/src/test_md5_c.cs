@@ -440,7 +440,7 @@ namespace Community.Data.SQLite
       MD5Context p = null;
       int i;
       if ( argc < 1 ) return;
-      Mem pMem = sqlite3_aggregate_context( context, -1 );//sizeof(*p));
+      Mem pMem = sqlite3_aggregate_context( context, 1 );//sizeof(*p));
       if ( pMem._MD5Context == null )
       {
         pMem._MD5Context = new MD5Context();

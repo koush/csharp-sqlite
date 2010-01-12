@@ -31,15 +31,6 @@ namespace Community.Data.SQLite
     ** sqlite3RegisterDateTimeFunctions() found at the bottom of the file.
     ** All other code has file scope.
     **
-    ** $Id: date.c,v 1.107 2009/05/03 20:23:53 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    **
     ** SQLite processes all times and dates as Julian Day numbers.  The
     ** dates and times are stored as the number of days since noon
     ** in Greenwich on November 24, 4714 B.C. according to the Gregorian
@@ -66,6 +57,14 @@ namespace Community.Data.SQLite
     **      ISBM 0-943396-61-1
     **      Willmann-Bell, Inc
     **      Richmond, Virginia (USA)
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#include "sqliteInt.h"
     //#include <stdlib.h>
@@ -187,8 +186,8 @@ namespace Community.Data.SQLite
       pVal = val;
       zIndex++;
       cnt++;
-//} while ( nextC != 0 && zIndex < zDate.Length );
-end_getDigits:
+    //} while ( nextC != 0 && zIndex < zDate.Length );
+    end_getDigits:
       //va_end( ap );
       return cnt;
     }
@@ -250,7 +249,7 @@ end_getDigits:
       p.tz = sgn * ( nMn + nHr * 60 );
       if ( zDate.Length == 6 ) zDate = "";
       else if ( zDate.Length > 6 ) zDate = zDate.Substring( 6 ).Trim();// while ( sqlite3Isspace( *(u8*)zDate ) ) { zDate++; }
-zulu_time:
+    zulu_time:
       return zDate != "" ? 1 : 0;
     }
 
@@ -577,7 +576,7 @@ y.h = sLocal.tm_hour;
 y.m = sLocal.tm_min;
 y.s = sLocal.tm_sec;
 }
-#elif (HAVE_LOCALTIME_S)
+#elif (HAVE_LOCALTIME_S) //defined(HAVE_LOCALTIME_S) && HAVE_LOCALTIME_S
 {
 struct tm sLocal;
 localtime_s(&sLocal, t);
@@ -897,7 +896,7 @@ y.s = sLocal.tm_sec;
           return 1;
         }
       }
-      for ( i = 1 ; i < argc ; i++ )
+      for ( i = 1; i < argc; i++ )
       {
         if ( String.IsNullOrEmpty( z = sqlite3_value_text( argv[i] ) ) || parseModifier( z, p ) != 0 )
         {
@@ -1030,10 +1029,10 @@ y.s = sLocal.tm_sec;
         string zFmt = sqlite3_value_text( argv[0] );
         StringBuilder zBuf = new StringBuilder( 100 );
         sqlite3_value[] argv1 = new sqlite3_value[argc - 1];
-        for ( i = 0 ; i < argc - 1 ; i++ ) { argv1[i] = new sqlite3_value(); argv[i + 1].CopyTo( argv1[i] ); }
+        for ( i = 0; i < argc - 1; i++ ) { argv1[i] = new sqlite3_value(); argv[i + 1].CopyTo( argv1[i] ); }
         if ( String.IsNullOrEmpty( zFmt ) || isDate( context, argc - 1, argv1, ref x ) != 0 ) return;
         db = sqlite3_context_db_handle( context );
-        for ( i = 0, n = 1 ; i < zFmt.Length ; i++, n++ )
+        for ( i = 0, n = 1; i < zFmt.Length; i++, n++ )
         {
           if ( zFmt[i] == '%' )
           {
@@ -1094,7 +1093,7 @@ y.s = sLocal.tm_sec;
         }
         computeJD( x );
         computeYMD_HMS( x );
-        for ( i = j = 0 ; i < zFmt.Length ; i++ )
+        for ( i = j = 0; i < zFmt.Length; i++ )
         {
           if ( zFmt[i] != '%' )
           {
@@ -1309,7 +1308,7 @@ FuncDef[] aFunc = (FuncDef)GLOBAL( FuncDef, aDateTimeFuncs );
       FuncDefHash pHash = sqlite3GlobalFunctions;
       FuncDef[] aFunc = aDateTimeFuncs;
 #endif
-      for ( i = 0 ; i < ArraySize( aDateTimeFuncs ) ; i++ )
+      for ( i = 0; i < ArraySize( aDateTimeFuncs ); i++ )
       {
         sqlite3FuncDefInsert( pHash, aFunc[i] );
       }

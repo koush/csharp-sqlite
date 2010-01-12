@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     **
     ** This file should be #included by the os_*.c files only.  It is not a
     ** general purpose header file.
-    **
-    ** $Id: os_common.h,v 1.38 2009/02/24 18:40:50 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

@@ -38,12 +38,11 @@ namespace Community.Data.SQLite
     ** an existing VFS. The code in this file attempts to verify that SQLite
     ** correctly populates and syncs a journal file before writing to a
     ** corresponding database file.
-    **
-    ** $Id: test_journal.c,v 1.17 2009/06/26 10:39:36 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

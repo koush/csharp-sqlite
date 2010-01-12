@@ -20,15 +20,6 @@ namespace Community.Data.SQLite
     ** This file contains routines used to translate between UTF-8,
     ** UTF-16, UTF-16BE, and UTF-16LE.
     **
-    ** $Id: utf.c,v 1.73 2009/04/01 18:40:32 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    **
     ** Notes on UTF-8:
     **
     **   Byte-0    Byte-1    Byte-2    Byte-3    Value
@@ -49,6 +40,14 @@ namespace Community.Data.SQLite
     **     0xff 0xfe   little-endian utf-16 follows
     **     0xfe 0xff   big-endian utf-16 follows
     **
+    *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#include "sqliteInt.h"
     //#include <assert.h>
@@ -122,20 +121,20 @@ namespace Community.Data.SQLite
     //  }                                                                 \
     //}
 
-    //#define READ_UTF16LE(zIn, c){                                         \
+    //#define READ_UTF16LE(zIn, TERM, c){                                   \
     //  c = (*zIn++);                                                       \
     //  c += ((*zIn++)<<8);                                                 \
-    //  if( c>=0xD800 && c<0xE000 ){                                       \
+    //  if( c>=0xD800 && c<0xE000 && TERM ){                                \
     //    int c2 = (*zIn++);                                                \
     //    c2 += ((*zIn++)<<8);                                              \
     //    c = (c2&0x03FF) + ((c&0x003F)<<10) + (((c&0x03C0)+0x0040)<<10);   \
     //  }                                                                   \
     //}
 
-    //#define READ_UTF16BE(zIn, c){                                         \
+    //#define READ_UTF16BE(zIn, TERM, c){                                   \
     //  c = ((*zIn++)<<8);                                                  \
     //  c += (*zIn++);                                                      \
-    //  if( c>=0xD800 && c<0xE000 ){                                       \
+    //  if( c>=0xD800 && c<0xE000 && TERM ){                                \
     //    int c2 = ((*zIn++)<<8);                                           \
     //    c2 += (*zIn++);                                                   \
     //    c = (c2&0x03FF) + ((c&0x003F)<<10) + (((c&0x03C0)+0x0040)<<10);   \
@@ -343,13 +342,13 @@ Debugger.Break (); // TODO -
 //  if( pMem->enc==SQLITE_UTF16LE ){
 //    /* UTF-16 Little-endian -> UTF-8 */
 //    while( zIn<zTerm ){
-//      READ_UTF16LE(zIn, c);
+//      READ_UTF16LE(zIn, zIn<zTerm, c); 
 //      WRITE_UTF8(z, c);
 //    }
 //  }else{
 //    /* UTF-16 Big-endian -> UTF-8 */
 //    while( zIn<zTerm ){
-//      READ_UTF16BE(zIn, c);
+//      READ_UTF16BE(zIn, zIn<zTerm, c); 
 //      WRITE_UTF8(z, c);
 //    }
 //  }
@@ -525,37 +524,27 @@ char *sqlite3Utf8to16(sqlite3 *db, u8 enc, char *z, int n, int *pnOut){
 #endif
 
 /*
-** pZ is a UTF-16 encoded unicode string. If nChar is less than zero,
-** return the number of bytes up to (but not including), the first pair
-** of consecutive 0x00 bytes in pZ. If nChar is not less than zero,
-** then return the number of bytes in the first nChar unicode characters
-** in pZ (or up until the first pair of 0x00 bytes, whichever comes first).
+** zIn is a UTF-16 encoded unicode string at least nChar characters long.
+** Return the number of bytes in the first nChar unicode characters
+** in pZ.  nChar must be non-negative.
 */
 int sqlite3Utf16ByteLen(const void *zIn, int nChar){
-int c;
-unsigned char const *z = zIn;
-int n = 0;
-if( SQLITE_UTF16NATIVE==SQLITE_UTF16BE ){
-/* Using an "if (SQLITE_UTF16NATIVE==SQLITE_UTF16BE)" construct here
-** and in other parts of this file means that at one branch will
-** not be covered by coverage testing on any single host. But coverage
-** will be complete if the tests are run on both a little-endian and
-** big-endian host. Because both the UTF16NATIVE and SQLITE_UTF16BE
-** macros are constant at compile time the compiler can determine
-** which branch will be followed. It is therefore assumed that no runtime
-** penalty is paid for this "if" statement.
-*/
-while( n<nChar ){
-READ_UTF16BE(z, c);
-n++;
-}
-}else{
-while( n<nChar ){
-READ_UTF16LE(z, c);
-n++;
-}
-}
-return (int)(z-(unsigned char const *)zIn);
+  int c;
+  unsigned char const *z = zIn;
+  int n = 0;
+  
+  if( SQLITE_UTF16NATIVE==SQLITE_UTF16BE ){
+    while( n<nChar ){
+      READ_UTF16BE(z, 1, c);
+      n++;
+    }
+  }else{
+    while( n<nChar ){
+      READ_UTF16LE(z, 1, c);
+      n++;
+    }
+  }
+  return (int)(z-(unsigned char const *)zIn);
 }
 
 #if SQLITE_TEST
@@ -598,7 +587,7 @@ n = (int)(z-zBuf);
 assert( n>0 && n<=4 );
 z[0] = 0;
 z = zBuf;
-READ_UTF16LE(z, c);
+READ_UTF16LE(z, 1, c);
 assert( c==i );
 assert( (z-zBuf)==n );
 }
@@ -610,7 +599,7 @@ n = (int)(z-zBuf);
 assert( n>0 && n<=4 );
 z[0] = 0;
 z = zBuf;
-READ_UTF16BE(z, c);
+READ_UTF16BE(z, 1, c);
 assert( c==i );
 assert( (z-zBuf)==n );
 }

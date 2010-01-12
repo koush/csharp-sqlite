@@ -29,12 +29,11 @@ namespace Community.Data.SQLite
     ** This file contains code use to implement an in-memory rollback journal.
     ** The in-memory rollback journal is used to journal transactions for
     ** ":memory:" databases and when the journal_mode=MEMORY pragma is used.
-    **
-    ** @(#) $Id: memjournal.c,v 1.12 2009/05/04 11:42:30 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -120,8 +119,8 @@ namespace Community.Data.SQLite
       if ( p.readpoint.iOffset != iOfst || iOfst == 0 )
       {
         int iOff = 0;
-        for ( pChunk = p.pFirst ;
-        ALWAYS( pChunk != null ) && ( iOff + JOURNAL_CHUNKSIZE ) <= iOfst ;
+        for ( pChunk = p.pFirst;
+        ALWAYS( pChunk != null ) && ( iOff + JOURNAL_CHUNKSIZE ) <= iOfst;
         pChunk = pChunk.pNext
         )
         {

@@ -25,12 +25,11 @@ namespace Community.Data.SQLite
     **
     ** This file contains OS interface code that is common to all
     ** architectures.
-    **
-    ** $Id: os.c,v 1.127 2009/07/27 11:41:21 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -175,6 +174,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     StringBuilder zPathOut
     )
     {
+      zPathOut.Length = 0;//zPathOut[0] = 0;
       return pVfs.xFullPathname( pVfs, zPath, nPathOut, zPathOut );
     }
 #if !SQLITE_OMIT_LOAD_EXTENSION
@@ -243,18 +243,19 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       return rc;
     }
 
-/*
-** This function is a wrapper around the OS specific implementation of
-** sqlite3_os_init(). The purpose of the wrapper is to provide the
-** ability to simulate a malloc failure, so that the handling of an
-** error in sqlite3_os_init() by the upper layers can be tested.
-*/
-static int sqlite3OsInit(){
-  //void *p = sqlite3_malloc(10);
-  //if( p==null ) return SQLITE_NOMEM;
-  //sqlite3_free(p);
-  return sqlite3_os_init();
-}
+    /*
+    ** This function is a wrapper around the OS specific implementation of
+    ** sqlite3_os_init(). The purpose of the wrapper is to provide the
+    ** ability to simulate a malloc failure, so that the handling of an
+    ** error in sqlite3_os_init() by the upper layers can be tested.
+    */
+    static int sqlite3OsInit()
+    {
+      //void *p = sqlite3_malloc(10);
+      //if( p==null ) return SQLITE_NOMEM;
+      //sqlite3_free(p);
+      return sqlite3_os_init();
+    }
     /*
     ** The list of all registered VFS implementations.
     */
@@ -281,7 +282,7 @@ sqlite3_mutex mutex;
 mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER);
 #endif
       sqlite3_mutex_enter( mutex );
-      for ( pVfs = vfsList ; pVfs != null ; pVfs = pVfs.pNext )
+      for ( pVfs = vfsList; pVfs != null; pVfs = pVfs.pNext )
       {
         if ( zVfs == null || zVfs == "" ) break;
         if ( zVfs == pVfs.zName ) break; //strcmp(zVfs, pVfs.zName) == null) break;

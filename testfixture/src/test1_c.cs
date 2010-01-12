@@ -38,12 +38,11 @@ namespace Community.Data.SQLite
     ** Code for testing all sorts of SQLite interfaces.  This code
     ** is not included in the SQLite library.  It is used for automated
     ** testing of the SQLite library.
-    **
-    ** $Id: test1.c,v 1.354 2009/08/10 04:37:50 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -1224,7 +1223,7 @@ sqlite3_mutex_leave(db.mutex);
     )
     {
       SumCtx p;
-      Mem pMem = sqlite3_aggregate_context( context, -1 );//sizeof(*p));
+      Mem pMem = sqlite3_aggregate_context( context, 1 );//sizeof(*p));
       if ( pMem._SumCtx == null ) pMem._SumCtx = new SumCtx();
       p = pMem._SumCtx;
       if ( p.Context == null ) p.Context = pMem;
@@ -3598,9 +3597,10 @@ Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(zErr, bytes));
       if ( getDbPointer( interp, TCL.Tcl_GetString( objv[1] ), ref db ) != 0 ) return TCL.TCL_ERROR;
       zSql = TCL.Tcl_GetString( objv[2] );
       if ( TCL.Tcl_GetIntFromObj( interp, objv[3], ref bytes ) ) return TCL.TCL_ERROR;
+
       if ( bytes > zSql.Length ) bytes = zSql.Length;
-      if ( objc >= 5 ) rc = sqlite3_prepare( db, zSql, bytes, ref pStmt, ref zTail );
-      else { string zDummy = ""; rc = sqlite3_prepare( db, zSql, bytes, ref pStmt, ref zDummy ); }
+      rc = sqlite3_prepare( db, zSql, bytes, ref pStmt, ref zTail );
+      TCL.Tcl_ResetResult(interp);
       if ( sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
       if ( zTail != null && objc >= 5 )
       {
@@ -3663,9 +3663,9 @@ Tcl_SetObjResult(interp, Tcl_NewByteArrayObj(zErr, bytes));
       zSql = TCL.Tcl_GetString( objv[2] );
       if ( TCL.Tcl_GetIntFromObj( interp, objv[3], ref bytes ) ) return TCL.TCL_ERROR;
 
-      if ( objc >= 5 ) rc = sqlite3_prepare_v2( db, zSql, bytes, ref pStmt, ref zTail );
-      else { string zDummy = ""; rc = sqlite3_prepare_v2( db, zSql, bytes, ref pStmt, ref zDummy ); }
+      rc = sqlite3_prepare_v2( db, zSql, bytes, ref pStmt, ref zTail );
       Debug.Assert( rc == SQLITE_OK || pStmt == null );
+      TCL.Tcl_ResetResult( interp );
       if ( sqlite3TestErrCode( interp, db, rc ) != 0 ) return TCL.TCL_ERROR;
       if ( zTail != null && objc >= 5 )
       {
@@ -5296,7 +5296,37 @@ return TCL_OK;
 }
 #endif
 
-    /*
+/*
+**     tcl_objproc COMMANDNAME ARGS...
+**
+** Run a TCL command using its objProc interface.  Throw an error if
+** the command has no objProc interface.
+*/
+//static int runAsObjProc(
+//  void * clientData,
+//  Tcl_Interp *interp,
+//  int objc,
+//  Tcl_Obj *CONST objv[]
+//){
+//  Tcl_CmdInfo cmdInfo;
+//  if( objc<2 ){
+//    Tcl_WrongNumArgs(interp, 1, objv, "COMMAND ...");
+//    return TCL_ERROR;
+//  }
+//  if( !Tcl_GetCommandInfo(interp, Tcl_GetString(objv[1]), &cmdInfo) ){
+//    Tcl_AppendResult(interp, "command not found: ",
+//           Tcl_GetString(objv[1]), (char*)0);
+//    return TCL_ERROR;
+//  }
+//  if( cmdInfo.objProc==0 ){
+//    Tcl_AppendResult(interp, "command has no objProc: ",
+//           Tcl_GetString(objv[1]), (char*)0);
+//    return TCL_ERROR;
+//  }
+//  return cmdInfo.objProc(cmdInfo.objClientData, interp, objc-1, objv+1);
+//}
+
+/*
 ** Register commands with the TCL interpreter.
 */
 
@@ -5315,6 +5345,7 @@ extern int sqlite3_hostid_num;
     static Var.SQLITE3_GETSET sqlite3_open_file_count = new Var.SQLITE3_GETSET( "sqlite3_open_file_count" );
     static Var.SQLITE3_GETSET sqlite3_opentemp_count = new Var.SQLITE3_GETSET( "sqlite3_opentemp_count" );
     static Var.SQLITE3_GETSET sqlite3_search_count = new Var.SQLITE3_GETSET( "sqlite3_search_count" );
+    static Var.SQLITE3_GETSET sqlite3_found_count = new Var.SQLITE3_GETSET( "sqlite3_found_count" );
     static Var.SQLITE3_GETSET sqlite3_xferopt_count = new Var.SQLITE3_GETSET( "sqlite3_xferopt_count" );
     static Var.SQLITE3_GETSET sqlite_static_bind_nbyte = new Var.SQLITE3_GETSET( "static_bind_nbyte" );
     static Var.SQLITE3_GETSET sqlite_static_bind_value = new Var.SQLITE3_GETSET( "static_bind_value" );
@@ -5327,6 +5358,7 @@ extern int sqlite3_hostid_num;
     public static int Sqlitetest1_Init( Tcl_Interp interp )
     {
       //  extern int sqlite3_search_count;
+      //  extern int sqlite3_found_count;
       //  extern int sqlite3_interrupt_count;
       //  extern int sqlite3_sort_count;
       //  extern int sqlite3_current_time;
@@ -5434,6 +5466,7 @@ new _aObjCmd(  "sqlite3_limit",                 test_limit,                 0),
 new _aObjCmd( "save_prng_state",               save_prng_state,    0 ),
 new _aObjCmd( "restore_prng_state",            restore_prng_state, 0 ),
 new _aObjCmd( "reset_prng_state",              reset_prng_state,   0 ),
+//     { "tcl_objproc",                   runAsObjProc,       0 },
 
 //     /* sqlite3_column_*() API */
 new _aObjCmd( "sqlite3_column_count",          test_column_count  ,0 ),
@@ -5543,6 +5576,8 @@ extern int sqlite3_fts3_enable_parentheses;
         (Interp.dxObjCmdProc)aObjCmd[i].xProc, (object)aObjCmd[i].clientData, null );
       }
       TCL.Tcl_LinkVar( interp, "sqlite_search_count",
+      sqlite3_search_count, VarFlags.SQLITE3_LINK_INT );
+      TCL.Tcl_LinkVar( interp, "sqlite_found_count",
       sqlite3_search_count, VarFlags.SQLITE3_LINK_INT );
       TCL.Tcl_LinkVar( interp, "sqlite_sort_count",
       sqlite3_sort_count, VarFlags.SQLITE3_LINK_INT );

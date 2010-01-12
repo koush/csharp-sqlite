@@ -13,6 +13,12 @@ using unsigned = System.UIntPtr;
 
 using Pgno = System.UInt32;
 
+#if !SQLITE_MAX_VARIABLE_NUMBER
+using ynVar = System.Int16;
+#else
+using ynVar = System.Int32; 
+#endif
+
 namespace Community.Data.SQLite
 {
   using Op = csSQLite.VdbeOp;
@@ -35,12 +41,11 @@ namespace Community.Data.SQLite
     ** source code file "vdbe.c".  When that file became too big (over
     ** 6000 lines long) it was split up into several smaller files and
     ** this header information was factored out.
-    **
-    ** $Id: vdbeInt.h,v 1.174 2009/06/23 14:15:04 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -122,40 +127,41 @@ public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
     //typedef struct VdbeCursor VdbeCursor;
 
 
-/*
-** When a sub-program is executed (OP_Program), a structure of this type
-** is allocated to store the current value of the program counter, as
-** well as the current memory cell array and various other frame specific
-** values stored in the Vdbe struct. When the sub-program is finished, 
-** these values are copied back to the Vdbe from the VdbeFrame structure,
-** restoring the state of the VM to as it was before the sub-program
-** began executing.
-**
-** Frames are stored in a linked list headed at Vdbe.pParent. Vdbe.pParent
-** is the parent of the current frame, or zero if the current frame
-** is the main Vdbe program.
-*/
-//typedef struct VdbeFrame VdbeFrame;
-public class VdbeFrame {
-  public Vdbe v;                 /* VM this frame belongs to */
-  public int pc;                 /* Program Counter */
-  public Op[] aOp;               /* Program instructions */
-  public int nOp;                /* Size of aOp array */
-  public Mem[] aMem;             /* Array of memory cells */
-  public int nMem;               /* Number of entries in aMem */
-  public VdbeCursor[] apCsr;     /* Element of Vdbe cursors */
-  public u16 nCursor;            /* Number of entries in apCsr */
-  public int token;              /* Copy of SubProgram.token */
-  public Mem[] aChildMem;        /* Array of memory cells for child frame */
-  public int nChildMem;          /* Number of memory cells for child frame */
-  public VdbeCursor[] aChildCsr; /* Array of cursors for child frame */
-  public int nChildCsr;          /* Number of cursors for child frame */
-  public i64 lastRowid;          /* Last insert rowid (sqlite3.lastRowid) */
-  public int nChange;            /* Statement changes (Vdbe.nChanges)     */
-  public VdbeFrame pParent;      /* Parent of this frame */
-};
+    /*
+    ** When a sub-program is executed (OP_Program), a structure of this type
+    ** is allocated to store the current value of the program counter, as
+    ** well as the current memory cell array and various other frame specific
+    ** values stored in the Vdbe struct. When the sub-program is finished, 
+    ** these values are copied back to the Vdbe from the VdbeFrame structure,
+    ** restoring the state of the VM to as it was before the sub-program
+    ** began executing.
+    **
+    ** Frames are stored in a linked list headed at Vdbe.pParent. Vdbe.pParent
+    ** is the parent of the current frame, or zero if the current frame
+    ** is the main Vdbe program.
+    */
+    //typedef struct VdbeFrame VdbeFrame;
+    public class VdbeFrame
+    {
+      public Vdbe v;                 /* VM this frame belongs to */
+      public int pc;                 /* Program Counter */
+      public Op[] aOp;               /* Program instructions */
+      public int nOp;                /* Size of aOp array */
+      public Mem[] aMem;             /* Array of memory cells */
+      public int nMem;               /* Number of entries in aMem */
+      public VdbeCursor[] apCsr;     /* Element of Vdbe cursors */
+      public u16 nCursor;            /* Number of entries in apCsr */
+      public int token;              /* Copy of SubProgram.token */
+      public Mem[] aChildMem;        /* Array of memory cells for child frame */
+      public int nChildMem;          /* Number of memory cells for child frame */
+      public VdbeCursor[] aChildCsr; /* Array of cursors for child frame */
+      public int nChildCsr;          /* Number of cursors for child frame */
+      public i64 lastRowid;          /* Last insert rowid (sqlite3.lastRowid) */
+      public int nChange;            /* Statement changes (Vdbe.nChanges)     */
+      public VdbeFrame pParent;      /* Parent of this frame */
+    };
 
-//#define VdbeFrameMem(p) ((Mem *)&((u8 *)p)[ROUND8(sizeof(VdbeFrame))])
+    //#define VdbeFrameMem(p) ((Mem *)&((u8 *)p)[ROUND8(sizeof(VdbeFrame))])
     /*
     ** A value for VdbeCursor.cacheValid that means the cache is always invalid.
     */
@@ -259,14 +265,14 @@ set { _flags = value; }
     //#define MEM_RowSet    0x0020   /* Value is a RowSet object */
     //#define MEM_Frame     0x0040   /* Value is a VdbeFrame object */
     //#define MEM_TypeMask  0x00ff   /* Mask of type bits */
-    const int MEM_Null = 0x0001; 
-    const int MEM_Str = 0x0002;  
-    const int MEM_Int = 0x0004;  
-    const int MEM_Real = 0x0008; 
-    const int MEM_Blob = 0x0010; 
-    const int MEM_RowSet = 0x0020; 
+    const int MEM_Null = 0x0001;
+    const int MEM_Str = 0x0002;
+    const int MEM_Int = 0x0004;
+    const int MEM_Real = 0x0008;
+    const int MEM_Blob = 0x0010;
+    const int MEM_RowSet = 0x0020;
     const int MEM_Frame = 0x0040;
-    const int MEM_TypeMask = 0x00ff; 
+    const int MEM_TypeMask = 0x00ff;
 
     /* Whenever Mem contains a valid string or blob representation, one of
     ** the following flags must be set to determine the memory management
@@ -279,19 +285,19 @@ set { _flags = value; }
     //#define MEM_Ephem     0x1000   /* Mem.z points to an ephemeral string */
     //#define MEM_Agg       0x2000   /* Mem.z points to an agg function context */
     //#define MEM_Zero      0x4000   /* Mem.i contains count of 0s appended to blob */
-//#ifdef SQLITE_OMIT_INCRBLOB
-//  #undef MEM_Zero
-//  #define MEM_Zero 0x0000
-//#endif
-    const int MEM_Term = 0x0200;   
-    const int MEM_Dyn = 0x0400;   
-    const int MEM_Static = 0x0800; 
-    const int MEM_Ephem = 0x1000;  
-    const int MEM_Agg = 0x2000;   
+    //#ifdef SQLITE_OMIT_INCRBLOB
+    //  #undef MEM_Zero
+    //  #define MEM_Zero 0x0000
+    //#endif
+    const int MEM_Term = 0x0200;
+    const int MEM_Dyn = 0x0400;
+    const int MEM_Static = 0x0800;
+    const int MEM_Ephem = 0x1000;
+    const int MEM_Agg = 0x2000;
 #if !SQLITE_OMIT_INCRBLOB
     const int MEM_Zero = 0x4000;  
 #else
-    const int MEM_Zero = 0x0000;  
+    const int MEM_Zero = 0x0000;
 #endif
 
     /*
@@ -343,7 +349,11 @@ set { _flags = value; }
     {
       public FuncDef pFunc;        /* Pointer to function information.  MUST BE FIRST */
       public VdbeFunc pVdbeFunc;   /* Auxilary data, if created. */
+#if !SQLITE_POOL_MEM
+      public Mem s = new Mem();
+#else
       public Mem s = Pool.Allocate_Mem();    /* The return value is stored here */
+#endif
       public Mem pMem;             /* Memory cell used to store aggregate context */
       public int isError;          /* Error code returned by the function. */
       public CollSeq pColl;        /* Collating sequence */
@@ -396,7 +406,7 @@ set { _flags = value; }
       public VdbeCursor[] apCsr;     /* One element of this array for each open cursor */
       public u8 errorAction;         /* Recovery action to do in case of an error */
       public u8 okVar;               /* True if azVar[] has been initialized */
-      public u16 nVar;               /* Number of entries in aVar[] */
+      public ynVar nVar;             /* Number of entries in aVar[] */
       public Mem[] aVar;             /* Values for the OP_Variable opcode. */
       public string[] azVar;         /* Name of variables */
       public u32 magic;              /* Magic number for sanity checking */
@@ -421,12 +431,15 @@ set { _flags = value; }
       public int[] aCounter = new int[2]; /* Counters used by sqlite3_stmt_status() */
       public string zSql = "";       /* Text of the SQL statement that generated this */
       public object pFree;           /* Free this when deleting the vdbe */
+      public i64 nFkConstraint;      /* Number of imm. FK constraints this VM */
+      public i64 nStmtDefCons;       /* Number of def. constraints when stmt started */
       public int iStatement;         /* Statement number (or 0 if has not opened stmt) */
 #if SQLITE_DEBUG
       public FILE trace;                  /* Write an execution trace here, if not NULL */
 #endif
       public VdbeFrame pFrame;       /* Parent frame */
       public int nFrame;             /* Number of frames in pFrame list */
+      public u32 expmask;            /* Binding to these vars invalidates VM */
 
       public Vdbe Copy()
       {
@@ -480,9 +493,12 @@ set { _flags = value; }
 #if SQLITE_DEBUG
         ct.trace = trace;
 #endif
+        ct.nFkConstraint = nFkConstraint;
+        ct.nStmtDefCons = nStmtDefCons;
         ct.iStatement = iStatement;
         ct.pFrame = pFrame;
         ct.nFrame = nFrame;
+        ct.expmask = expmask;
 
 #if SQLITE_SSE
 ct.fetchId=fetchId;
@@ -553,14 +569,17 @@ ct.pLruNext=pLruNext;
     //void sqlite3VdbeMemReleaseExternal(Mem p);
     //int sqlite3VdbeMemFinalize(Mem*, FuncDef*);
     //const char *sqlite3OpcodeName(int);
-    //int sqlite3VdbeOpcodeHasProperty(int, int);
     //int sqlite3VdbeMemGrow(Mem pMem, int n, int preserve);
     //int sqlite3VdbeCloseStatement(Vdbe *, int);
     //void sqlite3VdbeFrameDelete(VdbeFrame*);
     //int sqlite3VdbeFrameRestore(VdbeFrame *);
-    //#if SQLITE_ENABLE_MEMORY_MANAGEMENT
-    //int sqlite3VdbeReleaseBuffers(Vdbe p);
-    //#endif
+    //void sqlite3VdbeMemStoreType(Mem *pMem);  
+#if !SQLITE_OMIT_FOREIGN_KEY
+    //int sqlite3VdbeCheckFk(Vdbe *, int);
+#else
+    //# define sqlite3VdbeCheckFk(p,i) 0
+    static int sqlite3VdbeCheckFk( Vdbe p, int i ) { return 0; }
+#endif
 
 #if !SQLITE_OMIT_SHARED_CACHE
 //void sqlite3VdbeMutexArrayEnter(Vdbe *p);
@@ -583,6 +602,6 @@ ct.pLruNext=pLruNext;
     static int sqlite3VdbeMemExpandBlob( Mem x ) { return SQLITE_OK; }
 #endif
 
-    //#endif /* !_VDBEINT_H_) */
+    //#endif //* !_VDBEINT_H_) */
   }
 }

@@ -27,12 +27,11 @@ namespace Community.Data.SQLite
     ** This file contains the implementation of the sqlite3_prepare()
     ** interface, and routines that contribute to loading the database schema
     ** from disk.
-    **
-    ** $Id: prepare.c,v 1.131 2009/08/06 17:43:31 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -106,7 +105,7 @@ SQLITE_CORRUPT;
       {
         corruptSchema( pData, argv[0], "" );
       }
-      else if ( argv[2] != null && argv[2].Length != 0 )
+      else if ( !String.IsNullOrEmpty( argv[2] ) )
       {
         /* Call the parser to process a CREATE TABLE, INDEX or VIEW.
         ** But because db.init.busy is set to 1, no VDBE code is generated
@@ -124,7 +123,7 @@ SQLITE_CORRUPT;
         Debug.Assert( rc != SQLITE_OK || zErr == "" );
         if ( SQLITE_OK != rc )
         {
-          if ( db.init.orphanTrigger!=0 )
+          if ( db.init.orphanTrigger != 0 )
           {
             Debug.Assert( iDb == 1 );
           }
@@ -139,7 +138,7 @@ SQLITE_CORRUPT;
             {
               corruptSchema( pData, argv[0], zErr );
             }
-          }          sqlite3DbFree( db, ref zErr );
+          } sqlite3DbFree( db, ref zErr );
         }
       }
       else if ( argv[0] == null || argv[0] == "" )
@@ -308,7 +307,7 @@ SQLITE_CORRUPT;
       ** Note: The #defined SQLITE_UTF* symbols in sqliteInt.h correspond to
       ** the possible values of meta[BTREE_TEXT_ENCODING-1].
       */
-      for ( i = 0 ; i < ArraySize( meta ) ; i++ )
+      for ( i = 0; i < ArraySize( meta ); i++ )
       {
         sqlite3BtreeGetMeta( pDb.pBt, i + 1, ref meta[i] );
       }
@@ -434,21 +433,21 @@ db.xAuth = xAuth;
         DbSetProperty( db, iDb, DB_SchemaLoaded );
         rc = SQLITE_OK;
       }
-/* Jump here for an error that occurs after successfully allocating
-** curMain and calling sqlite3BtreeEnter(). For an error that occurs
-** before that point, jump to error_out.
-*/
-initone_error_out:
+    /* Jump here for an error that occurs after successfully allocating
+    ** curMain and calling sqlite3BtreeEnter(). For an error that occurs
+    ** before that point, jump to error_out.
+    */
+    initone_error_out:
       if ( openedTransaction != 0 )
       {
         sqlite3BtreeCommit( pDb.pBt );
       }
       sqlite3BtreeLeave( pDb.pBt );
 
-error_out:
+    error_out:
       if ( rc == SQLITE_NOMEM || rc == SQLITE_IOERR_NOMEM )
       {
-//        db.mallocFailed = 1;
+        //        db.mallocFailed = 1;
       }
       return rc;
     }
@@ -471,7 +470,7 @@ error_out:
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
       rc = SQLITE_OK;
       db.init.busy = 1;
-      for ( i = 0 ; rc == SQLITE_OK && i < db.nDb ; i++ )
+      for ( i = 0; rc == SQLITE_OK && i < db.nDb; i++ )
       {
         if ( DbHasProperty( db, i, DB_SchemaLoaded ) || i == 1 ) continue;
         rc = sqlite3InitOne( db, i, ref pzErrMsg );
@@ -540,9 +539,9 @@ error_out:
       int rc;
       u32 cookie = 0;
 
-      Debug.Assert( pParse.checkSchema!=0 );
+      Debug.Assert( pParse.checkSchema != 0 );
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
-      for ( iDb = 0 ; iDb < db.nDb ; iDb++ )
+      for ( iDb = 0; iDb < db.nDb; iDb++ )
       {
         int openedTransaction = 0;         /* True if a transaction is opened */
         Btree pBt = db.aDb[iDb].pBt;     /* Btree database to read cookie from */
@@ -563,7 +562,7 @@ error_out:
         }
 
         /* Read the schema cookie from the database. If it does not match the 
-        ** value stored as part of the in the in-memory schema representation,
+        ** value stored as part of the in-memory schema representation,
         ** set Parse.rc to SQLITE_SCHEMA. */
         sqlite3BtreeGetMeta( pBt, BTREE_SCHEMA_VERSION, ref cookie );
         if ( cookie != db.aDb[iDb].pSchema.schema_cookie )
@@ -572,7 +571,7 @@ error_out:
         }
 
         /* Close the transaction, if one was opened. */
-        if ( openedTransaction!=0 )
+        if ( openedTransaction != 0 )
         {
           sqlite3BtreeCommit( pBt );
         }
@@ -603,7 +602,7 @@ error_out:
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
       if ( pSchema != null )
       {
-        for ( i = 0 ; ALWAYS( i < db.nDb ) ; i++ )
+        for ( i = 0; ALWAYS( i < db.nDb ); i++ )
         {
           if ( db.aDb[i].pSchema == pSchema )
           {
@@ -623,6 +622,7 @@ error_out:
     string zSql,              /* UTF-8 encoded SQL statement. */
     int nBytes,               /* Length of zSql in bytes. */
     int saveSqlFlag,          /* True to copy SQL text into the sqlite3_stmt */
+    Vdbe pReprepare,          /* VM being reprepared */
     ref sqlite3_stmt ppStmt,  /* OUT: A pointer to the prepared statement */
     ref string pzTail         /* OUT: End of parsed string */
     )
@@ -639,7 +639,9 @@ error_out:
         rc = SQLITE_NOMEM;
         goto end_prepare;
       }
+      pParse.pReprepare = pReprepare;
       pParse.sLastToken.z = "";
+
       if ( sqlite3SafetyOn( db ) )
       {
         rc = SQLITE_MISUSE;
@@ -672,7 +674,7 @@ error_out:
       ** but it does *not* override schema lock detection, so this all still
       ** works even if READ_UNCOMMITTED is set.
       */
-      for ( i = 0 ; i < db.nDb ; i++ )
+      for ( i = 0; i < db.nDb; i++ )
       {
         Btree pBt = db.aDb[i].pBt;
         if ( pBt != null )
@@ -728,7 +730,7 @@ error_out:
       //  pParse.rc = SQLITE_NOMEM;
       //}
       if ( pParse.rc == SQLITE_DONE ) pParse.rc = SQLITE_OK;
-      if ( pParse.checkSchema != 0)
+      if ( pParse.checkSchema != 0 )
       {
         schemaIsValid( pParse );
       }
@@ -765,7 +767,7 @@ error_out:
           iFirst = 0;
           mx = 8;
         }
-        for ( i = iFirst ; i < mx ; i++ )
+        for ( i = iFirst; i < mx; i++ )
         {
           sqlite3VdbeSetColName( pParse.pVdbe, i - iFirst, COLNAME_NAME,
                 azColName[i], SQLITE_STATIC );
@@ -805,15 +807,15 @@ error_out:
       }
 
       /* Delete any TriggerPrg structures allocated while parsing this statement. */
-      while ( pParse.pTriggerPrg!=null )
+      while ( pParse.pTriggerPrg != null )
       {
         TriggerPrg pT = pParse.pTriggerPrg;
         pParse.pTriggerPrg = pT.pNext;
         sqlite3VdbeProgramDelete( db, pT.pProgram, 0 );
-        pT = null;sqlite3DbFree( db, ref pT );
+        pT = null; sqlite3DbFree( db, ref pT );
       }
-    
-      end_prepare:
+
+    end_prepare:
 
       //sqlite3StackFree( db, pParse );
       rc = sqlite3ApiExit( db, rc );
@@ -825,7 +827,8 @@ error_out:
     sqlite3 db,               /* Database handle. */
     string zSql,              /* UTF-8 encoded SQL statement. */
     int nBytes,               /* Length of zSql in bytes. */
-    int saveSqlFlag,         /* True to copy SQL text into the sqlite3_stmt */
+    int saveSqlFlag,          /* True to copy SQL text into the sqlite3_stmt */
+    Vdbe pOld,                /* VM being reprepared */
     ref sqlite3_stmt ppStmt,  /* OUT: A pointer to the prepared statement */
     ref string pzTail         /* OUT: End of parsed string */
     )
@@ -839,11 +842,11 @@ error_out:
       }
       sqlite3_mutex_enter( db.mutex );
       sqlite3BtreeEnterAll( db );
-      rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, ref ppStmt, ref pzTail );
+      rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, pOld, ref ppStmt, ref pzTail );
       if ( rc == SQLITE_SCHEMA )
       {
         sqlite3_finalize( ref ppStmt );
-        rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, ref ppStmt, ref  pzTail );
+        rc = sqlite3Prepare( db, zSql, nBytes, saveSqlFlag, pOld, ref ppStmt, ref  pzTail );
       }
       sqlite3BtreeLeaveAll( db );
       sqlite3_mutex_leave( db.mutex );
@@ -871,12 +874,12 @@ error_out:
       db = sqlite3VdbeDb( p );
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
       string dummy = "";
-      rc = sqlite3LockAndPrepare( db, zSql, -1, 1, ref pNew, ref dummy );
+      rc = sqlite3LockAndPrepare( db, zSql, -1, 0, p, ref pNew, ref dummy );
       if ( rc != 0 )
       {
         if ( rc == SQLITE_NOMEM )
         {
-  //        db.mallocFailed = 1;
+          //        db.mallocFailed = 1;
         }
         Debug.Assert( pNew == null );
         return ( rc == SQLITE_LOCKED ) ? SQLITE_LOCKED : SQLITE_SCHEMA;
@@ -910,7 +913,7 @@ error_out:
     )
     {
       int rc;
-      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 0, ref  ppStmt, ref pzTail );
+      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 0, null, ref  ppStmt, ref pzTail );
       Debug.Assert( rc == SQLITE_OK || ppStmt == null );  /* VERIFY: F13021 */
       return rc;
     }
@@ -924,7 +927,7 @@ error_out:
     {
       string pzTail = null;
       int rc;
-      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 1, ref  ppStmt, ref pzTail );
+      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 1, null, ref  ppStmt, ref pzTail );
       Debug.Assert( rc == SQLITE_OK || ppStmt == null );  /* VERIFY: F13021 */
       return rc;
     }
@@ -937,7 +940,7 @@ error_out:
     )
     {
       int rc;
-      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 1, ref  ppStmt, ref pzTail );
+      rc = sqlite3LockAndPrepare( db, zSql, nBytes, 1, null, ref  ppStmt, ref pzTail );
       Debug.Assert( rc == SQLITE_OK || ppStmt == null );  /* VERIFY: F13021 */
       return rc;
     }
@@ -972,7 +975,7 @@ return SQLITE_MISUSE;
 sqlite3_mutex_enter(db.mutex);
 zSql8 = sqlite3Utf16to8(db, zSql, nBytes);
 if( zSql8 !=""){
-rc = sqlite3LockAndPrepare(db, zSql8, -1, saveSqlFlag, ref ppStmt, ref zTail8);
+rc = sqlite3LockAndPrepare(db, zSql8, -1, saveSqlFlag, null, ref ppStmt, ref zTail8);
 }
 
 if( zTail8 !="" && pzTail !=""){

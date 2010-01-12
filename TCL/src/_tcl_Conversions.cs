@@ -162,6 +162,7 @@ namespace tcl.lang
 
     public static byte[] Tcl_GetByteArrayFromObj( TclObject to, ref int n )
     {
+      n = TclByteArray.getLength(null, to);
       return Encoding.UTF8.GetBytes( to.ToString() );
     }
 
@@ -262,8 +263,9 @@ namespace tcl.lang
         {
           to = (TclObject)var.value;
           double D = 0;
-          if ( !Double.TryParse( to.ToString(), out D ) ) { if ( String.IsNullOrEmpty(to.typePtr )) to.typePtr = "string"; }
-          else if ( to.ToString().Contains( "." ) ) to.typePtr = "double";
+          if (!Double.TryParse(to.ToString(), out D)) { if (String.IsNullOrEmpty(to.typePtr)) to.typePtr = "string"; }
+          else if (to.typePtr == "ByteArray") to.typePtr = "bytearray";
+          else if (to.ToString().Contains(".")) to.typePtr = "double";
           else to.typePtr = "int";
 
           return to;

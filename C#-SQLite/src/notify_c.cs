@@ -18,12 +18,11 @@ namespace Community.Data.SQLite
     **
     ** This file contains the implementation of the sqlite3_unlock_notify()
     ** API method and its associated functionality.
-    **
-    ** $Id: notify.c,v 1.4 2009/04/07 22:06:57 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************

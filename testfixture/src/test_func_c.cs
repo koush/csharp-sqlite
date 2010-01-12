@@ -35,12 +35,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** Code for testing all sorts of SQLite interfaces.  This code
     ** implements new SQL functions used by the test scripts.
-    **
-    ** $Id: test_func.c,v 1.16 2009/07/22 07:27:57 danielk1977 Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -392,14 +391,125 @@ sqlite3_value_text(argv[0]);
       }
     }
 
-    static int registerTestFunctions( sqlite3 db, ref string dummy1, sqlite3_api_routines dummy2 )
+/*
+** convert one character from hex to binary
+*/
+static int testHexChar(char c){
+  if( c>='0' && c<='9' ){
+    return c - '0';
+  }else if( c>='a' && c<='f' ){
+    return c - 'a' + 10;
+  }else if( c>='A' && c<='F' ){
+    return c - 'A' + 10;
+  }
+  return 0;
+}
+
+/*
+** Convert hex to binary.
+*/
+static void testHexToBin(string zIn, ref string zOut){
+  for(int zIx =0; zIx < zIn.Length-1; zIx+=2)// zIn[0] && zIn[1] )
+  {
+    //*(zOut++) = (testHexChar(zIn[0])<<4) + testHexChar(zIn[1]);
+    zOut += (testHexChar(zIn[zIx])<<4) + testHexChar(zIn[zIx+1]);
+    //zIn += 2;
+  }
+}
+
+#if !SQLITE_OMIT_UTF16
+/*
+**      hex_to_utf16be(HEX)
+**
+** Convert the input string from HEX into binary.  Then return the
+** result using sqlite3_result_text16le().
+*/
+static void testHexToUtf16be(
+  sqlite3_context *pCtx, 
+  int nArg,
+  sqlite3_value **argv
+){
+  int n;
+  const char *zIn;
+  char *zOut;
+  assert( nArg==1 );
+  n = sqlite3_value_bytes(argv[0]);
+  zIn = (const char*)sqlite3_value_text(argv[0]);
+  zOut = sqlite3_malloc( n/2 );
+  if( zOut==0 ){
+    sqlite3_result_error_nomem(pCtx);
+  }else{
+    testHexToBin(zIn, zOut);
+    sqlite3_result_text16be(pCtx, zOut, n/2, sqlite3_free);
+  }
+}
+#endif
+
+/*
+**      hex_to_utf8(HEX)
+**
+** Convert the input string from HEX into binary.  Then return the
+** result using sqlite3_result_text16le().
+*/
+static void testHexToUtf8(
+  sqlite3_context pCtx, 
+  int nArg,
+  sqlite3_value[] argv
+){
+  int n;
+  string zIn;
+  string zOut = "";
+  Debug.Assert( nArg==1 );
+  n = sqlite3_value_bytes(argv[0]);
+  zIn = sqlite3_value_text(argv[0]);
+  //zOut = sqlite3_malloc( n/2 );
+  //if( zOut==0 ){
+  //  sqlite3_result_error_nomem(pCtx);
+  //}else{
+    testHexToBin(zIn, ref zOut);
+    sqlite3_result_text( pCtx, zOut, n / 2, null );//sqlite3_free );
+  //}
+}
+
+#if !SQLITE_OMIT_UTF16
+/*
+**      hex_to_utf16le(HEX)
+**
+** Convert the input string from HEX into binary.  Then return the
+** result using sqlite3_result_text16le().
+*/
+static void testHexToUtf16le(
+  sqlite3_context *pCtx, 
+  int nArg,
+  sqlite3_value **argv
+){
+  int n;
+  const char *zIn;
+  char *zOut;
+  assert( nArg==1 );
+  n = sqlite3_value_bytes(argv[0]);
+  zIn = (const char*)sqlite3_value_text(argv[0]);
+  zOut = sqlite3_malloc( n/2 );
+  if( zOut==0 ){
+    sqlite3_result_error_nomem(pCtx);
+  }else{
+    testHexToBin(zIn, zOut);
+    sqlite3_result_text16le(pCtx, zOut, n/2, sqlite3_free);
+  }
+}
+#endif
+
+static int registerTestFunctions( sqlite3 db, ref string dummy1, sqlite3_api_routines dummy2 )
     {
       _aFuncs[] aFuncs = new _aFuncs[]  {
 new _aFuncs( "randstr",               2, SQLITE_UTF8, randStr    ),
 new _aFuncs( "test_destructor",       1, SQLITE_UTF8, test_destructor),
 #if !SQLITE_OMIT_UTF16
-{ "test_destructor16",     1, SQLITE_UTF8, test_destructor16},
+    { "test_destructor16",     1, SQLITE_UTF8, test_destructor16},
+    { "hex_to_utf16be",        1, SQLITE_UTF8, testHexToUtf16be},
+    { "hex_to_utf16le",        1, SQLITE_UTF8, testHexToUtf16le},
 #endif
+    new _aFuncs(   "hex_to_utf8",           1, SQLITE_UTF8, testHexToUtf8),
 new _aFuncs(  "test_destructor_count", 0, SQLITE_UTF8, test_destructor_count),
 new _aFuncs(  "test_auxdata",         -1, SQLITE_UTF8, test_auxdata),
 new _aFuncs( "test_error",            1, SQLITE_UTF8, test_error),

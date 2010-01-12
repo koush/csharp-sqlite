@@ -7,7 +7,7 @@
     <ProjectGuid>{F1653F20-D47D-4F29-8C55-3C835542AF5F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CS_SQLite3</RootNamespace>
+    <RootNamespace>Community.Data.SQLite</RootNamespace>
     <AssemblyName>C#-SQLite3</AssemblyName>
     <StartupObject>Shell</StartupObject>
     <FileUpgradeFlags>
@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
+    <DefineConstants>TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_TRIGGER SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
@@ -101,6 +101,9 @@
     <Compile Include="..\C#-SQLite\src\fault_c.cs">
       <Link>C#-SQLite\fault_c.cs</Link>
     </Compile>
+    <Compile Include="..\C#-SQLite\src\fkey_c.cs">
+      <Link>C#-SQLite\fkey_c.cs</Link>
+    </Compile>
     <Compile Include="..\C#-SQLite\src\func_c.cs">
       <Link>C#-SQLite\func_c.cs</Link>
     </Compile>
@@ -139,9 +142,6 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\mem0_c.cs">
       <Link>C#-SQLite\mem0_c.cs</Link>
-    </Compile>
-    <Compile Include="..\C#-SQLite\src\mem1_c.cs">
-      <Link>C#-SQLite\mem1_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\memjournal_c.cs">
       <Link>C#-SQLite\memjournal_c.cs</Link>
@@ -274,6 +274,9 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\vdbemem_c.cs">
       <Link>C#-SQLite\vdbemem_c.cs</Link>
+    </Compile>
+    <Compile Include="..\C#-SQLite\src\vdbetrace_c.cs">
+      <Link>C#-SQLite\vdbetrace_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\vdbe_c.cs">
       <Link>C#-SQLite\vdbe_c.cs</Link>

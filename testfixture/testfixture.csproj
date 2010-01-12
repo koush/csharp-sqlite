@@ -7,7 +7,7 @@
     <ProjectGuid>{FDA6FB30-1601-4C64-85C1-49C7AD3C78DD}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CS_SQLite3</RootNamespace>
+    <RootNamespace>Community.Data.SQLite</RootNamespace>
     <AssemblyName>Testfixture</AssemblyName>
     <StartupObject>Testing</StartupObject>
     <FileUpgradeFlags>
@@ -74,7 +74,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
+    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_TRIGGER SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF</DefineConstants>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -151,6 +151,9 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\fault_c.cs">
       <Link>C#-SQLite\fault_c.cs</Link>
+    </Compile>
+    <Compile Include="..\C#-SQLite\src\fkey_c.cs">
+      <Link>C#-SQLite\fkey_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\func_c.cs">
       <Link>C#-SQLite\func_c.cs</Link>
@@ -319,6 +322,9 @@
     </Compile>
     <Compile Include="..\C#-SQLite\src\vdbemem_c.cs">
       <Link>C#-SQLite\vdbemem_c.cs</Link>
+    </Compile>
+    <Compile Include="..\C#-SQLite\src\vdbetrace_c.cs">
+      <Link>C#-SQLite\vdbetrace_c.cs</Link>
     </Compile>
     <Compile Include="..\C#-SQLite\src\vdbe_c.cs">
       <Link>C#-SQLite\vdbe_c.cs</Link>
@@ -786,6 +792,7 @@
     <Compile Include="src\testfixture.cs" />
     <Compile Include="src\test_autoext_c.cs" />
     <Compile Include="src\test_backup_c.cs" />
+    <Compile Include="src\test_btree_c.cs" />
     <Compile Include="src\test_config_c.cs" />
     <Compile Include="src\test_func_c.cs" />
     <Compile Include="src\test_hexio_c.cs" />
@@ -893,9 +900,6 @@
     </None>
     <None Include="..\test\backup_ioerr.test">
       <Link>test\backup_ioerr.test</Link>
-    </None>
-    <None Include="..\test\backup_malloc.test">
-      <Link>test\backup_malloc.test</Link>
     </None>
     <None Include="..\test\badutf.test">
       <Link>test\badutf.test</Link>
@@ -1137,6 +1141,9 @@
     <None Include="..\test\expr.test">
       <Link>test\expr.test</Link>
     </None>
+    <None Include="..\test\e_fkey.test">
+      <Link>test\e_fkey.test</Link>
+    </None>
     <None Include="..\test\filectrl.test">
       <Link>test\filectrl.test</Link>
     </None>
@@ -1145,6 +1152,12 @@
     </None>
     <None Include="..\test\fkey1.test">
       <Link>test\fkey1.test</Link>
+    </None>
+    <None Include="..\test\fkey2.test">
+      <Link>test\fkey2.test</Link>
+    </None>
+    <None Include="..\test\fkey3.test">
+      <Link>test\fkey3.test</Link>
     </None>
     <None Include="..\test\format4.test">
       <Link>test\format4.test</Link>
@@ -1163,9 +1176,6 @@
     </None>
     <None Include="..\test\fuzz_common.tcl">
       <Link>test\fuzz_common.tcl</Link>
-    </None>
-    <None Include="..\test\fuzz_malloc.test">
-      <Link>test\fuzz_malloc.test</Link>
     </None>
     <None Include="..\test\hook.test">
       <Link>test\hook.test</Link>
@@ -1230,14 +1240,8 @@
     <None Include="..\test\insert5.test">
       <Link>test\insert5.test</Link>
     </None>
-    <None Include="..\test\interrupt.test">
-      <Link>test\interrupt.test</Link>
-    </None>
     <None Include="..\test\intpkey.test">
       <Link>test\intpkey.test</Link>
-    </None>
-    <None Include="..\test\io.test">
-      <Link>test\io.test</Link>
     </None>
     <None Include="..\test\ioerr.test">
       <Link>test\ioerr.test</Link>
@@ -1332,66 +1336,6 @@
     <None Include="..\test\make-where7.tcl">
       <Link>test\make-where7.tcl</Link>
     </None>
-    <None Include="..\test\malloc.test">
-      <Link>test\malloc.test</Link>
-    </None>
-    <None Include="..\test\malloc3.test">
-      <Link>test\malloc3.test</Link>
-    </None>
-    <None Include="..\test\malloc4.test">
-      <Link>test\malloc4.test</Link>
-    </None>
-    <None Include="..\test\malloc5.test">
-      <Link>test\malloc5.test</Link>
-    </None>
-    <None Include="..\test\malloc6.test">
-      <Link>test\malloc6.test</Link>
-    </None>
-    <None Include="..\test\malloc7.test">
-      <Link>test\malloc7.test</Link>
-    </None>
-    <None Include="..\test\malloc8.test">
-      <Link>test\malloc8.test</Link>
-    </None>
-    <None Include="..\test\malloc9.test">
-      <Link>test\malloc9.test</Link>
-    </None>
-    <None Include="..\test\mallocA.test">
-      <Link>test\mallocA.test</Link>
-    </None>
-    <None Include="..\test\mallocAll.test">
-      <Link>test\mallocAll.test</Link>
-    </None>
-    <None Include="..\test\mallocB.test">
-      <Link>test\mallocB.test</Link>
-    </None>
-    <None Include="..\test\mallocC.test">
-      <Link>test\mallocC.test</Link>
-    </None>
-    <None Include="..\test\mallocD.test">
-      <Link>test\mallocD.test</Link>
-    </None>
-    <None Include="..\test\mallocE.test">
-      <Link>test\mallocE.test</Link>
-    </None>
-    <None Include="..\test\mallocF.test">
-      <Link>test\mallocF.test</Link>
-    </None>
-    <None Include="..\test\mallocG.test">
-      <Link>test\mallocG.test</Link>
-    </None>
-    <None Include="..\test\mallocH.test">
-      <Link>test\mallocH.test</Link>
-    </None>
-    <None Include="..\test\mallocI.test">
-      <Link>test\mallocI.test</Link>
-    </None>
-    <None Include="..\test\mallocJ.test">
-      <Link>test\mallocJ.test</Link>
-    </None>
-    <None Include="..\test\mallocK.test">
-      <Link>test\mallocK.test</Link>
-    </None>
     <None Include="..\test\malloc_common.tcl">
       <Link>test\malloc_common.tcl</Link>
     </None>
@@ -1475,9 +1419,6 @@
     </None>
     <None Include="..\test\pcache2.test">
       <Link>test\pcache2.test</Link>
-    </None>
-    <None Include="..\test\performance.sql">
-      <Link>test\performance.sql</Link>
     </None>
     <None Include="..\test\permutations.test">
       <Link>test\permutations.test</Link>
@@ -1712,6 +1653,30 @@
     </None>
     <None Include="..\test\thread_common.tcl">
       <Link>test\thread_common.tcl</Link>
+    </None>
+    <None Include="..\test\tkt-2ea2425d34.test">
+      <Link>test\tkt-2ea2425d34.test</Link>
+    </None>
+    <None Include="..\test\tkt-3fe897352e.test">
+      <Link>test\tkt-3fe897352e.test</Link>
+    </None>
+    <None Include="..\test\tkt-4a03edc4c8.test">
+      <Link>test\tkt-4a03edc4c8.test</Link>
+    </None>
+    <None Include="..\test\tkt-5ee23731f.test">
+      <Link>test\tkt-5ee23731f.test</Link>
+    </None>
+    <None Include="..\test\tkt-78e04e52ea.test">
+      <Link>test\tkt-78e04e52ea.test</Link>
+    </None>
+    <None Include="..\test\tkt-94c04eaadb.test">
+      <Link>test\tkt-94c04eaadb.test</Link>
+    </None>
+    <None Include="..\test\tkt-d82e3f3721.test">
+      <Link>test\tkt-d82e3f3721.test</Link>
+    </None>
+    <None Include="..\test\tkt-f777251dc7a.test">
+      <Link>test\tkt-f777251dc7a.test</Link>
     </None>
     <None Include="..\test\tkt1435.test">
       <Link>test\tkt1435.test</Link>
@@ -2004,6 +1969,9 @@
     <None Include="..\test\triggerB.test">
       <Link>test\triggerB.test</Link>
     </None>
+    <None Include="..\test\triggerC.test">
+      <Link>test\triggerC.test</Link>
+    </None>
     <None Include="..\test\types.test">
       <Link>test\types.test</Link>
     </None>
@@ -2039,54 +2007,6 @@
     </None>
     <None Include="..\test\view.test">
       <Link>test\view.test</Link>
-    </None>
-    <None Include="..\test\vtab1.test">
-      <Link>test\vtab1.test</Link>
-    </None>
-    <None Include="..\test\vtab2.test">
-      <Link>test\vtab2.test</Link>
-    </None>
-    <None Include="..\test\vtab3.test">
-      <Link>test\vtab3.test</Link>
-    </None>
-    <None Include="..\test\vtab4.test">
-      <Link>test\vtab4.test</Link>
-    </None>
-    <None Include="..\test\vtab5.test">
-      <Link>test\vtab5.test</Link>
-    </None>
-    <None Include="..\test\vtab6.test">
-      <Link>test\vtab6.test</Link>
-    </None>
-    <None Include="..\test\vtab7.test">
-      <Link>test\vtab7.test</Link>
-    </None>
-    <None Include="..\test\vtab8.test">
-      <Link>test\vtab8.test</Link>
-    </None>
-    <None Include="..\test\vtab9.test">
-      <Link>test\vtab9.test</Link>
-    </None>
-    <None Include="..\test\vtabA.test">
-      <Link>test\vtabA.test</Link>
-    </None>
-    <None Include="..\test\vtabB.test">
-      <Link>test\vtabB.test</Link>
-    </None>
-    <None Include="..\test\vtabC.test">
-      <Link>test\vtabC.test</Link>
-    </None>
-    <None Include="..\test\vtabD.test">
-      <Link>test\vtabD.test</Link>
-    </None>
-    <None Include="..\test\vtab_alter.test">
-      <Link>test\vtab_alter.test</Link>
-    </None>
-    <None Include="..\test\vtab_err.test">
-      <Link>test\vtab_err.test</Link>
-    </None>
-    <None Include="..\test\vtab_shared.test">
-      <Link>test\vtab_shared.test</Link>
     </None>
     <None Include="..\test\where.test">
       <Link>test\where.test</Link>

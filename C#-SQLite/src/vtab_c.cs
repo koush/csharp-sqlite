@@ -18,12 +18,11 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     ** This file contains code used to help implement virtual tables.
-    **
-    ** $Id: vtab.c,v 1.94 2009/08/08 18:01:08 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -274,7 +273,7 @@ static void addModuleArgument(sqlite3 *db, Table *pTable, char *zArg){
     for(j=0; j<i; j++){
       sqlite3DbFree(db, pTable->azModuleArg[j]);
     }
-    sqlite3DbFree(db, ref zArg);
+    sqlite3DbFree(db, zArg);
     sqlite3DbFree(db, pTable->azModuleArg);
     pTable->nModuleArg = 0;
   }else{
@@ -392,7 +391,7 @@ void sqlite3VtabFinishParse(Parse *pParse, Token *pEnd){
       zStmt,
       pParse->regRowid
     );
-    sqlite3DbFree(db, ref zStmt);
+    sqlite3DbFree(db, zStmt);
     v = sqlite3GetVdbe(pParse);
     sqlite3ChangeCookie(pParse, iDb);
 
@@ -474,7 +473,7 @@ static int vtabCallConstructor(
 
   pVTable = sqlite3DbMallocZero(db, sizeof(VTable));
   if( !pVTable ){
-    sqlite3DbFree(db, ref zModuleName);
+    sqlite3DbFree(db, zModuleName);
     return SQLITE_NOMEM;
   }
   pVTable->db = db;
@@ -495,7 +494,7 @@ static int vtabCallConstructor(
       *pzErr = sqlite3MPrintf(db, "vtable constructor failed: %s", zModuleName);
     }else {
       *pzErr = sqlite3MPrintf(db, "%s", zErr);
-      sqlite3DbFree(db, ref zErr);
+      sqlite3DbFree(db, zErr);
     }
     sqlite3DbFree(db, pVTable);
   }else if( ALWAYS(pVTable->pVtab) ){
@@ -550,7 +549,7 @@ static int vtabCallConstructor(
     }
   }
 
-  sqlite3DbFree(db, ref zModuleName);
+  sqlite3DbFree(db, zModuleName);
   db->pVTab = 0;
   return rc;
 }
@@ -587,7 +586,7 @@ int sqlite3VtabCallConnect(Parse *pParse, Table *pTab){
     if( rc!=SQLITE_OK ){
       sqlite3ErrorMsg(pParse, "%s", zErr);
     }
-    sqlite3DbFree(db, ref zErr);
+    sqlite3DbFree(db, zErr);
   }
 
   return rc;
@@ -686,11 +685,11 @@ int sqlite3_declare_vtab(sqlite3 *db, const char *zCreateTable){
     pParse->declareVtab = 1;
     pParse->db = db;
   
-    if( 
-        SQLITE_OK == sqlite3RunParser(pParse, zCreateTable, &zErr) && 
-        pParse->pNewTable && 
-        !pParse->pNewTable->pSelect && 
-        (pParse->pNewTable->tabFlags & TF_Virtual)==0
+    if( SQLITE_OK==sqlite3RunParser(pParse, zCreateTable, &zErr) 
+     && pParse->pNewTable
+     && !db->mallocFailed
+     && !pParse->pNewTable->pSelect
+     && (pParse->pNewTable->tabFlags & TF_Virtual)==0
     ){
       if( !pTab->aCol ){
         pTab->aCol = pParse->pNewTable->aCol;
@@ -699,9 +698,9 @@ int sqlite3_declare_vtab(sqlite3 *db, const char *zCreateTable){
         pParse->pNewTable->aCol = 0;
       }
       db->pVTab = 0;
-    } else {
+    }else{
       sqlite3Error(db, SQLITE_ERROR, zErr);
-      sqlite3DbFree(db, ref zErr);
+      sqlite3DbFree(db, zErr);
       rc = SQLITE_ERROR;
     }
     pParse->declareVtab = 0;
@@ -927,7 +926,7 @@ FuncDef *sqlite3VtabOverloadFunction(
       *z = sqlite3UpperToLower[*z];
     }
     rc = pMod->xFindFunction(pVtab, nArg, zLowerName, &xFunc, &pArg);
-    sqlite3DbFree(db, ref zLowerName);
+    sqlite3DbFree(db, zLowerName);
   }
   if( rc==0 ){
     return pDef;
@@ -973,8 +972,6 @@ void sqlite3VtabMakeWritable(Parse *pParse, Table *pTab){
     pToplevel->db->mallocFailed = 1;
   }
 }
-
 #endif //* SQLITE_OMIT_VIRTUALTABLE */
-
   }
 }

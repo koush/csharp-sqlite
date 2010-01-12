@@ -19,78 +19,8 @@ using sqlite3_int64 = System.Int64;
 
 namespace Community.Data.SQLite
 {
-  internal static class HelperMethods
-  {
-    public static bool IsRunningMediumTrust()
-    {
-      // placeholder method
-      // this is where it needs to check if it's running in an ASP.Net MediumTrust or lower environment
-      // in order to pick the appropriate locking strategy
-      return false;
-    }
-  }
-
   public partial class csSQLite
   {
-    /// <summary>
-    /// Basic locking strategy for Console/Winform applications
-    /// </summary>
-    private class LockingStrategy
-    {
-      [DllImport( "kernel32.dll" )]
-      static extern bool LockFileEx( IntPtr hFile, uint dwFlags, uint dwReserved,
-      uint nNumberOfBytesToLockLow, uint nNumberOfBytesToLockHigh,
-      [In] ref System.Threading.NativeOverlapped lpOverlapped );
-
-      const int LOCKFILE_FAIL_IMMEDIATELY = 1;
-
-      public virtual void LockFile( sqlite3_file pFile, long offset, long length )
-      {
-        pFile.fs.Lock( offset, length );
-      }
-
-      public virtual int SharedLockFile( sqlite3_file pFile, long offset, long length )
-      {
-        Debug.Assert( length == SHARED_SIZE );
-        Debug.Assert( offset == SHARED_FIRST );
-        System.Threading.NativeOverlapped ovlp = new System.Threading.NativeOverlapped();
-        ovlp.OffsetLow = (int)offset;
-        ovlp.OffsetHigh = 0;
-        ovlp.EventHandle = IntPtr.Zero;
-
-        return LockFileEx( pFile.fs.Handle, LOCKFILE_FAIL_IMMEDIATELY, 0, (uint)length, 0, ref ovlp ) ? 1 : 0;
-      }
-
-      public virtual void UnlockFile( sqlite3_file pFile, long offset, long length )
-      {
-        pFile.fs.Unlock( offset, length );
-      }
-    }
-
-    /// <summary>
-    /// Locking strategy for Medium Trust. It uses the same trick used in the native code for WIN_CE
-    /// which doesn't support LockFileEx as well.
-    /// </summary>
-    private class MediumTrustLockingStrategy : LockingStrategy
-    {
-      public override int SharedLockFile( sqlite3_file pFile, long offset, long length )
-      {
-        Debug.Assert( length == SHARED_SIZE );
-        Debug.Assert( offset == SHARED_FIRST );
-        try
-        {
-          pFile.fs.Lock( offset + pFile.sharedLockByte, 1 );
-        }
-        catch ( IOException )
-        {
-          return 0;
-        }
-        return 1;
-      }
-    }
-
-
-
     /*
     ** 2004 May 22
     **
@@ -104,19 +34,17 @@ namespace Community.Data.SQLite
     ******************************************************************************
     **
     ** This file contains code that is specific to windows.
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-09-11 14:05:07 b084828a771ec40be85f07c590ca99de4f6c24ee
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
 #if SQLITE_OS_WIN               // * This file is used for windows only */
-
 
     /*
 ** A Note About Memory Allocation:
@@ -1534,7 +1462,7 @@ return SQLITE_OK;
 
       StringBuilder zRandom = new StringBuilder( 20 );
       i64 iRandom = 0;
-      for ( int i = 0 ; i < 20 ; i++ )
+      for ( int i = 0; i < 20; i++ )
       {
         sqlite3_randomness( 1, ref iRandom );
         zRandom.Append( (char)zChars[(int)( iRandom % ( zChars.Length - 1 ) )] );
@@ -1565,30 +1493,60 @@ return SQLITE_OK;
     */
     static int getLastErrorMsg( int nBuf, ref string zBuf )
     {
-      //int error = GetLastError ();
-
-#if SQLITE_OS_WINCE
-sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", error, error);
-#else
       /* FormatMessage returns 0 on failure.  Otherwise it
-** returns the number of TCHARs written to the output
-** buffer, excluding the terminating null char.
-*/
-      //int iDummy = 0;
-      //object oDummy = null;
-      //if ( 00 == FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM,
-      //ref oDummy,
-      //error,
-      //0,
-      //zBuf,
-      //nBuf - 1,
-      //ref iDummy ) )
-      //{
-      //  sqlite3_snprintf( nBuf, ref zBuf, "OsError 0x%x (%u)", error, error );
-      //}
-#endif
-      zBuf = new Win32Exception( Marshal.GetLastWin32Error() ).Message;
+      ** returns the number of TCHARs written to the output
+      ** buffer, excluding the terminating null char.
+      */
+      //  DWORD error = GetLastError();
+      //  DWORD dwLen = 0;
+      //  char *zOut = 0;
 
+      //  if( isNT() ){
+      //    WCHAR *zTempWide = NULL;
+      //    dwLen = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      //                           NULL,
+      //                           error,
+      //                           0,
+      //                           (LPWSTR) &zTempWide,
+      //                           0,
+      //                           0);
+      //    if( dwLen > 0 ){
+      //      /* allocate a buffer and convert to UTF8 */
+      //      zOut = unicodeToUtf8(zTempWide);
+      //      /* free the system buffer allocated by FormatMessage */
+      //      LocalFree(zTempWide);
+      //    }
+      ///* isNT() is 1 if SQLITE_OS_WINCE==1, so this else is never executed. 
+      //** Since the ASCII version of these Windows API do not exist for WINCE,
+      //** it's important to not reference them for WINCE builds.
+      //*/
+      //#if SQLITE_OS_WINCE==0
+      //  }else{
+      //    char *zTemp = NULL;
+      //    dwLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      //                           NULL,
+      //                           error,
+      //                           0,
+      //                           (LPSTR) &zTemp,
+      //                           0,
+      //                           0);
+      //    if( dwLen > 0 ){
+      //      /* allocate a buffer and convert to UTF8 */
+      //      zOut = sqlite3_win32_mbcs_to_utf8(zTemp);
+      //      /* free the system buffer allocated by FormatMessage */
+      //      LocalFree(zTemp);
+      //    }
+      //#endif
+      //  }
+      //  if( 0 == dwLen ){
+      //    sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", error, error);
+      //  }else{
+      //    /* copy a maximum of nBuf chars to output buffer */
+      //    sqlite3_snprintf(nBuf, zBuf, "%s", zOut);
+      //    /* free the UTF8 buffer */
+      //    free(zOut);
+      //  }
+      zBuf = new Win32Exception( Marshal.GetLastWin32Error() ).Message;
       return 0;
     }
 
@@ -2115,7 +2073,7 @@ return SQLITE_OK;
             //     ref dwDummy );
             //}else{
             //  /* trim path to just drive reference */
-            //  CHAR* p = (CHAR*)zConverted;
+            //   char *p = (char *)zConverted;
             //  for ( ; *p ; p++ )
             //  {
             //    if ( *p == '\\' )
@@ -2124,7 +2082,7 @@ return SQLITE_OK;
             //      break;
             //    }
             //  }
-            //        dwRet = GetDiskFreeSpaceA((CHAR*)zConverted,
+            //        dwRet = GetDiskFreeSpaceA((char*)zConverted,
             //                                  dwDummy,
             //                                  ref bytesPerSector,
             //                                  dwDummy,
@@ -2143,7 +2101,7 @@ return SQLITE_OK;
 #endif
       return bytesPerSector == 0 ? SQLITE_DEFAULT_SECTOR_SIZE : bytesPerSector;
 #endif
-return SQLITE_DEFAULT_SECTOR_SIZE;
+      return SQLITE_DEFAULT_SECTOR_SIZE;
     }
 
 #if !SQLITE_OMIT_LOAD_EXTENSION
@@ -2294,7 +2252,7 @@ n += sizeof( long );
 */
     static int winCurrentTime( sqlite3_vfs pVfs, ref double prNow )
     {
-      FILETIME ft = new FILETIME();
+      //FILETIME ft = new FILETIME();
       /* FILETIME structure is a 64-bit value representing the number of
       100-nanosecond intervals since January 1, 1601 (= JD 2305813.5).
       */
@@ -2421,5 +2379,71 @@ n += sizeof( long );
     //
 
     const int NO_ERROR = 0;
+    /// <summary>
+    /// Basic locking strategy for Console/Winform applications
+    /// </summary>
+    private class LockingStrategy
+    {
+      [DllImport( "kernel32.dll" )]
+      static extern bool LockFileEx( IntPtr hFile, uint dwFlags, uint dwReserved,
+      uint nNumberOfBytesToLockLow, uint nNumberOfBytesToLockHigh,
+      [In] ref System.Threading.NativeOverlapped lpOverlapped );
+
+      const int LOCKFILE_FAIL_IMMEDIATELY = 1;
+
+      public virtual void LockFile( sqlite3_file pFile, long offset, long length )
+      {
+        pFile.fs.Lock( offset, length );
+      }
+
+      public virtual int SharedLockFile( sqlite3_file pFile, long offset, long length )
+      {
+        Debug.Assert( length == SHARED_SIZE );
+        Debug.Assert( offset == SHARED_FIRST );
+        System.Threading.NativeOverlapped ovlp = new System.Threading.NativeOverlapped();
+        ovlp.OffsetLow = (int)offset;
+        ovlp.OffsetHigh = 0;
+        ovlp.EventHandle = IntPtr.Zero;
+
+        return LockFileEx( pFile.fs.Handle, LOCKFILE_FAIL_IMMEDIATELY, 0, (uint)length, 0, ref ovlp ) ? 1 : 0;
+      }
+
+      public virtual void UnlockFile( sqlite3_file pFile, long offset, long length )
+      {
+        pFile.fs.Unlock( offset, length );
+      }
+    }
+
+    /// <summary>
+    /// Locking strategy for Medium Trust. It uses the same trick used in the native code for WIN_CE
+    /// which doesn't support LockFileEx as well.
+    /// </summary>
+    private class MediumTrustLockingStrategy : LockingStrategy
+    {
+      public override int SharedLockFile( sqlite3_file pFile, long offset, long length )
+      {
+        Debug.Assert( length == SHARED_SIZE );
+        Debug.Assert( offset == SHARED_FIRST );
+        try
+        {
+          pFile.fs.Lock( offset + pFile.sharedLockByte, 1 );
+        }
+        catch ( IOException )
+        {
+          return 0;
+        }
+        return 1;
+      }
+    }
+  }
+  internal static class HelperMethods
+  {
+    public static bool IsRunningMediumTrust()
+    {
+      // placeholder method
+      // this is where it needs to check if it's running in an ASP.Net MediumTrust or lower environment
+      // in order to pick the appropriate locking strategy
+      return false;
+    }
   }
 }

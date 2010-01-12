@@ -22,12 +22,11 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     ** This file contains code used to implement the ATTACH and DETACH commands.
-    **
-    ** $Id: attach.c,v 1.93 2009/05/31 21:21:41 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -60,7 +59,7 @@ namespace Community.Data.SQLite
       {
         if ( pExpr.op != TK_ID )
         {
-          rc = sqlite3ResolveExprNames( pName,ref pExpr );
+          rc = sqlite3ResolveExprNames( pName, ref pExpr );
           if ( rc == SQLITE_OK && sqlite3ExprIsConstant( pExpr ) == 0 )
           {
             sqlite3ErrorMsg( pName.pParse, "invalid name: \"%s\"", pExpr.u.zToken );
@@ -126,7 +125,7 @@ namespace Community.Data.SQLite
         zErrDyn = sqlite3MPrintf( db, "cannot ATTACH database within transaction" );
         goto attach_error;
       }
-      for ( i = 0 ; i < db.nDb ; i++ )
+      for ( i = 0; i < db.nDb; i++ )
       {
         string z = db.aDb[i].zName;
         Debug.Assert( z != null && zName != null );
@@ -190,7 +189,7 @@ namespace Community.Data.SQLite
       aNew.safety_level = 3;
 
 #if SQLITE_HAS_CODEC
-{
+if( rc==SQLITE_OK ){
 extern int sqlite3CodecAttach(sqlite3*, int, const void*, int);
 extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
 int nKey;
@@ -207,13 +206,13 @@ case SQLITE_TEXT:
 case SQLITE_BLOB:
 nKey = sqlite3_value_bytes(argv[2]);
 zKey = (char *)sqlite3_value_blob(argv[2]);
-sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
+rc = sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
 break;
 
 case SQLITE_NULL:
 /* No key specified.  Use the key from the main database */
 sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
-sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
+rc = sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
 break;
 }
 }
@@ -246,7 +245,7 @@ break;
         db.nDb = iDb;
         if ( rc == SQLITE_NOMEM || rc == SQLITE_IOERR_NOMEM )
         {
-  ////        db.mallocFailed = 1;
+          ////        db.mallocFailed = 1;
           sqlite3DbFree( db, ref zErrDyn );
           zErrDyn = sqlite3MPrintf( db, "out of memory" );
         }
@@ -259,7 +258,7 @@ break;
 
       return;
 
-attach_error:
+    attach_error:
       /* Return an error if we get here */
       if ( zErrDyn != "" )
       {
@@ -292,7 +291,7 @@ attach_error:
       UNUSED_PARAMETER( NotUsed );
 
       if ( zName == null ) zName = "";
-      for ( i = 0 ; i < db.nDb ; i++ )
+      for ( i = 0; i < db.nDb; i++ )
       {
         pDb = db.aDb[i];
         if ( pDb.pBt == null ) continue;
@@ -327,7 +326,7 @@ attach_error:
       sqlite3ResetInternalSchema( db, 0 );
       return;
 
-detach_error:
+    detach_error:
       sqlite3_result_error( context, zErr, -1 );
     }
 
@@ -398,7 +397,7 @@ goto attach_end;
         sqlite3VdbeAddOp1( v, OP_Expire, ( type == SQLITE_ATTACH ) ? 1 : 0 );
       }
 
-attach_end:
+    attach_end:
       sqlite3ExprDelete( db, ref pFilename );
       sqlite3ExprDelete( db, ref pDbname );
       sqlite3ExprDelete( db, ref pKey );
@@ -501,7 +500,7 @@ attach_end:
 
       if ( NEVER( pList == null ) ) return 0;
       zDb = pFix.zDb;
-      for ( i = 0 ; i < pList.nSrc ; i++ )
+      for ( i = 0; i < pList.nSrc; i++ )
       {//, pItem++){
         pItem = pList.a[i];
         if ( pItem.zDatabase == null )
@@ -582,7 +581,7 @@ attach_end:
       int i;
       ExprList_item pItem;
       if ( pList == null ) return 0;
-      for ( i = 0 ; i < pList.nExpr ; i++ )//, pItem++ )
+      for ( i = 0; i < pList.nExpr; i++ )//, pItem++ )
       {
         pItem = pList.a[i];
         if ( sqlite3FixExpr( pFix, pItem.pExpr ) != 0 )

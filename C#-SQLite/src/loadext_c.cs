@@ -19,17 +19,15 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This file contains code used to dynamically load extensions into
     ** the SQLite library.
-    **
-    ** $Id: loadext.c,v 1.60 2009/06/03 01:24:54 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
     **  $Header$
     *************************************************************************
     */
-
 #if !SQLITE_CORE
     //#define SQLITE_CORE 1  /* Disable the API redefinition in sqlite3ext.h */
     const int SQLITE_CORE = 1;
@@ -154,7 +152,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
 #if !SQLITE_OMIT_DEPRECATED
     /  sqlite3_aggregate_count,
 #else
-//  0,
+    //  0,
 #endif
     //  sqlite3_bind_blob,
     //  sqlite3_bind_double,
@@ -213,7 +211,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
 #if !SQLITE_OMIT_DEPRECATED
     //sqlite3_expired,
 #else
-//0,
+    //0,
 #endif
     //  sqlite3_finalize,
     //  //sqlite3_free,
@@ -257,14 +255,14 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
 #if !SQLITE_OMIT_DEPRECATED
     //sqlite3_thread_cleanup,
 #else
-//  0,
+    //  0,
 #endif
     //  sqlite3_total_changes,
     //  sqlite3_trace,
 #if !SQLITE_OMIT_DEPRECATED
     //sqlite3_transfer_bindings,
 #else
-//  0,
+    //  0,
 #endif
     //  sqlite3_update_hook,
     //  sqlite3_user_data,
@@ -484,7 +482,7 @@ static void sqlite3_progress_handler (sqlite3 db,       int nOps, dxProgress xPr
     {
       int i;
       Debug.Assert( sqlite3_mutex_held( db.mutex ) );
-      for ( i = 0 ; i < db.nExtension ; i++ )
+      for ( i = 0; i < db.nExtension; i++ )
       {
         sqlite3OsDlClose( db.pVfs, (HANDLE)db.aExtension[i] );
       }
@@ -579,7 +577,7 @@ sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
 #endif
         wsdAutoextInit();
         sqlite3_mutex_enter( mutex );
-        for ( i = 0 ; i < wsdAutoext.nExt ; i++ )
+        for ( i = 0; i < wsdAutoext.nExt; i++ )
         {
           if ( wsdAutoext.aExt[i] == xInit ) break;
         }
@@ -650,7 +648,7 @@ if ( wsdAutoext.nExt == 0 )
         /* Common case: early out without every having to acquire a mutex */
         return;
       }
-      for ( i = 0 ; go ; i++ )
+      for ( i = 0; go; i++ )
       {
         string zErrmsg = "";
 #if SQLITE_THREADSAFE

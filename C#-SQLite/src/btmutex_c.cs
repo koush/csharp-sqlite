@@ -16,19 +16,18 @@ namespace Community.Data.SQLite
     **
     *************************************************************************
     **
-    ** $Id: btmutex.c,v 1.17 2009/07/20 12:33:33 drh Exp $
-    **
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  $Header$
-    *************************************************************************
-    **
     ** This file contains code used to implement mutexes on Btree objects.
     ** This code really belongs in btree.c.  But btree.c is getting too
     ** big and we want to break it down some.  This packaged seemed like
     ** a good breakout.
+     *************************************************************************
+    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+    **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **
+    **  $Header$
+    *************************************************************************
     */
     //#include "btreeInt.h"
 #if !SQLITE_OMIT_SHARED_CACHE

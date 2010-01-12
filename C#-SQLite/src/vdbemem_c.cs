@@ -29,12 +29,11 @@ namespace Community.Data.SQLite
     ** stores a single value in the VDBE.  Mem is an opaque structure visible
     ** only within the VDBE.  Interface routines refer to a Mem using the
     ** name sqlite_value
-    **
-    ** $Id: vdbemem.c,v 1.152 2009/07/22 18:07:41 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
     **
     **  $Header$
     *************************************************************************
@@ -369,12 +368,6 @@ return SQLITE_OK;
       p.n = 0;
       p.z = null;
       p.zBLOB = null;
-      //
-      // Release additional C# pointers for backlinks
-      p._Mem = null;
-      p._SumCtx = null;
-      p._MD5Context = null;
-      p._MD5Context = null;
     }
 
     /*
@@ -509,7 +502,7 @@ return SQLITE_OK;
           return (double)0;
         }
         if ( pMem.zBLOB != null ) sqlite3AtoF( Encoding.UTF8.GetString( pMem.zBLOB ), ref val );
-        else if ( !String.IsNullOrEmpty(pMem.z )) sqlite3AtoF( pMem.z, ref val );
+        else if ( !String.IsNullOrEmpty( pMem.z ) ) sqlite3AtoF( pMem.z, ref val );
         else val = 0.0;
         return val;
       }
@@ -816,6 +809,16 @@ return SQLITE_OK;
     string z,           /* String pointer */
     int n,              /* Bytes in string, or negative */
     u8 enc,             /* Encoding of z.  0 for BLOBs */
+    dxDel xDel          /* Destructor function */
+    )
+    { return sqlite3VdbeMemSetStr( pMem, z, 0, n, enc, xDel ); } // Call w/o offset
+
+    static int sqlite3VdbeMemSetStr(
+    Mem pMem,           /* Memory cell to set to string value */
+    string z,           /* String pointer */
+    int offset,         /* offset into string */
+    int n,              /* Bytes in string, or negative */
+    u8 enc,             /* Encoding of z.  0 for BLOBs */
     dxDel xDel//)(void*)/* Destructor function */
     )
     {
@@ -827,7 +830,7 @@ return SQLITE_OK;
       Debug.Assert( ( pMem.flags & MEM_RowSet ) == 0 );
 
       /* If z is a NULL pointer, set pMem to contain an SQL NULL. */
-      if ( z == null )
+      if ( z == null || z.Length < offset )
       {
         sqlite3VdbeMemSetNull( pMem );
         return SQLITE_OK;
@@ -847,11 +850,11 @@ return SQLITE_OK;
         Debug.Assert( enc != 0 );
         if ( enc == SQLITE_UTF8 )
         {
-          for ( nByte = 0; nByte <= iLimit && nByte < z.Length && z[nByte] != 0; nByte++ ) { }
+          for ( nByte = 0; nByte <= iLimit && nByte < z.Length - offset && z[offset + nByte] != 0; nByte++ ) { }
         }
         else
         {
-          for ( nByte = 0; nByte <= iLimit && z[nByte] != 0 || z[nByte + 1] != 0; nByte += 2 ) { }
+          for ( nByte = 0; nByte <= iLimit && z[nByte + offset] != 0 || z[offset + nByte + 1] != 0; nByte += 2 ) { }
         }
         flags |= MEM_Term;
       }
@@ -882,11 +885,11 @@ return SQLITE_OK;
         {
           pMem.z = null;
           pMem.zBLOB = new byte[n];
-          for ( int i = 0; i < n && i < z.Length; i++ ) pMem.zBLOB[i] = (byte)z[i];
+          for ( int i = 0; i < n && i < z.Length - offset; i++ ) pMem.zBLOB[i] = (byte)z[offset + i];
         }
         else
         {
-          pMem.z = z;//memcpy(pMem.z, z, nAlloc);
+          pMem.z = n > 0 && z.Length - offset > n ? z.Substring( offset, n ) : z.Substring( offset );//memcpy(pMem.z, z, nAlloc);
           pMem.zBLOB = null;
         }
       }
@@ -897,11 +900,11 @@ return SQLITE_OK;
         if ( enc == 0 )
         {
           pMem.z = null;
-          pMem.zBLOB = Encoding.UTF8.GetBytes( z );
+          pMem.zBLOB = Encoding.UTF8.GetBytes( offset == 0 ? z : z.Length + offset < n ? z.Substring( offset, n ) : z.Substring( offset ) );
         }
         else
         {
-          pMem.z = z;//memcpy(pMem.z, z, nAlloc);
+          pMem.z = n > 0 && z.Length - offset > n ? z.Substring( offset, n ) : z.Substring( offset );//memcpy(pMem.z, z, nAlloc);
           pMem.zBLOB = null;
         }
         pMem.xDel = null;
@@ -912,11 +915,11 @@ return SQLITE_OK;
         if ( enc == 0 )
         {
           pMem.z = null;
-          pMem.zBLOB = Encoding.UTF8.GetBytes( z );
+          pMem.zBLOB = Encoding.UTF8.GetBytes( offset == 0 ? z : z.Length + offset < n ? z.Substring( offset, n ) : z.Substring( offset ) );
         }
         else
         {
-          pMem.z = z;//memcpy(pMem.z, z, nAlloc);
+          pMem.z = n > 0 && z.Length - offset > n ? z.Substring( offset, n ) : z.Substring( offset );//memcpy(pMem.z, z, nAlloc);
           pMem.zBLOB = null;
         }
         pMem.xDel = xDel;
@@ -956,13 +959,10 @@ return SQLITE_NOMEM;
       int f1, f2;
       int combined_flags;
 
-      /* Interchange pMem1 and pMem2 if the collating sequence specifies
-      ** DESC order.
-      */
       f1 = pMem1.flags;
       f2 = pMem2.flags;
       combined_flags = f1 | f2;
-      Debug.Assert( ( combined_flags & MEM_RowSet ) == 0 );
+      //TODO Debug.Assert( ( combined_flags & MEM_RowSet ) == 0 );
 
       /* If one value is NULL, it is less than the other. If both values
       ** are NULL, return 0.
@@ -1057,8 +1057,17 @@ return SQLITE_NOMEM;
             int n1, n2;
             Mem c1;
             Mem c2;
-            c1 = Pool.Allocate_Mem();// memset( &c1, 0, sizeof( c1 ) );
-            c2 = Pool.Allocate_Mem();//memset( &c2, 0, sizeof( c2 ) );
+#if !SQLITE_POOL_MEM            // memset( &c1, 0, sizeof( c1 ) );
+            c1 = new Mem();
+#else
+            c1 = Pool.Allocate_Mem();
+#endif
+
+#if !SQLITE_POOL_MEM          //memset( &c2, 0, sizeof( c2 ) );
+            c2 = new Mem();
+#else
+            c2 = Pool.Allocate_Mem();
+#endif
             sqlite3VdbeMemShallowCopy( c1, pMem1, MEM_Ephem );
             sqlite3VdbeMemShallowCopy( c2, pMem2, MEM_Ephem );
             v1 = sqlite3ValueText( (sqlite3_value)c1, pColl.enc );
@@ -1225,7 +1234,11 @@ return SQLITE_NOMEM;
     */
     static sqlite3_value sqlite3ValueNew( sqlite3 db )
     {
+#if !SQLITE_POOL_MEM
+      Mem p = new Mem();
+#else
       Mem p = Pool.Allocate_Mem();//sqlite3DbMallocZero(db, sizeof(*p));
+#endif
       //if ( p != null )
       //{
       p.flags = MEM_Null;
@@ -1265,7 +1278,7 @@ return SQLITE_NOMEM;
       op = pExpr.op;
       if ( op == TK_REGISTER )
       {
-        op = pExpr.op2;
+        op = pExpr.op2;  /* This only happens with SQLITE_ENABLE_STAT2 */
       }
 
       if ( op == TK_STRING || op == TK_FLOAT || op == TK_INTEGER )
@@ -1325,6 +1338,11 @@ return SQLITE_NOMEM;
       }
 #endif
 
+      if ( pVal != null )
+      {
+        sqlite3VdbeMemStoreType( pVal );
+      }
+
       ppVal = pVal;
       return SQLITE_OK;
 
@@ -1381,25 +1399,46 @@ return SQLITE_NOMEM;
       return 0;
     }
 
+#if SQLITE_POOL_MEM
     // An attempt to reduce garbage collection through Mem object reuse
-    public class Pool
+    public static class Pool
     {
       static Mem[] poolMem = null;
       static int poolCount = 0;
+      static int found = 0;
+
+      static public Mem[] Allocate_Mem(int N)
+      {
+        Mem[] pMem;
+        if (N == 0)
+        {
+          pMem = new Mem[1];
+          pMem[0] = Allocate_Mem();
+        }
+        else
+        {
+          pMem = new Mem[N];
+          for (int i = 0; i < N; i++) pMem[i] = Allocate_Mem();
+        } return pMem;
+      }
 
       static public Mem Allocate_Mem()
       {
         Mem pMem = null;
-        for ( int i = poolCount-1; i > 0; i-- )
-          if ( poolMem[i] != null ) { pMem = poolMem[i]; poolMem[i] = null; break; }
+        int i;
+        for ( i = poolCount-1; i > 0; i-- )
+          if ( poolMem[i] != null ) {
+            pMem = poolMem[i]; poolMem[i] = null; found++; break; 
+          }
         if ( pMem == null ) pMem = new Mem();
         return pMem;
       }
       static public void Release_Mem( Mem pMem )
       {
+        int i;
         MemSetTypeFlag( pMem, MEM_Null );
         pMem.type = SQLITE_NULL;
-        for ( int i = poolCount-1; i > 0; i-- )
+        for ( i = poolCount-1; i > 0; i-- )
           if ( poolMem[i] == null )
           {
             poolMem[i] = pMem;
@@ -1410,6 +1449,8 @@ return SQLITE_NOMEM;
           Array.Resize( ref poolMem, poolCount * 2 + 1 );
           poolMem[poolCount] = pMem;
           poolCount = poolCount * 2 + 1;
+          Console.Write(-poolCount );
+          Console.Write( found );
         }
       }
     }
@@ -1445,6 +1486,7 @@ return SQLITE_NOMEM;
     {
       Pool.Release_Mem( pMem );
     }
-  static void sqlite3DbFree<T>( sqlite3 db, ref T pT ) where T : class { }
+#endif
+    static void sqlite3DbFree<T>( sqlite3 db, ref T pT ) where T : class { }
   }
 }

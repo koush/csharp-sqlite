@@ -28,12 +28,11 @@ namespace Community.Data.SQLite
     *************************************************************************
     ** This file contains the implementation of the sqlite3_backup_XXX()
     ** API functions and the related features.
-    **
-    ** $Id: backup.c,v 1.19 2009/07/06 19:03:13 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -272,7 +271,7 @@ namespace Community.Data.SQLite
       ** page. For each iteration, variable iOff is set to the byte offset
       ** of the destination page.
       */
-      for ( iOff = iEnd - (i64)nSrcPgsz ; rc == SQLITE_OK && iOff < iEnd ; iOff += nDestPgsz )
+      for ( iOff = iEnd - (i64)nSrcPgsz; rc == SQLITE_OK && iOff < iEnd; iOff += nDestPgsz )
       {
         DbPage pDestPg = null;
         u32 iDest = (u32)( iOff / nDestPgsz ) + 1;
@@ -395,7 +394,7 @@ namespace Community.Data.SQLite
         {
           rc = sqlite3PagerPagecount( pSrcPager, ref nSrcPage );
         }
-        for ( ii = 0 ; ( nPage < 0 || ii < nPage ) && p.iNext <= (Pgno)nSrcPage && 0 == rc ; ii++ )
+        for ( ii = 0; ( nPage < 0 || ii < nPage ) && p.iNext <= (Pgno)nSrcPage && 0 == rc; ii++ )
         {
           Pgno iSrcPg = p.iNext;                 /* Source page number */
           if ( iSrcPg != PENDING_BYTE_PAGE( p.pSrc.pBt ) )
@@ -425,11 +424,11 @@ namespace Community.Data.SQLite
         }
 
 
-          /* Update the schema version field in the destination database. This
-          ** is to make sure that the schema-version really does change in
-          ** the case where the source and destination databases have the
-          ** same schema version.
-          */
+        /* Update the schema version field in the destination database. This
+        ** is to make sure that the schema-version really does change in
+        ** the case where the source and destination databases have the
+        ** same schema version.
+        */
         if ( rc == SQLITE_DONE
          && ( rc = sqlite3BtreeUpdateMeta( p.pDest, 1, p.iDestSchema + 1 ) ) == SQLITE_OK
         )
@@ -496,8 +495,8 @@ namespace Community.Data.SQLite
               i64 iOff;
               i64 iEnd = MIN( PENDING_BYTE + nDestPagesize, iSize );
               for (
-              iOff = PENDING_BYTE + nSrcPagesize ;
-              rc == SQLITE_OK && iOff < iEnd ;
+              iOff = PENDING_BYTE + nSrcPagesize;
+              rc == SQLITE_OK && iOff < iEnd;
               iOff += nSrcPagesize
               )
               {
@@ -647,7 +646,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
     static void sqlite3BackupUpdate( sqlite3_backup pBackup, Pgno iPage, byte[] aData )
     {
       sqlite3_backup p;                   /* Iterator variable */
-      for ( p = pBackup ; p != null ; p = p.pNext )
+      for ( p = pBackup; p != null; p = p.pNext )
       {
         Debug.Assert( sqlite3_mutex_held( p.pSrc.pBt.mutex ) );
         if ( !isFatalError( p.rc ) && iPage < p.iNext )
@@ -680,7 +679,7 @@ sqlite3BtreeCommitPhaseTwo(p.pSrc);
     static void sqlite3BackupRestart( sqlite3_backup pBackup )
     {
       sqlite3_backup p;                   /* Iterator variable */
-      for ( p = pBackup ; p != null ; p = p.pNext )
+      for ( p = pBackup; p != null; p = p.pNext )
       {
         Debug.Assert( sqlite3_mutex_held( p.pSrc.pBt.mutex ) );
         p.iNext = 1;

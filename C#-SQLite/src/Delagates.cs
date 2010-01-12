@@ -1,14 +1,14 @@
-    /*
-    *************************************************************************
-    **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
-    **  C#-SQLite is an independent reimplementation of the SQLite software library
-    **
-    **  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/Delagates.cs $
-    **  Revision        : $Revision$
-    **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
-    **  Last Changed By : $LastChangedBy: noah.hart $
-    *************************************************************************
-    */
+/*
+*************************************************************************
+**  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
+**  C#-SQLite is an independent reimplementation of the SQLite software library
+**
+**  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/Delagates.cs $
+**  Revision        : $Revision$
+**  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
+**  Last Changed By : $LastChangedBy: noah.hart $
+*************************************************************************
+*/
 
 using System.Text;
 
@@ -39,7 +39,7 @@ namespace Community.Data.SQLite
     public delegate int dxCommitCallback( object pCommitArg );
     public delegate int dxCompare( object pCompareArg, int size1, string Key1, int size2, string Key2 );
     public delegate bool dxCompare4( string Key1, int size1, string Key2, int size2 );
-    public delegate void dxDel ( ref string pDelArg ); // needs ref
+    public delegate void dxDel( ref string pDelArg ); // needs ref
     public delegate void dxDelCollSeq( ref object pDelArg ); // needs ref
     public delegate void dxProfile( object pProfileArg, string msg, u64 time );
     public delegate int dxProgress( object pProgressArg );
@@ -64,7 +64,7 @@ namespace Community.Data.SQLite
        VFS Delegates
     */
     public delegate int dxClose( sqlite3_file File_ID );
-    public delegate int dxCheckReservedLock( sqlite3_file File_ID, ref int pRes);
+    public delegate int dxCheckReservedLock( sqlite3_file File_ID, ref int pRes );
     public delegate int dxDeviceCharacteristics( sqlite3_file File_ID );
     public delegate int dxFileControl( sqlite3_file File_ID, int op, ref int pArgs );
     public delegate int dxFileSize( sqlite3_file File_ID, ref int size );
@@ -96,7 +96,7 @@ namespace Community.Data.SQLite
      * Pager Delegates
      */
 
-    public delegate void dxDestructor( DbPage dbPage); /* Call this routine when freeing pages */
+    public delegate void dxDestructor( DbPage dbPage ); /* Call this routine when freeing pages */
     public delegate int dxBusyHandler( object pBusyHandlerArg );
     public delegate void dxReiniter( DbPage dbPage );   /* Call this routine when reloading pages */
 
@@ -104,7 +104,7 @@ namespace Community.Data.SQLite
 
     //Module
     public delegate void dxDestroy( ref PgHdr pDestroyArg );
-    public delegate int dxStress (object obj,PgHdr pPhHdr);
+    public delegate int dxStress( object obj, PgHdr pPhHdr );
 
     //sqlite3_module
     public delegate int smdxCreate( sqlite3 db, object pAux, int argc, string constargv, ref sqlite3_vtab ppVTab, ref string pError );
@@ -153,49 +153,49 @@ namespace Community.Data.SQLite
     //Faults
     public delegate void void_function();
 
-//Alarms
-    public delegate void dxalarmCallback (object pData, sqlite3_int64 p1, int p2);
+    //Alarms
+    public delegate void dxalarmCallback( object pData, sqlite3_int64 p1, int p2 );
 
     //Mem Methods
-    public delegate int dxMemInit (object o);
+    public delegate int dxMemInit( object o );
     public delegate void dxMemShutdown( object o );
-    public delegate byte[] dxMalloc (int nSize);
-    public delegate void dxFree( ref byte[]  pOld);
+    public delegate byte[] dxMalloc( int nSize );
+    public delegate void dxFree( ref byte[] pOld );
     public delegate byte[] dxRealloc( ref byte[] pOld, int nSize );
-    public delegate int  dxSize (byte[] pArray);
+    public delegate int dxSize( byte[] pArray );
     public delegate int dxRoundup( int nSize );
 
     //Mutex Methods
-  public delegate int dxMutexInit();
-  public delegate int dxMutexEnd( );
-  public delegate   sqlite3_mutex dxMutexAlloc(int iNumber);
-  public delegate  void dxMutexFree(sqlite3_mutex sm);
-  public delegate   void dxMutexEnter(sqlite3_mutex sm);
-  public delegate   int dxMutexTry(sqlite3_mutex sm);
-  public delegate   void dxMutexLeave(sqlite3_mutex sm);
-  public delegate   int dxMutexHeld(sqlite3_mutex sm);
-  public delegate   int dxMutexNotheld(sqlite3_mutex sm);
+    public delegate int dxMutexInit();
+    public delegate int dxMutexEnd();
+    public delegate sqlite3_mutex dxMutexAlloc( int iNumber );
+    public delegate void dxMutexFree( sqlite3_mutex sm );
+    public delegate void dxMutexEnter( sqlite3_mutex sm );
+    public delegate int dxMutexTry( sqlite3_mutex sm );
+    public delegate void dxMutexLeave( sqlite3_mutex sm );
+    public delegate int dxMutexHeld( sqlite3_mutex sm );
+    public delegate int dxMutexNotheld( sqlite3_mutex sm );
 
     public delegate object dxColumn( sqlite3_stmt pStmt, int i );
     public delegate int dxColumn_I( sqlite3_stmt pStmt, int i );
 
-  // Walker Methods
-    public delegate int dxExprCallback (Walker W, ref Expr E);     /* Callback for expressions */
-    public delegate int dxSelectCallback (Walker W, Select S);  /* Callback for SELECTs */
+    // Walker Methods
+    public delegate int dxExprCallback( Walker W, ref Expr E );     /* Callback for expressions */
+    public delegate int dxSelectCallback( Walker W, Select S );  /* Callback for SELECTs */
 
 
-  // pcache Methods
+    // pcache Methods
     public delegate int dxPC_Init( object NotUsed );
     public delegate void dxPC_Shutdown( object NotUsed );
-    public delegate  sqlite3_pcache dxPC_Create (int szPage, int bPurgeable);
-    public delegate  void dxPC_Cachesize (sqlite3_pcache pCache, int nCachesize);
-    public delegate  int dxPC_Pagecount (sqlite3_pcache pCache);
+    public delegate sqlite3_pcache dxPC_Create( int szPage, int bPurgeable );
+    public delegate void dxPC_Cachesize( sqlite3_pcache pCache, int nCachesize );
+    public delegate int dxPC_Pagecount( sqlite3_pcache pCache );
     public delegate PgHdr dxPC_Fetch( sqlite3_pcache pCache, u32 key, int createFlag );
     public delegate void dxPC_Unpin( sqlite3_pcache pCache, PgHdr p2, int discard );
     public delegate void dxPC_Rekey( sqlite3_pcache pCache, PgHdr p2, u32 oldKey, u32 newKey );
     public delegate void dxPC_Truncate( sqlite3_pcache pCache, u32 iLimit );
-    public delegate  void dxPC_Destroy(ref sqlite3_pcache pCache);
+    public delegate void dxPC_Destroy( ref sqlite3_pcache pCache );
 
-    public delegate void dxIter(PgHdr p);
+    public delegate void dxIter( PgHdr p );
   }
 }

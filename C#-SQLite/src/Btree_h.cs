@@ -16,12 +16,11 @@ namespace Community.Data.SQLite
     ** This header file defines the interface that the sqlite B-Tree file
     ** subsystem.  See comments in the source code for a detailed description
     ** of what each interface routine does.
-    **
-    ** @(#) $Id: btree.h,v 1.120 2009/07/22 00:35:24 drh Exp $
-    **
     *************************************************************************
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
+    **
+    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
     **
     **  $Header$
     *************************************************************************
@@ -171,6 +170,7 @@ namespace Community.Data.SQLite
     //  BtCursor pCursor                    /* Space to write cursor structure */
     //);
     //int sqlite3BtreeCursorSize(void);
+    //void sqlite3BtreeCursorZero(BtCursor*);
 
     //int sqlite3BtreeCloseCursor(BtCursor*);
     //int sqlite3BtreeMovetoUnpacked(
@@ -206,7 +206,7 @@ namespace Community.Data.SQLite
     //void sqlite3BtreeCacheOverflow(BtCursor );
     //void sqlite3BtreeClearCursor(BtCursor *);
 
-    //#ifndef NDEBUG
+    //#if !NDEBUG
     //int sqlite3BtreeCursorIsValid(BtCursor*);
     //#endif
 
