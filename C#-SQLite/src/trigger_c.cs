@@ -1067,8 +1067,10 @@ static void sqlite3CodeRowTriggerDirect(
     sqlite3VdbeAddOp3(v, OP_Program, reg, ignoreJump, ++pParse.nMem);
     pPrg.pProgram.nRef++;
     sqlite3VdbeChangeP4(v, -1, pPrg.pProgram, P4_SUBPROGRAM);
+#if SQLITE_DEBUG
     VdbeComment
         (v, "Call: %s.%s", (!String.IsNullOrEmpty(p.zName)?p.zName:"fkey"), onErrorText(orconf));
+#endif
 
     /* Set the P5 operand of the OP_Program instruction to non-zero if
     ** recursive invocation of this trigger program is disallowed. Recursive

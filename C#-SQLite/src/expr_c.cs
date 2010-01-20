@@ -1270,11 +1270,11 @@ return null;
       }
       return pList;
 
-    no_mem:
-      /* Avoid leaking memory if malloc has failed. */
-      sqlite3ExprDelete( db, ref pExpr );
-      sqlite3ExprListDelete( db, ref pList );
-      return null;
+    //no_mem:
+    //  /* Avoid leaking memory if malloc has failed. */
+    //  sqlite3ExprDelete( db, ref pExpr );
+    //  sqlite3ExprListDelete( db, ref pList );
+    //  return null;
     }
 
     /*
@@ -3254,7 +3254,7 @@ pDef = sqlite3VtabOverloadFunction( db, pDef, nFarg, pFarg.a[0].pExpr );
             Debug.Assert( p1 >= 0 && p1 < ( pTab.nCol * 2 + 2 ) );
 
             sqlite3VdbeAddOp2( v, OP_Param, p1, target );
-            VdbeComment( v, "%s.%s . $%d",
+            VdbeComment( v, "%s.%s -> $%d",
             ( pExpr.iTable != 0 ? "new" : "old" ),
             ( pExpr.iColumn < 0 ? "rowid" : pExpr.pTab.aCol[pExpr.iColumn].zName ),
             target

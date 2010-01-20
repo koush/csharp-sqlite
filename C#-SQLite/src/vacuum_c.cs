@@ -146,7 +146,8 @@ sqlite3_step(pStmt);
       saved_nTotalChange = db.nTotalChange;
       saved_xTrace = db.xTrace;
       db.flags |= SQLITE_WriteSchema | SQLITE_IgnoreChecks;
-      db.flags &= ~SQLITE_ForeignKeys;
+      db.flags &= ~( SQLITE_ForeignKeys | SQLITE_ReverseOrder );
+
       db.xTrace = null;
 
       pMain = db.aDb[0].pBt;

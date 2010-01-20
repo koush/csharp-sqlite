@@ -1432,12 +1432,12 @@ break;
     {
       int i;
       //Mem[] aMem = VdbeFrameMem(p);
-      VdbeCursor[] apCsr = new VdbeCursor[p.nChildMem];// (VdbeCursor)aMem[p.nChildMem];
+      VdbeCursor[] apCsr = p.aChildCsr;// (VdbeCursor)aMem[p.nChildMem];
       for ( i = 0; i < p.nChildCsr; i++ )
       {
         sqlite3VdbeFreeCursor( p.v, apCsr[i] );
       }
-      //releaseMemArray(aMem, p.nChildMem);
+      releaseMemArray(p.aChildMem, p.nChildMem);
       p = null;// sqlite3DbFree( p.v.db, p );
     }
 
@@ -1936,8 +1936,9 @@ sqlite3IoTrace( "SQL %s\n", z.Trim() );
 
 
         // C# -- Replace allocation with individual Dims
+        // aMem is 1 based, so allocate 1 extra cell under C#
 #if !SQLITE_POOL_MEM
-        p.aMem = new Mem[nMem + 1];
+        p.aMem = new Mem[nMem + 1]; 
 #else
         p.aMem = Pool.Allocate_Mem(nMem + 1);
 #endif
@@ -1948,9 +1949,8 @@ sqlite3IoTrace( "SQL %s\n", z.Trim() );
 #else
           p.aMem[n] = Pool.Allocate_Mem();
 #endif
-          //p.aMem--;
         }
-        /* aMem[] goes from 1..nMem */
+        //p.aMem--;         /* aMem[] goes from 1..nMem */
         p.nMem = nMem;      /*       not from 0..nMem-1 */
         //
 #if !SQLITE_POOL_MEM
@@ -1995,7 +1995,7 @@ sqlite3IoTrace( "SQL %s\n", z.Trim() );
         }
         if ( p.aMem != null )
         {
-          //p.aMem--;                      /* aMem[] goes from 1..nMem */
+          //p.aMem--;                    /* aMem[] goes from 1..nMem */
           p.nMem = nMem;                 /*       not from 0..nMem-1 */
           for ( n = 0; n <= nMem; n++ )
           {

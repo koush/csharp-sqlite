@@ -140,7 +140,8 @@ namespace Community.Data.SQLite
       string zNew = sqlite3_value_text( argv[2] );
 
       int zIdx;         /* Pointer to token */
-      int n = 0;          /* Length of token z */
+      int zLeft = 0;    /* Pointer to remainder of String */
+      int n = 0;        /* Length of token z */
       int token = 0;    /* Type of token */
 
       UNUSED_PARAMETER( NotUsed );
@@ -157,22 +158,23 @@ namespace Community.Data.SQLite
           } while ( token == TK_SPACE );
 
           zParent = zIdx + n < zInput.Length ? zInput.Substring( zIdx, n ) : "";//sqlite3DbStrNDup(db, zIdx, n);
-          if ( !String.IsNullOrEmpty( zParent ) ) break;
+          if ( String.IsNullOrEmpty( zParent ) ) break;
           sqlite3Dequote( ref zParent );
           if ( 0 == sqlite3StrICmp( zOld, zParent ) )
           {
             string zOut = sqlite3MPrintf( db, "%s%.*s\"%w\"",
-                ( zOutput != null ? zOutput : "" ), zIdx, zInput, zNew
+                zOutput, zIdx-zLeft, zInput.Substring(zLeft), zNew
             );
             sqlite3DbFree( db, ref zOutput );
             zOutput = zOut;
             zIdx += n;// zInput = &z[n];
+            zLeft = zIdx;
           }
           sqlite3DbFree( db, ref zParent );
         }
       }
 
-      zResult = sqlite3MPrintf( db, "%s%s", ( zOutput != null ? zOutput : "" ), zInput );
+      zResult = sqlite3MPrintf( db, "%s%s", zOutput , zInput.Substring(zLeft)   );
       sqlite3_result_text( context, zResult, -1, SQLITE_DYNAMIC );
       sqlite3DbFree( db, ref zOutput );
     }

@@ -390,7 +390,7 @@ SQLITE_CORRUPT;
       {
         string zSql;
         zSql = sqlite3MPrintf( db,
-        "SELECT name, rootpage, sql FROM '%q'.%s",
+        "SELECT name, rootpage, sql FROM '%q'.%s ORDER BY rowid",
         db.aDb[iDb].zName, zMasterName );
         sqlite3SafetyOff( db );
 #if ! SQLITE_OMIT_AUTHORIZATION

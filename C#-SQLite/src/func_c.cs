@@ -1500,6 +1500,7 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
         {
           sqlite3_result_int64( context, p.iSum );
         }
+        p.cnt = 0; // Reset for C#
       }
     }
 

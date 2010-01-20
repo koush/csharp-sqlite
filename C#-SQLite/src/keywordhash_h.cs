@@ -165,7 +165,7 @@ namespace Community.Data.SQLite
       n ) % 127;
       for ( i = ( aHash[h] ) - 1; i >= 0; i = ( aNext[i] ) - 1 )
       {
-        if ( aLen[i] == n && 0 == sqlite3StrNICmp( zText.ToString(), aOffset[i], z.Substring( iOffset, n ), n ) )
+        if ( aLen[i] == n && 0 == sqlite3StrNICmp( zText.Substring( aOffset[i],n), z.Substring( iOffset, n ), n ) )
         {
           testcase( i == 0 ); /* REINDEX */
           testcase( i == 1 ); /* INDEXED */

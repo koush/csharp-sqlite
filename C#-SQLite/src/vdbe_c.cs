@@ -5318,7 +5318,7 @@ iCnt++;
                 initData.iDb = pOp.p1;
                 initData.pzErrMsg = p.zErrMsg;
                 zSql = sqlite3MPrintf( db,
-                "SELECT name, rootpage, sql FROM '%q'.%s WHERE %s",
+                "SELECT name, rootpage, sql FROM '%q'.%s WHERE %s ORDER BY rowid",
                 db.aDb[iDb].zName, zMaster, pOp.p4.z );
                 if ( String.IsNullOrEmpty( zSql ) )
                 {
@@ -5651,7 +5651,7 @@ iCnt++;
             ** cell is required for each cursor used by the program. Set local
             ** variable nMem (and later, VdbeFrame.nChildMem) to this value.
             */
-            nMem = pProgram.nMem + pProgram.nCsr + 1;
+            nMem = pProgram.nMem + pProgram.nCsr;
             //nByte = ROUND8( sizeof( VdbeFrame ) )
                       //+ nMem * sizeof( Mem )
                       //+ pProgram.nCsr * sizeof( VdbeCursor* );
@@ -5666,13 +5666,7 @@ iCnt++;
 
             pFrame.v = p;
             pFrame.nChildMem = nMem;
-#if !SQLITE_POOL_MEM
-        pFrame.aChildMem = new Mem[pFrame.nChildMem];
-#else
-        pFrame.aChildMem = Pool.Allocate_Mem(pFrame.nChildMem);
-#endif
             pFrame.nChildCsr = pProgram.nCsr;
-            pFrame.aChildCsr = new VdbeCursor[pFrame.nChildCsr];
             pFrame.pc = pc;
             pFrame.aMem = p.aMem;
             pFrame.nMem = p.nMem;
@@ -5683,7 +5677,13 @@ iCnt++;
             pFrame.token = pProgram.token;
 
             // &VdbeFrameMem( pFrame )[pFrame.nChildMem];
-            for ( int i = 0; i < pFrame.nChildMem; i++ )//pMem = VdbeFrameMem( pFrame ) ; pMem != pEnd ; pMem++ )
+            // aMem is 1 based, so allocate 1 extra cell under C#
+#if !SQLITE_POOL_MEM
+            pFrame.aChildMem = new Mem[pFrame.nChildMem + 1];
+#else
+        pFrame.aChildMem = Pool.Allocate_Mem(pFrame.nChildMem+1);
+#endif
+            for ( int i = 0; i < pFrame.aChildMem.Length; i++ )//pMem = VdbeFrameMem( pFrame ) ; pMem != pEnd ; pMem++ )
             {
               //pFrame.aMem[i] = pFrame.aMem[pFrame.nMem+i];
               pMem = new Mem();
@@ -5691,11 +5691,13 @@ iCnt++;
               pMem.db = db;
               pFrame.aChildMem[i] = pMem;
             }
+            pFrame.aChildCsr = new VdbeCursor[pFrame.nChildCsr];
+            for ( int i = 0; i < pFrame.nChildCsr; i++ ) pFrame.aChildCsr[i] = new VdbeCursor();
           }
           else
           {
             pFrame = pRt.u.pFrame;
-            Debug.Assert( pProgram.nMem + pProgram.nCsr + 1 == pFrame.nChildMem );
+            Debug.Assert( pProgram.nMem + pProgram.nCsr   == pFrame.nChildMem );
             Debug.Assert( pProgram.nCsr == pFrame.nChildCsr );
             Debug.Assert( pc == pFrame.pc );
           }

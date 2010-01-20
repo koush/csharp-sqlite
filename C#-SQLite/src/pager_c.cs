@@ -5940,7 +5940,7 @@ MEMDB != 0
     }
 #endif
 
-    /*
+/*
 ** Return a pointer to the data for the specified page.
 */
     static byte[] sqlite3PagerGetData( DbPage pPg )

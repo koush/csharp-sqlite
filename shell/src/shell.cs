@@ -330,6 +330,7 @@ sqlite3_free(ref z);
         {
           n--;
           zIn.Remove( n, 1 );
+          if (n < zLine.Length && zLine[n - 1] == '\r') { n--; zIn.Remove(n, 1); }
           //zIn.Length = 0;
           eol = true;
         }
@@ -2155,28 +2156,28 @@ enableTimer = booleanValue(azArg[1]);
     static bool _all_whitespace( string z )
     {
       return z.Trim().Length == 0;
-      int zIdx = 0;
-      for ( ; zIdx < z.Length ; zIdx++ )
-      {
-        if ( isspace( z[zIdx] ) ) continue;
-        if ( z[zIdx] == '/' && z[zIdx + 1] == '*' )
-        {
-          zIdx += 2;
-          while ( zIdx < z.Length && ( z[zIdx] != '*' || z[zIdx + 1] != '/' ) ) { zIdx++; }
-          if ( zIdx == z.Length ) return false;
-          zIdx++;
-          continue;
-        }
-        if ( z[zIdx] == '-' && z[zIdx + 1] == '-' )
-        {
-          zIdx += 2;
-          while ( zIdx < z.Length && z[zIdx] != '\n' ) { zIdx++; }
-          if ( zIdx == z.Length ) return true;
-          continue;
-        }
-        return false;
-      }
-      return true;
+      //int zIdx = 0;
+      //for ( ; zIdx < z.Length ; zIdx++ )
+      //{
+      //  if ( isspace( z[zIdx] ) ) continue;
+      //  if ( z[zIdx] == '/' && z[zIdx + 1] == '*' )
+      //  {
+      //    zIdx += 2;
+      //    while ( zIdx < z.Length && ( z[zIdx] != '*' || z[zIdx + 1] != '/' ) ) { zIdx++; }
+      //    if ( zIdx == z.Length ) return false;
+      //    zIdx++;
+      //    continue;
+      //  }
+      //  if ( z[zIdx] == '-' && z[zIdx + 1] == '-' )
+      //  {
+      //    zIdx += 2;
+      //    while ( zIdx < z.Length && z[zIdx] != '\n' ) { zIdx++; }
+      //    if ( zIdx == z.Length ) return true;
+      //    continue;
+      //  }
+      //  return false;
+      //}
+      //return true;
     }
 
     /*
@@ -2405,7 +2406,7 @@ END_TIMER;
     {
       string home_dir = null; ;
       string sqliterc = sqliterc_override;
-      string zBuf = "";
+      //string zBuf = "";
       StreamReader _in = null; ;
       int nBuf;
 
@@ -2767,7 +2768,6 @@ if( zHistory ) read_history(zHistory);
       {
         case "USERPROFILE":
           return Environment.GetEnvironmentVariable( "UserProfile" );
-          break;
         default:
           throw new Exception( "The method or operation is not implemented." );
       }

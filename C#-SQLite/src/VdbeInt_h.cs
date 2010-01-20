@@ -123,6 +123,10 @@ public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
       public u32[] aOffset;        /* Cached offsets to the start of each columns data */
       public int aRow;             /* Pointer to Data for the current row, if all on one page */
 
+      public VdbeCursor Copy()
+      {
+        return (VdbeCursor)MemberwiseClone();
+      }
     };
     //typedef struct VdbeCursor VdbeCursor;
 
@@ -152,13 +156,16 @@ public readonly sqlite3_module pModule; /* Module for cursor pVtabCursor */
       public VdbeCursor[] apCsr;     /* Element of Vdbe cursors */
       public u16 nCursor;            /* Number of entries in apCsr */
       public int token;              /* Copy of SubProgram.token */
-      public Mem[] aChildMem;        /* Array of memory cells for child frame */
       public int nChildMem;          /* Number of memory cells for child frame */
-      public VdbeCursor[] aChildCsr; /* Array of cursors for child frame */
       public int nChildCsr;          /* Number of cursors for child frame */
       public i64 lastRowid;          /* Last insert rowid (sqlite3.lastRowid) */
       public int nChange;            /* Statement changes (Vdbe.nChanges)     */
       public VdbeFrame pParent;      /* Parent of this frame */
+//
+// Needed for C# Implementation
+//
+      public Mem[] aChildMem;        /* Array of memory cells for child frame */
+      public VdbeCursor[] aChildCsr; /* Array of cursors for child frame */
     };
 
     //#define VdbeFrameMem(p) ((Mem *)&((u8 *)p)[ROUND8(sizeof(VdbeFrame))])

@@ -5578,7 +5578,7 @@ extern int sqlite3_fts3_enable_parentheses;
       TCL.Tcl_LinkVar( interp, "sqlite_search_count",
       sqlite3_search_count, VarFlags.SQLITE3_LINK_INT );
       TCL.Tcl_LinkVar( interp, "sqlite_found_count",
-      sqlite3_search_count, VarFlags.SQLITE3_LINK_INT );
+      sqlite3_found_count, VarFlags.SQLITE3_LINK_INT );
       TCL.Tcl_LinkVar( interp, "sqlite_sort_count",
       sqlite3_sort_count, VarFlags.SQLITE3_LINK_INT );
       TCL.Tcl_LinkVar( interp, "sqlite3_max_blobsize",
