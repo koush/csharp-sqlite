@@ -3748,6 +3748,7 @@ swapMixedEndianFloat(x);
       int i = 0;
       int nField;
       int rc = 0;
+
       //byte[] aKey1 = new byte[pKey1.Length - offset];
       //Buffer.BlockCopy( pKey1, offset, aKey1, 0, aKey1.Length );
       KeyInfo pKeyInfo;
@@ -3772,7 +3773,7 @@ swapMixedEndianFloat(x);
       */
       /*  mem1.u.i = 0;  // not needed, here to silence compiler warning */
 
-      idx1 = (u32)( ( szHdr1 = pKey1[0] ) <= 0x7f ? 1 : getVarint32( pKey1, 0, ref szHdr1 ) );// GetVarint( aKey1, szHdr1 );
+      idx1 = (u32)((szHdr1 = pKey1[offset]) <= 0x7f ? 1 : getVarint32(pKey1, offset, ref szHdr1));// GetVarint( aKey1, szHdr1 );
       d1 = (int)szHdr1;
       if ( ( pPKey2.flags & UNPACKED_IGNORE_ROWID ) != 0 )
       {
@@ -3784,12 +3785,12 @@ swapMixedEndianFloat(x);
         u32 serial_type1;
 
         /* Read the serial types for the next element in each key. */
-        idx1 += (u32)( ( serial_type1 = pKey1[idx1] ) <= 0x7f ? 1 : getVarint32( pKey1, idx1, ref serial_type1 ) ); //GetVarint( aKey1 + idx1, serial_type1 );
+        idx1 += (u32)((serial_type1 = pKey1[offset + idx1]) <= 0x7f ? 1 : getVarint32(pKey1,(uint)( offset+idx1), ref serial_type1)); //GetVarint( aKey1 + idx1, serial_type1 );
         if ( d1 >= nKey1 && sqlite3VdbeSerialTypeLen( serial_type1 ) > 0 ) break;
 
         /* Extract the values to be compared.
         */
-        d1 += (int)sqlite3VdbeSerialGet(pKey1, d1, serial_type1, mem1);//sqlite3VdbeSerialGet( aKey1, d1, serial_type1, mem1 );
+        d1 += (int)sqlite3VdbeSerialGet(pKey1,offset+ d1, serial_type1, mem1);//sqlite3VdbeSerialGet( aKey1, d1, serial_type1, mem1 );
 
         /* Do the comparison
         */
