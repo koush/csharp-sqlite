@@ -4942,7 +4942,7 @@ if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
                 {
                   nKey = pIn2.n;
                   zKey = ( pIn2.flags & MEM_Blob ) != 0 ? pIn2.zBLOB : Encoding.UTF8.GetBytes( pIn2.z );
-                  rc = sqlite3BtreeInsert( pCrsr, zKey, nKey, new byte[1], 0, 0, ( pOp.p3 != 0 ) ? 1 : 0,
+                  rc = sqlite3BtreeInsert( pCrsr, zKey, nKey, null, 0, 0, ( pOp.p3 != 0 ) ? 1 : 0,
                   ( ( pOp.p5 & OPFLAG_USESEEKRESULT ) != 0 ? pC.seekResult : 0 )
                   );
                   Debug.Assert( !pC.deferredMoveto );

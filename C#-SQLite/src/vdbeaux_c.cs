@@ -3727,6 +3727,11 @@ swapMixedEndianFloat(x);
     ** to ignore the rowid at the end of key1.
     */
 
+#if !SQLITE_POOL_MEM
+    static Mem mem1 = new Mem();
+#else
+      Mem mem1 = Pool.Allocate_Mem();
+#endif
     // ALTERNATE FORM for C#
     static int sqlite3VdbeRecordCompare(
     int nKey1, byte[] pKey1,    /* Left key */
@@ -3753,11 +3758,11 @@ swapMixedEndianFloat(x);
       //Buffer.BlockCopy( pKey1, offset, aKey1, 0, aKey1.Length );
       KeyInfo pKeyInfo;
 
-#if !SQLITE_POOL_MEM
-      Mem mem1 = new Mem();
-#else
-      Mem mem1 = Pool.Allocate_Mem();
-#endif
+//#if !SQLITE_POOL_MEM
+//      Mem mem1 = new Mem();
+//#else
+//      Mem mem1 = Pool.Allocate_Mem();
+//#endif
       pKeyInfo = pPKey2.pKeyInfo;
       mem1.enc = pKeyInfo.enc;
       mem1.db = pKeyInfo.db;

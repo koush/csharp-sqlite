@@ -1106,10 +1106,11 @@ return SQLITE_CORRUPT_BKPT;
     ** the space used by the cell pointer.
     */
     // Alternative form for C#
-    static u16 cellSizePtr( MemPage pPage, int iCell )
+    static byte[] pCell = new byte[13];
+    static u16 cellSizePtr(MemPage pPage, int iCell)
     {
       CellInfo info = new CellInfo();
-      byte[] pCell = new byte[13];// Minimum Size = (2 bytes of Header  or (4) Child Pointer) + (maximum of) 9 bytes data
+      //byte[] pCell = new byte[13];// Minimum Size = (2 bytes of Header  or (4) Child Pointer) + (maximum of) 9 bytes data
       if ( iCell < 0 )// Overflow Cell
         Buffer.BlockCopy( pPage.aOvfl[-( iCell + 1 )].pCell, 0, pCell, 0, pCell.Length < pPage.aOvfl[-( iCell + 1 )].pCell.Length ? pCell.Length : pPage.aOvfl[-( iCell + 1 )].pCell.Length );
       else if ( iCell >= pPage.aData.Length + 1 - pCell.Length )
@@ -6705,6 +6706,17 @@ if (false)
     ** If aOvflSpace is set to a null pointer, this function returns
     ** SQLITE_NOMEM.
     */
+
+    // under C#; Try to reuse Memory
+    static MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
+    static MemPage[] apCopy = new MemPage[NB];   /* Private copies of apOld[] pages */
+    static MemPage[] apNew = new MemPage[NB + 2];/* pPage and up to NB siblings after balancing */
+    static int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
+    static int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
+    static int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
+    static u16[] szCell = new u16[1];            /* Local size of all cells in apCell[] */
+    static u8[][] apCell = new u8[1][]; 
+
     static int balance_nonroot(
     MemPage pParent,               /* Parent page of siblings being balanced */
     int iParentIdx,                /* Index of "the page" in pParent */
@@ -6728,15 +6740,15 @@ if (false)
       //int iSpace1 = 0;             /* First unused byte of aSpace1[] */
       int iOvflSpace = 0;          /* First unused byte of aOvflSpace[] */
       int szScratch;               /* Size of scratch memory requested */
-      MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
-      MemPage[] apCopy = new MemPage[NB];   /* Private copies of apOld[] pages */
-      MemPage[] apNew = new MemPage[NB + 2];/* pPage and up to NB siblings after balancing */
+      //MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
+      //MemPage[] apCopy = new MemPage[NB];   /* Private copies of apOld[] pages */
+      //MemPage[] apNew = new MemPage[NB + 2];/* pPage and up to NB siblings after balancing */
       int pRight;                  /* Location in parent of right-sibling pointer */
-      int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
-      int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
-      int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
-      u8[][] apCell = null;                 /* All cells begin balanced */
-      u16[] szCell;                         /* Local size of all cells in apCell[] */
+      //int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
+      //int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
+      //int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
+      //u8[][] apCell = null;                 /* All cells begin balanced */
+      //u16[] szCell;                         /* Local size of all cells in apCell[] */
       //u8[] aSpace1;                         /* Space for copies of dividers cells */
       Pgno pgno;                   /* Temp var to store a page number in */
 
@@ -6860,12 +6872,12 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
       //   + nMaxCells*sizeof(u16)                       /* szCell */
       //   + pBt.pageSize                               /* aSpace1 */
       //   + k*nOld;                                     /* Page copies (apCopy) */
-      apCell = new byte[nMaxCells][];//apCell = sqlite3ScratchMalloc( szScratch );
+      if (apCell.Length < nMaxCells) Array.Resize(ref apCell,nMaxCells);//apCell = sqlite3ScratchMalloc( szScratch );
       //if( apCell==null ){
       //  rc = SQLITE_NOMEM;
       //  goto balance_cleanup;
       //}
-      szCell = new u16[nMaxCells];//(u16*)&apCell[nMaxCells];
+      if (szCell.Length < nMaxCells) Array.Resize(ref szCell, nMaxCells); //(u16*)&apCell[nMaxCells];
       //aSpace1 = new byte[pBt.pageSize * (nMaxCells)];//  aSpace1 = (u8*)&szCell[nMaxCells];
       //Debug.Assert( EIGHT_BYTE_ALIGNMENT(aSpace1) );
 
@@ -6910,7 +6922,8 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
           int iFOFC = findOverflowCell( pOld, j );
           szCell[nCell] = cellSizePtr( pOld, iFOFC );
           // Copy the Data Locally
-          apCell[nCell] = new u8[szCell[nCell]];
+          if (apCell[nCell] == null) apCell[nCell] = new u8[szCell[nCell]];
+            else if (apCell[nCell].Length < szCell[nCell]) Array.Resize(ref apCell[nCell] ,szCell[nCell]);
           if ( iFOFC < 0 )  // Overflow Cell
             Buffer.BlockCopy( pOld.aOvfl[-( iFOFC + 1 )].pCell, 0, apCell[nCell], 0, szCell[nCell] );
           else
@@ -6928,7 +6941,7 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
           Debug.Assert( sz <= pBt.pageSize / 4 );
           //Debug.Assert(iSpace1 <= pBt.pageSize);
           Buffer.BlockCopy( pParent.aData, apDiv[i], pTemp, 0, sz );//memcpy( pTemp, apDiv[i], sz );
-          apCell[nCell] = new byte[sz];
+          if (apCell[nCell].Length < sz) Array.Resize(ref          apCell[nCell] ,sz);
           Buffer.BlockCopy( pTemp, leafCorrection, apCell[nCell], 0, sz );//apCell[nCell] = pTemp + leafCorrection;
           Debug.Assert( leafCorrection == 0 || leafCorrection == 4 );
           szCell[nCell] = (u16)( szCell[nCell] - leafCorrection );
@@ -7480,7 +7493,7 @@ if (false)
       int rc = SQLITE_OK;
       int nMin = pCur.pBt.usableSize * 2 / 3;
       u8[] aBalanceQuickSpace = new u8[13];
-      u8[] pFree = null;
+      //u8[] pFree = null;
 
 #if !NDEBUG || SQLITE_COVERAGE_TEST || DEBUG
       int balance_quick_called = 0;//TESTONLY( int balance_quick_called = 0 );
@@ -7575,8 +7588,8 @@ int balance_deeper_called = 0;
               ** copied either into the body of a database page or into the new
               ** pSpace buffer passed to the latter call to balance_nonroot().
               */
-              u8[] pSpace = new u8[pCur.pBt.pageSize];// u8 pSpace = sqlite3PageMalloc( pCur.pBt.pageSize );
-              rc = balance_nonroot( pParent, iIdx, pSpace, iPage == 1 ? 1 : 0 );
+              //u8[] pSpace = new u8[pCur.pBt.pageSize];// u8 pSpace = sqlite3PageMalloc( pCur.pBt.pageSize );
+              rc = balance_nonroot( pParent, iIdx, null, iPage == 1 ? 1 : 0 );
               //if (pFree != null)
               //{
               //  /* If pFree is not NULL, it points to the pSpace buffer used
@@ -7589,7 +7602,7 @@ int balance_deeper_called = 0;
               /* The pSpace buffer will be freed after the next call to
               ** balance_nonroot(), or just before this function returns, whichever
               ** comes first. */
-              pFree = pSpace;
+              //pFree = pSpace;
             }
           }
 
