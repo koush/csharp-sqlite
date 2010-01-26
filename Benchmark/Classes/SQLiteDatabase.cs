@@ -147,26 +147,31 @@ namespace Community.Data.SQLite
           {
             case csSQLite.SQLITE_INTEGER:
               {
-                columnValues[i] = csSQLite.sqlite3_column_int( vm, i );
+                table.Columns[i].DataType = typeof(Int64);
+                columnValues[i] = csSQLite.sqlite3_column_int(vm, i);
                 break;
               }
             case csSQLite.SQLITE_FLOAT:
               {
-                columnValues[i] = csSQLite.sqlite3_column_double( vm, i );
+                table.Columns[i].DataType = typeof(Double);
+                columnValues[i] = csSQLite.sqlite3_column_double(vm, i);
                 break;
               }
             case csSQLite.SQLITE_TEXT:
               {
-                columnValues[i] = csSQLite.sqlite3_column_text( vm, i );
+                table.Columns[i].DataType = typeof(String);
+                columnValues[i] = csSQLite.sqlite3_column_text(vm, i);
                 break;
               }
             case csSQLite.SQLITE_BLOB:
               {
-                columnValues[i] = csSQLite.sqlite3_column_blob( vm, i );
+                table.Columns[i].DataType = typeof(Byte[]);
+                columnValues[i] = csSQLite.sqlite3_column_blob(vm, i);
                 break;
               }
             default:
               {
+                table.Columns[i].DataType = null;
                 columnValues[i] = "";
                 break;
               }
