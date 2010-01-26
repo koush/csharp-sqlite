@@ -1275,7 +1275,7 @@ if( db ) sqlite3_interrupt(db);
         }
         z[j] = c;
       }
-      // z[j] = '\0';
+      z.Length = j;//z[j] = '\0';
     }
 
     /*
@@ -1596,12 +1596,11 @@ int i, j;                     /* Loop counters */
                           int j = strlen30( zSql );
                           for ( i = 1 ; i < nCol ; i++ )
                           {
-                            zSql[j++] = ',';
-                            zSql[j++] = '?';
+                            zSql.Append(',');
+                            zSql.Append('?');
                           }
-                          zSql[j++] = ')';
-                          zSql[j] = '\0';
-                          rc = csSQLite.sqlite3_prepare( p.db, zSql.ToString(), -1, ref pStmt, ref sDummy );
+                          zSql.Append(')');
+                          rc = csSQLite.sqlite3_prepare(p.db, zSql.ToString(), -1, ref pStmt, ref sDummy);
                           free( ref zSql );
                           if ( rc != 0 )
                           {
@@ -1609,7 +1608,15 @@ int i, j;                     /* Loop counters */
                             csSQLite.sqlite3_finalize( ref pStmt );
                             return 1;
                           }
-                          _in = new StreamReader( zFile );// fopen( zFile, "rb" );
+                          try
+                          {
+                            _in = new StreamReader(zFile);// fopen( zFile, "rb" );
+                            zLine.Length = 0;
+                          }
+                          catch
+                          { 
+                            _in = null; 
+                          }
                           if ( _in == null )
                           {
                             fprintf( stderr, "cannot open file: %s\n", zFile );
@@ -1624,29 +1631,30 @@ int i, j;                     /* Loop counters */
                           }
                           csSQLite.sqlite3_exec( p.db, "BEGIN", 0, 0, 0 );
                           zCommit = "COMMIT";
-                          while ( ( zLine.Append( local_getline( "", _in ) ) ) != null )
+                          while ( ( zLine.Append( local_getline( "", _in ) ) ).Length != 0 )
                           {
                             string z;
                             i = 0;
                             lineno++;
-                            azCol[0] = zLine.ToString();
-                            int zDx = 0;
-                            for ( i = 0 ; zLine[zDx] != '\0' && zLine[zDx] != '\n' && zLine[zDx] != '\r' ; zDx++ )
-                            {
-                              z = zLine.ToString( i, zDx - i + 1 );
-                              if ( z[0] == p.separator[0] && strncmp( z, p.separator, nSep ) == 0 )
-                              {
-                                z = null;
-                                i++;
-                                if ( i < nCol )
-                                {
-                                  azCol[i] = zLine.ToString( zDx + nSep, zLine.Length - zDx + nSep + 1 );
-                                  zDx += nSep - 1;
-                                }
-                              }
-                            }
-                            z = null;
-                            if ( i + 1 != nCol )
+                            azCol = zLine.ToString().Split(p.separator.ToCharArray());
+                            //azCol[0] = zLine.ToString();
+                            //int zDx = 0;
+                            //for (i = 0; zDx < zLine.Length && zLine[zDx] != '\0' && zLine[zDx] != '\n' && zLine[zDx] != '\r'; zDx++)
+                            //{
+                            //  z = zLine.ToString( i, zDx - i + 1 );
+                            //  if ( z[zDx-i] == p.separator[0] && strncmp( z.Substring(zDx), p.separator, nSep ) == 0 )
+                            //  {
+                            //    z = null;
+                            //    i++;
+                            //    if ( i < nCol )
+                            //    {
+                            //      azCol[i] = zLine.ToString( zDx + nSep, zLine.Length - zDx + nSep + 1 );
+                            //      zDx += nSep - 1;
+                            //    }
+                            //  }
+                            //}
+                            //z = null;
+                            if (azCol.Length != nCol)
                             {
                               fprintf( stderr, "%s line %d: expected %d columns of data but found %d\n",
                                  zFile, lineno, nCol, i + 1 );
@@ -1660,7 +1668,7 @@ int i, j;                     /* Loop counters */
                             }
                             csSQLite.sqlite3_step( pStmt );
                             rc = csSQLite.sqlite3_reset( pStmt );
-                            free( ref zLine );
+                            zLine.Length = 0;// free(zLine);
                             if ( rc != csSQLite.SQLITE_OK )
                             {
                               fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( db ) );
@@ -1857,8 +1865,16 @@ sqlite3IoTrace = iotracePrintf;
 
                                         if ( c == 'r' && n >= 3 && strncmp( azArg[0], "read", n ) == 0 && nArg == 2 )
                                         {
-                                          TextReader alt = new StreamReader( azArg[1].ToString() );// fopen( azArg[1], "rb" );
-                                          if ( alt == null )
+                                          TextReader alt;
+                                          try
+                                          {
+                                            alt = new StreamReader(azArg[1].ToString());// fopen( azArg[1], "rb" );
+                                          }
+                                          catch
+                                          {
+                                            alt = null;
+                                          }
+                                          if (alt == null)
                                           {
                                             fprintf( stderr, "can't open \"%s\"\n", azArg[1] );
                                           }
@@ -2242,7 +2258,7 @@ enableTimer = booleanValue(azArg[1]);
         fflush( p._out );
         //free( ref zLine );
         zLine.Length = 0; zLine.Append( one_input_line( zSql, _in ) );
-        if ( zLine == null )
+        if (_in!= null && ((System.IO.StreamReader)(_in)).EndOfStream)
         {
           break;  /* We have reached EOF */
         }
@@ -2751,7 +2767,8 @@ if( zHistory ) read_history(zHistory);
       try
       {
         p.Length = 0;
-        p.Append( _in.ReadLine() + '\n' );
+        p.Append( _in.ReadLine() );
+        if (p.Length > 0 )p.Append('\n' );
         return p.Length;
       }
       catch { return 0; }
