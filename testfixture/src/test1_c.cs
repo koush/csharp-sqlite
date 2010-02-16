@@ -3269,7 +3269,7 @@ return TCL.TCL_ERROR;
       sqlite3_stmt pStmt = null;
       int idx = 0;
       int bytes = 0;
-      string value;
+      byte[] value;
       int rc;
       dxDel xDestructor = SQLITE_TRANSIENT;
 
@@ -3289,7 +3289,7 @@ return TCL.TCL_ERROR;
 
       if ( getStmtPointer( interp, TCL.Tcl_GetString( objv[iObjv + 1] ), ref pStmt ) != 0 ) return TCL.TCL_ERROR;
       if ( TCL.Tcl_GetIntFromObj( interp, objv[iObjv + 2], ref idx ) ) return TCL.TCL_ERROR;
-      value = TCL.Tcl_GetString( objv[iObjv + 3] );
+      value = Encoding.UTF8.GetBytes(TCL.Tcl_GetString( objv[iObjv + 3] ));
       if ( TCL.Tcl_GetIntFromObj( interp, objv[iObjv + 4], ref bytes ) ) return TCL.TCL_ERROR;
 
       rc = sqlite3_bind_blob( pStmt, idx, value, bytes, xDestructor );

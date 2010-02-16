@@ -59,7 +59,7 @@ namespace Community.Data.SQLite
 //#define DO_OS_MALLOC_TEST(x) if (!x || !sqlite3IsMemJournal(x)) {     \
 void *pTstAlloc = sqlite3Malloc(10);                             \
 if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
-//sqlite3_free(pTstAlloc);                                         \
+//sqlite3_free(ref pTstAlloc);                                         \
 }
 #else
     //#define DO_OS_MALLOC_TEST(x)
@@ -86,7 +86,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     static int sqlite3OsRead( sqlite3_file id, byte[] pBuf, int amt, i64 offset )
     {
       DO_OS_MALLOC_TEST( id );
-      if ( pBuf == null ) pBuf = new byte[amt];
+      if ( pBuf == null ) pBuf = sqlite3Malloc(amt);
       return id.pMethods.xRead( id, pBuf, amt, offset );
     }
     static int sqlite3OsWrite( sqlite3_file id, byte[] pBuf, int amt, i64 offset )
@@ -150,11 +150,11 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       int rc;
       DO_OS_MALLOC_TEST( null );
-      /* 0x7f1f is a mask of SQLITE_OPEN_ flags that are valid to be passed
+      /* 0x7f3f is a mask of SQLITE_OPEN_ flags that are valid to be passed
       ** down into the VFS layer.  Some SQLITE_OPEN_ flags (for example,
       ** SQLITE_OPEN_FULLMUTEX or SQLITE_OPEN_SHAREDCACHE) are blocked before
       ** reaching the VFS. */
-      rc = pVfs.xOpen( pVfs, zPath, pFile, flags & 0x7f1f, ref pFlagsOut );
+      rc = pVfs.xOpen( pVfs, zPath, pFile, flags & 0x7f3f, ref pFlagsOut );
       Debug.Assert( rc == SQLITE_OK || pFile.pMethods == null );
       return rc;
     }
@@ -253,7 +253,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       //void *p = sqlite3_malloc(10);
       //if( p==null ) return SQLITE_NOMEM;
-      //sqlite3_free(p);
+      //sqlite3_free(ref p);
       return sqlite3_os_init();
     }
     /*

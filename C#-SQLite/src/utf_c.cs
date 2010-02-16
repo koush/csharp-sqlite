@@ -431,7 +431,7 @@ return rc;
       if ( zIn.Length == 0 ) return 0;
       int zInLength = zIn.Length;
       int zTerm = ( nByte >= 0 && nByte <= zInLength ) ? nByte : zInLength;
-      ////Debug.Assert( z<=zTerm );
+      //Debug.Assert( z<=zTerm );
       //for ( int i = 0 ; i < zTerm ; i++ )      //while( *z!=0 && z<zTerm ){
       //{
       //  SQLITE_SKIP_UTF8( ref z);//  SQLITE_SKIP_UTF8(z);

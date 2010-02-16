@@ -1506,7 +1506,7 @@ namespace tcl.lang
         {
           result = updateReturnInfo();
         }
-        if ( result != TCL.CompletionCode.OK && result != TCL.CompletionCode.ERROR && ( evalFlags & Parser.TCL_ALLOW_EXCEPTIONS ) == 0 )
+        if (result != TCL.CompletionCode.EXIT && result != TCL.CompletionCode.OK && result != TCL.CompletionCode.ERROR && (evalFlags & Parser.TCL_ALLOW_EXCEPTIONS) == 0)
         {
           processUnexpectedResult( result );
         }

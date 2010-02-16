@@ -1227,8 +1227,7 @@ static int dbPrepareAndBind(
           /* Load a BLOB type if the Tcl variable is a bytearray and
           ** it has no string representation or the host
           ** parameter name begins with "@". */
-          data = Encoding.UTF8.GetString( TCL.Tcl_GetByteArrayFromObj(pVar, ref n));
-          sqlite3_bind_blob(pStmt, i, data, n, SQLITE_STATIC);
+          sqlite3_bind_blob( pStmt, i, TCL.Tcl_GetByteArrayFromObj( pVar, ref n ), n, SQLITE_STATIC );
           TCL.Tcl_IncrRefCount(pVar);
           pPreStmt.apParm[iParm++] = pVar;
            }
@@ -1527,7 +1526,7 @@ static int dbEvalStep( DbEvalContext p )
       }
       else
       {
-        dbReleaseStmt( pDb, pPreStmt, 0 );
+        dbReleaseStmt( pDb, pPreStmt, 0);
       }
     }
   }
@@ -1546,7 +1545,7 @@ static void dbEvalFinalize( DbEvalContext p )
   if ( p.pPreStmt != null )
   {
     sqlite3_reset( p.pPreStmt.pStmt );
-    dbReleaseStmt( p.pDb, p.pPreStmt, 0 );
+    dbReleaseStmt( p.pDb, p.pPreStmt, 1 );
     p.pPreStmt = null;
   }
   if ( p.pArray != null )

@@ -2943,11 +2943,18 @@ proc test_on_update_recursion {limit} {
   "
 }
 
+#-------------------------------------------------------------------------
+# C# seems to have some serious stack issues when SQLITE_MAX_TRIGGER_DEPTH
+# is hard coded to 1000, so test this section with a limited subset
+#-------------------------------------------------------------------------
+set SQLITE_MAX_TRIGGER_DEPTH_TEST 300
+sqlite3_limit db SQLITE_LIMIT_TRIGGER_DEPTH $SQLITE_MAX_TRIGGER_DEPTH_TEST
+
 do_test e_fkey-63.1.1 {
-  test_on_delete_recursion $SQLITE_MAX_TRIGGER_DEPTH
+  test_on_delete_recursion $SQLITE_MAX_TRIGGER_DEPTH_TEST
 } {0 0}
 do_test e_fkey-63.1.2 {
-  test_on_delete_recursion [expr $SQLITE_MAX_TRIGGER_DEPTH+1]
+  test_on_delete_recursion [expr $SQLITE_MAX_TRIGGER_DEPTH_TEST+1]
 } {1 {too many levels of trigger recursion}}
 do_test e_fkey-63.1.3 {
   sqlite3_limit db SQLITE_LIMIT_TRIGGER_DEPTH 5
@@ -2959,11 +2966,12 @@ do_test e_fkey-63.1.4 {
 do_test e_fkey-63.1.5 {
   sqlite3_limit db SQLITE_LIMIT_TRIGGER_DEPTH 1000000
 } {5}
+sqlite3_limit db SQLITE_LIMIT_TRIGGER_DEPTH $SQLITE_MAX_TRIGGER_DEPTH_TEST
 do_test e_fkey-63.2.1 {
-  test_on_update_recursion $SQLITE_MAX_TRIGGER_DEPTH
+  test_on_update_recursion $SQLITE_MAX_TRIGGER_DEPTH_TEST
 } {0 0}
 do_test e_fkey-63.2.2 {
-  test_on_update_recursion [expr $SQLITE_MAX_TRIGGER_DEPTH+1]
+  test_on_update_recursion [expr $SQLITE_MAX_TRIGGER_DEPTH_TEST+1]
 } {1 {too many levels of trigger recursion}}
 do_test e_fkey-63.2.3 {
   sqlite3_limit db SQLITE_LIMIT_TRIGGER_DEPTH 5

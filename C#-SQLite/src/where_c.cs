@@ -446,7 +446,7 @@ public WhereTerm[] aStatic = new WhereTerm[1];    /* Initial static space for a[
         //}
         //memcpy(pWC.a, pOld, sizeof(pWC.a[0])*pWC.nTerm);
         //if( pOld!=pWC.aStatic ){
-        //  sqlite3DbFree(db, pOld);
+        //  sqlite3DbFree(db, ref pOld);
         //}
         //pWC.nSlot = sqlite3DbMallocSize(db, pWC.a)/sizeof(pWC.a[0]);
         pWC.nSlot = pWC.a.Length - 1;
@@ -801,7 +801,7 @@ if( pnoCase ) return 0;
       }
       Debug.Assert(pLeft.iColumn != (-1)); /* Because IPK never has AFF_TEXT */
       pColl = sqlite3ExprCollSeq(pParse, pLeft);
-      Debug.Assert(pColl != null);  /* Every non-IPK column has a collating sequence */
+      if ( pColl == null ) return 0;  /* Happens when LHS has an undefined collation */
       if ((pColl.type != SQLITE_COLL_BINARY || pnoCase) &&
       (pColl.type != SQLITE_COLL_NOCASE || !pnoCase))
       {
@@ -2164,7 +2164,7 @@ pUsage[i] = new sqlite3_index_constraint_usage();
 }
 // memset(pUsage, 0, sizeof(pUsage[0])*pIdxInfo.nConstraint);
 if( pIdxInfo.needToFreeIdxStr ){
-//sqlite3_free(pIdxInfo.idxStr);
+//sqlite3_free(ref pIdxInfo.idxStr);
 }
 pIdxInfo.idxStr = 0;
 pIdxInfo.idxNum = 0;

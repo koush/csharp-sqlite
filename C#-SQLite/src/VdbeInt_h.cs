@@ -238,8 +238,12 @@ set { _flags = value; }
         ct.r = r;
         ct.db = db;
         ct.z = z;
-        if ( zBLOB == null ) zBLOB = null;
-        else { ct.zBLOB = (byte[])zBLOB.Clone(); }
+        if ( zBLOB == null ) ct.zBLOB = null;
+        else
+        {
+          ct.zBLOB = sqlite3Malloc( zBLOB.Length );
+          Buffer.BlockCopy( zBLOB, 0, ct.zBLOB, 0, zBLOB.Length );
+        }
         ct.n = n;
         ct.flags = flags;
         ct.type = type;
@@ -356,14 +360,11 @@ set { _flags = value; }
     {
       public FuncDef pFunc;        /* Pointer to function information.  MUST BE FIRST */
       public VdbeFunc pVdbeFunc;   /* Auxilary data, if created. */
-#if !SQLITE_POOL_MEM
-      public Mem s = new Mem();
-#else
-      public Mem s = Pool.Allocate_Mem();    /* The return value is stored here */
-#endif
+      public Mem s = new Mem();         /* The return value is stored here */
       public Mem pMem;             /* Memory cell used to store aggregate context */
       public int isError;          /* Error code returned by the function. */
       public CollSeq pColl;        /* Collating sequence */
+    
     };
 
     /*

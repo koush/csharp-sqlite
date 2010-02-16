@@ -427,7 +427,7 @@ namespace Community.Data.SQLite
       /* Allocate the Bitvec to be tested and a linear array of
       ** bits to act as the reference */
       pBitvec = sqlite3BitvecCreate( sz );
-      pV = new byte[( sz + 7 ) / 8 + 1];// sqlite3_malloc( ( sz + 7 ) / 8 + 1 );
+      pV = sqlite3_malloc( (int)( sz + 7 ) / 8 + 1 );
       pTmpSpace = new u32[BITVEC_SZ];// sqlite3_malloc( BITVEC_SZ );
       if ( pBitvec == null || pV == null || pTmpSpace == null ) goto bitvec_end;
       Array.Clear( pV, 0, (int)( sz + 7 ) / 8 + 1 );// memset( pV, 0, ( sz + 7 ) / 8 + 1 );

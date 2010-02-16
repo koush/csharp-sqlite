@@ -1276,7 +1276,11 @@ namespace Community.Data.SQLite
     public struct sqlite3_mem_methods
     {
       public dxMalloc xMalloc;          //void *(*xMalloc)(int);         /* Memory allocation function */
+      public dxMallocInt xMallocInt;    //void *(*xMalloc)(int);         /* Memory allocation function */
+      public dxMallocMem xMallocMem;    //void *(*xMalloc)(int);         /* Memory allocation function */
       public dxFree xFree;              //void (*xFree)(void*);          /* Free a prior allocation */
+      public dxFreeInt xFreeInt;        //void (*xFree)(void*);          /* Free a prior allocation */
+      public dxFreeMem xFreeMem;        //void (*xFree)(void*);          /* Free a prior allocation */
       public dxRealloc xRealloc;        //void *(*xRealloc)(void*,int);  /* Resize an allocation */
       public dxSize xSize;              //int (*xSize)(void*);           /* Return the size of an allocation */
       public dxRoundup xRoundup;        //int (*xRoundup)(int);          /* Round up request size to allocation size */
@@ -1286,7 +1290,11 @@ namespace Community.Data.SQLite
 
       public sqlite3_mem_methods(
       dxMalloc xMalloc,
+      dxMallocInt xMallocInt,
+      dxMallocMem xMallocMem,
       dxFree xFree,
+      dxFreeInt xFreeInt,
+      dxFreeMem xFreeMem,
       dxRealloc xRealloc,
       dxSize xSize,
       dxRoundup xRoundup,
@@ -1296,7 +1304,11 @@ namespace Community.Data.SQLite
       )
       {
         this.xMalloc = xMalloc;
+        this.xMallocInt = xMallocInt;
+        this.xMallocMem = xMallocMem;
         this.xFree = xFree;
+        this.xFreeInt = xFreeInt;
+        this.xFreeMem = xFreeMem;
         this.xRealloc = xRealloc;
         this.xSize = xSize;
         this.xRoundup = xRoundup;
@@ -2067,7 +2079,7 @@ namespace Community.Data.SQLite
     ** sqlite3_malloc(N) where N is the second parameter to sqlite3_realloc().
     ** ^If the second parameter to sqlite3_realloc() is zero or
     ** negative then the behavior is exactly the same as calling
-    ** sqlite3_free(P) where P is the first parameter to sqlite3_realloc().
+    ** sqlite3_free(ref p) where P is the first parameter to sqlite3_realloc().
     ** ^sqlite3_realloc() returns a pointer to a memory allocation
     ** of at least N bytes in size or NULL if sufficient memory is unavailable.
     ** ^If M is the size of the prior allocation, then min(N,M) bytes

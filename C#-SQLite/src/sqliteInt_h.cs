@@ -174,6 +174,8 @@ const int SQLITE_THREADSAFE = 1;
 */
 #if !(SQLITE_DEFAULT_MEMSTATUS)
     //# define SQLITE_DEFAULT_MEMSTATUS 1
+    const int SQLITE_DEFAULT_MEMSTATUS = 0;
+#else
     const int SQLITE_DEFAULT_MEMSTATUS = 1;
 #endif
 
@@ -3103,19 +3105,32 @@ the <column-list> is stored here */
     ** An objected used to accumulate the text of a string where we
     ** do not necessarily know how big the string will be in the end.
     */
-    public class StrAccum
+    public struct StrAccum
     {
       public sqlite3 db;          /* Optional database for lookaside.  Can be NULL */
-      public StringBuilder zBase = new StringBuilder();     /* A base allocation.  Not from malloc. */
-      public StringBuilder zText = new StringBuilder();     /* The string collected so far */
-      public int nChar;                                     /* Length of the string so far */
-      public int nAlloc;                                    /* Amount of space allocated in zText */
+      public StringBuilder zBase; /* A base allocation.  Not from malloc. */
+      public StringBuilder zText; /* The string collected so far */
+      public int nChar;           /* Length of the string so far */
+      public int nAlloc;          /* Amount of space allocated in zText */
       public int mxAlloc;         /* Maximum allowed string length */
       // Cannot happen under C#
-      //public u8 mallocFailed;     /* Becomes true if any memory allocation fails */
+      //public u8 mallocFailed;   /* Becomes true if any memory allocation fails */
       public u8 useMalloc;        /* True if zText is enlargeable using realloc */
       public u8 tooBig;           /* Becomes true if string size exceeds limits */
       public Mem Context;
+
+      public StrAccum( int n )
+      {
+        db = null;
+        zBase = new StringBuilder( n );
+        zText = new StringBuilder( n );
+        nChar = 0;
+        nAlloc = n;
+        mxAlloc = 0;
+        useMalloc = 0;
+        tooBig = 0;
+        Context = null;
+      }
     };
 
     /*
@@ -3149,7 +3164,8 @@ the <column-list> is stored here */
       public byte[] pHeap;                     /* Heap storage space */
       public int nHeap;                        /* Size of pHeap[] */
       public int mnReq, mxReq;                 /* Min and max heap requests sizes */
-      public byte[] pScratch;                  /* Scratch memory */
+      public byte[][] pScratch2;               /* Scratch memory */
+      public byte[][] pScratch;                  /* Scratch memory */
       public int szScratch;                    /* Size of each scratch buffer */
       public int nScratch;                     /* Number of scratch buffers */
       public MemPage pPage;                    /* Page cache memory */
@@ -3174,7 +3190,7 @@ the <column-list> is stored here */
       , byte[] pHeap
       , int nHeap,
       int mnReq, int mxReq
-      , byte[] pScratch
+      , byte[][] pScratch
       , int szScratch
       , int nScratch
       , MemPage pPage

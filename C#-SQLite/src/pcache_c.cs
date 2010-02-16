@@ -309,6 +309,7 @@ expensive_assert( pcacheCheckSynced(pCache) );
         pPg != null && ( pPg.nRef != 0 || ( pPg.flags & PGHDR_NEED_SYNC ) != 0 );
         pPg = pPg.pDirtyPrev
         ) ;
+        pCache.pSynced = pPg;
         if ( null == pPg )
         {
           for ( pPg = pCache.pDirtyTail; pPg != null && pPg.nRef != 0; pPg = pPg.pDirtyPrev ) ;
@@ -330,7 +331,8 @@ expensive_assert( pcacheCheckSynced(pCache) );
       {
         if ( null == pPage.pData )
         {
-          pPage.pData = new byte[pCache.szPage];//memset( pPage, 0, sizeof( PgHdr ) + pCache.szExtra );
+//memset( pPage, 0, sizeof( PgHdr ) + pCache.szExtra );
+          pPage.pData = sqlite3Malloc(pCache.szPage);
           //pPage.pExtra = (void*)&pPage[1];
           //pPage.pData = (void*)&( (char*)pPage )[sizeof( PgHdr ) + pCache.szExtra];
           pPage.pCache = pCache;
@@ -509,7 +511,8 @@ expensive_assert( pcacheCheckSynced(pCache) );
         }
         if ( pgno == 0 && pCache.pPage1 != null )
         {
-          pCache.pPage1.pData = new byte[pCache.szPage];// memset( pCache.pPage1.pData, 0, pCache.szPage );
+// memset( pCache.pPage1.pData, 0, pCache.szPage );
+          pCache.pPage1.pData = sqlite3Malloc(pCache.szPage);
           pgno = 1;
         }
         sqlite3GlobalConfig.pcache.xTruncate( pCache.pCache, pgno + 1 );

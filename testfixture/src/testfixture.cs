@@ -128,7 +128,7 @@ using Community.Data.SQLite;
               if (tcl.lang.ConsoleThread.debug) System.Diagnostics.Debug.WriteLine(interp.getResult().ToString());
               System.Diagnostics.Debug.Assert(false, interp.getResult().ToString());
             }
-            else
+            else if (code != TCL.CompletionCode.EXIT)
             {
               System.Console.Error.WriteLine("command returned bad code: " + code);
               if (tcl.lang.ConsoleThread.debug) System.Diagnostics.Debug.WriteLine("command returned bad code: " + code);
@@ -148,6 +148,7 @@ using Community.Data.SQLite;
           // have exited and no Tcl scripts can be executed.
 
           interp.dispose();
+          csSQLite.sqlite3_shutdown();
 
           System.Environment.Exit(0);
         }
@@ -370,7 +371,7 @@ namespace tcl.lang
     private Channel err;
 
     // set to true to get extra debug output
-    public const bool debug = true;
+    public static bool debug = true;
 
     // used to keep track of wether or not System.in.available() works
     private static bool sysInAvailableWorks = false;

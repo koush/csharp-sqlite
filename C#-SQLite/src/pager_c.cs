@@ -2628,8 +2628,9 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
           {
             pager_reset( pPager );
             pPager.pageSize = pageSize;
-            //sqlite3PageFree( ref  pPager.pTmpSpace );
-            pPager.pTmpSpace = new byte[pageSize];// pNew;
+            sqlite3PageFree( ref  pPager.pTmpSpace );
+            
+            pPager.pTmpSpace = sqlite3Malloc(pageSize);// pNew;
             sqlite3PcacheSetPageSize( pPager.pPCache, pageSize );
           }
         }
@@ -3882,7 +3883,8 @@ Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
       if ( NEVER( !isOpen( pPager.fd ) ) )
       {
         Debug.Assert( pPager.tempFile );
-        pPg.pData = new u8[pPager.pageSize];//memset(pPg->pData, 0, pPager.pageSize);
+//memset(pPg->pData, 0, pPager.pageSize);
+        pPg.pData = sqlite3Malloc(pPager.pageSize);
         return SQLITE_OK;
       }
       iOffset = ( pgno - 1 ) * (i64)pPager.pageSize;

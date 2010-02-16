@@ -115,18 +115,34 @@ namespace Community.Data.SQLite
       }
       return p;
     }
-
-
+    static int[] faultsimMallocInt( int n )
+    {
+      int[] p = null;
+      if ( faultsimStep() != 0 )
+      {
+        p = memfault.m.xMallocInt( n );
+      }
+      return p;
+    }
+    static Mem faultsimMallocMem( Mem n )
+    {
+      Mem p = null;
+      if ( faultsimStep() != 0 )
+      {
+        p = memfault.m.xMallocMem( n );
+      }
+      return p;
+    }
     /*
     ** A version of sqlite3_mem_methods.xRealloc() that includes fault simulation
     ** logic.
     */
-    static byte[] faultsimRealloc( ref byte[] pOld, int n )
+    static byte[] faultsimRealloc(byte[] pOld, int n )
     {
       byte[] p = null;
       if ( faultsimStep() != 0 )
       {
-        p = memfault.m.xRealloc( ref pOld, n );
+        p = memfault.m.xRealloc( pOld, n );
       }
       return p;
     }
@@ -144,6 +160,14 @@ namespace Community.Data.SQLite
     static void faultsimFree( ref byte[] p )
     {
       memfault.m.xFree( ref p );
+    }
+    static void faultsimFreeInt(ref int[] p)
+    {
+      memfault.m.xFreeInt(ref p);
+    }
+    static void faultsimFreeMem(ref Mem p)
+    {
+      memfault.m.xFreeMem( ref p );
     }
     static int faultsimSize( byte[] p )
     {
@@ -238,7 +262,11 @@ namespace Community.Data.SQLite
     {
       sqlite3_mem_methods m = new sqlite3_mem_methods(
       (dxMalloc)faultsimMalloc,                 /* xMalloc */
+      (dxMallocInt)faultsimMallocInt,           /* xMalloc */
+      (dxMallocMem)faultsimMallocMem,           /* xMalloc */
       (dxFree)faultsimFree,                     /* xFree */
+      (dxFreeInt)faultsimFreeInt,               /* xFree */
+      (dxFreeMem)faultsimFreeMem,
       (dxRealloc)faultsimRealloc,               /* xRealloc */
       (dxSize)faultsimSize,                     /* xSize */
       (dxRoundup)faultsimRoundup,               /* xRoundup */
@@ -978,7 +1006,7 @@ sqlite3MemdebugSettitle(zTitle);
     {
       int sz = 0, N = 0, rc;
       Tcl_Obj pResult;
-      byte[] buf = null;
+      byte[][] buf = null;
       if ( objc != 3 )
       {
         TCL.Tcl_WrongNumArgs( interp, 1, objv, "SIZE N" );
@@ -994,7 +1022,7 @@ sqlite3MemdebugSettitle(zTitle);
       }
       else
       {
-        buf = new byte[sz * N + 1];// malloc( sz * N + 1 );
+        buf = new byte[2][];//// malloc( sz * N + 1 );
         rc = sqlite3_config( SQLITE_CONFIG_SCRATCH, buf, sz, N );
       }
       pResult = TCL.Tcl_NewObj();

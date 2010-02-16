@@ -307,7 +307,7 @@ namespace Community.Data.SQLite
         _OvflCell cp = new _OvflCell();
         if ( pCell != null )
         {
-          cp.pCell = new byte[pCell.Length];
+          cp.pCell = sqlite3Malloc(pCell.Length);
           Buffer.BlockCopy( pCell, 0, cp.pCell, 0, pCell.Length );
         }
         cp.idx = idx;
@@ -345,7 +345,7 @@ namespace Community.Data.SQLite
         }
         if ( aData != null )
         {
-          cp.aData = new byte[aData.Length];
+          cp.aData = sqlite3Malloc( aData.Length );
           Buffer.BlockCopy( aData, 0, cp.aData, 0, aData.Length );
         }
         return cp;
@@ -749,7 +749,7 @@ public static bool ISAUTOVACUUM =false;
       public int mxErr;         /* Stop accumulating errors when this reaches zero */
       public int nErr;          /* Number of messages written to zErrMsg so far */
       //public int mallocFailed;  /* A memory allocation error has occurred */
-      public StrAccum errMsg = new StrAccum(); /* Accumulate the error message text here */
+      public StrAccum errMsg = new StrAccum(100); /* Accumulate the error message text here */
     };
 
     /*

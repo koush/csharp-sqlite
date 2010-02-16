@@ -290,6 +290,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
     ** seems to make a big difference in determining how fast this beast
     ** will run.
     */
+    static char[] buf = new char[etBUFSIZE];       /* Conversion buffer */
     static void sqlite3VXPrintf(
     StrAccum pAccum,             /* Accumulate results here */
     int useExtended,             /* Allow extended %-conversions */
@@ -315,7 +316,7 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
       i64 longvalue;
       LONGDOUBLE_TYPE realvalue; /* Value for real types */
       et_info infop;      /* Pointer to the appropriate info structure */
-      char[] buf = new char[etBUFSIZE];       /* Conversion buffer */
+      //char[] buf = new char[etBUFSIZE];       /* Conversion buffer */
       char prefix;                /* Prefix character.  "+" or "-" or " " or '\0'. */
       byte xtype = 0;             /* Conversion paradigm */
       // Not used in C# -- string zExtra;              /* Extra memory used for etTCLESCAPE conversions */
@@ -637,7 +638,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
             double d = 0;
             if ( Double.IsNaN( realvalue ) || !( Double.TryParse( Convert.ToString( realvalue ), out d ) ) )//if( sqlite3IsNaN((double)realvalue) )
             {
-              buf = "NaN".ToCharArray();
+              buf[0] = 'N'; buf[1] = 'a'; buf[2] = 'N';// "NaN"
               length = 3;
               break;
             }
@@ -652,17 +653,17 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
               {
                 if ( prefix == '-' )
                 {
-                  buf = "-Inf".ToCharArray();
+                  buf[0] = '-'; buf[1] = 'I'; buf[2] = 'n'; buf[3] = 'f';// "-Inf"
                   bufpt = 4;
                 }
                 else if ( prefix == '+' )
                 {
-                  buf = "+Inf".ToCharArray();
+                  buf[0] = '+'; buf[1] = 'I'; buf[2] = 'n'; buf[3] = 'f';// "+Inf"
                   bufpt = 4;
                 }
                 else
                 {
-                  buf = "Inf".ToCharArray();
+                  buf[0] = 'I'; buf[1] = 'n'; buf[2] = 'f';// "Inf"
                   bufpt = 3;
                 }
                 length = sqlite3Strlen30( bufpt );// sqlite3Strlen30(bufpt);
@@ -1070,7 +1071,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       {
         sqlite3DbFree( p.db, ref p.zText );
       }
-      p.zText = new StringBuilder();
+      p.zText.Length = 0;
     }
 
     /*
@@ -1078,7 +1079,10 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     */
     static void sqlite3StrAccumInit( StrAccum p, StringBuilder zBase, int n, int mx )
     {
-      p.zText = p.zBase = zBase;
+      p.zBase.Length = 0;
+      if ( p.zBase.Capacity < n ) p.zBase.Capacity = n;
+      p.zText.Length = 0;
+      if ( p.zText.Capacity < n ) p.zBase.Capacity = n;
       p.db = null;
       p.nChar = 0;
       p.nAlloc = n;
@@ -1087,22 +1091,21 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       p.tooBig = 0;
       //p.mallocFailed = 0;
     }
-
     /*
     ** Print into memory obtained from sqliteMalloc().  Use the internal
     ** %-conversion extensions.
     */
+    static StrAccum acc = new StrAccum(SQLITE_PRINT_BUF_SIZE);
     static string sqlite3VMPrintf( sqlite3 db, string zFormat, params va_list[] ap )
     {
       if ( zFormat == null ) return null;
       if ( ap.Length == 0 ) return zFormat;
       string z;
-      StringBuilder zBase = new StringBuilder( SQLITE_PRINT_BUF_SIZE );
-      StrAccum acc = new StrAccum();
       Debug.Assert( db != null );
-      sqlite3StrAccumInit( acc, zBase, zBase.Capacity, //zBase).Length;
+      sqlite3StrAccumInit( acc, null,SQLITE_PRINT_BUF_SIZE,
       db.aLimit[SQLITE_LIMIT_LENGTH] );
       acc.db = db;
+      acc.zText.Length = 0;
       sqlite3VXPrintf( acc, 1, zFormat, ap );
       z = sqlite3StrAccumFinish( acc );
       //      if ( acc.mallocFailed != 0 )
@@ -1152,12 +1155,11 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     static string sqlite3_vmprintf( string zFormat, params  va_list[] ap )
     {
       string z;
-      StringBuilder zBase = new StringBuilder( SQLITE_PRINT_BUF_SIZE );
-      StrAccum acc = new StrAccum();
+      //StrAccum acc = new StrAccum(SQLITE_PRINT_BUF_SIZE);
 #if !SQLITE_OMIT_AUTOINIT
       if ( sqlite3_initialize() != 0 ) return "";
 #endif
-      sqlite3StrAccumInit( acc, zBase, zBase.Length, SQLITE_PRINT_BUF_SIZE );//zBase).Length;
+      sqlite3StrAccumInit( acc, null, SQLITE_PRINT_BUF_SIZE, SQLITE_PRINT_BUF_SIZE );//zBase).Length;
       sqlite3VXPrintf( acc, 0, zFormat, ap );
       z = sqlite3StrAccumFinish( acc );
       return z;
@@ -1186,17 +1188,16 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     ** are not able to use a "," as the decimal point in place of "." as
     ** specified by some locales.
     */
-    static public string sqlite3_snprintf( int n, ref StringBuilder zBuf, string zFormat, params va_list[] ap )
+    static public string sqlite3_snprintf(int n, ref StringBuilder zBuf, string zFormat, params va_list[] ap)
     {
-      StringBuilder zBase = new StringBuilder( SQLITE_PRINT_BUF_SIZE );
       //va_list ap;
-      StrAccum acc = new StrAccum();
+      //StrAccum acc = new StrAccum( SQLITE_PRINT_BUF_SIZE );
 
       if ( n <= 0 )
       {
         return zBuf.ToString();
       }
-      sqlite3StrAccumInit( acc, zBase, n, 0 );
+      sqlite3StrAccumInit( acc, null, n, 0 );
       acc.useMalloc = 0;
       va_start( ap, zFormat );
       sqlite3VXPrintf( acc, 0, zFormat, ap );
@@ -1210,15 +1211,14 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     static public string sqlite3_snprintf( int n, ref string zBuf, string zFormat, params va_list[] ap )
     {
       string z;
-      StringBuilder zBase = new StringBuilder( SQLITE_PRINT_BUF_SIZE );
       //va_list ap;
-      StrAccum acc = new StrAccum();
+      //StrAccum acc = new StrAccum();
 
       if ( n <= 0 )
       {
         return zBuf;
       }
-      sqlite3StrAccumInit( acc, zBase, n, 0 );
+      sqlite3StrAccumInit( acc, null, n, 0 );
       acc.useMalloc = 0;
       va_start( ap, zFormat );
       sqlite3VXPrintf( acc, 0, zFormat, ap );
@@ -1236,7 +1236,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
     static void sqlite3DebugPrintf( string zFormat, params va_list[] ap )
     {
       //va_list ap;
-      StrAccum acc = new StrAccum();
+      //StrAccum acc = new StrAccum();
       StringBuilder zBuf = new StringBuilder( SQLITE_PRINT_BUF_SIZE );
       sqlite3StrAccumInit( acc, zBuf, zBuf.Capacity, 0 );
       acc.useMalloc = 0;

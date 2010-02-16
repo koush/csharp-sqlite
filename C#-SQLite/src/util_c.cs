@@ -599,9 +599,10 @@ return sqlite3Atoi64(z, pResult);
     {
       zNum = zNum.Trim() + " ";
       int i;
-      for ( i = 1; i < zNum.Length; i++ ) if ( !sqlite3Isdigit( zNum[i] ) ) break;
-      return Int64.TryParse( zNum.Substring( 0, i ), out pNum
-      );
+      for ( i = 1; i < zNum.Length; i++ ) if ( !sqlite3Isdigit( zNum[i] )  ) break;
+      bool c =  Int64.TryParse( zNum.Substring( 0, i ), out pNum);
+      if ( i < zNum.Length - 1 ) c = false;
+      return c;
       //i64 v = 0;
       //int neg;
       //int i, c;
@@ -815,30 +816,29 @@ return sqlite3Atoi64(z, pResult);
       if ( v <= 0x7F ) return 1;
       return sqlite3GetVarint32( p, 0, ref v );
     }
+    static byte[] pByte4 = new byte[4];
     static int getVarint32( string s, u32 offset, ref int v )
     { //(*B=*(A))<=0x7f?1:sqlite3GetVarint32(A,B))
       v = s[(int)offset];
       if ( v <= 0x7F ) return 1;
-      byte[] p = new byte[4];
-      p[0] = (u8)s[(int)offset + 0];
-      p[1] = (u8)s[(int)offset + 1];
-      p[2] = (u8)s[(int)offset + 2];
-      p[3] = (u8)s[(int)offset + 3];
+      pByte4[0] = (u8)s[(int)offset + 0];
+      pByte4[1] = (u8)s[(int)offset + 1];
+      pByte4[2] = (u8)s[(int)offset + 2];
+      pByte4[3] = (u8)s[(int)offset + 3];
       u32 u32_v = 0;
-      int result = sqlite3GetVarint32( p, 0, ref u32_v );
+      int result = sqlite3GetVarint32( pByte4, 0, ref u32_v );
       v = (int)u32_v;
-      return sqlite3GetVarint32( p, 0, ref v );
+      return sqlite3GetVarint32( pByte4, 0, ref v );
     }
     static int getVarint32( string s, u32 offset, ref u32 v )
     { //(*B=*(A))<=0x7f?1:sqlite3GetVarint32(A,B))
       v = s[(int)offset];
       if ( v <= 0x7F ) return 1;
-      byte[] p = new byte[4];
-      p[0] = (u8)s[(int)offset + 0];
-      p[1] = (u8)s[(int)offset + 1];
-      p[2] = (u8)s[(int)offset + 2];
-      p[3] = (u8)s[(int)offset + 3];
-      return sqlite3GetVarint32( p, 0, ref v );
+      pByte4[0] = (u8)s[(int)offset + 0];
+      pByte4[1] = (u8)s[(int)offset + 1];
+      pByte4[2] = (u8)s[(int)offset + 2];
+      pByte4[3] = (u8)s[(int)offset + 3];
+      return sqlite3GetVarint32( pByte4, 0, ref v );
     }
     static int getVarint32( byte[] p, u32 offset, ref u32 v )
     { //(*B=*(A))<=0x7f?1:sqlite3GetVarint32(A,B))
@@ -869,10 +869,10 @@ return sqlite3Atoi64(z, pResult);
     }
     static int sqlite3PutVarint( byte[] p, int offset, int v )
     { return sqlite3PutVarint( p, offset, (u64)v ); }
+    static u8[] bufByte10 = new u8[10];
     static int sqlite3PutVarint( byte[] p, int offset, u64 v )
     {
       int i, j, n;
-      u8[] buf = new u8[10];
       if ( ( v & ( ( (u64)0xff000000 ) << 32 ) ) != 0 )
       {
         p[offset + 8] = (byte)v;
@@ -887,14 +887,14 @@ return sqlite3Atoi64(z, pResult);
       n = 0;
       do
       {
-        buf[n++] = (byte)( ( v & 0x7f ) | 0x80 );
+        bufByte10[n++] = (byte)( ( v & 0x7f ) | 0x80 );
         v >>= 7;
       } while ( v != 0 );
-      buf[0] &= 0x7f;
+      bufByte10[0] &= 0x7f;
       Debug.Assert( n <= 9 );
       for ( i = 0, j = n - 1; j >= 0; j--, i++ )
       {
-        p[offset + i] = buf[j];
+        p[offset + i] = bufByte10[j];
       }
       return n;
     }
@@ -1356,17 +1356,17 @@ h += 9*(1&~(h>>4));
       StringBuilder zBlob;
       int i;
 
-      zBlob = new StringBuilder( n / 2 + 1 );// (char*)sqlite3DbMallocRaw(db, n / 2 + 1);
+      zBlob = new StringBuilder(n / 2 + 1);// (char*)sqlite3DbMallocRaw(db, n / 2 + 1);
       n--;
-      if ( zBlob != null )
+      if (zBlob != null)
       {
-        for ( i = 0; i < n; i += 2 )
+        for (i = 0; i < n; i += 2)
         {
-          zBlob.Append( Convert.ToChar( ( hexToInt( z[i] ) << 4 ) | hexToInt( z[i + 1] ) ) );
+          zBlob.Append(Convert.ToChar((hexToInt(z[i]) << 4) | hexToInt(z[i + 1])));
         }
         //zBlob[i / 2] = '\0'; ;
       }
-      return Encoding.UTF8.GetBytes( zBlob.ToString() );
+      return Encoding.UTF8.GetBytes(zBlob.ToString());
     }
 #endif // * !SQLITE_OMIT_BLOB_LITERAL || SQLITE_HAS_CODEC */
 

@@ -73,6 +73,7 @@ namespace Community.Data.SQLite
 
       public void Clear()
       {
+        sqlite3_free(ref this.pData);
         this.pData = null;
         this.pExtra = null;
         this.pDirty = null;

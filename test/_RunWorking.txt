@@ -177,8 +177,9 @@ set QUICKTEST_INCLUDE {}
 catch { set QUICKTEST_INCLUDE $env(QUICKTEST_INCLUDE) }
 
 set STARTING a
+set ENDING z
 
-foreach testfile [lsort -dictionary [glob $testdir/\[$STARTING-z\]*.test]] {
+foreach testfile [lsort -dictionary [glob $testdir/\[$STARTING-$ENDING\]*.test]] {
   set tail [file tail $testfile]
   if {$tail < $STARTING } continue
   if { [lsearch $QUICKTEST_INCLUDE $tail]<0 } {

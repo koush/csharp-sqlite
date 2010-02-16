@@ -774,15 +774,17 @@ namespace tcl.lang
         }
 
         int rc = 0;
-        if ( cmd != null )
-          cmd.cmdProc( interp, objv );
+        if (cmd != null)
+        { 
+          if (cmd.cmdProc(interp, objv) == TCL.CompletionCode.EXIT) throw new TclException(TCL.CompletionCode.EXIT); 
+        }
         else
         {
-          rc = wCmd.objProc( wCmd.objClientData, interp, objv.Length, objv );
-          if ( rc != 0 )
+          rc = wCmd.objProc(wCmd.objClientData, interp, objv.Length, objv);
+          if (rc != 0)
           {
-            if (rc == TCL.TCL_RETURN) throw new TclException( TCL.CompletionCode.RETURN );
-            throw new TclException( TCL.CompletionCode.ERROR );
+            if (rc == TCL.TCL_RETURN) throw new TclException(TCL.CompletionCode.RETURN);
+            throw new TclException(TCL.CompletionCode.ERROR);
           }
         }
         interp.varFrame = savedVarFrame;

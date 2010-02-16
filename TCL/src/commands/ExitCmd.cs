@@ -38,8 +38,7 @@ namespace tcl.lang
 			{
 				code = 0;
 			}
-			System.Environment.Exit(code);
-      return TCL.CompletionCode.RETURN;
+      return TCL.CompletionCode.EXIT;
     }
 	}
 }

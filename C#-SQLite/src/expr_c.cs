@@ -776,8 +776,15 @@ sqlite3Dequote(ref pNew.u._zToken);
           pExpr.iColumn = (ynVar)( ++pParse.nVar );
           if ( pParse.nVarExpr >= pParse.nVarExprAlloc - 1 )
           {
+            int oldLength = pParse.nVarExprAlloc;
             pParse.nVarExprAlloc += pParse.nVarExprAlloc + 10;
-            pParse.apVarExpr = new Expr[pParse.nVarExprAlloc];
+            
+            Expr[] newXper = new Expr[pParse.nVarExprAlloc];
+            for (int iter = 0; iter < newXper.Length && iter < oldLength; iter++)
+            {
+                newXper[iter] = pParse.apVarExpr[iter];
+            }
+            pParse.apVarExpr = newXper;
             //sqlite3DbReallocOrFree(
             //  db,
             //  pParse.apVarExpr,

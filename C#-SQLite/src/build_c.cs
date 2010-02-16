@@ -3838,6 +3838,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
       if ( db.aDb[1].pBt == null && pParse.explain == 0 )
       {
         int rc;
+        Btree pBt = null;
         const int flags =
         SQLITE_OPEN_READWRITE |
         SQLITE_OPEN_CREATE |
@@ -3845,8 +3846,7 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
         SQLITE_OPEN_DELETEONCLOSE |
         SQLITE_OPEN_TEMP_DB;
 
-        rc = sqlite3BtreeFactory( db, null, false, SQLITE_DEFAULT_CACHE_SIZE, flags,
-        ref db.aDb[1].pBt );
+        rc = sqlite3BtreeFactory( db, null, false, SQLITE_DEFAULT_CACHE_SIZE, flags, ref pBt);
         if ( rc != SQLITE_OK )
         {
           sqlite3ErrorMsg( pParse, "unable to open a temporary database " +
@@ -3854,9 +3854,13 @@ Debug.Assert( !SAVEPOINT_BEGIN && SAVEPOINT_RELEASE==1 && SAVEPOINT_ROLLBACK==2 
           pParse.rc = rc;
           return 1;
         }
+        db.aDb[1].pBt = pBt;
         Debug.Assert( db.aDb[1].pSchema != null );
-        sqlite3PagerJournalMode( sqlite3BtreePager( db.aDb[1].pBt ),
-        db.dfltJournalMode );
+        if ( SQLITE_NOMEM == sqlite3BtreeSetPageSize( pBt, db.nextPagesize, -1, 0 ) )
+        {
+        //  db.mallocFailed = 1;
+        }
+        sqlite3PagerJournalMode( sqlite3BtreePager( pBt ), db.dfltJournalMode );
       }
       return 0;
     }

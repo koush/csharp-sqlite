@@ -1654,21 +1654,21 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
     )
     {
       string zVal;
-      StrAccum pAccum;
+      //StrAccum pAccum;
       string zSep;
       int nVal, nSep;
       Debug.Assert( argc == 1 || argc == 2 );
       if ( sqlite3_value_type( argv[0] ) == SQLITE_NULL ) return;
       Mem pMem = sqlite3_aggregate_context( context, 1 );//sizeof(*pAccum));
-      if ( pMem._StrAccum == null ) pMem._StrAccum = new StrAccum();
-      pAccum = pMem._StrAccum;
-      if ( pAccum.Context == null ) pAccum.Context = pMem;
-      if ( pAccum != null )
+      if ( pMem._StrAccum.zBase == null ) pMem._StrAccum = new StrAccum(100);
+      //pAccum = pMem._StrAccum;
+      if ( pMem._StrAccum.Context == null ) pMem._StrAccum.Context = pMem;
+      if ( pMem._StrAccum.zBase != null )
       {
         sqlite3 db = sqlite3_context_db_handle( context );
-        int firstTerm = pAccum.useMalloc == 0 ? 1 : 0;
-        pAccum.useMalloc = 1;
-        pAccum.mxAlloc = db.aLimit[SQLITE_LIMIT_LENGTH];
+        int firstTerm = pMem._StrAccum.useMalloc == 0 ? 1 : 0;
+        pMem._StrAccum.useMalloc = 1;
+        pMem._StrAccum.mxAlloc = db.aLimit[SQLITE_LIMIT_LENGTH];
         if ( 0 == firstTerm )
         {
           if ( argc == 2 )
@@ -1681,25 +1681,25 @@ sqlite3_result_text(context, "?000", 4, SQLITE_STATIC);
             zSep = ",";
             nSep = 1;
           }
-          sqlite3StrAccumAppend( pAccum, zSep, nSep );
+          sqlite3StrAccumAppend( pMem._StrAccum, zSep, nSep );
         }
         zVal = sqlite3_value_text( argv[0] );
         nVal = sqlite3_value_bytes( argv[0] );
-        sqlite3StrAccumAppend( pAccum, zVal, nVal );
+        sqlite3StrAccumAppend( pMem._StrAccum, zVal, nVal );
       }
     }
 
     static void groupConcatFinalize( sqlite3_context context )
     {
-      StrAccum pAccum = null;
+      //StrAccum pAccum = null;
       Mem pMem = sqlite3_aggregate_context( context, 0 );
       if ( pMem != null )
       {
-        if ( pMem._StrAccum == null ) pMem._StrAccum = new StrAccum();
-        pAccum = pMem._StrAccum;
-      }
-      if ( pAccum != null )
-      {
+        if ( pMem._StrAccum.zBase == null ) pMem._StrAccum = new StrAccum(100);
+        StrAccum pAccum = pMem._StrAccum;
+      //}
+      //if ( pAccum != null )
+      //{
         if ( pAccum.tooBig != 0 )
         {
           sqlite3_result_error_toobig( context );

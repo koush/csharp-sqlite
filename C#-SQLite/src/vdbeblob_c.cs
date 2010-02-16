@@ -275,7 +275,7 @@ int sqlite3_blob_open(
     }
     pBlob = (Incrblob *)sqlite3DbMallocZero(db, sizeof(Incrblob));
     if( db->mallocFailed ){
-      sqlite3DbFree(db, pBlob);
+      sqlite3DbFree(db, ref pBlob);
       goto blob_open_out;
     }
     pBlob->flags = flags;
@@ -320,7 +320,7 @@ int sqlite3_blob_close(sqlite3_blob *pBlob){
     db = p->db;
     sqlite3_mutex_enter(db->mutex);
     rc = sqlite3_finalize(p->pStmt);
-    sqlite3DbFree(db, p);
+    sqlite3DbFree(db, ref p);
     sqlite3_mutex_leave(db->mutex);
   }else{
     rc = SQLITE_OK;

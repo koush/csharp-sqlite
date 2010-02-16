@@ -16,7 +16,6 @@ do_test SIMPLE_SQLITE_VERSION {
 # after these comments
 
 #source $testdir/_RunWorking.txt
-
 ##########################################################################################
 puts -nonewline "Press RETURN to exit..."; gets stdin; exit 0
 

@@ -205,6 +205,15 @@ namespace Community.Data.SQLite
           {
             return (byte[])ap[vaNEXT - 1];
           }
+        case "byte[][]":
+          if ( ap[vaNEXT - 1] == null )
+          {
+            return null;
+          }
+          else
+          {
+            return (byte[][])ap[vaNEXT - 1];
+          }
         case "int[]":
           if ( ap[vaNEXT - 1] == null )
           {

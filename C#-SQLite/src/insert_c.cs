@@ -1562,11 +1562,11 @@ isView = false;
           case OE_Fail:
             {
               int j;
-              StrAccum errMsg = new StrAccum();
+              StrAccum errMsg = new StrAccum(200);
               string zSep;
               string zErr;
 
-              sqlite3StrAccumInit( errMsg, new StringBuilder( 200 ), 0, 200 );
+              sqlite3StrAccumInit( errMsg, null, 0, 200 );
               errMsg.db = pParse.db;
               zSep = pIdx.nColumn > 1 ? "columns " : "column ";
               for ( j = 0; j < pIdx.nColumn; j++ )

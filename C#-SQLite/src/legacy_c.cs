@@ -85,6 +85,11 @@ namespace Community.Data.SQLite
       int nRetry = 0;             /* Number of retry attempts */
       int callbackIsInit;         /* True if callback data is initialized */
 
+      if ( !sqlite3SafetyCheckOk( db ) )
+      {
+        return SQLITE_MISUSE;
+      }
+
       if ( zSql == null ) zSql = "";
 
       sqlite3_mutex_enter( db.mutex );

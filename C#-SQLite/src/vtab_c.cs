@@ -60,7 +60,7 @@ static int createModule(
     if( pDel && pDel->xDestroy ){
       pDel->xDestroy(pDel->pAux);
     }
-    sqlite3DbFree(db, pDel);
+    sqlite3DbFree(db, ref pDel);
     if( pDel==pMod ){
       db->mallocFailed = 1;
     }
@@ -150,7 +150,7 @@ void sqlite3VtabUnlock(VTable *pVTab){
         p->pModule->xDisconnect(p);
       }
     }
-    sqlite3DbFree(db, pVTab);
+    sqlite3DbFree(db, ref pVTab);
   }
 }
 
@@ -271,10 +271,10 @@ static void addModuleArgument(sqlite3 *db, Table *pTable, char *zArg){
   if( azModuleArg==0 ){
     int j;
     for(j=0; j<i; j++){
-      sqlite3DbFree(db, pTable->azModuleArg[j]);
+      sqlite3DbFree(db, ref pTable->azModuleArg[j]);
     }
     sqlite3DbFree(db, zArg);
-    sqlite3DbFree(db, pTable->azModuleArg);
+    sqlite3DbFree(db, ref pTable->azModuleArg);
     pTable->nModuleArg = 0;
   }else{
     azModuleArg[i] = zArg;
@@ -496,7 +496,7 @@ static int vtabCallConstructor(
       *pzErr = sqlite3MPrintf(db, "%s", zErr);
       sqlite3DbFree(db, zErr);
     }
-    sqlite3DbFree(db, pVTable);
+    sqlite3DbFree(db, ref pVTable);
   }else if( ALWAYS(pVTable->pVtab) ){
     /* Justification of ALWAYS():  A correct vtab constructor must allocate
     ** the sqlite3_vtab object if successful.  */

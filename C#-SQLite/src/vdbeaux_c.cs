@@ -106,7 +106,7 @@ if( 0==isPrepareV2 ) return;
     static string sqlite3_sql( sqlite3_stmt pStmt )
     {
       Vdbe p = (Vdbe)pStmt;
-      return ( p.isPrepareV2 ? p.zSql : "" );
+      return ( p!=null && p.isPrepareV2 ? p.zSql : "" );
     }
 
     /*
@@ -384,8 +384,9 @@ pOp.cnt = 0;
       Debug.Assert( p.magic == VDBE_MAGIC_INIT );
       if ( i >= p.nLabelAlloc )
       {
-        int n = p.nLabelAlloc * 2 + 5;
-        Array.Resize( ref p.aLabel, n );
+        int n = p.nLabelAlloc == 0 ? 15 : p.nLabelAlloc * 2 + 5;
+        if (p.aLabel == null) p.aLabel = sqlite3Malloc(p.aLabel, n);
+        else Array.Resize(ref p.aLabel, n);
         //p.aLabel = sqlite3DbReallocOrFree(p.db, p.aLabel,
         //                                       n*sizeof(p.aLabel[0]));
         p.nLabelAlloc = p.aLabel.Length;//sqlite3DbMallocSize(p.db, p.aLabel)/sizeof(p.aLabel[0]);
@@ -833,7 +834,7 @@ if( n>nMaxArgs ) nMaxArgs = n;
         //    for(pOp=aOp; pOp<&aOp[nOp]; pOp++){
         //      freeP4(db, pOp.p4type, pOp.p4.p);
         //#if SQLITE_DEBUG
-        //      sqlite3DbFree(db, pOp.zComment);
+        //      sqlite3DbFree(db, ref pOp.zComment);
         //#endif     
         //    }
         //  }
@@ -1413,11 +1414,11 @@ break;
             //  sqlite3DbFree( db, ref pEnd.zMalloc );
             //  pEnd.zMalloc = 0;
             //}
-            pEnd._Mem = null;
             pEnd.z = null;
             pEnd.n = 0;
-            pEnd.zBLOB = null;
             pEnd.flags = MEM_Null;
+            sqlite3_free( ref pEnd._Mem );
+            sqlite3_free( ref pEnd.zBLOB);
           }
         }
         //        db.mallocFailed = malloc_failed;
@@ -1522,11 +1523,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
 
       i_pMem = 0; if ( i_pMem >= p.pResultSet.Length ) Array.Resize( ref p.pResultSet, 8 + p.pResultSet.Length );
       {
-#if !SQLITE_POOL_MEM
-        p.pResultSet[i_pMem] = new Mem();
-#else
-    p.pResultSet[i_pMem] =Pool.Allocate_Mem();
-#endif
+      p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
       }
       pMem = p.pResultSet[i_pMem++];
       do
@@ -1573,11 +1570,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
           pMem.u.i = i;                                /* Program counter */
           if ( p.pResultSet[i_pMem] == null )
           {
-#if !SQLITE_POOL_MEM
-            p.pResultSet[i_pMem] = new Mem();
-#else
-          p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+            p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
           }
           pMem = p.pResultSet[i_pMem++]; //pMem++;
 
@@ -1594,11 +1587,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
           pMem.enc = SQLITE_UTF8;
           if ( p.pResultSet[i_pMem] == null )
           {
-#if !SQLITE_POOL_MEM
-            p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+            p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
           }
           pMem = p.pResultSet[i_pMem++]; //pMem++;
           if ( pOp.p4type == P4_SUBPROGRAM )
@@ -1626,11 +1615,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
         pMem.type = SQLITE_INTEGER;
         if ( p.pResultSet[i_pMem] == null )
         {
-#if !SQLITE_POOL_MEM
-          p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+          p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
         }
         pMem = p.pResultSet[i_pMem++]; //pMem++;
 
@@ -1639,11 +1624,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
         pMem.type = SQLITE_INTEGER;
         if ( p.pResultSet[i_pMem] == null )
         {
-#if !SQLITE_POOL_MEM
-          p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+          p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
         }
         pMem = p.pResultSet[i_pMem++]; //pMem++;
 
@@ -1654,11 +1635,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
           pMem.type = SQLITE_INTEGER;
           if ( p.pResultSet[i_pMem] == null )
           {
-#if !SQLITE_POOL_MEM
-            p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+            p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
           }
           pMem = p.pResultSet[i_pMem++]; //pMem++;
         }
@@ -1683,11 +1660,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
         pMem.type = SQLITE_TEXT;
         if ( p.pResultSet[i_pMem] == null )
         {
-#if !SQLITE_POOL_MEM
-          p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+          p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
         }
         pMem = p.pResultSet[i_pMem++]; //pMem++;
 
@@ -1705,11 +1678,7 @@ Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
           pMem.enc = SQLITE_UTF8;
           if ( p.pResultSet[i_pMem] == null )
           {
-#if !SQLITE_POOL_MEM
-            p.pResultSet[i_pMem] = new Mem();
-#else
-            p.pResultSet[i_pMem] = Pool.Allocate_Mem();
-#endif
+            p.pResultSet[i_pMem] = sqlite3Malloc( p.pResultSet[i_pMem] );
           }
           pMem = p.pResultSet[i_pMem++]; // pMem++;
 
@@ -1937,43 +1906,24 @@ sqlite3IoTrace( "SQL %s\n", z.Trim() );
 
         // C# -- Replace allocation with individual Dims
         // aMem is 1 based, so allocate 1 extra cell under C#
-#if !SQLITE_POOL_MEM
-        p.aMem = new Mem[nMem + 1]; 
-#else
-        p.aMem = Pool.Allocate_Mem(nMem + 1);
-#endif
+        p.aMem = new Mem[nMem + 1];
         for ( n = 0; n <= nMem; n++ )
         {
-#if !SQLITE_POOL_MEM
-          p.aMem[n] = new Mem();
-#else
-          p.aMem[n] = Pool.Allocate_Mem();
-#endif
+          p.aMem[n] = sqlite3Malloc( p.aMem[n] );
+          p.aMem[n].db = db;
         }
         //p.aMem--;         /* aMem[] goes from 1..nMem */
         p.nMem = nMem;      /*       not from 0..nMem-1 */
         //
-#if !SQLITE_POOL_MEM
-        p.aVar = new Mem[nVar == 0 ? 1 : nVar]; //p.aVar = p.aMem[nMem + 1];
-#else
-        p.aVar = Pool.Allocate_Mem(nVar == 0 ? 1 : nVar);
-#endif
+        p.aVar = new Mem[nVar == 0 ? 1 : nVar ]; 
         for ( n = 0; n < nVar; n++ )
         {
-#if !SQLITE_POOL_MEM
-          p.aVar[n] = new Mem();
-#else
-          p.aVar[n] = Pool.Allocate_Mem();
-#endif
+          p.aVar[n] = sqlite3Malloc(p.aVar[n] );
         }
         p.nVar = (ynVar)nVar;
         p.okVar = 0;
         //
-#if !SQLITE_POOL_MEM
         p.apArg = new Mem[nArg == 0 ? 1 : nArg];//p.apArg = (Mem**)p.aVar[nVar];
-#else
-        p.apArg = Pool.Allocate_Mem(nArg == 0 ? 1 : nArg);
-#endif
         //
 
         p.azVar = new string[nArg == 0 ? 1 : nArg]; //p.azVar = (char**)p.apArg[nArg];
@@ -2056,6 +2006,7 @@ p.aOp[i].cycles = 0;
       else if ( pCx.pCursor != null )
       {
         sqlite3BtreeCloseCursor( pCx.pCursor );
+        sqlite3MemFreeBtCursor( ref pCx.pCursor );
       }
 #if ! SQLITE_OMIT_VIRTUALTABLE
 if( pCx.pVtabCursor ){
@@ -2163,19 +2114,11 @@ p.inVtabMethod = 0;
       sqlite3DbFree( db, ref p.aColName );
       n = nResColumn * COLNAME_N;
       p.nResColumn = (u16)nResColumn;
-#if !SQLITE_POOL_MEM
       p.aColName = new Mem[n];// (Mem*)sqlite3DbMallocZero(db, Mem.Length * n);
-#else
-      p.aColName = Pool.Allocate_Mem(n);
-#endif
       //if (p.aColName == 0) return;
       while ( n-- > 0 )
       {
-#if !SQLITE_POOL_MEM
-        p.aColName[n] = new Mem();
-#else
-        p.aColName[n] = Pool.Allocate_Mem();
-#endif
+        p.aColName[n] = sqlite3Malloc( p.aColName[n] );
         pColName = p.aColName[n];
         pColName.flags = MEM_Null;
         pColName.db = p.db;
@@ -3044,6 +2987,9 @@ fclose(out);
       sqlite3DbFree( db, ref p.zSql );
       p.magic = VDBE_MAGIC_DEAD;
       sqlite3DbFree( db, ref  p.pFree );
+      p.db = null;
+      if (p.aMem != null) releaseMemArray(p.aMem, p.aMem.Length);
+      if (p.apArg != null) releaseMemArray(p.apArg, p.apArg.Length);
       sqlite3DbFree( db, ref  p );
     }
 
@@ -3460,7 +3406,7 @@ swapMixedEndianFloat(x);
             else
             {
               pMem.z = null;
-              pMem.zBLOB = new byte[len];
+              pMem.zBLOB = sqlite3Malloc((int)len);
               pMem.flags = MEM_Blob | MEM_Ephem;
               Buffer.BlockCopy( buf, offset, pMem.zBLOB, 0, (int)len );//memcpy( buf, pMem.z, len );
             }
@@ -3578,7 +3524,7 @@ swapMixedEndianFloat(x);
             else
             {
               pMem.flags = MEM_Blob | MEM_Ephem;
-              pMem.zBLOB = new byte[len];
+              pMem.zBLOB = sqlite3Malloc(len);
               buf.CopyTo( pMem.zBLOB, 0 );
               pMem.n = len;// len;
               pMem.z = null;
@@ -3644,21 +3590,13 @@ swapMixedEndianFloat(x);
       p.nField = (u16)( pKeyInfo.nField + 1 );
       //p->aMem = pMem = (Mem*)&( (char*)p )[ROUND8( sizeof( UnpackedRecord ) )];
       //assert( EIGHT_BYTE_ALIGNMENT( pMem ) );
-#if !SQLITE_POOL_MEM
       p.aMem = new Mem[p.nField + 1];
-#else
-      p.aMem = Pool.Allocate_Mem(p.nField + 1);
-#endif
       idx = (u32)getVarint32( aKey, 0, ref szHdr );// GetVarint( aKey, szHdr );
       d = (int)szHdr;
       u = 0;
       while ( idx < (int)szHdr && u < p.nField && d <= nKey )
       {
-#if !SQLITE_POOL_MEM
-        p.aMem[u] = new Mem();
-#else
-        p.aMem[u] = Pool.Allocate_Mem();
-#endif
+        p.aMem[u] = sqlite3Malloc(p.aMem[u]);
         pMem = p.aMem[u];
         u32 serial_type = 0;
 
@@ -3696,7 +3634,8 @@ swapMixedEndianFloat(x);
       //}
       if ( ( p.flags & UNPACKED_NEED_FREE ) != 0 )
       {
-        p = null; sqlite3DbFree( p.pKeyInfo.db, ref p );
+        sqlite3DbFree( p.pKeyInfo.db, ref p.aMem );
+        p = null; 
       }
     }
 
@@ -3727,11 +3666,7 @@ swapMixedEndianFloat(x);
     ** to ignore the rowid at the end of key1.
     */
 
-#if !SQLITE_POOL_MEM
     static Mem mem1 = new Mem();
-#else
-      Mem mem1 = Pool.Allocate_Mem();
-#endif
     // ALTERNATE FORM for C#
     static int sqlite3VdbeRecordCompare(
     int nKey1, byte[] pKey1,    /* Left key */
@@ -3758,11 +3693,6 @@ swapMixedEndianFloat(x);
       //Buffer.BlockCopy( pKey1, offset, aKey1, 0, aKey1.Length );
       KeyInfo pKeyInfo;
 
-//#if !SQLITE_POOL_MEM
-//      Mem mem1 = new Mem();
-//#else
-//      Mem mem1 = Pool.Allocate_Mem();
-//#endif
       pKeyInfo = pPKey2.pKeyInfo;
       mem1.enc = pKeyInfo.enc;
       mem1.db = pKeyInfo.db;
@@ -3873,13 +3803,10 @@ swapMixedEndianFloat(x);
       u32 szHdr = 0;        /* Size of the header */
       u32 typeRowid = 0;    /* Serial type of the rowid */
       u32 lenRowid;       /* Size of the rowid */
-      Mem m;
-#if !SQLITE_POOL_MEM
-      Mem v = new Mem();
-#else
-      Mem v = Pool.Allocate_Mem();
-#endif
-      UNUSED_PARAMETER( db );
+      Mem m = null;
+      Mem v = null; 
+      v = sqlite3Malloc( v);
+      UNUSED_PARAMETER(db);
 
       /* Get the size of the index entry.  Only indices entries of less
       ** than 2GiB are support - anything large must be database corruption.
@@ -3892,11 +3819,7 @@ swapMixedEndianFloat(x);
       Debug.Assert( ( (u32)nCellKey & SQLITE_MAX_U32 ) == (u64)nCellKey );
 
       /* Read in the complete content of the index entry */
-#if !SQLITE_POOL_MEM
-      m = new Mem();
-#else
-      m = Pool.Allocate_Mem();
-#endif
+      m = sqlite3Malloc( m );
       // memset(&m, 0, sizeof(m));
       rc = sqlite3VdbeMemFromBtree( pCur, 0, (int)nCellKey, true, m );
       if ( rc != 0 )
@@ -3973,7 +3896,7 @@ return SQLITE_CORRUPT_BKPT;
       i64 nCellKey = 0;
       int rc;
       BtCursor pCur = pC.pCursor;
-      Mem m;
+      Mem m = null;
 
       Debug.Assert( sqlite3BtreeCursorIsValid( pCur ) );
       rc = sqlite3BtreeKeySize( pCur, ref nCellKey );
@@ -3985,11 +3908,8 @@ return SQLITE_CORRUPT_BKPT;
         res = 0;
         return SQLITE_CORRUPT;
       }
-#if !SQLITE_POOL_MEM
-      m = new Mem();
-#else
-      m = Pool.Allocate_Mem();
-#endif
+
+      m = sqlite3Malloc( m );
       // memset(&m, 0, sizeof(m));
       rc = sqlite3VdbeMemFromBtree( pC.pCursor, 0, (int)nCellKey, true, m );
       if ( rc != 0 )

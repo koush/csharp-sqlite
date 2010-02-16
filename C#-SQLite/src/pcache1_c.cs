@@ -257,9 +257,10 @@ namespace Community.Data.SQLite
       }
       else
       {
-        int iSize = p.pData.Length;//sqlite3MallocSize( p );
+        int iSize = sqlite3MallocSize(p.pData);
         sqlite3StatusAdd( SQLITE_STATUS_PAGECACHE_OVERFLOW, -iSize );
-        p = null;//sqlite3_free( ref p );
+        sqlite3_free(ref p.pData); 
+        p = null;
       }
     }
 
@@ -325,6 +326,14 @@ namespace Community.Data.SQLite
     /*
     ** Free an allocated buffer obtained from sqlite3PageMalloc().
     */
+    static void sqlite3PageFree(ref byte[] p)
+    {
+      if ( p != null )
+      {
+        sqlite3_free(ref p );
+        p = null;
+      }
+    }
     static void sqlite3PageFree( ref PgHdr p )
     {
       pcache1EnterMutex();

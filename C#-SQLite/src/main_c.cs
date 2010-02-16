@@ -166,7 +166,7 @@ return rc;
       sqlite3GlobalConfig.isMutexInit = 1;
       if ( sqlite3GlobalConfig.isMallocInit == 0 )
       {
-        //rc = sqlite3MallocInit();
+        rc = sqlite3MallocInit();
       }
       if ( rc == SQLITE_OK )
       {
@@ -274,7 +274,7 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
     ** on when SQLite is already shut down.  If SQLite is already shut down
     ** when this routine is invoked, then this routine is a harmless no-op.
     */
-    static int sqlite3_shutdown()
+    public static int sqlite3_shutdown()
     {
       if ( sqlite3GlobalConfig.isInit != 0 )
       {
@@ -289,7 +289,7 @@ memset( pHash, 0, sizeof( sqlite3GlobalFunctions ) );
       }
       if ( sqlite3GlobalConfig.isMallocInit != 0 )
       {
-        //sqlite3MallocEnd();
+        sqlite3MallocEnd();
         sqlite3GlobalConfig.isMallocInit = 0;
       }
       if ( sqlite3GlobalConfig.isMutexInit != 0 )
@@ -481,7 +481,7 @@ break;
         case SQLITE_CONFIG_SCRATCH:
           {
             /* Designate a buffer for scratch memory space */
-            sqlite3GlobalConfig.pScratch = (byte[])va_arg( ap, "byte[]" );
+            sqlite3GlobalConfig.pScratch = (byte[][])va_arg( ap, "byte[][]" );
             sqlite3GlobalConfig.szScratch = (int)va_arg( ap, "int" );
             sqlite3GlobalConfig.nScratch = (int)va_arg( ap, "int" );
             break;
@@ -918,10 +918,10 @@ sqlite3HashClear(&db.aModule);
       db.magic = SQLITE_MAGIC_CLOSED;
       sqlite3_mutex_free( ref db.mutex );
       Debug.Assert( db.lookaside.nOut == 0 );  /* Fails on a lookaside memory leak */
-      if ( db.lookaside.bMalloced )
-      {
-        ////sqlite3_free( ref db.lookaside.pStart );
-      }
+      //if ( db.lookaside.bMalloced )
+      //{
+      //  sqlite3_free( ref db.lookaside.pStart );
+      //}
       //sqlite3_free( ref db );
       return SQLITE_OK;
     }

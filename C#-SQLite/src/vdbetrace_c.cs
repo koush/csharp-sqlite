@@ -87,12 +87,12 @@ namespace Community.Data.SQLite
       int nToken = 0;          /* Length of the parameter token */
       int i;                   /* Loop counter */
       Mem pVar;                /* Value of a host parameter */
-      StrAccum _out = new StrAccum();               /* Accumulate the _output here */
-      StringBuilder zBase = new StringBuilder( 100 ); /* Initial working space */
+      StrAccum _out = new StrAccum(1000);               /* Accumulate the _output here */
+      //StringBuilder zBase = new StringBuilder( 100 ); /* Initial working space */
       int izRawSql = 0;
 
       db = p.db;
-      sqlite3StrAccumInit( _out, zBase, zBase.Capacity,//sizeof(zBase), 
+      sqlite3StrAccumInit( _out, null, 100,
                           db.aLimit[SQLITE_LIMIT_LENGTH] );
       _out.db = db;
       while ( izRawSql < zRawSql.Length )

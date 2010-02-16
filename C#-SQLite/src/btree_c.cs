@@ -623,7 +623,7 @@ p.eState = CURSOR_INVALID;
       */
       if ( 0 == pCur.apPage[0].intKey )
       {
-        byte[] pKey = new byte[pCur.nKey];//void pKey = sqlite3Malloc( (int)pCur.nKey );
+        byte[] pKey = sqlite3Malloc( (int)pCur.nKey );
         //if( pKey !=null){
         rc = sqlite3BtreeKey( pCur, 0, (u32)pCur.nKey, pKey );
         if ( rc == SQLITE_OK )
@@ -686,8 +686,7 @@ p.eState = CURSOR_INVALID;
     static void sqlite3BtreeClearCursor( BtCursor pCur )
     {
       Debug.Assert( cursorHoldsMutex( pCur ) );
-      //sqlite3_free(ref pCur.pKey);
-      pCur.pKey = null;
+      sqlite3_free(ref pCur.pKey);
       pCur.eState = CURSOR_INVALID;
     }
 
@@ -987,28 +986,28 @@ return SQLITE_CORRUPT_BKPT;
     static void btreeParseCellPtr(
     MemPage pPage,        /* Page containing the cell */
     int iCell,            /* Pointer to the cell text. */
-    ref CellInfo pInfo        /* Fill in this structure */
+    ref CellInfo pInfo    /* Fill in this structure */
     )
     { btreeParseCellPtr( pPage, pPage.aData, iCell, ref pInfo ); }
     static void btreeParseCellPtr(
     MemPage pPage,        /* Page containing the cell */
     byte[] pCell,         /* The actual data */
-    ref CellInfo pInfo        /* Fill in this structure */
+    ref CellInfo pInfo    /* Fill in this structure */
     )
     { btreeParseCellPtr( pPage, pCell, 0, ref pInfo ); }
     static void btreeParseCellPtr(
     MemPage pPage,         /* Page containing the cell */
     u8[] pCell,            /* Pointer to the cell text. */
     int iCell,             /* Pointer to the cell text. */
-    ref CellInfo pInfo         /* Fill in this structure */
+    ref CellInfo pInfo     /* Fill in this structure */
     )
     {
-      u16 n;                  /* Number bytes in cell content header */
-      u32 nPayload = 0;           /* Number of bytes of cell payload */
+      u16 n;               /* Number bytes in cell content header */
+      u32 nPayload = 0;    /* Number of bytes of cell payload */
 
       Debug.Assert( sqlite3_mutex_held( pPage.pBt.mutex ) );
 
-      pInfo.pCell = pCell;
+      if (pInfo.pCell != pCell) pInfo.pCell = pCell;
       pInfo.iCell = iCell;
       Debug.Assert( pPage.leaf == 0 || pPage.leaf == 1 );
       n = pPage.childPtrSize;
@@ -1106,10 +1105,10 @@ return SQLITE_CORRUPT_BKPT;
     ** the space used by the cell pointer.
     */
     // Alternative form for C#
-    static byte[] pCell = new byte[13];
     static u16 cellSizePtr(MemPage pPage, int iCell)
     {
       CellInfo info = new CellInfo();
+      byte[] pCell = new byte[13];
       //byte[] pCell = new byte[13];// Minimum Size = (2 bytes of Header  or (4) Child Pointer) + (maximum of) 9 bytes data
       if ( iCell < 0 )// Overflow Cell
         Buffer.BlockCopy( pPage.aOvfl[-( iCell + 1 )].pCell, 0, pCell, 0, pCell.Length < pPage.aOvfl[-( iCell + 1 )].pCell.Length ? pCell.Length : pPage.aOvfl[-( iCell + 1 )].pCell.Length );
@@ -1125,9 +1124,9 @@ return SQLITE_CORRUPT_BKPT;
     static u16 cellSizePtr( MemPage pPage, byte[] pCell, int offset )
     {
       CellInfo info = new CellInfo();
-      byte[] pTemp = new byte[pCell.Length];
-      Buffer.BlockCopy( pCell, offset, pTemp, 0, pCell.Length - offset );
-      btreeParseCellPtr( pPage, pTemp, ref info );
+      info.pCell = sqlite3Malloc( pCell.Length );
+      Buffer.BlockCopy( pCell, offset, info.pCell, 0, pCell.Length - offset );
+      btreeParseCellPtr( pPage, info.pCell, ref info );
       return info.nSize;
     }
 
@@ -1860,7 +1859,7 @@ return SQLITE_CORRUPT_BKPT;
     )
     {
       int rc;
-      DbPage pDbPage = new PgHdr();
+      DbPage pDbPage = null;
 
       Debug.Assert( sqlite3_mutex_held( pBt.mutex ) );
       rc = sqlite3PagerAcquire( pBt.pPager, pgno, ref pDbPage, (u8)noContent );
@@ -2308,7 +2307,7 @@ return removed;
     {
       if ( null == pBt.pTmpSpace )
       {
-        pBt.pTmpSpace = new byte[pBt.pageSize]; //sqlite3PageMalloc( pBt.pageSize );
+        pBt.pTmpSpace = sqlite3Malloc(pBt.pageSize);
       }
     }
 
@@ -2317,8 +2316,7 @@ return removed;
     */
     static void freeTempSpace( BtShared pBt )
     {
-      //sqlite3PageFree(ref pBt.pTmpSpace);
-      pBt.pTmpSpace = null;
+      sqlite3PageFree(ref pBt.pTmpSpace);
     }
 
     /*
@@ -2341,6 +2339,7 @@ return removed;
         {
           sqlite3BtreeCloseCursor( pTmp );
         }
+        sqlite3MemFreeBtCursor( ref pBt.pCursor );
       }
 
       /* Rollback any active transaction and free the handle structure.
@@ -3905,7 +3904,7 @@ sqlite3BtreeTripAllCursors(p, rc);
     */
     static void sqlite3BtreeCursorZero( BtCursor p )
     {
-      p.Clear(); // TODO memset( p, 0, offsetof( BtCursor, iPage ) );
+      p.Clear(); // memset( p, 0, offsetof( BtCursor, iPage ) );
     }
 
     /*
@@ -4442,7 +4441,7 @@ return SQLITE_CORRUPT_BKPT;
       Debug.Assert( cursorHoldsMutex( pCur ) );
       Debug.Assert( pCur.eState == CURSOR_VALID );
       Debug.Assert( pCur.iPage >= 0 && pCur.apPage[pCur.iPage] != null );
-      //Debug.Assert(pCur.aiIdx[pCur.iPage] < pCur.apPage[pCur.iPage].nCell);
+      Debug.Assert(pCur.aiIdx[pCur.iPage] < pCur.apPage[pCur.iPage].nCell);
       return accessPayload( pCur, offset, amt, pBuf, 0 );
     }
 
@@ -4521,7 +4520,7 @@ return SQLITE_ABORT;
       }
       //aPayload = pCur.info.pCell;
       //aPayload += pCur.info.nHeader;
-      aPayload = new byte[pCur.info.nSize - pCur.info.nHeader];
+      aPayload = sqlite3Malloc(pCur.info.nSize - pCur.info.nHeader);
       if ( pPage.intKey != 0 )
       {
         nKey = 0;
@@ -5095,7 +5094,7 @@ return SQLITE_CORRUPT_BKPT;
               Buffer.BlockCopy( pPage.aData, pCell - pPage.childPtrSize, pCellBody, 0, pCellBody.Length );//          u8 * const pCellBody = pCell - pPage->childPtrSize;
               btreeParseCellPtr( pPage, pCellBody, ref pCur.info );
               nCell = (int)pCur.info.nKey;
-              pCellKey = new byte[nCell]; //sqlite3Malloc( nCell );
+              pCellKey = sqlite3Malloc( nCell );
               //if ( pCellKey == null )
               //{
               //  rc = SQLITE_NOMEM;
@@ -5104,11 +5103,11 @@ return SQLITE_CORRUPT_BKPT;
               rc = accessPayload( pCur, 0, (u32)nCell, pCellKey, 0 );
               if ( rc != 0 )
               {
-                pCellKey = null;// sqlite3_free( pCellKey );
+                pCellKey = null;// sqlite3_free(ref pCellKey );
                 goto moveto_finish;
               }
               c = sqlite3VdbeRecordCompare( nCell, pCellKey, pIdxKey );
-              pCellKey = null;// sqlite3_free( pCellKey );
+              pCellKey = null;// sqlite3_free(ref pCellKey );
             }
           }
           if ( c == 0 )
@@ -6118,7 +6117,7 @@ return SQLITE_CORRUPT_BKPT;
         }
         else
         {
-          byte[] pZeroBlob = new byte[n]; // memset(pPayload, 0, n);
+          byte[] pZeroBlob = sqlite3Malloc(n); // memset(pPayload, 0, n);
           Buffer.BlockCopy( pZeroBlob, 0, pPayload, pPayloadIndex, n );
         }
         nPayload -= n;
@@ -6708,14 +6707,6 @@ if (false)
     */
 
     // under C#; Try to reuse Memory
-    static MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
-    static MemPage[] apCopy = new MemPage[NB];   /* Private copies of apOld[] pages */
-    static MemPage[] apNew = new MemPage[NB + 2];/* pPage and up to NB siblings after balancing */
-    static int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
-    static int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
-    static int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
-    static u16[] szCell = new u16[1];            /* Local size of all cells in apCell[] */
-    static u8[][] apCell = new u8[1][]; 
 
     static int balance_nonroot(
     MemPage pParent,               /* Parent page of siblings being balanced */
@@ -6724,6 +6715,13 @@ if (false)
     int isRoot                     /* True if pParent is a root-page */
     )
     {
+     MemPage[] apOld = new MemPage[NB];    /* pPage and up to two siblings */
+     MemPage[] apCopy = new MemPage[NB];   /* Private copies of apOld[] pages */
+     MemPage[] apNew = new MemPage[NB + 2];/* pPage and up to NB siblings after balancing */
+     int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
+     int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
+     int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
+     u16[] szCell = new u16[1];            /* Local size of all cells in apCell[] */
       BtShared pBt;                /* The whole database */
       int nCell = 0;               /* Number of cells in apCell[] */
       int nMaxCells = 0;           /* Allocated size of apCell, szCell, aFrom. */
@@ -6747,7 +6745,7 @@ if (false)
       //int[] apDiv = new int[NB - 1];        /* Divider cells in pParent */
       //int[] cntNew = new int[NB + 2];       /* Index in aCell[] of cell after i-th page */
       //int[] szNew = new int[NB + 2];        /* Combined size of cells place on i-th page */
-      //u8[][] apCell = null;                 /* All cells begin balanced */
+      u8[][] apCell = null;                 /* All cells begin balanced */
       //u16[] szCell;                         /* Local size of all cells in apCell[] */
       //u8[] aSpace1;                         /* Space for copies of dividers cells */
       Pgno pgno;                   /* Temp var to store a page number in */
@@ -6872,7 +6870,7 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
       //   + nMaxCells*sizeof(u16)                       /* szCell */
       //   + pBt.pageSize                               /* aSpace1 */
       //   + k*nOld;                                     /* Page copies (apCopy) */
-      if (apCell.Length < nMaxCells) Array.Resize(ref apCell,nMaxCells);//apCell = sqlite3ScratchMalloc( szScratch );
+      apCell = sqlite3ScratchMalloc(apCell, nMaxCells); 
       //if( apCell==null ){
       //  rc = SQLITE_NOMEM;
       //  goto balance_cleanup;
@@ -6933,7 +6931,7 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
         if ( i < nOld - 1 && 0 == leafData )
         {
           u16 sz = (u16)szNew[i];
-          byte[] pTemp = new byte[sz + leafCorrection];
+          byte[] pTemp = sqlite3Malloc(sz + leafCorrection);
           Debug.Assert( nCell < nMaxCells );
           szCell[nCell] = sz;
           //pTemp = &aSpace1[iSpace1];
@@ -6941,7 +6939,7 @@ apDiv[i] = &aOvflSpace[apDiv[i]-pParent.aData];
           Debug.Assert( sz <= pBt.pageSize / 4 );
           //Debug.Assert(iSpace1 <= pBt.pageSize);
           Buffer.BlockCopy( pParent.aData, apDiv[i], pTemp, 0, sz );//memcpy( pTemp, apDiv[i], sz );
-          if (apCell[nCell].Length < sz) Array.Resize(ref          apCell[nCell] ,sz);
+          if (apCell[nCell] == null || apCell[nCell].Length < sz) Array.Resize(ref apCell[nCell] ,sz);
           Buffer.BlockCopy( pTemp, leafCorrection, apCell[nCell], 0, sz );//apCell[nCell] = pTemp + leafCorrection;
           Debug.Assert( leafCorrection == 0 || leafCorrection == 4 );
           szCell[nCell] = (u16)( szCell[nCell] - leafCorrection );
@@ -7177,7 +7175,7 @@ if (false)
           Debug.Assert( j < nMaxCells );
           pCell = apCell[j];
           sz = szCell[j] + leafCorrection;
-          pTemp = new byte[sz];//&aOvflSpace[iOvflSpace];
+          pTemp = sqlite3Malloc(sz);//&aOvflSpace[iOvflSpace];
           if ( 0 == pNew.leaf )
           {
             Buffer.BlockCopy( pCell, 0, pNew.aData, 8, 4 );//memcpy( pNew.aData[8], pCell, 4 );
@@ -7199,7 +7197,7 @@ if (false)
           else
           {
             //------------ pCell -= 4;
-            byte[] _pCell_4 = new byte[pCell.Length + 4];
+            byte[] _pCell_4 = sqlite3Malloc(pCell.Length + 4);
             Buffer.BlockCopy( pCell, 0, _pCell_4, 4, pCell.Length );
             pCell = _pCell_4;
             //
@@ -7393,7 +7391,7 @@ ptrmapCheckPages(pParent, 1);
     ** Cleanup before returning.
     */
     balance_cleanup:
-      //sqlite3ScratchFree( ref apCell );
+      sqlite3ScratchFree( apCell );
       for ( i = 0; i < nOld; i++ )
       {
         releasePage( apOld[i] );
@@ -7488,11 +7486,12 @@ if (false)
     **   balance_deeper()
     **   balance_nonroot()
     */
+    static u8[] aBalanceQuickSpace = new u8[13];
     static int balance( BtCursor pCur )
     {
       int rc = SQLITE_OK;
       int nMin = pCur.pBt.usableSize * 2 / 3;
-      u8[] aBalanceQuickSpace = new u8[13];
+
       //u8[] pFree = null;
 
 #if !NDEBUG || SQLITE_COVERAGE_TEST || DEBUG
@@ -7885,7 +7884,7 @@ int balance_deeper_called = 0;
         //pTmp = pBt.pTmpSpace;
 
         rc = sqlite3PagerWrite( pLeaf.pDbPage );
-        byte[] pNext_4 = new byte[nCell + 4];
+        byte[] pNext_4 = sqlite3Malloc(nCell + 4);
         Buffer.BlockCopy( pLeaf.aData, pCell - 4, pNext_4, 0, nCell + 4 );
         insertCell( pPage, iCellIdx, pNext_4, nCell + 4, null, n, ref rc ); //insertCell( pPage, iCellIdx, pCell - 4, nCell + 4, pTmp, n, ref rc );
         dropCell( pLeaf, pLeaf.nCell - 1, nCell, ref rc );
@@ -8503,7 +8502,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
       pCheck.mxErr--;
       pCheck.nErr++;
       va_start( ap, zFormat );
-      if ( pCheck.errMsg.nChar != 0 )
+      if ( pCheck.errMsg.zText.Length != 0 )
       {
         sqlite3StrAccumAppend( pCheck.errMsg, "\n", 1 );
       }
@@ -8797,16 +8796,15 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
       */
       data = pPage.aData;
       hdr = pPage.hdrOffset;
-      hit = new byte[pBt.pageSize]; //sqlite3PageMalloc( pBt.pageSize );
+      hit = sqlite3Malloc(pBt.pageSize);
       //if( hit==null ){
       //  pCheck.mallocFailed = 1;
       //}else
       {
         u16 contentOffset = (u16)get2byte( data, hdr + 5 );
         Debug.Assert( contentOffset <= usableSize );  /* Enforced by btreeInitPage() */
-        //memset(hit+contentOffset, 0, usableSize-contentOffset);
-        //memset(hit, 1, contentOffset);
-        for ( int iLoop = contentOffset - 1; iLoop >= 0; iLoop-- ) hit[iLoop] = 1;
+        Array.Clear( hit, contentOffset, usableSize - contentOffset );//memset(hit+contentOffset, 0, usableSize-contentOffset);
+        for ( int iLoop = contentOffset - 1; iLoop >= 0; iLoop-- ) hit[iLoop] = 1;//memset(hit, 1, contentOffset);
         nCell = get2byte( data, hdr + 3 );
         cellStart = hdr + 12 - 4 * pPage.leaf;
         for ( i = 0; i < nCell; i++ )
@@ -8861,7 +8859,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
           cnt, data[hdr + 7], iPage );
         }
       }
-      //      sqlite3PageFree(ref hit);
+      sqlite3PageFree(ref hit);
       releasePage( pPage );
       return depth + 1;
     }
@@ -8893,7 +8891,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
       int nRef;
       IntegrityCk sCheck = new IntegrityCk();
       BtShared pBt = p.pBt;
-      StringBuilder zErr = new StringBuilder( 100 );//char zErr[100];
+      //StringBuilder zErr = new StringBuilder( 100 );//char zErr[100];
 
 
       sqlite3BtreeEnter( p );
@@ -8911,7 +8909,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
         sqlite3BtreeLeave( p );
         return "";
       }
-      sCheck.anRef = new int[sCheck.nPage + 1];//sqlite3Malloc( (sCheck.nPage+1)*sizeof(sCheck.anRef[0]) );
+      sCheck.anRef = sqlite3Malloc( sCheck.anRef, (int)sCheck.nPage+1);
       //if( !sCheck.anRef ){
       //  pnErr = 1;
       //  sqlite3BtreeLeave(p);
@@ -8923,7 +8921,7 @@ if( idx==BTREE_LARGEST_ROOT_PAGE && pMeta>0 ) pBt.readOnly = 1;
       {
         sCheck.anRef[i] = 1;
       }
-      sqlite3StrAccumInit( sCheck.errMsg, zErr, zErr.Capacity, 20000 );
+      sqlite3StrAccumInit( sCheck.errMsg, null, 1000, 20000 );
 
       /* Check the integrity of the freelist
       */

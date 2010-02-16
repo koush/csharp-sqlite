@@ -68,7 +68,8 @@ namespace tcl.lang
       ERROR = 1,
       RETURN = 2,
       BREAK = 3,
-      CONTINUE = 4
+      CONTINUE = 4,
+      EXIT = 5
     };
 
 

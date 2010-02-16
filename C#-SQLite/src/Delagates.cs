@@ -35,7 +35,8 @@ namespace Community.Data.SQLite
     public delegate int dxBusy( object pBtShared, int iValue );
     public delegate void dxFreeAux( object pAuxArg );
     public delegate int dxCallback( object pCallbackArg, sqlite3_int64 argc, object p2, object p3 );
-    public delegate void dxCollNeeded( object pCollNeededArg, sqlite3 db, int eTextRep, string collationName );
+    public delegate void dxalarmCallback(object pNotUsed, sqlite3_int64 iNotUsed, int size); 
+    public delegate void dxCollNeeded(object pCollNeededArg, sqlite3 db, int eTextRep, string collationName);
     public delegate int dxCommitCallback( object pCommitArg );
     public delegate int dxCompare( object pCompareArg, int size1, string Key1, int size2, string Key2 );
     public delegate bool dxCompare4( string Key1, int size1, string Key2, int size2 );
@@ -153,15 +154,16 @@ namespace Community.Data.SQLite
     //Faults
     public delegate void void_function();
 
-    //Alarms
-    public delegate void dxalarmCallback( object pData, sqlite3_int64 p1, int p2 );
-
     //Mem Methods
     public delegate int dxMemInit( object o );
     public delegate void dxMemShutdown( object o );
     public delegate byte[] dxMalloc( int nSize );
-    public delegate void dxFree( ref byte[] pOld );
-    public delegate byte[] dxRealloc( ref byte[] pOld, int nSize );
+    public delegate int[] dxMallocInt(int nSize);
+    public delegate Mem dxMallocMem(Mem pMem);
+    public delegate void dxFree(ref byte[] pOld);
+    public delegate void dxFreeInt(ref int[] pOld);
+    public delegate void dxFreeMem(ref Mem pOld);
+    public delegate byte[] dxRealloc( byte[] pOld, int nSize );
     public delegate int dxSize( byte[] pArray );
     public delegate int dxRoundup( int nSize );
 
