@@ -492,9 +492,8 @@ namespace Community.Data.SQLite
             pCache.nPage--;
             pp = pPage.pNext;
             pcache1PinPage( pPage );
-            if ( pCache.apHash[h] == pPage )
-              pCache.apHash[h] = pPage.pNext;
-            else Debugger.Break();
+            if ( pCache.apHash[h] == pPage ) pCache.apHash[h] = pPage.pNext;
+//            else if (pp!=null) Debugger.Break();
             pcache1FreePage( ref  pPage );
           }
           else
@@ -861,6 +860,7 @@ namespace Community.Data.SQLite
       pcache1LeaveMutex();
       //sqlite3_free( ref pCache.apHash );
       //sqlite3_free( ref pCache );
+      p = null;
     }
 
     /*

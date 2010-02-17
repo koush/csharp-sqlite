@@ -4,30 +4,27 @@
 *************************************************************************
 */
 using System;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
+#if !SILVERLIGHT
 using System.Management;
-using System.Runtime.InteropServices;
+#endif
 using System.Text;
 
 using i64 = System.Int64;
 
-using u8 = System.Byte;
 using u32 = System.UInt32;
-using u64 = System.UInt64;
 using time_t = System.Int64;
 
 namespace Community.Data.SQLite
 {
   using sqlite3_value = csSQLite.Mem;
-  using sqlite_int64 = System.Int64;
 
   public partial class csSQLite
   {
 
     static int atoi( byte[] inStr )
-    { return atoi( Encoding.UTF8.GetString( inStr ) ); }
+    { return atoi(Encoding.UTF8.GetString(inStr,0,inStr.Length)); }
 
     static int atoi( string inStr )
     {
@@ -186,10 +183,10 @@ namespace Community.Data.SQLite
           else
           {
             if ( ap[vaNEXT - 1].GetType().Name == "Byte[]" )
-              if ( Encoding.UTF8.GetString( (byte[])ap[vaNEXT - 1] ) == "\0" )
+              if ( Encoding.UTF8.GetString( (byte[])ap[vaNEXT - 1], 0, ((byte[])ap[vaNEXT - 1]).Length) == "\0" )
                 return "";
               else
-                return Encoding.UTF8.GetString( (byte[])ap[vaNEXT - 1] );
+                return Encoding.UTF8.GetString((byte[])ap[vaNEXT - 1], 0, ((byte[])ap[vaNEXT - 1]).Length);
             else if ( ap[vaNEXT - 1].GetType().Name == "Int32" )
               return null;
             else if ( ap[vaNEXT - 1].GetType().Name == "StringBuilder" )
@@ -314,6 +311,7 @@ namespace Community.Data.SQLite
     // Example (C#)
     public static int GetbytesPerSector( StringBuilder diskPath )
     {
+#if !SILVERLIGHT
       ManagementObjectSearcher mosLogicalDisks = new ManagementObjectSearcher( "select * from Win32_LogicalDisk where DeviceID = '" + diskPath.ToString().Remove( diskPath.Length - 1, 1 ) + "'" );
       try
       {
@@ -327,7 +325,10 @@ namespace Community.Data.SQLite
         }
       }
       catch { }
-      return 0;
+      return 4096;
+#else
+      return 4096;
+#endif
     }
 
     static void SWAP<T>( ref T A, ref T B ) { T t = A; A = B; B = t; }

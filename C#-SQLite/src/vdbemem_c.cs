@@ -70,7 +70,7 @@ namespace Community.Data.SQLite
       || desiredEnc == SQLITE_UTF16BE );
       if ( ( pMem.flags & MEM_Str ) == 0 || pMem.enc == desiredEnc )
       {
-        if ( pMem.z == null && pMem.zBLOB != null ) pMem.z = Encoding.UTF8.GetString( pMem.zBLOB );
+        if (pMem.z == null && pMem.zBLOB != null) pMem.z = Encoding.UTF8.GetString(pMem.zBLOB, 0, pMem.zBLOB.Length);
         return SQLITE_OK;
       }
       Debug.Assert( pMem.db == null || sqlite3_mutex_held( pMem.db.mutex ) );
@@ -500,7 +500,7 @@ return SQLITE_OK;
           /* (double)0 In case of SQLITE_OMIT_FLOATING_POINT... */
           return (double)0;
         }
-        if ( pMem.zBLOB != null ) sqlite3AtoF( Encoding.UTF8.GetString( pMem.zBLOB ), ref val );
+        if (pMem.zBLOB != null) sqlite3AtoF(Encoding.UTF8.GetString(pMem.zBLOB, 0, pMem.zBLOB.Length), ref val);
         else if ( !String.IsNullOrEmpty( pMem.z ) ) sqlite3AtoF( pMem.z, ref val );
         else val = 0.0;
         return val;
@@ -1404,8 +1404,8 @@ return SQLITE_NOMEM;
         zVal = pExpr.u.zToken.Substring( 2 );
         nVal = sqlite3Strlen30( zVal ) - 1;
         Debug.Assert( zVal[nVal] == '\'' );
-        sqlite3VdbeMemSetStr( pVal, Encoding.UTF8.GetString( sqlite3HexToBlob( db, zVal, nVal ) ), nVal / 2,
-        0, SQLITE_DYNAMIC );
+        byte[] blob = sqlite3HexToBlob(db, zVal, nVal);
+        sqlite3VdbeMemSetStr(pVal, Encoding.UTF8.GetString(blob, 0, blob.Length), nVal / 2, 0, SQLITE_DYNAMIC);
       }
 #endif
 

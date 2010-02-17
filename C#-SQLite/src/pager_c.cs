@@ -2134,7 +2134,7 @@ CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
       rc = readMasterJournal( pPager.jfd, zMaster, (u32)pPager.pVfs.mxPathname + 1 );
       if ( rc == SQLITE_OK && zMaster[0] != 0 )
       {
-        rc = sqlite3OsAccess( pVfs, Encoding.UTF8.GetString( zMaster ), SQLITE_ACCESS_EXISTS, ref res );
+        rc = sqlite3OsAccess( pVfs, Encoding.UTF8.GetString( zMaster, 0, zMaster.Length  ), SQLITE_ACCESS_EXISTS, ref res );
       } zMaster = null;
       if ( rc != SQLITE_OK || res == 0 )
       {
@@ -2284,8 +2284,8 @@ CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
         /* If there was a master journal and this routine will return success,
         ** see if it is possible to delete the master journal.
         */
-        rc = pager_delmaster( pPager, Encoding.UTF8.GetString( zMaster ) );
-        testcase( rc != SQLITE_OK );
+        rc = pager_delmaster(pPager, Encoding.UTF8.GetString(zMaster, 0, zMaster.Length));
+        testcase(rc != SQLITE_OK);
       }
 
       /* The Pager.sectorSize variable may have been updated while rolling

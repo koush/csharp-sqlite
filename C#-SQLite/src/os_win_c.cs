@@ -1419,7 +1419,7 @@ return SQLITE_OK;
     ** Create a temporary file name in zBuf.  zBuf must be big enough to
     ** hold at pVfs.mxPathname characters.
     */
-    static int getTempname( int nBuf, StringBuilder zBuf )
+    static int getTempname(int nBuf, StringBuilder zBuf)
     {
       const string zChars = "abcdefghijklmnopqrstuvwxyz0123456789";
       //static char zChars[] =
@@ -1460,15 +1460,15 @@ return SQLITE_OK;
 #endif
       //}
 
-      StringBuilder zRandom = new StringBuilder( 20 );
+      StringBuilder zRandom = new StringBuilder(20);
       i64 iRandom = 0;
-      for ( int i = 0; i < 20; i++ )
+      for (int i = 0; i < 20; i++)
       {
-        sqlite3_randomness( 1, ref iRandom );
-        zRandom.Append( (char)zChars[(int)( iRandom % ( zChars.Length - 1 ) )] );
+        sqlite3_randomness(1, ref iRandom);
+        zRandom.Append((char)zChars[(int)(iRandom % (zChars.Length - 1))]);
       }
       //  zBuf[j] = 0;
-      zBuf.Append( Path.GetTempPath() + SQLITE_TEMP_FILE_PREFIX + zRandom.ToString() );
+      zBuf.Append(Path.GetTempPath() + SQLITE_TEMP_FILE_PREFIX + zRandom.ToString());
       //for(i=sqlite3Strlen30(zTempPath); i>0 && zTempPath[i-1]=='\\'; i--){}
       //zTempPath[i] = 0;
       //sqlite3_snprintf(nBuf-30, zBuf,
@@ -1481,7 +1481,7 @@ return SQLITE_OK;
       //zBuf[j] = 0;
 
 #if SQLITE_DEBUG
-      OSTRACE2( "TEMP FILENAME: %s\n", zBuf.ToString() );
+      OSTRACE2("TEMP FILENAME: %s\n", zBuf.ToString());
 #endif
       return SQLITE_OK;
     }
@@ -1546,7 +1546,7 @@ return SQLITE_OK;
       //    /* free the UTF8 buffer */
       //    free(zOut);
       //  }
-      zBuf = new Win32Exception( Marshal.GetLastWin32Error() ).Message;
+      zBuf = Marshal.GetLastWin32Error().ToString();//new Win32Exception( Marshal.GetLastWin32Error() ).Message;
       return 0;
     }
 
@@ -1566,7 +1566,9 @@ return SQLITE_OK;
       FileAccess dwDesiredAccess;
       FileShare dwShareMode;
       FileMode dwCreationDisposition;
+#if !SILVERLIGHT
       FileOptions dwFlagsAndAttributes;
+#endif
 #if SQLITE_OS_WINCE
 int isTemp = 0;
 #endif
@@ -1634,14 +1636,18 @@ int isTemp = 0;
 dwFlagsAndAttributes = FILE_ATTRIBUTE_HIDDEN;
 isTemp = 1;
 #else
+#if !SILVERLIGHT
         dwFlagsAndAttributes = FileOptions.DeleteOnClose; // FILE_ATTRIBUTE_TEMPORARY
         //| FILE_ATTRIBUTE_HIDDEN
         //| FILE_FLAG_DELETE_ON_CLOSE;
 #endif
+#endif
       }
       else
       {
+#if !SILVERLIGHT
         dwFlagsAndAttributes = FileOptions.None; // FILE_ATTRIBUTE_NORMAL;
+#endif
       }
       /* Reports from the internet are that performance is always
       ** better if FILE_FLAG_RANDOM_ACCESS is used.  Ticket #2699. */
@@ -1667,7 +1673,11 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
           try
           {
             retries--;
-            fs = new FileStream( zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 1024, dwFlagsAndAttributes );
+#if !SILVERLIGHT
+            fs = new FileStream( zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096, dwFlagsAndAttributes );
+#else
+            fs = new FileStream(zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096);
+#endif
 #if SQLITE_DEBUG
             OSTRACE3( "OPEN %d (%s)\n", fs.GetHashCode(), fs.Name );
 #endif
@@ -1695,8 +1705,15 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
         //   NULL
         //);
 #endif
-      }
-      if ( fs == null || fs.SafeFileHandle.IsInvalid ) //(h == INVALID_HANDLE_VALUE)
+     }
+      if ( fs == null 
+          ||
+#if !SILVERLIGHT
+          fs.SafeFileHandle.IsInvalid 
+#else
+          !fs.CanRead
+#endif
+          ) //(h == INVALID_HANDLE_VALUE)
       {
         //        free(zConverted);
         if ( ( flags & SQLITE_OPEN_READWRITE ) != 0 )
@@ -1878,15 +1895,12 @@ pFile.zDeleteOnClose = zConverted;
         attr = File.GetAttributes( zFilename );// GetFileAttributesW( (WCHAR*)zConverted );
         if ( attr == FileAttributes.Directory )
         {
-          StringBuilder zTmpname = new StringBuilder( 255 );        /* Buffer used to create temp filename */
-          getTempname( 256, zTmpname );
-
-          string zTempFilename;
-          zTempFilename = zTmpname.ToString();//( SQLITE_TEMP_FILE_PREFIX.Length + 1 );
-          try
-          {
-            FileStream fs = File.Create( zTempFilename, 1, FileOptions.DeleteOnClose );
+           try
+           {
+            var name = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+            FileStream fs = File.Create(name);
             fs.Close();
+            File.Delete(name);
             attr = FileAttributes.Normal;
           }
           catch ( IOException e ) { attr = FileAttributes.ReadOnly; }
@@ -2204,7 +2218,13 @@ n += 16;// sizeof(x);
 if ( sizeof( DWORD ) <= nBuf - n )
 {
 //DWORD pid = GetCurrentProcessId();
-put32bits( zBuf, n, (u32)Process.GetCurrentProcess().Id );//(memcpy(&zBuf[n], pid, sizeof(pid));
+    u32 processId;
+#if !SILVERLIGHT
+    processId = (u32)Process.GetCurrentProcess().Id; 
+#else
+    processId = 28376023;
+#endif
+put32bits( zBuf, n, processId);//(memcpy(&zBuf[n], pid, sizeof(pid));
 n += 4;// sizeof(pid);
 }
 if ( sizeof( DWORD ) <= nBuf - n )
@@ -2384,20 +2404,24 @@ n += sizeof( long );
     /// </summary>
     private class LockingStrategy
     {
+#if !SILVERLIGHT      
       [DllImport( "kernel32.dll" )]
       static extern bool LockFileEx( IntPtr hFile, uint dwFlags, uint dwReserved,
       uint nNumberOfBytesToLockLow, uint nNumberOfBytesToLockHigh,
       [In] ref System.Threading.NativeOverlapped lpOverlapped );
 
       const int LOCKFILE_FAIL_IMMEDIATELY = 1;
-
+#endif
       public virtual void LockFile( sqlite3_file pFile, long offset, long length )
       {
+#if !SILVERLIGHT
         pFile.fs.Lock( offset, length );
+#endif
       }
 
       public virtual int SharedLockFile( sqlite3_file pFile, long offset, long length )
       {
+#if !SILVERLIGHT
         Debug.Assert( length == SHARED_SIZE );
         Debug.Assert( offset == SHARED_FIRST );
         System.Threading.NativeOverlapped ovlp = new System.Threading.NativeOverlapped();
@@ -2406,11 +2430,16 @@ n += sizeof( long );
         ovlp.EventHandle = IntPtr.Zero;
 
         return LockFileEx( pFile.fs.Handle, LOCKFILE_FAIL_IMMEDIATELY, 0, (uint)length, 0, ref ovlp ) ? 1 : 0;
+#else
+        return 1;
+#endif
       }
 
       public virtual void UnlockFile( sqlite3_file pFile, long offset, long length )
       {
+#if !SILVERLIGHT
         pFile.fs.Unlock( offset, length );
+#endif
       }
     }
 
@@ -2422,6 +2451,7 @@ n += sizeof( long );
     {
       public override int SharedLockFile( sqlite3_file pFile, long offset, long length )
       {
+#if !SILVERLIGHT
         Debug.Assert( length == SHARED_SIZE );
         Debug.Assert( offset == SHARED_FIRST );
         try
@@ -2432,6 +2462,7 @@ n += sizeof( long );
         {
           return 0;
         }
+#endif
         return 1;
       }
     }
