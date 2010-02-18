@@ -34,16 +34,11 @@
 //
 
 using System;
-using System.Collections;
 using System.Text;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Data;
 #if NET_2_0
 using System.Data.Common;
 #endif
-using System.Diagnostics; 
-using Group = System.Text.RegularExpressions.Group;
 using Community.Data.SQLite;
 
 namespace Community.Data.SQLiteClient 
@@ -428,45 +423,7 @@ namespace Community.Data.SQLiteClient
 		public void Cancel ()
 		{
 		}
-		
-		public string BindParameters2()
-		{
-			string text = sql;
-			
-			// There used to be a crazy regular expression here, but it caused Mono
-			// to go into an infinite loop of some sort when there were no parameters
-			// in the SQL string.  That was too complicated anyway.
-			
-			// Here we search for substrings of the form [:?]wwwww where w is a letter or digit
-			// (not sure what a legitimate Sqlite3 identifier is), except those within quotes.
-			
-			char inquote = (char)0;
-			int counter = 0;
-			for (int i = 0; i < text.Length; i++) {
-				char c = text[i];
-				if (c == inquote) {
-					inquote = (char)0;
-				} else if (inquote == (char)0 && (c == '\'' || c == '"')) {
-					inquote = c;
-				} else if (inquote == (char)0 && (c == ':' || c == '?')) {
-					int start = i;
-					while (++i < text.Length && char.IsLetterOrDigit(text[i])) { } // scan to end
-					string name = text.Substring(start, i-start);
-					SqliteParameter p;
-					if (name.Length > 1)
-						p = Parameters[name] as SqliteParameter;
-					else
-						p = Parameters[counter] as SqliteParameter;
-					string value = "'" + Convert.ToString(p.Value).Replace("'", "''") + "'";
-					text = text.Remove(start, name.Length).Insert(start, value);
-					i += value.Length - name.Length - 1;
-					counter++;
-				}
-			}
-			
-			return text;
-		}
-		
+				
 #if NET_2_0
 		override
 #endif
@@ -477,13 +434,7 @@ namespace Community.Data.SQLiteClient
 			// so we can only compile statements right before we
 			// want to run them.
 			
-			if (prepared) return;		
-		
-			if (Parameters.Count > 0 && parent_conn.Version == 2)
-			{
-				sql = BindParameters2();
-			}
-			
+			if (prepared) return;			
 			prepared = true;
 		}
 		

@@ -70,7 +70,7 @@ namespace Community.Data.SQLiteClient
 		{
 			db_file = null;
 			db_mode = 0644;
-			db_version = 2;
+			db_version = 3;
 			state = ConnectionState.Closed;
 			sqlite_handle = IntPtr.Zero;
 			encoding = null;
@@ -143,7 +143,13 @@ namespace Community.Data.SQLiteClient
 		public int Version {
 			get { return db_version; }
 		}
-		    internal csSQLite.sqlite3 Handle2
+
+      public string ServerVersion
+      {
+        get { return csSQLite.sqlite3_libversion(); }
+      }
+
+      internal csSQLite.sqlite3 Handle2
 		    {
                 get { return sqlite_handle2; }
 		    }
@@ -157,16 +163,11 @@ namespace Community.Data.SQLiteClient
 		}
 
 		public override string ServerVersion {
-			get {
-				if (Version == 3)
-					return "3";
-				else
-					return "2";
-			}
+			get { return Version.ToString();}
 		}
 #endif
 
-		public int LastInsertRowId {
+    public int LastInsertRowId {
 			get {
 				//if (Version == 3)
 				    return (int) csSQLite.sqlite3_last_insert_rowid(Handle2);
@@ -249,6 +250,7 @@ namespace Community.Data.SQLiteClient
 
 						case "version":
 							db_version = Convert.ToInt32 (tvalue);
+              if (db_version < 3) throw new InvalidOperationException ("Minimum database version is 3");
 							break;
 
 						case "encoding": // only for sqlite2
