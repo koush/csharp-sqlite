@@ -85,9 +85,9 @@ namespace Community.Data.SQLite
 ** already, check for an MSVC build environment that provides
 ** localtime_s().
 */
-#if !(HAVE_LOCALTIME_R) && !(HAVE_LOCALTIME_S) &&      (_MSC_VER) && (_CRT_INSECURE_DEPRECATE)
-#define HAVE_LOCALTIME_S
-#endif
+//#if !(HAVE_LOCALTIME_R) && !(HAVE_LOCALTIME_S) &&      (_MSC_VER) && (_CRT_INSECURE_DEPRECATE)
+//#define HAVE_LOCALTIME_S
+//#endif
 
     /*
 ** A structure for holding a single date and time.
