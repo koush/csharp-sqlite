@@ -9,7 +9,7 @@ using u64 = System.UInt64;
 
 using ClientData = System.Object;
 
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -20,10 +20,10 @@ namespace Community.Data.SQLite
 
   using sqlite3_int64 = System.Int64;
   using sqlite3_u3264 = System.UInt64;
-  using sqlite3_stmt = csSQLite.Vdbe;
-  using sqlite3_value = csSQLite.Mem;
+  using sqlite3_stmt = Sqlite3.Vdbe;
+  using sqlite3_value = Sqlite3.Mem;
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2009 January 28

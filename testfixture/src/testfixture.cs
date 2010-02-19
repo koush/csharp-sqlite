@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
-
+using Community.CsharpSqlite;
 using tcl.lang;
-using Community.Data.SQLite;
 
   class Testing
   {
@@ -79,27 +76,27 @@ using Community.Data.SQLite;
         }
 
         // Setup SQLIte specific object for routines
-        csSQLite.Sqlite3_Init(interp);
-        csSQLite.Sqlitetestbackup_Init(interp);
-        csSQLite.Sqliteconfig_Init(interp);
-        csSQLite.Sqlitetest_autoext_Init(interp);
-        csSQLite.Sqlitetest_func_Init(interp);
-        csSQLite.Sqlitetest_hexio_Init(interp);
-        csSQLite.Sqlitetest_malloc_Init(interp);
-        csSQLite.Sqlitetest_mutex_Init(interp);
-        csSQLite.Sqlitetest1_Init(interp);
-        csSQLite.Sqlitetest2_Init(interp);
-        csSQLite.Sqlitetest3_Init(interp);
-        csSQLite.Sqlitetest6_Init(interp);
-        csSQLite.Sqlitetest9_Init(interp);
-        csSQLite.Md5_Init(interp);
+        Sqlite3.Sqlite3_Init(interp);
+        Sqlite3.Sqlitetestbackup_Init(interp);
+        Sqlite3.Sqliteconfig_Init(interp);
+        Sqlite3.Sqlitetest_autoext_Init(interp);
+        Sqlite3.Sqlitetest_func_Init(interp);
+        Sqlite3.Sqlitetest_hexio_Init(interp);
+        Sqlite3.Sqlitetest_malloc_Init(interp);
+        Sqlite3.Sqlitetest_mutex_Init(interp);
+        Sqlite3.Sqlitetest1_Init(interp);
+        Sqlite3.Sqlitetest2_Init(interp);
+        Sqlite3.Sqlitetest3_Init(interp);
+        Sqlite3.Sqlitetest6_Init(interp);
+        Sqlite3.Sqlitetest9_Init(interp);
+        Sqlite3.Md5_Init(interp);
 
         // Normally we would do application specific initialization here.
         // However, that feature is not currently supported.
         // If a script file was specified then just source that file
         // and quit.
 
-        Console.WriteLine("               C#-SQLite version " + csSQLite.sqlite3_version);
+        Console.WriteLine("               C#-SQLite version " + Sqlite3.sqlite3_version);
         Console.WriteLine("An independent reimplementation of the SQLite software library");
         Console.WriteLine("==============================================================");
         Console.WriteLine("");
@@ -148,7 +145,7 @@ using Community.Data.SQLite;
           // have exited and no Tcl scripts can be executed.
 
           interp.dispose();
-          csSQLite.sqlite3_shutdown();
+          Sqlite3.sqlite3_shutdown();
 
           System.Environment.Exit(0);
         }

@@ -5,25 +5,25 @@ using u8 = System.Byte;
 using sqlite_u3264 = System.UInt64;
 using sqlite_int64 = System.Int64;
 
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
 #if !SQLITE_OMIT_INCRBLOB
 using sqlite3_blob = sqlite.Incrblob;
 #endif
-  using sqlite3_stmt = csSQLite.Vdbe;
+  using sqlite3_stmt = Sqlite3.Vdbe;
   using Tcl_Channel = tcl.lang.Channel;
   using Tcl_DString = tcl.lang.TclString;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
   using Tcl_WideInt = System.Int64;
 
-  using sqlite3_value = csSQLite.Mem;
+  using sqlite3_value = Sqlite3.Mem;
   using System.Text;
   using System.IO;
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2001 September 15

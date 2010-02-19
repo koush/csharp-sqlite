@@ -6,15 +6,15 @@ using Bitmask = System.UInt64;
 using i64 = System.Int64;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
-  using DbPage = csSQLite.PgHdr;
+  using DbPage = Sqlite3.PgHdr;
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2001 September 15

@@ -7,7 +7,7 @@ using Bitmask = System.UInt64;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -15,9 +15,9 @@ namespace Community.Data.SQLite
   using Tcl_Obj = tcl.lang.TclObject;
   using Tcl_CmdInfo = tcl.lang.Command;
 
-  using sqlite3_value = csSQLite.Mem;
+  using sqlite3_value = Sqlite3.Mem;
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2007 April 6

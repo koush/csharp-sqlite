@@ -1,13 +1,13 @@
 using System.Diagnostics;
 
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
   using Tcl_Interp = tcl.lang.Interp;
 #endif
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2007 May 7

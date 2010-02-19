@@ -7,7 +7,7 @@ using u64 = System.UInt64;
 using Pgno = System.UInt32;
 
 
-namespace Community.Data.SQLite
+namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
@@ -16,7 +16,7 @@ namespace Community.Data.SQLite
   using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
   using System.Text;
 
-  public partial class csSQLite
+  public partial class Sqlite3
   {
     /*
     ** 2001 September 15
