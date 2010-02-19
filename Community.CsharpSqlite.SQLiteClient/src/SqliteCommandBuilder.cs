@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteCommandBuilder.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteCommandBuilder.cs
 //
 // Author(s): Tim Coleman (tim@timcoleman.com)
 //            Marek Habersack (grendello@gmail.com)
@@ -33,7 +33,7 @@ using System.Data;
 using System.Data.Common;
 using System.Text;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public sealed class SqliteCommandBuilder : DbCommandBuilder
 	{

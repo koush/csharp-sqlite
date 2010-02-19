@@ -1,7 +1,7 @@
 using System;
 using System.Data;
 
-namespace Community.Data.SQLiteClient 
+namespace Community.CsharpSqlite.SQLiteClient 
 {
 	// This exception is raised whenever a statement cannot be compiled.
 	public class SqliteSyntaxException : ApplicationException

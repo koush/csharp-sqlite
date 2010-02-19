@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.IO;
-using Community.Data.SQLiteClient;
+using Community.CsharpSqlite.SQLiteClient;
 
 namespace SQLiteClientTests
  {
@@ -81,8 +81,77 @@ namespace SQLiteClientTests
           con = null;
 
           Console.WriteLine("Test1 Done.");
-          Console.WriteLine("Press Enter to Continue");
-          Console.ReadKey();
+        }
+        public void Test2()
+        {
+          Console.WriteLine( "Test2 Start." );
+
+          Console.WriteLine( "Create connection..." );
+          SqliteConnection con = new SqliteConnection();
+
+          string dbFilename = @"SqliteTest3.db";
+          string cs = string.Format( "Version=3,uri=file:{0}", dbFilename );
+
+          Console.WriteLine( "Set connection String: {0}", cs );
+
+          if ( File.Exists( dbFilename ) )
+            File.Delete( dbFilename );
+
+          con.ConnectionString = cs;
+
+          Console.WriteLine( "Open database..." );
+          con.Open();
+
+          Console.WriteLine( "create command..." );
+          SqliteCommand cmd = con.CreateCommand();
+
+          Console.WriteLine( "create table TEST_TABLE..." );
+          cmd.CommandText = "CREATE TABLE TBL ( ID NUMBER, NAME TEXT)";
+          cmd.ExecuteNonQuery();
+
+          Console.WriteLine( "insert row 1..." );
+          cmd.CommandText = "INSERT INTO TBL ( ID, NAME ) VALUES (1, 'ONE' )";
+          cmd.ExecuteNonQuery();
+
+          Console.WriteLine( "insert row 2..." );
+          cmd.CommandText = "INSERT INTO TBL ( ID, NAME ) VALUES (2, '中文' )";
+          cmd.ExecuteNonQuery();
+
+          //Console.WriteLine("commit...");
+          //cmd.CommandText = "COMMIT";
+          //cmd.ExecuteNonQuery();
+
+          Console.WriteLine( "SELECT data from TBL..." );
+          cmd.CommandText = "SELECT id,NAME FROM tbl WHERE name = '中文'";
+          SqliteDataReader reader = cmd.ExecuteReader();
+          int r = 0;
+          Console.WriteLine( "Read the data..." );
+          while ( reader.Read() )
+          {
+            Console.WriteLine( "  Row: {0}", r );
+            int i = reader.GetInt32( reader.GetOrdinal( "ID" ) );
+            Console.WriteLine( "    ID: {0}", i );
+
+            string s = reader.GetString( reader.GetOrdinal( "NAME" ) );
+            Console.WriteLine( "    NAME: {0}", s );
+            r++;
+          }
+          Console.WriteLine( "Rows retrieved: {0}", r );
+
+
+          SqliteCommand command = new SqliteCommand( "PRAGMA table_info('TEST_TABLE')", con );
+          DataTable dataTable = new DataTable();
+          SqliteDataAdapter dataAdapter = new SqliteDataAdapter();
+          dataAdapter.SelectCommand = command;
+          dataAdapter.Fill( dataTable );
+          DisplayDataTable( dataTable, "Columns" );
+
+
+          Console.WriteLine( "Close and cleanup..." );
+          con.Close();
+          con = null;
+
+          Console.WriteLine( "Test1 Done." );
         }
 
         public void DisplayDataTable(DataTable table, string name)
@@ -108,9 +177,11 @@ namespace SQLiteClientTests
 
         public static int Main(string[] args)
         {
-          Community.Data.SQLiteClient.SqliteConnection con = new Community.Data.SQLiteClient.SqliteConnection();
           SQLiteClientTestDriver tests = new SQLiteClientTestDriver();
           tests.Test1();
+          tests.Test2();
+          Console.WriteLine( "Press Enter to Continue" );
+          Console.ReadKey();
           tests = null;
 
           return 0;

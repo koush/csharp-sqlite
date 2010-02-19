@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteRowUpdatedEventArgs.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteRowUpdatedEventArgs.cs
 //
 // Provides data for the RowUpdated event.
 //
@@ -31,7 +31,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	/// <summary>
 	/// Provides data for the <see cref="SqliteDataAdapter.RowUpdated"/> event.

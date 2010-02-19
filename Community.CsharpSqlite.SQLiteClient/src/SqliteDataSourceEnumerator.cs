@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteDataSourceEnumerator.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteDataSourceEnumerator.cs
 //
 // Author(s):
 //   Chris Toshok (toshok@ximian.com)
@@ -35,7 +35,7 @@ using System;
 using System.Data;
 using System.Data.Common;
         
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
         public sealed class SqliteDataSourceEnumerator : DbDataSourceEnumerator
 	{		
@@ -68,7 +68,7 @@ namespace Community.Data.SQLiteClient
 			dr [1] = "Sqlite Default Instance";
 			dr [2] = false;
 			dr [3] = "?";
-			dr [4] = "Community.Data.SQLiteClient.SqliteConnectionFactory";
+			dr [4] = "Community.CsharpSqlite.SQLiteClient.SqliteConnectionFactory";
 			dt.Rows.Add (dr);
 			
 			return dt;

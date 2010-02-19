@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteParameterCollection.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteParameterCollection.cs
 //
 // Represents a collection of parameters relevant to a SqliteCommand as well as 
 // their respective mappings to columns in a DataSet.
@@ -39,7 +39,7 @@ using System.Data.Common;
 #endif
 using System.Collections;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public class SqliteParameterCollection :
 #if NET_2_0

@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteClientFactory.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteClientFactory.cs
 //
 // Author:
 //   Chris Toshok (toshok@ximian.com)
@@ -33,7 +33,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public class SqliteClientFactory : DbProviderFactory
 	{

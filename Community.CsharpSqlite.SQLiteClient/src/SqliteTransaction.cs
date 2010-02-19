@@ -1,7 +1,7 @@
 //
-// Community.Data.SQLiteClient.SqliteTransaction.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteTransaction.cs
 //
-// Community.Data.SQLiteClient data access components for .Net
+// Community.CsharpSqlite.SQLiteClient data access components for .Net
 // Derived from ByteFX.Data
 // With permission from Reggie Burnett to relicense under MIT/X11
 //
@@ -31,7 +31,7 @@ using System.Data;
 using System.Data.Common;
 #endif
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public sealed class SqliteTransaction :
 #if NET_2_0

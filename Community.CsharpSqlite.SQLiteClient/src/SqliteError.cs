@@ -1,5 +1,5 @@
 /*
-** Community.Data.SQLiteClient.SqliteError
+** Community.CsharpSqlite.SQLiteClient.SqliteError
 ** 
 ** Author:  Noah Hart <Noah.Hart@gmail.com>
 **
@@ -14,7 +14,7 @@ using System.Security;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
   /// <summary>
   /// Represents the return values for sqlite_exec() and sqlite_step()

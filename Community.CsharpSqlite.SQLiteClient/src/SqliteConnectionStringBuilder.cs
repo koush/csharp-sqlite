@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteConnectionStringBuilder.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteConnectionStringBuilder.cs
 //
 // Author(s):
 //   Sureshkumar T (tsureshkumar@novell.com)
@@ -37,7 +37,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Text;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public sealed class SqliteConnectionStringBuilder : DbConnectionStringBuilder
 	{

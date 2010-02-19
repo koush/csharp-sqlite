@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteDataReader.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteDataReader.cs
 //
 // Provides a means of reading a forward-only stream of rows from a Sqlite 
 // database file.
@@ -36,7 +36,7 @@ using System.Data;
 using System.Data.Common;
 using Community.CsharpSqlite;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	public class SqliteDataReader :
 #if NET_2_0

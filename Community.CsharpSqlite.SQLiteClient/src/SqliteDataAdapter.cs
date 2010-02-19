@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteDataAdapter.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteDataAdapter.cs
 //
 // Represents a set of data commands and a database connection that are used 
 // to fill the DataSet and update the data source.
@@ -34,7 +34,7 @@ using System.Data.Common;
 using System.Collections;
 using System.Text;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	/// <summary>
 	/// Represents a set of data commands and a database connection that are used 

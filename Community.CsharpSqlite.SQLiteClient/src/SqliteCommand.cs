@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteCommand.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteCommand.cs
 //
 // Represents a Transact-SQL statement or stored procedure to execute against 
 // a Sqlite database file.
@@ -41,7 +41,7 @@ using System.Data.Common;
 #endif
 using Community.CsharpSqlite;
 
-namespace Community.Data.SQLiteClient 
+namespace Community.CsharpSqlite.SQLiteClient 
 {
 #if NET_2_0
 	public class SqliteCommand : DbCommand, ICloneable
@@ -105,7 +105,7 @@ namespace Community.Data.SQLiteClient
 		public string CommandText 
 		{
 			get { return sql; }
-			set { sql = value; prepared = false; }
+			set { ASCIIEncoding ascii = new ASCIIEncoding(); sql = ascii.GetString(Encoding.UTF8.GetBytes(value)); prepared = false; }
 		}
 	
 #if NET_2_0

@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteConnection.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteConnection.cs
 //
 // Represents an open connection to a Sqlite database file.
 //
@@ -36,7 +36,7 @@ using System.Data.Common;
 using System.Text;
 using Community.CsharpSqlite;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 #if NET_2_0
 	public class SqliteConnection : DbConnection, ICloneable

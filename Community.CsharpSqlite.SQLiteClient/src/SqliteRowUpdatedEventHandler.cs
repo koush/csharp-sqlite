@@ -1,5 +1,5 @@
 //
-// Community.Data.SQLiteClient.SqliteRowUpdatedEventHandler.cs
+// Community.CsharpSqlite.SQLiteClient.SqliteRowUpdatedEventHandler.cs
 //
 // Represents the method that will handle the RowUpdated event of a 
 // SqliteDataAdapter.
@@ -32,7 +32,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-namespace Community.Data.SQLiteClient
+namespace Community.CsharpSqlite.SQLiteClient
 {
 	/// <summary>
 	/// Represents the method that will handle the <see cref="SqliteDataAdapter.RowUpdated"/> event 

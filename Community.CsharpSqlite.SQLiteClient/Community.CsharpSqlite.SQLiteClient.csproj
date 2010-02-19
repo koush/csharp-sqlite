@@ -8,8 +8,8 @@
     <ProjectGuid>{7BC68E61-C64C-488C-975F-1E2248383B80}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Community.Data.SQLiteClient</RootNamespace>
-    <AssemblyName>Community.Data.SQLiteClient</AssemblyName>
+    <RootNamespace>Community.CsharpSqlite.SQLiteClient</RootNamespace>
+    <AssemblyName>Community.CsharpSqlite.SQLiteClient</AssemblyName>
     <StartupObject>
     </StartupObject>
     <FileUpgradeFlags>
