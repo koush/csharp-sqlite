@@ -3,14 +3,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using Community.Data.SQLite;
-using dxCallback = Community.Data.SQLite.csSQLite.dxCallback;
-using sqlite3 = Community.Data.SQLite.csSQLite.sqlite3;
-using sqlite3_backup = Community.Data.SQLite.csSQLite.sqlite3_backup;
-using sqlite3_context = Community.Data.SQLite.csSQLite.sqlite3_context;
+using Community.CsharpSqlite;
+using dxCallback = Community.CsharpSqlite.Sqlite3.dxCallback;
+using sqlite3 = Community.CsharpSqlite.Sqlite3.sqlite3;
+using sqlite3_backup = Community.CsharpSqlite.Sqlite3.sqlite3_backup;
+using sqlite3_context = Community.CsharpSqlite.Sqlite3.sqlite3_context;
 using sqlite3_int64 = System.Int64;
-using sqlite3_stmt = Community.Data.SQLite.csSQLite.Vdbe;
-using sqlite3_value = Community.Data.SQLite.csSQLite.Mem;
+using sqlite3_stmt = Community.CsharpSqlite.Sqlite3.Vdbe;
+using sqlite3_value = Community.CsharpSqlite.Sqlite3.Mem;
 using va_list = System.Object;
 
   class Shell
@@ -168,7 +168,7 @@ timeDiff(&sBegin.ru_stime, &sEnd.ru_stime));
     ** to this database a static variable so that it can be accessed
     ** by the SIGINT handler to interrupt database processing.
     */
-    static csSQLite.sqlite3 db = null;
+    static Sqlite3.sqlite3 db = null;
 
     /*
     ** True if an interrupt (Control-C) has been received.
@@ -275,7 +275,7 @@ sqlite3_free(ref z);
       Debug.Assert( zShellStatic != null );
       UNUSED_PARAMETER( argc );
       UNUSED_PARAMETER( argv );
-      csSQLite.sqlite3_result_text( context, zShellStatic, -1, csSQLite.SQLITE_STATIC );
+      Sqlite3.sqlite3_result_text( context, zShellStatic, -1, Sqlite3.SQLITE_STATIC );
     }
 
 
@@ -991,18 +991,18 @@ if( db ) sqlite3_interrupt(db);
       sqlite3_stmt pSelect = new sqlite3_stmt();
       int rc;
       string sDummy = null;
-      rc = csSQLite.sqlite3_prepare( db, zSelect, -1, ref pSelect, ref sDummy );
-      if ( rc != csSQLite.SQLITE_OK || null == pSelect )
+      rc = Sqlite3.sqlite3_prepare( db, zSelect, -1, ref pSelect, ref sDummy );
+      if ( rc != Sqlite3.SQLITE_OK || null == pSelect )
       {
         return rc;
       }
-      rc = csSQLite.sqlite3_step( pSelect );
-      while ( rc == csSQLite.SQLITE_ROW )
+      rc = Sqlite3.sqlite3_step( pSelect );
+      while ( rc == Sqlite3.SQLITE_ROW )
       {
-        fprintf( _out, "%s;\n", csSQLite.sqlite3_column_text( pSelect, 0 ) );
-        rc = csSQLite.sqlite3_step( pSelect );
+        fprintf( _out, "%s;\n", Sqlite3.sqlite3_column_text( pSelect, 0 ) );
+        rc = Sqlite3.sqlite3_step( pSelect );
       }
-      return csSQLite.sqlite3_finalize( ref pSelect );
+      return Sqlite3.sqlite3_finalize( ref pSelect );
     }
 
 
@@ -1046,7 +1046,7 @@ if( db ) sqlite3_interrupt(db);
           fprintf( p._out, "PRAGMA writable_schema=ON;\n" );
           p.writableSchema = true;
         }
-        zIns = csSQLite.sqlite3_mprintf(
+        zIns = Sqlite3.sqlite3_mprintf(
         "INSERT INTO sqlite_master(type,name,tbl_name,rootpage,sql)" +
         "VALUES('table','%q','%q',0,'%q');",
         zTable, zTable, zSql );
@@ -1071,9 +1071,9 @@ if( db ) sqlite3_interrupt(db);
         appendText( zTableInfo, ");", '\0' );
 
         string sDummy = null;
-        rc = csSQLite.sqlite3_prepare( p.db, zTableInfo.ToString(), -1, ref pTableInfo, ref sDummy );
+        rc = Sqlite3.sqlite3_prepare( p.db, zTableInfo.ToString(), -1, ref pTableInfo, ref sDummy );
         //if ( zTableInfo ) free( ref zTableInfo );
-        if ( rc != csSQLite.SQLITE_OK || null == pTableInfo )
+        if ( rc != Sqlite3.SQLITE_OK || null == pTableInfo )
         {
           return 1;
         }
@@ -1085,14 +1085,14 @@ if( db ) sqlite3_interrupt(db);
           appendText( zSelect, zTmp.ToString(), '\'' );
         }
         appendText( zSelect, " || ' VALUES(' || ", '\0' );
-        rc = csSQLite.sqlite3_step( pTableInfo );
-        while ( rc == csSQLite.SQLITE_ROW )
+        rc = Sqlite3.sqlite3_step( pTableInfo );
+        while ( rc == Sqlite3.SQLITE_ROW )
         {
-          string zText = (string)csSQLite.sqlite3_column_text( pTableInfo, 1 );
+          string zText = (string)Sqlite3.sqlite3_column_text( pTableInfo, 1 );
           appendText( zSelect, "quote(", '\0' );
           appendText( zSelect, zText, '"' );
-          rc = csSQLite.sqlite3_step( pTableInfo );
-          if ( rc == csSQLite.SQLITE_ROW )
+          rc = Sqlite3.sqlite3_step( pTableInfo );
+          if ( rc == Sqlite3.SQLITE_ROW )
           {
             appendText( zSelect, ") || ',' || ", '\0' );
           }
@@ -1101,8 +1101,8 @@ if( db ) sqlite3_interrupt(db);
             appendText( zSelect, ") ", '\0' );
           }
         }
-        rc = csSQLite.sqlite3_finalize( ref pTableInfo );
-        if ( rc != csSQLite.SQLITE_OK )
+        rc = Sqlite3.sqlite3_finalize( ref pTableInfo );
+        if ( rc != Sqlite3.SQLITE_OK )
         {
           //if ( zSelect ) free( ref zSelect );
           return 1;
@@ -1111,7 +1111,7 @@ if( db ) sqlite3_interrupt(db);
         appendText( zSelect, zTable, '"' );
 
         rc = run_table_dump_query( p._out, p.db, zSelect.ToString() );
-        if ( rc == csSQLite.SQLITE_CORRUPT )
+        if ( rc == Sqlite3.SQLITE_CORRUPT )
         {
           appendText( zSelect, " ORDER BY rowid DESC", '\0' );
           rc = run_table_dump_query( p._out, p.db, zSelect.ToString() );
@@ -1135,16 +1135,16 @@ if( db ) sqlite3_interrupt(db);
     )
     {
       int rc;
-      rc = csSQLite.sqlite3_exec( p.db, zQuery, (dxCallback)dump_callback, p, ref pzErrMsg );
-      if ( rc == csSQLite.SQLITE_CORRUPT )
+      rc = Sqlite3.sqlite3_exec( p.db, zQuery, (dxCallback)dump_callback, p, ref pzErrMsg );
+      if ( rc == Sqlite3.SQLITE_CORRUPT )
       {
         StringBuilder zQ2;
         int len = strlen30( zQuery );
         //if ( pzErrMsg ) sqlite3_free( ref pzErrMsg );
         zQ2 = new StringBuilder( len + 100 );// malloc( len + 100 );
         if ( zQ2 == null ) return rc;
-        csSQLite.sqlite3_snprintf( zQ2.Capacity, ref zQ2, "%s ORDER BY rowid DESC", zQuery );
-        rc = csSQLite.sqlite3_exec( p.db, zQ2.ToString(), (dxCallback)dump_callback, p, ref pzErrMsg );
+        Sqlite3.sqlite3_snprintf( zQ2.Capacity, ref zQ2, "%s ORDER BY rowid DESC", zQuery );
+        rc = Sqlite3.sqlite3_exec( p.db, zQ2.ToString(), (dxCallback)dump_callback, p, ref pzErrMsg );
         free( ref zQ2 );
       }
       return rc;
@@ -1209,21 +1209,21 @@ if( db ) sqlite3_interrupt(db);
     {
       if ( p.db == null )
       {
-        csSQLite.sqlite3_open( p.zDbFilename, ref p.db );
+        Sqlite3.sqlite3_open( p.zDbFilename, ref p.db );
         db = p.db;
-        if ( db != null && csSQLite.sqlite3_errcode( db ) == csSQLite.SQLITE_OK )
+        if ( db != null && Sqlite3.sqlite3_errcode( db ) == Sqlite3.SQLITE_OK )
         {
-          csSQLite.sqlite3_create_function( db, "shellstatic", 0, csSQLite.SQLITE_UTF8, 0,
-          (csSQLite.dxFunc)shellstaticFunc, null, null );
+          Sqlite3.sqlite3_create_function( db, "shellstatic", 0, Sqlite3.SQLITE_UTF8, 0,
+          (Sqlite3.dxFunc)shellstaticFunc, null, null );
         }
-        if ( db == null || csSQLite.SQLITE_OK != csSQLite.sqlite3_errcode( db ) )
+        if ( db == null || Sqlite3.SQLITE_OK != Sqlite3.sqlite3_errcode( db ) )
         {
           fprintf( stderr, "Unable to open database \"%s\": %s\n",
-          p.zDbFilename, csSQLite.sqlite3_errmsg( db ) );
+          p.zDbFilename, Sqlite3.sqlite3_errmsg( db ) );
           exit( 1 );
         }
 #if !SQLITE_OMIT_LOAD_EXTENSION
-        csSQLite.sqlite3_enable_load_extension( p.db, 1 );
+        Sqlite3.sqlite3_enable_load_extension( p.db, 1 );
 #endif
       }
     }
@@ -1368,32 +1368,32 @@ if( db ) sqlite3_interrupt(db);
           zDestFile = azArg[2].ToString();
           zDb = azArg[1].ToString();
         }
-        rc = csSQLite.sqlite3_open( zDestFile, ref pDest );
-        if ( rc != csSQLite.SQLITE_OK )
+        rc = Sqlite3.sqlite3_open( zDestFile, ref pDest );
+        if ( rc != Sqlite3.SQLITE_OK )
         {
           fprintf( stderr, "Error: cannot open %s\n", zDestFile );
-          csSQLite.sqlite3_close( pDest );
+          Sqlite3.sqlite3_close( pDest );
           return 1;
         }
         open_db( p );
-        pBackup = csSQLite.sqlite3_backup_init( pDest, "main", p.db, zDb );
+        pBackup = Sqlite3.sqlite3_backup_init( pDest, "main", p.db, zDb );
         if ( pBackup == null )
         {
-          fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( pDest ) );
-          csSQLite.sqlite3_close( pDest );
+          fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( pDest ) );
+          Sqlite3.sqlite3_close( pDest );
           return 1;
         }
-        while ( ( rc = csSQLite.sqlite3_backup_step( pBackup, 100 ) ) == csSQLite.SQLITE_OK ) { }
-        csSQLite.sqlite3_backup_finish( pBackup );
-        if ( rc == csSQLite.SQLITE_DONE )
+        while ( ( rc = Sqlite3.sqlite3_backup_step( pBackup, 100 ) ) == Sqlite3.SQLITE_OK ) { }
+        Sqlite3.sqlite3_backup_finish( pBackup );
+        if ( rc == Sqlite3.SQLITE_DONE )
         {
-          rc = csSQLite.SQLITE_OK;
+          rc = Sqlite3.SQLITE_OK;
         }
         else
         {
-          fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( pDest ) );
+          fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( pDest ) );
         }
-        csSQLite.sqlite3_close( pDest );
+        Sqlite3.sqlite3_close( pDest );
       }
       else
 
@@ -1415,7 +1415,7 @@ if( db ) sqlite3_interrupt(db);
             data.colWidth[1] = 15;
             data.colWidth[2] = 58;
             data.cnt = 0;
-            csSQLite.sqlite3_exec( p.db, "PRAGMA database_list; ", (dxCallback)callback, data, ref zErrMsg );
+            Sqlite3.sqlite3_exec( p.db, "PRAGMA database_list; ", (dxCallback)callback, data, ref zErrMsg );
             if ( zErrMsg != "" )
             {
               fprintf( stderr, "Error: %s\n", zErrMsg );
@@ -1431,7 +1431,7 @@ if( db ) sqlite3_interrupt(db);
               fprintf( p._out, "BEGIN TRANSACTION;\n" );
               p.writableSchema = false;
               string sDummy = "";
-              csSQLite.sqlite3_exec( p.db, "PRAGMA writable_schema=ON", null, null, ref sDummy );
+              Sqlite3.sqlite3_exec( p.db, "PRAGMA writable_schema=ON", null, null, ref sDummy );
               if ( nArg == 1 )
               {
                 run_schema_dump_query( p,
@@ -1467,7 +1467,7 @@ if( db ) sqlite3_interrupt(db);
                 fprintf( p._out, "PRAGMA writable_schema=OFF;\n" );
                 p.writableSchema = false;
               }
-              csSQLite.sqlite3_exec( p.db, "PRAGMA writable_schema=OFF", 0, 0, 0 );
+              Sqlite3.sqlite3_exec( p.db, "PRAGMA writable_schema=OFF", 0, 0, 0 );
               if ( zErrMsg != "" )
               {
                 fprintf( stderr, "Error: %s\n", zErrMsg );
@@ -1572,27 +1572,27 @@ int i, j;                     /* Loop counters */
                             fprintf( stderr, "non-null separator required for import\n" );
                             return 0;
                           }
-                          zSql = new StringBuilder( csSQLite.sqlite3_mprintf( "SELECT * FROM '%q'", zTable ) );
+                          zSql = new StringBuilder( Sqlite3.sqlite3_mprintf( "SELECT * FROM '%q'", zTable ) );
                           if ( zSql == null ) return 0;
                           nByte = strlen30( zSql );
                           string sDummy = null;
-                          rc = csSQLite.sqlite3_prepare( p.db, zSql.ToString(), -1, ref pStmt, ref sDummy );
+                          rc = Sqlite3.sqlite3_prepare( p.db, zSql.ToString(), -1, ref pStmt, ref sDummy );
                           //sqlite3_free( ref zSql );
                           if ( rc != 0 )
                           {
-                            fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( db ) );
+                            fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( db ) );
                             nCol = 0;
                             rc = 1;
                           }
                           else
                           {
-                            nCol = csSQLite.sqlite3_column_count( pStmt );
+                            nCol = Sqlite3.sqlite3_column_count( pStmt );
                           }
-                          csSQLite.sqlite3_finalize( ref pStmt );
+                          Sqlite3.sqlite3_finalize( ref pStmt );
                           if ( nCol == 0 ) return 0;
                           zSql = new StringBuilder( nByte + 20 + nCol * 2 );//malloc( nByte + 20 + nCol * 2 );
                           if ( zSql == null ) return 0;
-                          csSQLite.sqlite3_snprintf( nByte + 20, ref zSql, "INSERT INTO '%q' VALUES(?", zTable );
+                          Sqlite3.sqlite3_snprintf( nByte + 20, ref zSql, "INSERT INTO '%q' VALUES(?", zTable );
                           int j = strlen30( zSql );
                           for ( i = 1 ; i < nCol ; i++ )
                           {
@@ -1600,12 +1600,12 @@ int i, j;                     /* Loop counters */
                             zSql.Append('?');
                           }
                           zSql.Append(')');
-                          rc = csSQLite.sqlite3_prepare(p.db, zSql.ToString(), -1, ref pStmt, ref sDummy);
+                          rc = Sqlite3.sqlite3_prepare(p.db, zSql.ToString(), -1, ref pStmt, ref sDummy);
                           free( ref zSql );
                           if ( rc != 0 )
                           {
-                            fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( db ) );
-                            csSQLite.sqlite3_finalize( ref pStmt );
+                            fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( db ) );
+                            Sqlite3.sqlite3_finalize( ref pStmt );
                             return 1;
                           }
                           try
@@ -1620,7 +1620,7 @@ int i, j;                     /* Loop counters */
                           if ( _in == null )
                           {
                             fprintf( stderr, "cannot open file: %s\n", zFile );
-                            csSQLite.sqlite3_finalize( ref pStmt );
+                            Sqlite3.sqlite3_finalize( ref pStmt );
                             return 0;
                           }
                           azCol = new string[nCol + 1];//malloc( sizeof(azCol[0])*(nCol+1) );
@@ -1629,7 +1629,7 @@ int i, j;                     /* Loop counters */
                             _in.Close();// fclose( _in );
                             return 0;
                           }
-                          csSQLite.sqlite3_exec( p.db, "BEGIN", 0, 0, 0 );
+                          Sqlite3.sqlite3_exec( p.db, "BEGIN", 0, 0, 0 );
                           zCommit = "COMMIT";
                           while ( ( zLine.Append( local_getline( "", _in ) ) ).Length != 0 )
                           {
@@ -1664,14 +1664,14 @@ int i, j;                     /* Loop counters */
                             }
                             for ( i = 0 ; i < nCol ; i++ )
                             {
-                              csSQLite.sqlite3_bind_text( pStmt, i + 1, azCol[i], -1, csSQLite.SQLITE_STATIC );
+                              Sqlite3.sqlite3_bind_text( pStmt, i + 1, azCol[i], -1, Sqlite3.SQLITE_STATIC );
                             }
-                            csSQLite.sqlite3_step( pStmt );
-                            rc = csSQLite.sqlite3_reset( pStmt );
+                            Sqlite3.sqlite3_step( pStmt );
+                            rc = Sqlite3.sqlite3_reset( pStmt );
                             zLine.Length = 0;// free(zLine);
-                            if ( rc != csSQLite.SQLITE_OK )
+                            if ( rc != Sqlite3.SQLITE_OK )
                             {
-                              fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( db ) );
+                              fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( db ) );
                               zCommit = "ROLLBACK";
                               rc = 1;
                               break;
@@ -1679,8 +1679,8 @@ int i, j;                     /* Loop counters */
                           }
                           //free( ref azCol );
                           _in.Close();// fclose( _in );
-                          csSQLite.sqlite3_finalize( ref pStmt );
-                          csSQLite.sqlite3_exec( p.db, zCommit.ToString(), null, null, ref sDummy );
+                          Sqlite3.sqlite3_finalize( ref pStmt );
+                          Sqlite3.sqlite3_exec( p.db, zCommit.ToString(), null, null, ref sDummy );
                         }
                         else
 
@@ -1693,7 +1693,7 @@ int i, j;                     /* Loop counters */
                             data.showHeader = false;
                             data.mode = MODE_List;
                             zShellStatic = azArg[1].ToString();
-                            csSQLite.sqlite3_exec( p.db,
+                            Sqlite3.sqlite3_exec( p.db,
                               "SELECT name FROM sqlite_master " +
                               "WHERE type='index' AND tbl_name LIKE shellstatic() " +
                               "UNION ALL " +
@@ -1742,8 +1742,8 @@ sqlite3IoTrace = iotracePrintf;
                               zFile = azArg[1].ToString();
                               zProc = nArg >= 3 ? azArg[2].ToString() : null;
                               open_db( p );
-                              rc = csSQLite.sqlite3_load_extension( p.db, zFile, zProc, ref  zErrMsg );
-                              if ( rc != csSQLite.SQLITE_OK )
+                              rc = Sqlite3.sqlite3_load_extension( p.db, zFile, zProc, ref  zErrMsg );
+                              if ( rc != Sqlite3.SQLITE_OK )
                               {
                                 fprintf( stderr, "%s\n", zErrMsg );
                                 //sqlite3_free( ref zErrMsg );
@@ -1783,12 +1783,12 @@ sqlite3IoTrace = iotracePrintf;
                                 else if ( strncmp( azArg[1], "csv", n2 ) == 0 )
                                 {
                                   p.mode = MODE_Csv;
-                                  csSQLite.sqlite3_snprintf( 2, ref p.separator, "," );
+                                  Sqlite3.sqlite3_snprintf( 2, ref p.separator, "," );
                                 }
                                 else if ( strncmp( azArg[1], "tabs", n2 ) == 0 )
                                 {
                                   p.mode = MODE_List;
-                                  csSQLite.sqlite3_snprintf( 2, ref p.separator, "\t" );
+                                  Sqlite3.sqlite3_snprintf( 2, ref p.separator, "\t" );
                                 }
                                 else if ( strncmp( azArg[1], "insert", n2 ) == 0 )
                                 {
@@ -1812,7 +1812,7 @@ sqlite3IoTrace = iotracePrintf;
 
                                 if ( c == 'n' && strncmp( azArg[0], "nullvalue", n ) == 0 && nArg == 2 )
                                 {
-                                  csSQLite.sqlite3_snprintf( 20, ref p.nullvalue,
+                                  Sqlite3.sqlite3_snprintf( 20, ref p.nullvalue,
                                                    "%.*s", 19 - 1, azArg[1] );
                                 }
                                 else
@@ -1826,7 +1826,7 @@ sqlite3IoTrace = iotracePrintf;
                                     if ( strcmp( azArg[1], "stdout" ) == 0 )
                                     {
                                       p._out = stdout;
-                                      csSQLite.sqlite3_snprintf( p.outfile.Capacity, ref p.outfile, "stdout" );
+                                      Sqlite3.sqlite3_snprintf( p.outfile.Capacity, ref p.outfile, "stdout" );
                                     }
                                     else
                                     {
@@ -1838,7 +1838,7 @@ sqlite3IoTrace = iotracePrintf;
                                       }
                                       else
                                       {
-                                        csSQLite.sqlite3_snprintf( p.outfile.Capacity, ref p.outfile, "%s", azArg[1] );
+                                        Sqlite3.sqlite3_snprintf( p.outfile.Capacity, ref p.outfile, "%s", azArg[1] );
                                       }
                                     }
                                   }
@@ -1905,44 +1905,44 @@ sqlite3IoTrace = iotracePrintf;
                                               zSrcFile = azArg[2].ToString();
                                               zDb = azArg[1].ToString();
                                             }
-                                            rc = csSQLite.sqlite3_open( zSrcFile, ref pSrc );
-                                            if ( rc != csSQLite.SQLITE_OK )
+                                            rc = Sqlite3.sqlite3_open( zSrcFile, ref pSrc );
+                                            if ( rc != Sqlite3.SQLITE_OK )
                                             {
                                               fprintf( stderr, "Error: cannot open %s\n", zSrcFile );
-                                              csSQLite.sqlite3_close( pSrc );
+                                              Sqlite3.sqlite3_close( pSrc );
                                               return 1;
                                             }
                                             open_db( p );
-                                            pBackup = csSQLite.sqlite3_backup_init( p.db, zDb, pSrc, "main" );
+                                            pBackup = Sqlite3.sqlite3_backup_init( p.db, zDb, pSrc, "main" );
                                             if ( pBackup == null )
                                             {
-                                              fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( p.db ) );
-                                              csSQLite.sqlite3_close( pSrc );
+                                              fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( p.db ) );
+                                              Sqlite3.sqlite3_close( pSrc );
                                               return 1;
                                             }
-                                            while ( ( rc = csSQLite.sqlite3_backup_step( pBackup, 100 ) ) == csSQLite.SQLITE_OK
-                                                  || rc == csSQLite.SQLITE_BUSY )
+                                            while ( ( rc = Sqlite3.sqlite3_backup_step( pBackup, 100 ) ) == Sqlite3.SQLITE_OK
+                                                  || rc == Sqlite3.SQLITE_BUSY )
                                             {
-                                              if ( rc == csSQLite.SQLITE_BUSY )
+                                              if ( rc == Sqlite3.SQLITE_BUSY )
                                               {
                                                 if ( nTimeout++ >= 3 ) break;
-                                                csSQLite.sqlite3_sleep( 100 );
+                                                Sqlite3.sqlite3_sleep( 100 );
                                               }
                                             }
-                                            csSQLite.sqlite3_backup_finish( pBackup );
-                                            if ( rc == csSQLite.SQLITE_DONE )
+                                            Sqlite3.sqlite3_backup_finish( pBackup );
+                                            if ( rc == Sqlite3.SQLITE_DONE )
                                             {
-                                              rc = csSQLite.SQLITE_OK;
+                                              rc = Sqlite3.SQLITE_OK;
                                             }
-                                            else if ( rc == csSQLite.SQLITE_BUSY || rc == csSQLite.SQLITE_LOCKED )
+                                            else if ( rc == Sqlite3.SQLITE_BUSY || rc == Sqlite3.SQLITE_LOCKED )
                                             {
                                               fprintf( stderr, "source database is busy\n" );
                                             }
                                             else
                                             {
-                                              fprintf( stderr, "Error: %s\n", csSQLite.sqlite3_errmsg( p.db ) );
+                                              fprintf( stderr, "Error: %s\n", Sqlite3.sqlite3_errmsg( p.db ) );
                                             }
-                                            csSQLite.sqlite3_close( pSrc );
+                                            Sqlite3.sqlite3_close( pSrc );
                                           }
                                           else
 
@@ -1991,7 +1991,7 @@ sqlite3IoTrace = iotracePrintf;
                                                 else
                                                 {
                                                   zShellStatic = azArg[1].ToString();
-                                                  csSQLite.sqlite3_exec( p.db,
+                                                  Sqlite3.sqlite3_exec( p.db,
                                                     "SELECT sql FROM " +
                                                     "  (SELECT sql sql, type type, tbl_name tbl_name, name name" +
                                                     "     FROM sqlite_master UNION ALL" +
@@ -2004,7 +2004,7 @@ sqlite3IoTrace = iotracePrintf;
                                               }
                                               else
                                               {
-                                                csSQLite.sqlite3_exec( p.db,
+                                                Sqlite3.sqlite3_exec( p.db,
                                                    "SELECT sql FROM " +
                                                    "  (SELECT sql sql, type type, tbl_name tbl_name, name name" +
                                                    "     FROM sqlite_master UNION ALL" +
@@ -2024,7 +2024,7 @@ sqlite3IoTrace = iotracePrintf;
 
                                               if ( c == 's' && strncmp( azArg[0], "separator", n ) == 0 && nArg == 2 )
                                               {
-                                                csSQLite.sqlite3_snprintf( 2, ref p.separator,
+                                                Sqlite3.sqlite3_snprintf( 2, ref p.separator,
                                                                  "%.*s", 2 - 1, azArg[1] );
                                               }
                                               else
@@ -2062,7 +2062,7 @@ sqlite3IoTrace = iotracePrintf;
                                                     if ( nArg == 1 )
                                                     {
                                                       int Dummy0 = 0;
-                                                      rc = csSQLite.sqlite3_get_table( p.db,
+                                                      rc = Sqlite3.sqlite3_get_table( p.db,
                                                         "SELECT name FROM sqlite_master " +
                                                         "WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'" +
                                                         "UNION ALL " +
@@ -2076,7 +2076,7 @@ sqlite3IoTrace = iotracePrintf;
                                                     {
                                                       zShellStatic = azArg[1].ToString();
                                                       int Dummy0 = 0;
-                                                      rc = csSQLite.sqlite3_get_table( p.db,
+                                                      rc = Sqlite3.sqlite3_get_table( p.db,
                                                         "SELECT name FROM sqlite_master " +
                                                         "WHERE type IN ('table','view') AND name LIKE '%'||shellstatic()||'%' " +
                                                         "UNION ALL " +
@@ -2092,7 +2092,7 @@ sqlite3IoTrace = iotracePrintf;
                                                       fprintf( stderr, "Error: %s\n", zErrMsg );
                                                       //sqlite3_free( ref zErrMsg );
                                                     }
-                                                    if ( rc == csSQLite.SQLITE_OK )
+                                                    if ( rc == Sqlite3.SQLITE_OK )
                                                     {
                                                       int len, maxlen = 0;
                                                       int ii, j;
@@ -2127,7 +2127,7 @@ sqlite3IoTrace = iotracePrintf;
                                                     if ( c == 't' && n > 4 && strncmp( azArg[0], "timeout", n ) == 0 && nArg >= 2 )
                                                     {
                                                       open_db( p );
-                                                      csSQLite.sqlite3_busy_timeout( p.db, Convert.ToInt32( azArg[1] ) );//atoi( azArg[1] ) );
+                                                      Sqlite3.sqlite3_busy_timeout( p.db, Convert.ToInt32( azArg[1] ) );//atoi( azArg[1] ) );
                                                     }
                                                     else
 
@@ -2227,7 +2227,7 @@ enableTimer = booleanValue(azArg[1]);
       if ( zSql == null ) return 1;
       //zSql[nSql] = ';';
       //zSql[nSql + 1] = '\0';
-      rc = csSQLite.sqlite3_complete( zSql + ";\0" );
+      rc = Sqlite3.sqlite3_complete( zSql + ";\0" );
       //zSql[nSql] = '\0';
       return rc;
     }
@@ -2320,14 +2320,14 @@ enableTimer = booleanValue(azArg[1]);
           nSql += len;
         }
         if ( zSql.Length != 0 && _contains_semicolon( zSql.ToString().Substring( nSqlPrior ), nSql - nSqlPrior )
-          && csSQLite.sqlite3_complete( zSql.ToString() ) != 0 )
+          && Sqlite3.sqlite3_complete( zSql.ToString() ) != 0 )
         {
           p.cnt = 0;
           open_db( p );
 #if !(_WIN32) && !(WIN32) && !(__OS2__) && !(__RTP__) && !(_WRS_KERNEL)
 BEGIN_TIMER;
 #endif
-          rc = csSQLite.sqlite3_exec( p.db, zSql.ToString(), (dxCallback)callback, p, ref zErrMsg );
+          rc = Sqlite3.sqlite3_exec( p.db, zSql.ToString(), (dxCallback)callback, p, ref zErrMsg );
 #if !(_WIN32) && !(WIN32) && !(__OS2__) && !(__RTP__) && !(_WRS_KERNEL)
 END_TIMER;
 #endif
@@ -2336,12 +2336,12 @@ END_TIMER;
             string zPrefix = "";
             if ( _in != null || !stdin_is_interactive )
             {
-              csSQLite.sqlite3_snprintf( 20, ref zPrefix,
+              Sqlite3.sqlite3_snprintf( 20, ref zPrefix,
                            "SQL error near line %d:", startline );
             }
             else
             {
-              csSQLite.sqlite3_snprintf( 20, ref zPrefix, "SQL error:" );
+              Sqlite3.sqlite3_snprintf( 20, ref zPrefix, "SQL error:" );
             }
             if ( zErrMsg != "" )
             {
@@ -2351,7 +2351,7 @@ END_TIMER;
             }
             else
             {
-              printf( "%s %s\n", zPrefix, csSQLite.sqlite3_errmsg( p.db ) );
+              printf( "%s %s\n", zPrefix, Sqlite3.sqlite3_errmsg( p.db ) );
             }
             errCnt++;
           }
@@ -2399,7 +2399,7 @@ END_TIMER;
 			    n = strlen30( zDrive ) + strlen30( zPath ) + 1;
 			    home_dir = "";// malloc( n );
 			    //if ( home_dir == null ) return "";
-			    csSQLite.sqlite3_snprintf( n, ref home_dir, "%s%s", zDrive, zPath );
+			    Sqlite3.sqlite3_snprintf( n, ref home_dir, "%s%s", zDrive, zPath );
 			    return home_dir;
 		    }
 		    home_dir = "c:\\";
@@ -2498,8 +2498,8 @@ END_TIMER;
       data.mode = MODE_List;
       data.separator = "|";// memcpy( data.separator, "|", 2 );
       data.showHeader = false;
-      csSQLite.sqlite3_snprintf( 20, ref mainPrompt, "C#-sqlite> " );
-      csSQLite.sqlite3_snprintf( 20, ref continuePrompt, "   ...> " );
+      Sqlite3.sqlite3_snprintf( 20, ref mainPrompt, "C#-sqlite> " );
+      Sqlite3.sqlite3_snprintf( 20, ref continuePrompt, "   ...> " );
     }
 
     static int main( int argc, string[] argv )
@@ -2626,13 +2626,13 @@ if( data.zDbFilename=="" ){
         else if ( strcmp( z, "-separator" ) == 0 )
         {
           i++;
-          csSQLite.sqlite3_snprintf( 8, ref data.separator,
+          Sqlite3.sqlite3_snprintf( 8, ref data.separator,
                    "%.*s", 8 - 1, argv[i] );
         }
         else if ( strcmp( z, "-nullvalue" ) == 0 )
         {
           i++;
-          csSQLite.sqlite3_snprintf( 20, ref data.nullvalue,
+          Sqlite3.sqlite3_snprintf( 20, ref data.nullvalue,
                    "%.*s", (int)20 - 1, argv[i] );
         }
         else if ( strcmp( z, "-header" ) == 0 )
@@ -2653,7 +2653,7 @@ if( data.zDbFilename=="" ){
         }
         else if ( strcmp( z, "-version" ) == 0 )
         {
-          printf( "%s\n", csSQLite.sqlite3_libversion() );
+          printf( "%s\n", Sqlite3.sqlite3_libversion() );
           return 0;
         }
         else if ( strcmp( z, "-interactive" ) == 0 )
@@ -2689,7 +2689,7 @@ if( data.zDbFilename=="" ){
         {
           //int rc;
           open_db( data );
-          rc = csSQLite.sqlite3_exec( data.db, zFirstCmd.ToString(), (dxCallback)callback, data, ref zErrMsg );
+          rc = Sqlite3.sqlite3_exec( data.db, zFirstCmd.ToString(), (dxCallback)callback, data, ref zErrMsg );
           if ( rc != 0 && zErrMsg != "" )
           {
             fprintf( stderr, "SQL error: %s\n", zErrMsg );
@@ -2713,7 +2713,7 @@ if( data.zDbFilename=="" ){
           "\n" +
           "Enter \".help\" for instructions\n" +
           "Enter SQL statements terminated with a \";\"\n",
-          csSQLite.sqlite3_libversion()
+          Sqlite3.sqlite3_libversion()
           );
           zHome = find_home_dir();
           if ( zHome != "" )
@@ -2721,7 +2721,7 @@ if( data.zDbFilename=="" ){
             nHistory = strlen30( zHome ) + 20;
             //if ( ( zHistory = malloc( nHistory ) ) != 0 )
             //{
-            csSQLite.sqlite3_snprintf( nHistory, ref zHistory, "%s/.sqlite_history", zHome );
+            Sqlite3.sqlite3_snprintf( nHistory, ref zHistory, "%s/.sqlite_history", zHome );
             //}
           }
 #if (HAVE_READLINE) //&& HAVE_READLINE==1
@@ -2744,9 +2744,9 @@ if( zHistory ) read_history(zHistory);
       set_table_name( data, null );
       if ( db != null )
       {
-        if ( csSQLite.sqlite3_close( db ) != csSQLite.SQLITE_OK )
+        if ( Sqlite3.sqlite3_close( db ) != Sqlite3.SQLITE_OK )
         {
-          fprintf( stderr, "error closing database: %s\n", csSQLite.sqlite3_errmsg( db ) );
+          fprintf( stderr, "error closing database: %s\n", Sqlite3.sqlite3_errmsg( db ) );
         }
       }
       return rc;
@@ -2829,8 +2829,8 @@ if( zHistory ) read_history(zHistory);
       return s0.ToString( 0, n0 ).Equals( s1.Substring( 0, n1 ) ) ? 0 : 1;
     }
     //
-    static void fprintf( TextWriter tw, string zFormat, params va_list[] ap ) { tw.Write( csSQLite.sqlite3_mprintf( zFormat, ap ) ); }
-    static void printf( string zFormat, params va_list[] ap ) { stdout.Write( csSQLite.sqlite3_mprintf( zFormat, ap ) ); }
+    static void fprintf( TextWriter tw, string zFormat, params va_list[] ap ) { tw.Write( Sqlite3.sqlite3_mprintf( zFormat, ap ) ); }
+    static void printf( string zFormat, params va_list[] ap ) { stdout.Write( Sqlite3.sqlite3_mprintf( zFormat, ap ) ); }
 
     public static void Main( string[] args )
     {
