@@ -137,10 +137,10 @@ namespace Community.CsharpSqlite
             if ( 0 == callbackIsInit )
             {
               azCols = new string[nCol];//sqlite3DbMallocZero(db, 2*nCol*sizeof(const char*) + 1);
-              if ( azCols == null )
-              {
-                goto exec_out;
-              }
+              //if ( azCols == null )
+              //{
+              //  goto exec_out;
+              //}
               for ( i = 0; i < nCol; i++ )
               {
                 azCols[i] = sqlite3_column_name( pStmt, i );
@@ -158,8 +158,8 @@ namespace Community.CsharpSqlite
                 azVals[i] = sqlite3_column_text( pStmt, i );
                 if ( azVals[i] == null && sqlite3_column_type( pStmt, i ) != SQLITE_NULL )
                 {
-                  ////        db.mallocFailed = 1;
-                  goto exec_out;
+                  //db.mallocFailed = 1;
+                  //goto exec_out;
                 }
               }
             }

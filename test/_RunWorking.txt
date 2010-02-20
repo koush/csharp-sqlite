@@ -153,7 +153,6 @@ tkt4018.test
 #broken to fix in C# port; 3.6.22
   autovacuum.test
   tclsqlite.test
-  tkt-78e04e52ea.test
 }
 
 if {[sqlite3 -has-codec]} {

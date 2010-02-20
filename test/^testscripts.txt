@@ -246,6 +246,14 @@ source $testdir/temptable.test
 source $testdir/temptrigger.test
 source $testdir/thread1.test
 source $testdir/thread2.test
+source $testdir/tkt-2ea2425d34.test
+source $testdir/tkt-3fe897352e.test
+source $testdir/tkt-4a03edc4c8.test
+source $testdir/tkt-5ee23731f.test
+source $testdir/tkt-78e04e52ea.test
+source $testdir/tkt-94c04eaadb.test
+source $testdir/tkt-d82e3f3721.test
+source $testdir/tkt-f777251dc7a.test
 source $testdir/tkt35xx.test
 source $testdir/tkt1435.test
 source $testdir/tkt1443.test

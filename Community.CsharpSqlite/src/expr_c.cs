@@ -497,6 +497,7 @@ namespace Community.CsharpSqlite
             int c;
             //pNew.u.zToken = (char*)&pNew[1];
             if ( pToken.n > 0 ) pNew.u.zToken = pToken.z.Substring( 0, pToken.n );//memcpy(pNew.u.zToken, pToken.z, pToken.n);
+            else if ( pToken.n == 0 && pToken.z == "" ) pNew.u.zToken = "";
             //pNew.u.zToken[pToken.n] = 0;
             if ( dequote != 0 && nExtra >= 3
             && ( ( c = pToken.z[0] ) == '\'' || c == '"' || c == '[' || c == '`' ) )
