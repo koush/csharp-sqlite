@@ -1,21 +1,17 @@
 #define SQLITE_OS_WIN
 
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-
-using HANDLE = System.IntPtr;
 using DWORD = System.UInt64;
-using WORD = System.Int32;
+using HANDLE = System.IntPtr;
 using i64 = System.Int64;
-using u8 = System.Byte;
-using u32 = System.UInt32;
-
 using sqlite3_int64 = System.Int64;
+using u32 = System.UInt32;
+using u8 = System.Byte;
 
 namespace Community.CsharpSqlite
 {
@@ -750,7 +746,11 @@ free(pFile.zDeleteOnClose);
       }
       catch ( Exception e )      //            if( rc==INVALID_SET_FILE_POINTER && (error=GetLastError())!=NO_ERROR )
       {
+#if SQLITE_SILVERLIGHT
+                pFile.lastErrno = 1;
+#else
         pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif
         return SQLITE_FULL;
       }
 
@@ -760,7 +760,11 @@ free(pFile.zDeleteOnClose);
       }
       catch ( Exception e )
       {
+#if SQLITE_SILVERLIGHT
+                pFile.lastErrno = 1;
+#else
         pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif
         return SQLITE_IOERR_READ;
       }
       if ( got == amt )
@@ -830,7 +834,11 @@ free(pFile.zDeleteOnClose);
       //  }
       if ( rc == 0 || amt > (int)wrote )
       {
+#if SQLITE_SILVERLIGHT
+                id.lastErrno  = 1;
+#else
         id.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif       
         return SQLITE_FULL;
       }
       return SQLITE_OK;
@@ -872,7 +880,11 @@ free(pFile.zDeleteOnClose);
       }
       catch ( IOException e )
       {
+#if SQLITE_SILVERLIGHT
+                id.lastErrno  = 1;
+#else
         id.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif
         return SQLITE_IOERR_TRUNCATE;
       }
       return SQLITE_OK;
@@ -981,7 +993,11 @@ return SQLITE_OK;
       //}
       if ( res == 0 )
       {
+#if SQLITE_SILVERLIGHT
+                pFile.lastErrno = 1;
+#else
         pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif
       }
       return res;
     }
@@ -1013,7 +1029,11 @@ return SQLITE_OK;
 #endif
       if ( res == 0 )
       {
+#if SQLITE_SILVERLIGHT
+                pFile.lastErrno = 1;
+#else
         pFile.lastErrno = (u32)Marshal.GetLastWin32Error();
+#endif
       }
       return res;
     }
@@ -1106,7 +1126,11 @@ return SQLITE_OK;
         gotPendingLock = ( res != 0 );
         if ( 0 == res )
         {
+#if SQLITE_SILVERLIGHT
+                error = 1;
+#else
           error = (u32)Marshal.GetLastWin32Error();
+#endif
         }
       }
 
@@ -1122,7 +1146,11 @@ return SQLITE_OK;
         }
         else
         {
+#if SQLITE_SILVERLIGHT
+                error = 1;
+#else
           error = (u32)Marshal.GetLastWin32Error();
+#endif
         }
       }
 
@@ -1140,7 +1168,11 @@ return SQLITE_OK;
         catch ( Exception e )
         {
           res = 0;
+#if SQLITE_SILVERLIGHT
+                error = 1;
+#else
           error = (u32)Marshal.GetLastWin32Error();
+#endif
         }
         if ( res != 0 )
         {
@@ -1148,7 +1180,11 @@ return SQLITE_OK;
         }
         else
         {
+#if SQLITE_SILVERLIGHT
+                error = 1;
+#else
           error = (u32)Marshal.GetLastWin32Error();
+#endif
         }
       }
 
@@ -1186,7 +1222,11 @@ return SQLITE_OK;
         }
         else
         {
+#if SQLITE_SILVERLIGHT
+                error = 1;
+#else
           error = (u32)Marshal.GetLastWin32Error();
+#endif
 #if SQLITE_DEBUG
           OSTRACE2( "error-code = %d\n", error );
 #endif
@@ -1546,7 +1586,12 @@ return SQLITE_OK;
       //    /* free the UTF8 buffer */
       //    free(zOut);
       //  }
+#if SQLITE_SILVERLIGHT
+        zBuf = "Unknown error";
+        return 0;
+#else
       zBuf = Marshal.GetLastWin32Error().ToString();//new Win32Exception( Marshal.GetLastWin32Error() ).Message;
+#endif
       return 0;
     }
 
@@ -1566,7 +1611,7 @@ return SQLITE_OK;
       FileAccess dwDesiredAccess;
       FileShare dwShareMode;
       FileMode dwCreationDisposition;
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
       FileOptions dwFlagsAndAttributes;
 #endif
 #if SQLITE_OS_WINCE
@@ -1636,7 +1681,7 @@ int isTemp = 0;
 dwFlagsAndAttributes = FILE_ATTRIBUTE_HIDDEN;
 isTemp = 1;
 #else
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         dwFlagsAndAttributes = FileOptions.DeleteOnClose; // FILE_ATTRIBUTE_TEMPORARY
         //| FILE_ATTRIBUTE_HIDDEN
         //| FILE_FLAG_DELETE_ON_CLOSE;
@@ -1645,7 +1690,7 @@ isTemp = 1;
       }
       else
       {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         dwFlagsAndAttributes = FileOptions.None; // FILE_ATTRIBUTE_NORMAL;
 #endif
       }
@@ -1673,7 +1718,7 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
           try
           {
             retries--;
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
             fs = new FileStream( zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096, dwFlagsAndAttributes );
 #else
             fs = new FileStream(zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096);
@@ -1708,7 +1753,7 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
      }
       if ( fs == null 
           ||
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
           fs.SafeFileHandle.IsInvalid 
 #else
           !fs.CanRead
@@ -2219,7 +2264,7 @@ if ( sizeof( DWORD ) <= nBuf - n )
 {
 //DWORD pid = GetCurrentProcessId();
     u32 processId;
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
     processId = (u32)Process.GetCurrentProcess().Id; 
 #else
     processId = 28376023;
@@ -2404,7 +2449,7 @@ n += sizeof( long );
     /// </summary>
     private class LockingStrategy
     {
-#if !SILVERLIGHT      
+#if !SQLITE_SILVERLIGHT      
       [DllImport( "kernel32.dll" )]
       static extern bool LockFileEx( IntPtr hFile, uint dwFlags, uint dwReserved,
       uint nNumberOfBytesToLockLow, uint nNumberOfBytesToLockHigh,
@@ -2414,14 +2459,14 @@ n += sizeof( long );
 #endif
       public virtual void LockFile( sqlite3_file pFile, long offset, long length )
       {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         pFile.fs.Lock( offset, length );
 #endif
       }
 
       public virtual int SharedLockFile( sqlite3_file pFile, long offset, long length )
       {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         Debug.Assert( length == SHARED_SIZE );
         Debug.Assert( offset == SHARED_FIRST );
         System.Threading.NativeOverlapped ovlp = new System.Threading.NativeOverlapped();
@@ -2437,7 +2482,7 @@ n += sizeof( long );
 
       public virtual void UnlockFile( sqlite3_file pFile, long offset, long length )
       {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         pFile.fs.Unlock( offset, length );
 #endif
       }
@@ -2451,7 +2496,7 @@ n += sizeof( long );
     {
       public override int SharedLockFile( sqlite3_file pFile, long offset, long length )
       {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
         Debug.Assert( length == SHARED_SIZE );
         Debug.Assert( offset == SHARED_FIRST );
         try
@@ -2474,7 +2519,11 @@ n += sizeof( long );
       // placeholder method
       // this is where it needs to check if it's running in an ASP.Net MediumTrust or lower environment
       // in order to pick the appropriate locking strategy
+#if SQLITE_SILVERLIGHT
+      return true;
+#else
       return false;
+#endif
     }
   }
 }

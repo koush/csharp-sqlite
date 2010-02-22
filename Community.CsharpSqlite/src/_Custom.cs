@@ -6,7 +6,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
 using System.Management;
 #endif
 using System.Text;
@@ -311,7 +311,7 @@ namespace Community.CsharpSqlite
     // Example (C#)
     public static int GetbytesPerSector( StringBuilder diskPath )
     {
-#if !SILVERLIGHT
+#if !SQLITE_SILVERLIGHT
       ManagementObjectSearcher mosLogicalDisks = new ManagementObjectSearcher( "select * from Win32_LogicalDisk where DeviceID = '" + diskPath.ToString().Remove( diskPath.Length - 1, 1 ) + "'" );
       try
       {
