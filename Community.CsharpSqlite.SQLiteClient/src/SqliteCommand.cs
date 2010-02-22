@@ -10,6 +10,7 @@
 //		Jeroen Zwartepoorte <jeroen@xs4all.nl>
 //		Thomas Zoechling <thomas.zoechling@gmx.at>
 //		Joshua Tauberer <tauberer@for.net>
+//    Noah Hart <noah.hart@gmail.com>
 //
 // Copyright (C) 2002  Vladimir Vukicevic
 //
@@ -339,32 +340,10 @@ namespace Community.CsharpSqlite.SQLiteClient
 
 		private void GetNextStatement (string pzStart, ref string pzTail, ref Sqlite3.Vdbe pStmt)
 		{
-			//if (parent_conn.Version == 3)
-			//{
 		    UTF8Encoding encoding = new UTF8Encoding();
-            SqliteError err = (SqliteError)Sqlite3.sqlite3_prepare(parent_conn.Handle2, pzStart, encoding.GetBytes(pzStart).Length, ref pStmt, ref pzTail);
-		    //SqliteError err = (SqliteError)Sqlite3.sqlite3_prepare(parent_conn.Handle2, pzStart, encoding.GetBytes(pzStart).Length, ref pStmt, ref pzTail);
-			//SqliteError err = Sqlite.sqlite3_prepare16 (parent_conn.Handle, pzStart, -1, out pStmt, out pzTail);
+            SqliteError err = (SqliteError)Sqlite3.sqlite3_prepare(parent_conn.Handle2, pzStart, pzStart.Length, ref pStmt, ref pzTail);
 			if (err != SqliteError.OK)
 				throw new SqliteSyntaxException (GetError3());
-			/*
-            }
-			else
-			{
-				IntPtr errMsg;
-				SqliteError err = Sqlite.sqlite_compile (parent_conn.Handle, pzStart, out pzTail, out pStmt, out errMsg);
-				
-				if (err != SqliteError.OK) 
-				{
-					string msg = "unknown error";
-					if (errMsg != IntPtr.Zero) 
-					{
-						msg = Marshal.PtrToStringAnsi (errMsg);
-						Sqlite.sqliteFree (errMsg);
-					}
-					throw new SqliteSyntaxException (msg);
-				}
-			} */
 		}
 		
 		// Executes a statement and ignores its result.
