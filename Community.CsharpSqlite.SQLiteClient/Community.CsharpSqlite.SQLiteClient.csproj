@@ -91,9 +91,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\SqliteError.cs" />
     <Compile Include="src\SqliteClientFactory.cs" />
-    <Compile Include="src\SqliteCommand.cs" />
-    <Compile Include="src\SqliteCommandBuilder.cs" />
-    <Compile Include="src\SqliteConnection.cs" />
+    <Compile Include="src\SqliteCommand.cs">
+    </Compile>
+    <Compile Include="src\SqliteCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="src\SqliteConnection.cs">
+    </Compile>
     <Compile Include="src\SqliteConnectionFactory.cs" />
     <Compile Include="src\SqliteConnectionStringBuilder.cs" />
     <Compile Include="src\SqliteDataAdapter.cs">
