@@ -1,24 +1,18 @@
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Text;
 
-using Bitmask = System.UInt64;
 using i64 = System.Int64;
 using u8 = System.Byte;
-using u32 = System.UInt32;
-using u64 = System.UInt64;
 
 namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
+  using sqlite3_stmt = Sqlite3.Vdbe;
+  using sqlite3_value = Sqlite3.Mem;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
-  using Tcl_CmdInfo = tcl.lang.Command;
-
-  using sqlite3_value = Sqlite3.Mem;
-  using sqlite3_stmt = Sqlite3.Vdbe;
 
   public partial class Sqlite3
   {

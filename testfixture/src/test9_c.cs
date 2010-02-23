@@ -1,16 +1,12 @@
-using System;
 using System.Diagnostics;
-using System.Text;
 
 namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
-  using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
+  using sqlite3_stmt = Community.CsharpSqlite.Sqlite3.Vdbe;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
-
-  using sqlite3_stmt = Community.CsharpSqlite.Sqlite3.Vdbe;
 
   public partial class Sqlite3
   {

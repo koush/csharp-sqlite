@@ -2,19 +2,13 @@ using System.Diagnostics;
 
 using i64 = System.Int64;
 using u32 = System.UInt32;
-using u64 = System.UInt64;
-
-using Pgno = System.UInt32;
-
 
 namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
-  using Tcl_Interp = tcl.lang.Interp;
-  using Tcl_CmdInfo = tcl.lang.Command;
   using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
-  using System.Text;
+  using Tcl_Interp = tcl.lang.Interp;
 
   public partial class Sqlite3
   {

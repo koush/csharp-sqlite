@@ -1,9 +1,7 @@
 using System;
 using System.Diagnostics;
-
-using u8 = System.Byte;
-using sqlite_u3264 = System.UInt64;
 using sqlite_int64 = System.Int64;
+using sqlite_u3264 = System.UInt64;
 
 namespace Community.CsharpSqlite
 {
@@ -13,14 +11,12 @@ namespace Community.CsharpSqlite
 using sqlite3_blob = sqlite.Incrblob;
 #endif
   using sqlite3_stmt = Sqlite3.Vdbe;
-  using Tcl_Channel = tcl.lang.Channel;
   using Tcl_DString = tcl.lang.TclString;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
   using Tcl_WideInt = System.Int64;
 
   using sqlite3_value = Sqlite3.Mem;
-  using System.Text;
   using System.IO;
 
   public partial class Sqlite3

@@ -1,18 +1,10 @@
-using System;
-using System.Diagnostics;
-using System.Text;
-
-using Bitmask = System.UInt64;
-using i64 = System.Int64;
-using u32 = System.UInt32;
-using u64 = System.UInt64;
 namespace Community.CsharpSqlite
 {
 #if !NO_TCL
   using tcl.lang;
-  using Tcl_Interp = tcl.lang.Interp;
-  using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
   using DbPage = Sqlite3.PgHdr;
+  using Tcl_CmdProc = tcl.lang.Interp.dxObjCmdProc;
+  using Tcl_Interp = tcl.lang.Interp;
 
   public partial class Sqlite3
   {

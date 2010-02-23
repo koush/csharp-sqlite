@@ -1,11 +1,6 @@
-using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-
-using Bitmask = System.UInt64;
-using u32 = System.UInt32;
-using u64 = System.UInt64;
 
 namespace Community.CsharpSqlite
 {
@@ -13,9 +8,7 @@ namespace Community.CsharpSqlite
   using tcl.lang;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
-  using Tcl_CmdInfo = tcl.lang.Command;
 
-  using sqlite3_value = Sqlite3.Mem;
 
   public partial class Sqlite3
   {
