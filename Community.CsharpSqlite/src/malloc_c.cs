@@ -223,7 +223,7 @@ namespace Community.CsharpSqlite
       else
       {
         sqlite3GlobalConfig.pPage = null;
-        sqlite3GlobalConfig.szPage = 0;
+        sqlite3GlobalConfig.nPage = 0;
       }
       return sqlite3GlobalConfig.m.xInit( sqlite3GlobalConfig.m.pAppData );
     }

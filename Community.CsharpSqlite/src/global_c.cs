@@ -173,7 +173,7 @@ namespace Community.CsharpSqlite
     0,                         /* szScratch */
     0,                         /* nScratch */
     null,                      /* pPage */
-    0,                         /* szPage */
+    SQLITE_DEFAULT_PAGE_SIZE,  /* szPage */
     0,                         /* nPage */
     0,                         /* mxParserStack */
     false,                     /* sharedCacheEnabled */

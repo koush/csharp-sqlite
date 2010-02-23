@@ -149,9 +149,7 @@ malloc_common.tcl
 #No pipes implemented in C# port for TCL
 tkt4018.test
 
-
 #broken to fix in C# port; 3.6.22
-  autovacuum.test
   tclsqlite.test
 }
 

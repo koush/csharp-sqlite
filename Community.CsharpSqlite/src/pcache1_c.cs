@@ -443,9 +443,28 @@ namespace Community.CsharpSqlite
       pPrev = null;
       for ( pp = pCache.apHash[h]; pp != pPage; pPrev = pp, pp = pp.pNext ) ;
       if ( pPrev == null ) pCache.apHash[h] = pp.pNext; else pPrev.pNext = pp.pNext; // pCache.apHash[h] = pp.pNext;
-
       pCache.nPage--;
+#if FALSE
+      Debug.Assert(pcache1CountHash(pCache)==pCache.nPage);
+#endif
     }
+
+#if DEBUG && FALSE
+    static u32 pcache1CountHash( PCache1 pCache )
+    {
+      u32 nPage = 0;
+      for ( u32 h = 0; h < pCache.nHash; h++ )
+      {
+        PgHdr1 pp = pCache.apHash[h];
+        while ( pp != null )
+        {
+          nPage++;
+          pp = pp.pNext;
+        }
+      }
+    return nPage;
+    }
+#endif
 
     /*
     ** If there are currently more than pcache.nMaxPage pages allocated, try
@@ -483,18 +502,22 @@ namespace Community.CsharpSqlite
       Debug.Assert( sqlite3_mutex_held( pcache1.mutex ) );
       for ( h = 0; h < pCache.nHash; h++ )
       {
+        PgHdr1 pPrev = null;
         PgHdr1 pp = pCache.apHash[h];
         PgHdr1 pPage;
         while ( ( pPage = pp ) != null )
         {
           if ( pPage.iKey >= iLimit )
           {
-            pCache.nPage--;
             pp = pPage.pNext;
             pcache1PinPage( pPage );
             if ( pCache.apHash[h] == pPage ) pCache.apHash[h] = pPage.pNext;
-//            else if (pp!=null) Debugger.Break();
+            else pPrev.pNext = pp;
             pcache1FreePage( ref  pPage );
+            pCache.nPage--;
+#if FALSE
+            Debug.Assert( pcache1CountHash( pCache ) == pCache.nPage );
+#endif
           }
           else
           {
@@ -504,6 +527,7 @@ namespace Community.CsharpSqlite
             nPage++;
 #endif
           }
+          pPrev = pPage;
         }
       }
 #if !NDEBUG || SQLITE_COVERAGE_TEST
@@ -724,6 +748,9 @@ namespace Community.CsharpSqlite
         PGHDR1_TO_PAGE( pPage ).Clear();// *(void **)(PGHDR1_TO_PAGE(pPage)) = 0;
         pPage.pPgHdr.pPgHdr1 = pPage;
         pCache.apHash[h] = pPage;
+#if FALSE
+        Debug.Assert( pcache1CountHash( pCache ) == pCache.nPage );
+#endif
       }
 
     fetch_out:

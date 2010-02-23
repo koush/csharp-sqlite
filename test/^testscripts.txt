@@ -65,6 +65,7 @@ source $testdir/auth.test
 source $testdir/auth2.test
 source $testdir/auth3.test
 source $testdir/autoinc.test
+source $testdir/autovacuum.test
 source $testdir/avtrans.test
 source $testdir/backup2.test
 source $testdir/badutf.test
