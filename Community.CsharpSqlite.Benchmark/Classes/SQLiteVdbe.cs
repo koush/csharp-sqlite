@@ -25,7 +25,7 @@ namespace Community.CsharpSqlite
       vm = null;
 
       // prepare and compile 
-      Sqlite3.sqlite3_prepare_v2( db.Connection(), query, query.Length, ref vm, 0 );
+      Sqlite3.PrepareV2NoTail( db.Connection(), query, query.Length, ref vm, 0 );
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ namespace Community.CsharpSqlite
     /// <returns>LastResult</returns>
     public int BindInteger(int index, int bInteger )
     {
-      if ( (LastResult = Sqlite3.sqlite3_bind_int( vm, index, bInteger ))== Sqlite3.SQLITE_OK )
+      if ( (LastResult = Sqlite3.BindInt( vm, index, bInteger ))== Sqlite3.SQLITE_OK )
       { LastError = ""; }
       else
       {
@@ -65,7 +65,7 @@ namespace Community.CsharpSqlite
     /// <returns>LastResult</returns>
     public int BindLong( int index, long bLong )
     {
-      if ( ( LastResult = Sqlite3.sqlite3_bind_int64( vm, index, bLong ) ) == Sqlite3.SQLITE_OK )
+      if ( ( LastResult = Sqlite3.BindInt64( vm, index, bLong ) ) == Sqlite3.SQLITE_OK )
       { LastError = ""; }
       else
       {
@@ -82,7 +82,7 @@ namespace Community.CsharpSqlite
     /// <returns>LastResult</returns>
     public int BindText(  int index, string bText )
     {
-      if ( ( LastResult = Sqlite3.sqlite3_bind_text( vm, index, bText ,-1,null) ) == Sqlite3.SQLITE_OK )
+      if ( ( LastResult = Sqlite3.BindText( vm, index, bText ,-1,null) ) == Sqlite3.SQLITE_OK )
       { LastError = ""; }
       else
       {
@@ -99,7 +99,7 @@ namespace Community.CsharpSqlite
     public int ExecuteStep(   )
     {
       // Execute the statement
-      int LastResult = Sqlite3.sqlite3_step( vm );
+      int LastResult = Sqlite3.Step( vm );
 
       return LastResult;
     }
@@ -111,7 +111,7 @@ namespace Community.CsharpSqlite
     /// <returns>Result column</returns>
     public long Result_Long(int index)
     {
-      return Sqlite3.sqlite3_column_int64( vm, index );
+      return Sqlite3.ColumnInt64( vm, index );
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ namespace Community.CsharpSqlite
     /// <returns>Result column</returns>
     public string Result_Text( int index )
     {
-      return Sqlite3.sqlite3_column_text( vm, index );
+      return Sqlite3.ColumnText( vm, index );
     }
 
     
@@ -143,7 +143,7 @@ namespace Community.CsharpSqlite
     public void Reset()
     {
       // Reset the statment so it's ready to use again
-      Sqlite3.sqlite3_reset( vm );
+      Sqlite3.Reset( vm );
     }
     
     /// <summary>
@@ -153,7 +153,7 @@ namespace Community.CsharpSqlite
     /// <returns>LastResult</returns>
     public void Close()
     {
-      Sqlite3.sqlite3_finalize( ref vm );
+      Sqlite3.Finalize( ref vm );
     }
   
   }

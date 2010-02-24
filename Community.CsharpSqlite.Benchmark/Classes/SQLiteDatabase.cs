@@ -39,7 +39,7 @@ namespace Community.CsharpSqlite
     public void OpenDatabase( String DatabaseName )
     {
       // opens database 
-      if ( Sqlite3.sqlite3_open( DatabaseName, ref db ) != Sqlite3.SQLITE_OK )
+      if ( Sqlite3.Open( DatabaseName, ref db ) != Sqlite3.SQLITE_OK )
       {
         // if there is some error, database pointer is set to 0 and exception is throws
         db = null;
@@ -55,7 +55,7 @@ namespace Community.CsharpSqlite
       // closes the database if there is one opened
       if ( db != null )
       {
-        Sqlite3.sqlite3_close( db );
+        Sqlite3.Close( db );
       }
     }
 
@@ -95,10 +95,10 @@ namespace Community.CsharpSqlite
     public void ExecuteNonQuery( String query )
     {
       // calles SQLite function that executes non-query
-      Sqlite3.sqlite3_exec( db, query, 0, 0, 0 );
+      Sqlite3.exec( db, query, 0, 0, 0 );
       // if there is error, excetion is thrown
       if ( db.errCode != Sqlite3.SQLITE_OK )
-        throw new Exception( "Error with executing non-query: \"" + query + "\"!\n" + Sqlite3.sqlite3_errmsg( db ) );
+        throw new Exception( "Error with executing non-query: \"" + query + "\"!\n" + Sqlite3.Errmsg( db ) );
     }
 
     /// <summary>
@@ -136,37 +136,37 @@ namespace Community.CsharpSqlite
       }
 
       int resultType;
-      if ( ( resultType = Sqlite3.sqlite3_step( vm) ) == Sqlite3.SQLITE_ROW )
+      if ( ( resultType = Sqlite3.Step( vm) ) == Sqlite3.SQLITE_ROW )
       {
         object[] columnValues = new object[columnCount];
 
         for ( int i = 0 ; i < columnCount ; i++ )
         {
-          int columnType = Sqlite3.sqlite3_column_type( vm, i );
+          int columnType = Sqlite3.ColumnType( vm, i );
           switch ( columnType )
           {
             case Sqlite3.SQLITE_INTEGER:
               {
                 table.Columns[i].DataType = typeof(Int64);
-                columnValues[i] = Sqlite3.sqlite3_column_int(vm, i);
+                columnValues[i] = Sqlite3.ColumnInt(vm, i);
                 break;
               }
             case Sqlite3.SQLITE_FLOAT:
               {
                 table.Columns[i].DataType = typeof(Double);
-                columnValues[i] = Sqlite3.sqlite3_column_double(vm, i);
+                columnValues[i] = Sqlite3.ColumnDouble(vm, i);
                 break;
               }
             case Sqlite3.SQLITE_TEXT:
               {
                 table.Columns[i].DataType = typeof(String);
-                columnValues[i] = Sqlite3.sqlite3_column_text(vm, i);
+                columnValues[i] = Sqlite3.ColumnText(vm, i);
                 break;
               }
             case Sqlite3.SQLITE_BLOB:
               {
                 table.Columns[i].DataType = typeof(Byte[]);
-                columnValues[i] = Sqlite3.sqlite3_column_blob(vm, i);
+                columnValues[i] = Sqlite3.ColumnBlob(vm, i);
                 break;
               }
             default:
@@ -189,7 +189,7 @@ namespace Community.CsharpSqlite
       String columnName = "";
       int columnType = 0;
       // returns number of columns returned by statement
-      int columnCount = Sqlite3.sqlite3_column_count( vm );
+      int columnCount = Sqlite3.ColumnCount( vm );
       object[] columnValues = new object[columnCount];
 
       try
@@ -197,9 +197,9 @@ namespace Community.CsharpSqlite
         // reads columns one by one
         for ( int i = 0 ; i < columnCount ; i++ )
         {
-          columnName = Sqlite3.sqlite3_column_name( vm, i );
+          columnName = Sqlite3.ColumnName( vm, i );
 
-          columnType = Sqlite3.sqlite3_column_type( vm, i );
+          columnType = Sqlite3.ColumnType( vm, i );
 
           switch ( columnType )
           {

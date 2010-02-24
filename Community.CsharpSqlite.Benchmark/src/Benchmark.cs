@@ -48,7 +48,7 @@ public class Benchmark
       TestSQLite();
       //
       databaseName = "Benchmark_cs-Sqlite3.sqlite";
-      TestcsSQLite();
+      TestCsharpSqlite();
       //
       PrintStats(nRecords);
     }
@@ -56,7 +56,7 @@ public class Benchmark
     Console.ReadKey();
   }
 
-  private static void TestcsSQLite()
+  private static void TestCsharpSqlite()
   {
     SQLiteDatabase db;
     SQLiteVdbe stmt;
@@ -158,7 +158,7 @@ public class Benchmark
     db.ExecuteNonQuery("END");
     timer[1, 3] = DateTime.Now.Ticks - start;
     db.CloseDatabase();
-    Sqlite3.sqlite3_shutdown();
+    Sqlite3.Shutdown();
 
   }
   private static void TestSQLite()
