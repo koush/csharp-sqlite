@@ -1405,7 +1405,7 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
 
     //C# alias for call    
     public static int bind_blob(sqlite3_stmt pStmt, int i, byte[] zData, int nData, dxDel xDel)
-    { return sqlite3_bind_blob(pStmt, i, zData, nData, xDel); }
+    { return sqlite3_bind_blob(pStmt, i, zData, nData >= 0 ? nData : zData.Length, xDel); }
     public static int sqlite3_bind_blob(
     sqlite3_stmt pStmt,
     int i,
@@ -1414,7 +1414,7 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
     dxDel xDel
     )
     {
-      return bindBlob(pStmt, i, zData, nData, xDel, 0);
+      return bindBlob(pStmt, i, zData, nData >= 0 ? nData : zData.Length, xDel, 0);
     }
 
 #if  !SQLITE_OMIT_UTF16

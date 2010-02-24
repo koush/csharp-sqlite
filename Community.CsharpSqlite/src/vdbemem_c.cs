@@ -810,11 +810,11 @@ return SQLITE_OK;
     static int sqlite3VdbeMemSetBlob(
     Mem pMem,           /* Memory cell to set to string value */
     byte[] zBlob,       /* Blob pointer */
-    int n,              /* Bytes in string, or negative */
-    u8 enc,             /* Encoding of z.  0 for BLOBs */
+    int n,              /* Bytes in Blob */
+    u8 enc,             /* 0 for BLOBs */
     dxDel xDel          /* Destructor function */
     )
-    { return sqlite3VdbeMemSetBlob( pMem, zBlob, 0, n, enc, xDel ); } // Call w/o offset
+    { return sqlite3VdbeMemSetBlob(pMem, zBlob, 0, n >= 0 ? n : zBlob.Length, enc, xDel); } // Call w/o offset
 
     static int sqlite3VdbeMemSetBlob(
     Mem pMem,           /* Memory cell to set to string value */
