@@ -904,9 +904,6 @@ db.xAuth = xAuth;
     ** and the statement is automatically recompiled if an schema change
     ** occurs.
     */
-    //C# alias for call    
-    static public int prepare(sqlite3 db,           /* Database handle. */    string zSql,          /* UTF-8 encoded SQL statement. */    int nBytes,           /* Length of zSql in bytes. */    ref sqlite3_stmt ppStmt,  /* OUT: A pointer to the prepared statement */    ref string pzTail         /* OUT: End of parsed string */    )
-    { return sqlite3_prepare(db, zSql, nBytes, ref ppStmt, ref pzTail); }
     static public int sqlite3_prepare(
     sqlite3 db,           /* Database handle. */
     string zSql,          /* UTF-8 encoded SQL statement. */
@@ -921,9 +918,6 @@ db.xAuth = xAuth;
       return rc;
     }
 
-    //C# alias for call    
-    static public int prepare_v2(sqlite3 db,               /* Database handle. */    string zSql,              /* UTF-8 encoded SQL statement. */    int nBytes,               /* Length of zSql in bytes. */    ref sqlite3_stmt ppStmt,  /* OUT: A pointer to the prepared statement */    int dummy /* ( No string passed) */)
-    { return sqlite3_prepare_v2(db, zSql, nBytes, ref ppStmt, dummy); }
     public static int sqlite3_prepare_v2(
     sqlite3 db,               /* Database handle. */
     string zSql,              /* UTF-8 encoded SQL statement. */
@@ -939,9 +933,6 @@ db.xAuth = xAuth;
       return rc;
     }
 
-    //C# alias for call    
-    public static int prepare_v2(sqlite3 db,               /* Database handle. */    string zSql,              /* UTF-8 encoded SQL statement. */    int nBytes,               /* Length of zSql in bytes. */    ref sqlite3_stmt ppStmt,  /* OUT: A pointer to the prepared statement */    ref string pzTail         /* OUT: End of parsed string */    )
-    { return sqlite3_prepare_v2(db, zSql, nBytes, ref ppStmt, ref pzTail); }
     public static int sqlite3_prepare_v2(
     sqlite3 db,               /* Database handle. */
     string zSql,              /* UTF-8 encoded SQL statement. */

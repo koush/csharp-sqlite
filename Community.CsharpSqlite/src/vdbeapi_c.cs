@@ -66,9 +66,6 @@ return ( p == null || p.expired ) ? 1 : 0;
 ** This routine sets the error code and string returned by
 ** sqlite3_errcode(), sqlite3_errmsg() and sqlite3_errmsg16().
 */
-    //C# alias for call
-    public static int finalize(ref sqlite3_stmt pStmt)
-    { return sqlite3_finalize(ref pStmt); }
     public static int sqlite3_finalize(ref sqlite3_stmt pStmt)
     {
       int rc;
@@ -103,9 +100,6 @@ mutex = v.db.mutex;
     ** This routine sets the error code and string returned by
     ** sqlite3_errcode(), sqlite3_errmsg() and sqlite3_errmsg16().
     */
-    //C# alias for call
-    public static int reset(sqlite3_stmt pStmt)
-    { return sqlite3_reset(pStmt); }
     public static int sqlite3_reset(sqlite3_stmt pStmt)
     {
       int rc;
@@ -129,9 +123,6 @@ mutex = v.db.mutex;
     /*
     ** Set all the parameters in the compiled SQL statement to NULL.
     */
-    //C# alias for call
-    public static int clear_bindings(sqlite3_stmt pStmt)
-    { return sqlite3_clear_bindings(pStmt); }
     public static int sqlite3_clear_bindings(sqlite3_stmt pStmt)
     {
       int i;
@@ -159,9 +150,6 @@ sqlite3_mutex mutex = ( (Vdbe)pStmt ).db.mutex;
     ** The following routines extract information from a Mem or sqlite3_value
     ** structure.
     */
-    //C# alias for call
-    public static byte[] value_blob(sqlite3_value pVal)
-    { return sqlite3_value_blob(pVal); }
     public static byte[] sqlite3_value_blob(sqlite3_value pVal)
     {
       Mem p = pVal;
@@ -187,49 +175,31 @@ sqlite3_mutex mutex = ( (Vdbe)pStmt ).db.mutex;
       }
     }
 
-    //C# alias for call
-    public static int value_bytes(sqlite3_value pVal)
-    { return sqlite3_value_bytes(pVal); }
     public static int sqlite3_value_bytes(sqlite3_value pVal)
     {
       return sqlite3ValueBytes(pVal, SQLITE_UTF8);
     }
 
-    //C# alias for call
-    public static int value_bytes16(sqlite3_value pVal)
-    { return sqlite3_value_bytes16(pVal); }
     public static int sqlite3_value_bytes16(sqlite3_value pVal)
     {
       return sqlite3ValueBytes(pVal, SQLITE_UTF16NATIVE);
     }
 
-    //C# alias for call
-    public static double value_double(sqlite3_value pVal)
-    { return sqlite3_value_double(pVal); }
     public static double sqlite3_value_double(sqlite3_value pVal)
     {
       return sqlite3VdbeRealValue(pVal);
     }
 
-    //C# alias for call
-    public static int value_int(sqlite3_value pVal)
-    { return sqlite3_value_int(pVal); }
     public static int sqlite3_value_int(sqlite3_value pVal)
     {
       return (int)sqlite3VdbeIntValue(pVal);
     }
 
-    //C# alias for call
-    public static sqlite_int64 value_int64(sqlite3_value pVal)
-    { return sqlite3_value_int64(pVal); }
     public static sqlite_int64 sqlite3_value_int64(sqlite3_value pVal)
     {
       return sqlite3VdbeIntValue(pVal);
     }
 
-    //C# alias for call
-    public static string value_text(sqlite3_value pVal)
-    { return sqlite3_value_text(pVal); }
     public static string sqlite3_value_text(sqlite3_value pVal)
     {
       return sqlite3ValueText(pVal, SQLITE_UTF8);
@@ -247,9 +217,6 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
 }
 #endif // * SQLITE_OMIT_UTF16 */
 
-    //C# alias for call
-    public static int value_type(sqlite3_value pval)
-    { return sqlite3_value_type(pval); }
     public static int sqlite3_value_type(sqlite3_value pval)
     {
       return pval.type;
@@ -291,9 +258,6 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
       }
     }
 
-    //C# alias for call
-    public static void result_blob(sqlite3_context pCtx, string z, int n, dxDel xDel)
-    { sqlite3_result_blob(pCtx, z, n, xDel); }
     public static void sqlite3_result_blob(
     sqlite3_context pCtx,
     string z,
@@ -306,18 +270,12 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
       setResultStrOrError(pCtx, z, n, 0, xDel);
     }
 
-    //C# alias for call
-    public static void result_double(sqlite3_context pCtx, double rVal)
-    { sqlite3_result_double(pCtx, rVal); }
     public static void sqlite3_result_double(sqlite3_context pCtx, double rVal)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemSetDouble(pCtx.s, rVal);
     }
 
-    //C# alias for call
-    public static void result_error(sqlite3_context pCtx, string z, int n)
-    { sqlite3_result_error(pCtx, z, n); }
     public static void sqlite3_result_error(sqlite3_context pCtx, string z, int n)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
@@ -333,36 +291,24 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
 //}
 #endif
 
-    //C# alias for call
-    public static void result_int(sqlite3_context pCtx, int iVal)
-    { sqlite3_result_int(pCtx, iVal); }
     public static void sqlite3_result_int(sqlite3_context pCtx, int iVal)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemSetInt64(pCtx.s, (i64)iVal);
     }
 
-    //C# alias for call    
-    public static void result_int64(sqlite3_context pCtx, i64 iVal)
-    { sqlite3_result_int64(pCtx, iVal); }
     public static void sqlite3_result_int64(sqlite3_context pCtx, i64 iVal)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemSetInt64(pCtx.s, iVal);
     }
 
-    //C# alias for call    
-    public static void result_null(sqlite3_context pCtx)
-    { sqlite3_result_null(pCtx); }
     public static void sqlite3_result_null(sqlite3_context pCtx)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemSetNull(pCtx.s);
     }
 
-    //C# alias for call    
-    public static void result_text(sqlite3_context pCtx, string z, int o, int n, dxDel xDel)
-    { sqlite3_result_text(pCtx, z, o, n, xDel); }
     public static void sqlite3_result_text(
     sqlite3_context pCtx,
     string z,
@@ -375,9 +321,6 @@ return sqlite3ValueText(pVal, SQLITE_UTF16LE);
       setResultStrOrError(pCtx, z, o, n, SQLITE_UTF8, xDel);
     }
 
-    //C# alias for call    
-    public static void result_text(sqlite3_context pCtx, string z, int n, dxDel xDel)
-    { sqlite3_result_text(pCtx, z, n, xDel); }
     public static void sqlite3_result_text(
     sqlite3_context pCtx,
     string z,
@@ -418,27 +361,18 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
 }
 #endif // * SQLITE_OMIT_UTF16 */
 
-    //C# alias for call    
-    public static void result_value(sqlite3_context pCtx, sqlite3_value pValue)
-    { sqlite3_result_value(pCtx, pValue); }
     public static void sqlite3_result_value(sqlite3_context pCtx, sqlite3_value pValue)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemCopy(pCtx.s, pValue);
     }
 
-    //C# alias for call    
-    public static void result_zeroblob(sqlite3_context pCtx, int n)
-    { sqlite3_result_zeroblob(pCtx, n); }
     public static void sqlite3_result_zeroblob(sqlite3_context pCtx, int n)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
       sqlite3VdbeMemSetZeroBlob(pCtx.s, n);
     }
 
-    //C# alias for call    
-    public static void result_error_code(sqlite3_context pCtx, int errCode)
-    { sqlite3_result_error_code(pCtx, errCode); }
     public static void sqlite3_result_error_code(sqlite3_context pCtx, int errCode)
     {
       pCtx.isError = errCode;
@@ -450,9 +384,7 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     }
 
     /* Force an SQLITE_TOOBIG error. */
-    //C# alias for call    
-    public static void result_error_toobig(sqlite3_context pCtx)
-    { sqlite3_result_error_toobig(pCtx); }
+
     public static void sqlite3_result_error_toobig(sqlite3_context pCtx)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
@@ -462,9 +394,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     }
 
     /* An SQLITE_NOMEM error. */
-    //C# alias for call    
-    public static void result_error_nomem(sqlite3_context pCtx)
-    { sqlite3_result_error_nomem(pCtx); }
     public static void sqlite3_result_error_nomem(sqlite3_context pCtx)
     {
       Debug.Assert(sqlite3_mutex_held(pCtx.s.db.mutex));
@@ -604,9 +533,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** sqlite3Step() to do most of the work.  If a schema error occurs,
     ** call sqlite3Reprepare() and try again.
     */
-    //C# alias for call    
-    public static int step(sqlite3_stmt pStmt)
-    { return sqlite3_step(pStmt); }
     public static int sqlite3_step(sqlite3_stmt pStmt)
     {
       int rc = SQLITE_MISUSE;
@@ -655,9 +581,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** Extract the user data from a sqlite3_context structure and return a
     ** pointer to it.
     */
-    //C# alias for call    
-    public static object user_data(sqlite3_context p)
-    { return sqlite3_user_data(p); }
     public static object sqlite3_user_data(sqlite3_context p)
     {
       Debug.Assert(p != null && p.pFunc != null);
@@ -668,9 +591,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** Extract the user data from a sqlite3_context structure and return a
     ** pointer to it.
     */
-    //C# alias for call    
-    public static sqlite3 context_db_handle(sqlite3_context p)
-    { return context_db_handle(p); }
     public static sqlite3 sqlite3_context_db_handle(sqlite3_context p)
     {
       Debug.Assert(p != null && p.pFunc != null);
@@ -705,9 +625,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** context is allocated on the first call.  Subsequent calls return the
     ** same context that was returned on prior calls.
     */
-    //C# alias for call    
-    public static Mem aggregate_context(sqlite3_context p, int nByte)
-    { return sqlite3_aggregate_context(p, nByte); }
     public static Mem sqlite3_aggregate_context(sqlite3_context p, int nByte)
     {
       Mem pMem;
@@ -744,9 +661,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** Return the auxillary data pointer, if any, for the iArg'th argument to
     ** the user-function defined by pCtx.
     */
-    //C# alias for call    
-    public static string get_auxdata(sqlite3_context pCtx, int iArg)
-    { return sqlite3_get_auxdata(pCtx, iArg); }
     public static string sqlite3_get_auxdata(sqlite3_context pCtx, int iArg)
     {
       VdbeFunc pVdbeFunc;
@@ -765,9 +679,6 @@ sqlite3VdbeMemSetStr(pCtx.s, z, n, SQLITE_UTF16LE, xDel);
     ** argument to the user-function defined by pCtx. Any previous value is
     ** deleted by calling the delete function specified when it was set.
     */
-    //C# alias for call    
-    public static void set_auxdata(sqlite3_context pCtx, int iArg, string pAux, dxDel xDelete)
-    { sqlite3_set_auxdata(pCtx, iArg, pAux, xDelete); }
     public static void sqlite3_set_auxdata(
     sqlite3_context pCtx,
     int iArg,
@@ -836,9 +747,6 @@ return p.pMem.n;
     /*
 ** Return the number of columns in the result set for the statement pStmt.
 */
-    //C# alias for call    
-    public static int column_count(sqlite3_stmt pStmt)
-    { return sqlite3_column_count(pStmt); }
     public static int sqlite3_column_count(sqlite3_stmt pStmt)
     {
       Vdbe pVm = pStmt;
@@ -849,9 +757,6 @@ return p.pMem.n;
     ** Return the number of values available from the current row of the
     ** currently executing statement pStmt.
     */
-    //C# alias for call    
-    public static int data_count(sqlite3_stmt pStmt)
-    { return sqlite3_data_count(pStmt); }
     public static int sqlite3_data_count(sqlite3_stmt pStmt)
     {
       Vdbe pVm = pStmt;
@@ -948,9 +853,6 @@ __attribute__((aligned(8)))
     ** The following routines are used to access elements of the current row
     ** in the result set.
     */
-    //C# alias for call    
-    public static byte[] column_blob(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_blob(pStmt, i); }
     public static byte[] sqlite3_column_blob(sqlite3_stmt pStmt, int i)
     {
       byte[] val;
@@ -963,9 +865,6 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static int column_bytes(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_bytes(pStmt, i); }
     public static int sqlite3_column_bytes(sqlite3_stmt pStmt, int i)
     {
       int val = sqlite3_value_bytes(columnMem(pStmt, i));
@@ -973,9 +872,6 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static int column_bytes16(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_bytes16(pStmt, i); }
     public static int sqlite3_column_bytes16(sqlite3_stmt pStmt, int i)
     {
       int val = sqlite3_value_bytes16(columnMem(pStmt, i));
@@ -983,9 +879,6 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static double column_double(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_double(pStmt, i); }
     public static double sqlite3_column_double(sqlite3_stmt pStmt, int i)
     {
       double val = sqlite3_value_double(columnMem(pStmt, i));
@@ -993,9 +886,6 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static int column_int(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_int(pStmt, i); }
     public static int sqlite3_column_int(sqlite3_stmt pStmt, int i)
     {
       int val = sqlite3_value_int(columnMem(pStmt, i));
@@ -1003,9 +893,7 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static sqlite_int64 column_int64(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_int64(pStmt, i); }
+
     public static sqlite_int64 sqlite3_column_int64(sqlite3_stmt pStmt, int i)
     {
       sqlite_int64 val = sqlite3_value_int64(columnMem(pStmt, i));
@@ -1013,9 +901,6 @@ __attribute__((aligned(8)))
       return val;
     }
 
-    //C# alias for call    
-    public static string column_text(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_text(pStmt, i); }
     public static string sqlite3_column_text(sqlite3_stmt pStmt, int i)
     {
       string val = sqlite3_value_text(columnMem(pStmt, i));
@@ -1023,9 +908,6 @@ __attribute__((aligned(8)))
       if (String.IsNullOrEmpty(val)) return null; return val;
     }
 
-    //C# alias for call    
-    public static sqlite3_value column_value(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_value(pStmt, i); }
     public static sqlite3_value sqlite3_column_value(sqlite3_stmt pStmt, int i)
     {
       Mem pOut = columnMem(pStmt, i);
@@ -1045,9 +927,6 @@ __attribute__((aligned(8)))
 //}
 #endif // * SQLITE_OMIT_UTF16 */
 
-    //C# alias for call    
-    public static int column_type(sqlite3_stmt pStmt, int i)
-    { return sqlite3_column_type(pStmt, i); }
     public static int sqlite3_column_type(sqlite3_stmt pStmt, int i)
     {
       int iType = sqlite3_value_type(columnMem(pStmt, i));
@@ -1117,9 +996,6 @@ __attribute__((aligned(8)))
     ** Return the name of the Nth column of the result set returned by SQL
     ** statement pStmt.
     */
-    //C# alias for call    
-    public static string column_name(sqlite3_stmt pStmt, int N)
-    { return sqlite3_column_name(pStmt, N); }
     public static string sqlite3_column_name(sqlite3_stmt pStmt, int N)
     {
       return columnName(
@@ -1145,9 +1021,6 @@ pStmt, N,  sqlite3_value_text16, COLNAME_NAME);
 ** Return the column declaration type (if applicable) of the 'i'th column
 ** of the result set of SQL statement pStmt.
 */
-    //C# alias for call    
-    public static string column_decltype(sqlite3_stmt pStmt, int N)
-    { return sqlite3_column_decltype(pStmt, N); }
     public static string sqlite3_column_decltype(sqlite3_stmt pStmt, int N)
     {
       return columnName(
@@ -1334,10 +1207,6 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       return rc;
     }
 
-
-    //C# alias for call    
-    public static int bind_double(sqlite3_stmt pStmt, int i, double rValue)
-    { return sqlite3_bind_double(pStmt, i, rValue); }
     public static int sqlite3_bind_double(sqlite3_stmt pStmt, int i, double rValue)
     {
       int rc;
@@ -1351,17 +1220,11 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       return rc;
     }
 
-    //C# alias for call    
-    public static int bind_int(sqlite3_stmt p, int i, int iValue)
-    { return sqlite3_bind_int(p, i, iValue); }
     public static int sqlite3_bind_int(sqlite3_stmt p, int i, int iValue)
     {
       return sqlite3_bind_int64(p, i, (i64)iValue);
     }
 
-    //C# alias for call    
-    public static int bind_int64(sqlite3_stmt pStmt, int i, sqlite_int64 iValue)
-    { return sqlite3_bind_int64(pStmt, i, iValue); }
     public static int sqlite3_bind_int64(sqlite3_stmt pStmt, int i, sqlite_int64 iValue)
     {
       int rc;
@@ -1375,9 +1238,6 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       return rc;
     }
 
-    //C# alias for call    
-    public static int bind_null(sqlite3_stmt pStmt, int i)
-    { return sqlite3_bind_null(pStmt, i); }
     public static int sqlite3_bind_null(sqlite3_stmt pStmt, int i)
     {
       int rc;
@@ -1389,9 +1249,6 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       } return rc;
     }
 
-    //C# alias for call    
-    public static int bind_text(sqlite3_stmt pStmt, int i, string zData, int nData, dxDel xDel)
-    { return sqlite3_bind_text(pStmt, i, zData, nData, xDel); }
     public static int sqlite3_bind_text(
     sqlite3_stmt pStmt,
     int i,
@@ -1403,9 +1260,6 @@ pStmt, N, (const void*(*)(Mem*))sqlite3_value_text16, COLNAME_COLUMN);
       return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF8);
     }
 
-    //C# alias for call    
-    public static int bind_blob(sqlite3_stmt pStmt, int i, byte[] zData, int nData, dxDel xDel)
-    { return sqlite3_bind_blob(pStmt, i, zData, nData >= 0 ? nData : zData.Length, xDel); }
     public static int sqlite3_bind_blob(
     sqlite3_stmt pStmt,
     int i,
@@ -1429,9 +1283,6 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
 }
 #endif // * SQLITE_OMIT_UTF16 */
 
-    //C# alias for call    
-    public static int bind_value(sqlite3_stmt pStmt, int i, sqlite3_value pValue)
-    { return sqlite3_bind_value(pStmt, i, pValue); }
     public static int sqlite3_bind_value(sqlite3_stmt pStmt, int i, sqlite3_value pValue)
     {
       int rc;
@@ -1474,9 +1325,6 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
       return rc;
     }
 
-    //C# alias for call    
-    public static int bind_zeroblob(sqlite3_stmt pStmt, int i, int n)
-    { return sqlite3_bind_zeroblob(pStmt, i, n); }
     public static int sqlite3_bind_zeroblob(sqlite3_stmt pStmt, int i, int n)
     {
       int rc;
@@ -1494,9 +1342,6 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
     ** Return the number of wildcards that can be potentially bound to.
     ** This routine is added to support DBD::SQLite.
     */
-    //C# alias for call    
-    public static int bind_parameter_count(sqlite3_stmt pStmt)
-    { return sqlite3_bind_parameter_count(pStmt); }
     public static int sqlite3_bind_parameter_count(sqlite3_stmt pStmt)
     {
       Vdbe p = (Vdbe)pStmt;
@@ -1541,9 +1386,6 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
     **
     ** The result is always UTF-8.
     */
-    //C# alias for call    
-    public static string bind_parameter_name(sqlite3_stmt pStmt, int i)
-    { return sqlite3_bind_parameter_name(pStmt, i); }
     public static string sqlite3_bind_parameter_name(sqlite3_stmt pStmt, int i)
     {
       Vdbe p = (Vdbe)pStmt;
@@ -1582,9 +1424,6 @@ return bindText(pStmt, i, zData, nData, xDel, SQLITE_UTF16NATIVE);
       return 0;
     }
 
-    //C# alias for call    
-    public static int bind_parameter_index(sqlite3_stmt pStmt, string zName)
-    { return sqlite3_bind_parameter_index(pStmt, zName); }
     public static int sqlite3_bind_parameter_index(sqlite3_stmt pStmt, string zName)
     {
       return sqlite3VdbeParameterIndex((Vdbe)pStmt, zName, sqlite3Strlen30(zName));
@@ -1646,9 +1485,6 @@ return sqlite3TransferBindings( pFromStmt, pToStmt );
 ** the first argument to the sqlite3_prepare() that was used to create
 ** the statement in the first place.
 */
-    //C# alias for call    
-    public static sqlite3 db_handle(sqlite3_stmt pStmt)
-    { return sqlite3_db_handle(pStmt); }
     public static sqlite3 sqlite3_db_handle(sqlite3_stmt pStmt)
     {
       return pStmt != null ? ((Vdbe)pStmt).db : null;
@@ -1660,9 +1496,7 @@ return sqlite3TransferBindings( pFromStmt, pToStmt );
     ** prepared statement for the database connection.  Return NULL if there
     ** are no more.
     */
-    //C# alias for call    
-    public static sqlite3_stmt next_stmt(sqlite3 pDb, sqlite3_stmt pStmt)
-    { return sqlite3_next_stmt(pDb, pStmt); }
+ 
     public static sqlite3_stmt sqlite3_next_stmt(sqlite3 pDb, sqlite3_stmt pStmt)
     {
       sqlite3_stmt pNext;
@@ -1681,9 +1515,6 @@ return sqlite3TransferBindings( pFromStmt, pToStmt );
     /*
     ** Return the value of a status counter for a prepared statement
     */
-    //C# alias for call    
-    public static int stmt_status(sqlite3_stmt pStmt, int op, int resetFlag)
-    { return sqlite3_stmt_status(pStmt, op, resetFlag); }
     public static int sqlite3_stmt_status(sqlite3_stmt pStmt, int op, int resetFlag)
     {
       Vdbe pVdbe = (Vdbe)pStmt;
