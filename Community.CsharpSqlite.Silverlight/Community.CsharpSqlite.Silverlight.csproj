@@ -106,6 +106,9 @@
     <Compile Include="..\Community.CsharpSqlite\src\complete_c.cs">
       <Link>Community.CsharpSqlite\complete_c.cs</Link>
     </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\ctime_c.cs">
+      <Link>Community.CsharpSqlite\ctime_cs.cs</Link>
+    </Compile>
     <Compile Include="..\Community.CsharpSqlite\src\date_c.cs">
       <Link>Community.CsharpSqlite\date_c.cs</Link>
     </Compile>
