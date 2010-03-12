@@ -36,7 +36,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -5332,7 +5332,7 @@ return TCL_OK;
     static Var.SQLITE3_GETSET sqlite3_like_count = new Var.SQLITE3_GETSET( "sqlite3_like_count" );
     static Var.SQLITE3_GETSET sqlite3_sort_count = new Var.SQLITE3_GETSET( "sqlite_sort_count" );
     static Var.SQLITE3_GETSET sqlite3_current_time = new Var.SQLITE3_GETSET( "sqlite3_current_time" );
-#if SQLITE_OS_UNIX && (__APPLE__)
+#if SQLITE_OS_UNIX && (__APPLE__)  && SQLITE_ENABLE_LOCKING_STYLE
 extern int sqlite3_hostid_num;
 #endif
     static Var.SQLITE3_GETSET sqlite3_max_blobsize = new Var.SQLITE3_GETSET( "sqlite3_max_blobsize" );
@@ -5585,7 +5585,7 @@ extern int sqlite3_fts3_enable_parentheses;
       sqlite3_open_file_count, VarFlags.SQLITE3_LINK_INT );
       TCL.Tcl_LinkVar( interp, "sqlite_current_time",
       sqlite3_current_time, VarFlags.SQLITE3_LINK_INT );
-#if SQLITE_OS_UNIX && (__APPLE__)
+#if SQLITE_OS_UNIX && (__APPLE__) && SQLITE_ENABLE_LOCKING_STYLE
 TCL.Tcl_LinkVar(interp, "sqlite_hostid_num",
 (char*)&sqlite3_hostid_num, TCL.Tcl_LINK_INT);
 #endif

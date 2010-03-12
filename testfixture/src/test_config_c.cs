@@ -30,7 +30,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -207,6 +207,12 @@ TCL.Tcl_SetVar2(interp, "sqlite_options", "columnmetadata", "1", TCL.TCL_GLOBAL_
 #else
 TCL.Tcl_SetVar2(interp, "sqlite_options", "oversize_cell_check", "0",
 TCL.TCL_GLOBAL_ONLY);
+#endif
+
+#if SQLITE_OMIT_COMPILEOPTION_DIAGS
+  TCL.Tcl_SetVar2(interp, "sqlite_options", "compileoption_diags", "0", TCL.TCL_GLOBAL_ONLY);
+#else
+  TCL.Tcl_SetVar2(interp, "sqlite_options", "compileoption_diags", "1", TCL.TCL_GLOBAL_ONLY);
 #endif
 
 #if SQLITE_OMIT_COMPLETE
