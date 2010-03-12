@@ -38,7 +38,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -415,7 +415,7 @@ return rc;
 
       /* sqlite3_config() shall return SQLITE_MISUSE if it is invoked while
       ** the SQLite library is in use. */
-      if ( sqlite3GlobalConfig.isInit != 0 ) return SQLITE_MISUSE;
+      if (sqlite3GlobalConfig.isInit != 0) return SQLITE_MISUSE_BKPT();
 
       va_start( ap, null );
       switch ( op )
@@ -550,6 +550,20 @@ break;
             break;
           }
 
+    /* Record a pointer to the logger funcction and its first argument.
+    ** The default is NULL.  Logging is disabled if the function pointer is
+    ** NULL.
+    */
+    case SQLITE_CONFIG_LOG: {
+      /* MSVC is picky about pulling func ptrs from va lists.
+      ** http://support.microsoft.com/kb/47961
+      ** sqlite3GlobalConfig.xLog = va_arg(ap, void(*)(void*,int,const char*));
+      */
+      //typedef void(*LOGFUNC_t)(void*,int,const char*);
+      sqlite3GlobalConfig.xLog = (dxLog)va_arg(ap, "LOGFUNC_t");
+      sqlite3GlobalConfig.pLogArg = va_arg(ap, "void*");
+      break;
+    }
         default:
           {
             rc = SQLITE_ERROR;
@@ -793,7 +807,7 @@ break;
       }
       if ( !sqlite3SafetyCheckSickOrOk( db ) )
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
       sqlite3_mutex_enter( db.mutex );
 
@@ -1189,7 +1203,7 @@ return 1;
       ( nArg < -1 || nArg > SQLITE_MAX_FUNCTION_ARG ) ||
       ( 255 < ( nName = sqlite3Strlen30( zFunctionName ) ) ) )
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
 
 #if !SQLITE_OMIT_UTF16
@@ -1292,7 +1306,7 @@ int rc;
 string zFunc8;
 sqlite3_mutex_enter(db.mutex);
 Debug.Assert( 0==db.mallocFailed );
-zFunc8 = sqlite3Utf16to8(db, zFunctionName, -1);
+zFunc8 = sqlite3Utf16to8(db, zFunctionName, -1, SQLITE_UTF16NATIVE);
 rc = sqlite3CreateFunc(db, zFunc8, nArg, eTextRep, p, xFunc, xStep, xFinal);
 sqlite3DbFree(db,ref zFunc8);
 rc = sqlite3ApiExit(db, rc);
@@ -1548,7 +1562,7 @@ return rc;
       }
       if ( !sqlite3SafetyCheckSickOrOk( db ) )
       {
-        return sqlite3ErrStr( SQLITE_MISUSE );
+        return sqlite3ErrStr(SQLITE_MISUSE_BKPT());
       }
       sqlite3_mutex_enter( db.mutex );
       //if ( db.mallocFailed != 0 )
@@ -1623,7 +1637,7 @@ return z;
     {
       if ( db != null && !sqlite3SafetyCheckSickOrOk( db ) )
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
       if ( null == db /*|| db.mallocFailed != 0 */ )
       {
@@ -1635,7 +1649,7 @@ return z;
     {
       if ( db != null && !sqlite3SafetyCheckSickOrOk( db ) )
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
       if ( null == db /*|| db.mallocFailed != 0 */ )
       {
@@ -1676,7 +1690,7 @@ return z;
       }
       if ( enc2 < SQLITE_UTF8 || enc2 > SQLITE_UTF16BE )
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
 
       /* Check if this call is removing or replacing an existing collation
@@ -2185,7 +2199,7 @@ return sqlite3ApiExit(0, rc);
 //  char *zName8;
 //  sqlite3_mutex_enter(db.mutex);
 //  Debug.Assert( 0==db.mallocFailed );
-//  zName8 = sqlite3Utf16to8(db, zName, -1);
+//  zName8 = sqlite3Utf16to8(db, zName, -1, SQLITE_UTF16NATIVE);
 //  if( zName8 ){
 //    rc = createCollation(db, zName8, (u8)enc, SQLITE_COLL_USER, pCtx, xCompare, 0);
 //    sqlite3DbFree(db,ref zName8);
@@ -2259,17 +2273,36 @@ return sqlite3ApiExit(0, rc);
       return db.autoCommit;
     }
 
-#if  SQLITE_DEBUG
     /*
-** The following routine is subtituted for constant SQLITE_CORRUPT in
-** debugging builds.  This provides a way to set a breakpoint for when
-** corruption is first detected.
-*/
-    static int sqlite3Corrupt()
+    ** The following routines are subtitutes for constants SQLITE_CORRUPT,
+    ** SQLITE_MISUSE, SQLITE_CANTOPEN, SQLITE_IOERR and possibly other error
+    ** constants.  They server two purposes:
+    **
+    **   1.  Serve as a convenient place to set a breakpoint in a debugger
+    **       to detect when version error conditions occurs.
+    **
+    **   2.  Invoke sqlite3_log() to provide the source code location where
+    **       a low-level error is first detected.
+    */
+    static int sqlite3CorruptError(int lineno)
     {
+      testcase(sqlite3GlobalConfig.xLog != null);
+      sqlite3_log(SQLITE_CORRUPT,
+                  "database corruption found by source line %d", lineno);
       return SQLITE_CORRUPT;
     }
-#endif
+    static int sqlite3MisuseError(int lineno)
+    {
+      testcase(sqlite3GlobalConfig.xLog != null);
+      sqlite3_log(SQLITE_MISUSE, "misuse detected by source line %d", lineno);
+      return SQLITE_MISUSE;
+    }
+    static int sqlite3CantopenError(int lineno)
+    {
+      testcase(sqlite3GlobalConfig.xLog != null);
+      sqlite3_log(SQLITE_CANTOPEN, "cannot open file at source line %d", lineno);
+      return SQLITE_CANTOPEN;
+    }
 
 #if !SQLITE_OMIT_DEPRECATED
     /*
@@ -2314,7 +2347,6 @@ int autoinc = 0;
 
 /* Ensure the database schema has been loaded */
 sqlite3_mutex_enter(db.mutex);
-(void)sqlite3SafetyOn(db);
 sqlite3BtreeEnterAll(db);
 rc = sqlite3Init(db, zErrMsg);
 if( SQLITE_OK!=rc ){
@@ -2373,7 +2405,6 @@ zCollSeq = "BINARY";
 
 error_out:
 sqlite3BtreeLeaveAll(db);
-(void)sqlite3SafetyOff(db);
 
 /* Whether the function call succeeded or failed, set the output parameters
 ** to whatever their local counterparts contain. If an error did occur,

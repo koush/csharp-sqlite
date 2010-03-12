@@ -40,7 +40,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -122,15 +122,15 @@ namespace Community.CsharpSqlite
     ** [sqlite3_libversion_number()], [sqlite3_sourceid()],
     ** [sqlite_version()] and [sqlite_source_id()].
     */
-    //#define SQLITE_VERSION        "3.6.22"
-    //#define SQLITE_VERSION_NUMBER 3006022
-    //#define SQLITE_SOURCE_ID      "2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7"
-    const string SQLITE_VERSION = "3.6.22.C#";
-    const int SQLITE_VERSION_NUMBER = 300602267;
-    const string SQLITE_SOURCE_ID = "Ported to C# from 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7";
+    //#define SQLITE_VERSION        "3.6.23"
+    //#define SQLITE_VERSION_NUMBER 3006023
+    //#define SQLITE_SOURCE_ID      "2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d"
+    const string SQLITE_VERSION = "3.6.23.C#";
+    const int SQLITE_VERSION_NUMBER = 300602367;
+    const string SQLITE_SOURCE_ID = "Ported to C# from 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d";
     /*
     ** CAPI3REF: Run-Time Library Version Numbers
-    ** KEYWORDS: sqlite3_version
+    ** KEYWORDS: sqlite3_version, sqlite3_sourceid
     **
     ** These interfaces provide the same information as the [SQLITE_VERSION],
     ** [SQLITE_VERSION_NUMBER], and [SQLITE_SOURCE_ID] C preprocessor macros
@@ -152,9 +152,9 @@ namespace Community.CsharpSqlite
     ** function is provided for use in DLLs since DLL users usually do not have
     ** direct access to string constants within the DLL.  ^The
     ** sqlite3_libversion_number() function returns an integer equal to
-    ** [SQLITE_VERSION_NUMBER].  ^The sqlite3_sourceid() function a pointer
-    ** to a string constant whose value is the same as the [SQLITE_SOURCE_ID]
-    ** C preprocessor macro.
+    ** [SQLITE_VERSION_NUMBER].  ^The sqlite3_sourceid() function returns 
+    ** a pointer to a string constant whose value is the same as the 
+    ** [SQLITE_SOURCE_ID] C preprocessor macro.
     **
     ** See also: [sqlite_version()] and [sqlite_source_id()].
     */
@@ -162,6 +162,33 @@ namespace Community.CsharpSqlite
     //SQLITE_API const char *sqlite3_libversion(void);
     //SQLITE_API const char *sqlite3_sourceid(void);
     //SQLITE_API int sqlite3_libversion_number(void);
+
+#if !SQLITE_OMIT_COMPILEOPTION_DIAGS
+    /*
+    ** CAPI3REF: Run-Time Library Compilation Options Diagnostics
+    **
+    ** ^The sqlite3_compileoption_used() function returns 0 or 1 
+    ** indicating whether the specified option was defined at 
+    ** compile time.  ^The SQLITE_ prefix may be omitted from the 
+    ** option name passed to sqlite3_compileoption_used().  
+    **
+    ** ^The sqlite3_compileoption_get() function allows interating
+    ** over the list of options that were defined at compile time by
+    ** returning the N-th compile time option string.  ^If N is out of range,
+    ** sqlite3_compileoption_get() returns a NULL pointer.  ^The SQLITE_ 
+    ** prefix is omitted from any strings returned by 
+    ** sqlite3_compileoption_get().
+    **
+    ** ^Support for the diagnostic functions sqlite3_compileoption_used()
+    ** and sqlite3_compileoption_get() may be omitted by specifing the 
+    ** [SQLITE_OMIT_COMPILEOPTION_DIAGS] option at compile time.
+    **
+    ** See also: SQL functions [sqlite_compileoption_used()] and
+    ** [sqlite_compileoption_get()] and the [compile_options pragma].
+    */
+    //SQLITE_API int sqlite3_compileoption_used(const char *zOptName);
+    //SQLITE_API const char *sqlite3_compileoption_get(int N);
+#endif //* SQLITE_OMIT_COMPILEOPTION_DIAGS */
 
     /*
     ** CAPI3REF: Test To See If The Library Is Threadsafe
@@ -503,6 +530,7 @@ namespace Community.CsharpSqlite
     //#define SQLITE_OPEN_CREATE           0x00000004  /* Ok for sqlite3_open_v2() */
     //#define SQLITE_OPEN_DELETEONCLOSE    0x00000008  /* VFS only */
     //#define SQLITE_OPEN_EXCLUSIVE        0x00000010  /* VFS only */
+    //#define SQLITE_OPEN_AUTOPROXY        0x00000020  /* VFS only */
     //#define SQLITE_OPEN_MAIN_DB          0x00000100  /* VFS only */
     //#define SQLITE_OPEN_TEMP_DB          0x00000200  /* VFS only */
     //#define SQLITE_OPEN_TRANSIENT_DB     0x00000400  /* VFS only */
@@ -519,6 +547,7 @@ namespace Community.CsharpSqlite
     public const int SQLITE_OPEN_CREATE = 0x00000004;
     public const int SQLITE_OPEN_DELETEONCLOSE = 0x00000008;
     public const int SQLITE_OPEN_EXCLUSIVE = 0x00000010;
+    public const int SQLITE_OPEN_AUTOPROXY = 0x00000020;
     public const int SQLITE_OPEN_MAIN_DB = 0x00000100;
     public const int SQLITE_OPEN_TEMP_DB = 0x00000200;
     public const int SQLITE_OPEN_TRANSIENT_DB = 0x00000400;
@@ -1138,7 +1167,6 @@ namespace Community.CsharpSqlite
 
     /*
     ** CAPI3REF: Configuring The SQLite Library
-    ** EXPERIMENTAL
     **
     ** The sqlite3_config() interface is used to make global configuration
     ** changes to SQLite in order to tune SQLite to the specific needs of
@@ -1523,6 +1551,7 @@ namespace Community.CsharpSqlite
     //#define SQLITE_CONFIG_LOOKASIDE    13  /* int int */
     //#define SQLITE_CONFIG_PCACHE       14  /* sqlite3_pcache_methods* */
     //#define SQLITE_CONFIG_GETPCACHE    15  /* sqlite3_pcache_methods* */
+    //#define SQLITE_CONFIG_LOG          16  /* xFunc, void* */
     const int SQLITE_CONFIG_SINGLETHREAD = 1; /* nil */
     const int SQLITE_CONFIG_MULTITHREAD = 2;  /* nil */
     const int SQLITE_CONFIG_SERIALIZED = 3;  /* nil */
@@ -1537,6 +1566,7 @@ namespace Community.CsharpSqlite
     const int SQLITE_CONFIG_LOOKASIDE = 13;  /* int int */
     const int SQLITE_CONFIG_PCACHE = 14;  /* sqlite3_pcache_methods* */
     const int SQLITE_CONFIG_GETPCACHE = 15;  /* sqlite3_pcache_methods* */
+    const int SQLITE_CONFIG_LOG = 16;  /* xFunc, void* */
 
     /*
     ** CAPI3REF: Configuration Options
@@ -3999,6 +4029,7 @@ namespace Community.CsharpSqlite
     //  void(*)(void*,sqlite3*,int eTextRep,const void*)
     //);
 
+#if SQLITE_HAS_CODEC
     /*
     ** Specify the key for an encrypted database.  This routine should be
     ** called right after sqlite3_open().
@@ -4023,6 +4054,25 @@ namespace Community.CsharpSqlite
     //  sqlite3 *db,                   /* Database to be rekeyed */
     //  const void *pKey, int nKey     /* The new key */
     //);
+/*
+** Specify the activation key for a SEE database.  Unless 
+** activated, none of the SEE routines will work.
+*/
+SQLITE_API void sqlite3_activate_see(
+  const char *zPassPhrase        /* Activation phrase */
+);
+#endif
+
+#if SQLITE_ENABLE_CEROD
+/*
+** Specify the activation key for a CEROD database.  Unless 
+** activated, none of the CEROD routines will work.
+*/
+SQLITE_API void sqlite3_activate_cerod(
+  const char *zPassPhrase        /* Activation phrase */
+);
+#endif
+
 
     /*
     ** CAPI3REF: Suspend Execution For A Short Time
@@ -6162,6 +6212,30 @@ namespace Community.CsharpSqlite
     ** that SQLite uses internally when comparing identifiers.
     */
     //SQLITE_API int sqlite3_strnicmp(const char *, const char *, int);
+
+    /*
+    ** CAPI3REF: Error Logging Interface
+    ** EXPERIMENTAL
+    **
+    ** ^The [sqlite3_log()] interface writes a message into the error log
+    ** established by the [SQLITE_CONFIG_LOG] option to [sqlite3_config()].
+    ** ^If logging is enabled, the zFormat string and subsequent arguments are
+    ** passed through to [sqlite3_vmprintf()] to generate the final output string.
+    **
+    ** The sqlite3_log() interface is intended for use by extensions such as
+    ** virtual tables, collating functions, and SQL functions.  While there is
+    ** nothing to prevent an application from calling sqlite3_log(), doing so
+    ** is considered bad form.
+    **
+    ** The zFormat string must not be NULL.
+    **
+    ** To avoid deadlocks and other threading problems, the sqlite3_log() routine
+    ** will not use dynamically allocated memory.  The log message is stored in
+    ** a fixed-length buffer on the stack.  If the log message is longer than
+    ** a few hundred characters, it will be truncated to the length of the
+    ** buffer.
+    */
+    //SQLITE_API void sqlite3_log(int iErrCode, const char *zFormat, ...);
 
     /*
     ** Undo the hack that converts floating point types to integer for

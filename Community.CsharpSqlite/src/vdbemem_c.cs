@@ -33,7 +33,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -398,6 +398,10 @@ return SQLITE_OK;
     */
     static i64 doubleToInt64( double r )
     {
+#if SQLITE_OMIT_FLOATING_POINT
+  /* When floating-point is omitted, double and int64 are the same thing */
+  return r;
+#else
       /*
       ** Many compilers we encounter do not define constants for the
       ** minimum and maximum 64-bit integers, or they define them
@@ -424,6 +428,7 @@ return SQLITE_OK;
       {
         return (i64)r;
       }
+#endif
     }
 
     /*
@@ -603,6 +608,7 @@ return SQLITE_OK;
       return SQLITE_OK;
     }
 
+#if !SQLITE_OMIT_FLOATING_POINT
     /*
     ** Delete any previous value and set the value stored in pMem to NULL.
     */
@@ -621,6 +627,7 @@ return SQLITE_OK;
       pMem.z = null;
       pMem.type = SQLITE_NULL;
     }
+#endif
 
     /*
     ** Delete any previous value and set the value to be a BLOB of length
@@ -737,8 +744,8 @@ return SQLITE_OK;
       sqlite3VdbeMemReleaseExternal( pTo );
       pFrom.CopyTo( pTo );//  memcpy(pTo, pFrom, MEMCELLSIZE);
       pTo.xDel = null;
-      if ( ( pFrom.flags & MEM_Dyn ) != 0 )
-      {//|| pFrom.z==pFrom.zMalloc ){
+      if ((pFrom.flags & MEM_Static) != 0)
+      {
         pTo.flags = (u16)( pFrom.flags & ~( MEM_Dyn | MEM_Static | MEM_Ephem ) );
         Debug.Assert( srcType == MEM_Ephem || srcType == MEM_Static );
         pTo.flags |= (u16)srcType;

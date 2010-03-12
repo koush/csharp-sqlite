@@ -22,7 +22,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -139,16 +139,7 @@ void sqlite3VtabUnlock(VTable *pVTab){
   if( pVTab->nRef==0 ){
     sqlite3_vtab *p = pVTab->pVtab;
     if( p ){
-#if SQLITE_DEBUG
-      if( pVTab->db->magic==SQLITE_MAGIC_BUSY ){
-        (void)sqlite3SafetyOff(db);
         p->pModule->xDisconnect(p);
-        (void)sqlite3SafetyOn(db);
-      } else
-#endif
-      {
-        p->pModule->xDisconnect(p);
-      }
     }
     sqlite3DbFree(db, ref pVTab);
   }
@@ -484,9 +475,7 @@ static int vtabCallConstructor(
   db->pVTab = pTab;
 
   /* Invoke the virtual table constructor */
-  (void)sqlite3SafetyOff(db);
   rc = xConstruct(db, pMod->pAux, nArg, azArg, &pVTable->pVtab, &zErr);
-  (void)sqlite3SafetyOn(db);
   if( rc==SQLITE_NOMEM ) db->mallocFailed = 1;
 
   if( SQLITE_OK!=rc ){
@@ -674,7 +663,7 @@ int sqlite3_declare_vtab(sqlite3 *db, const char *zCreateTable){
   if( !pTab ){
     sqlite3Error(db, SQLITE_MISUSE, 0);
     sqlite3_mutex_leave(db->mutex);
-    return SQLITE_MISUSE;
+    return SQLITE_MISUSE_BKPT();
   }
   assert( (pTab->tabFlags & TF_Virtual)!=0 );
 
@@ -733,10 +722,8 @@ int sqlite3VtabCallDestroy(sqlite3 *db, int iDb, const char *zTab){
   if( ALWAYS(pTab!=0 && pTab->pVTable!=0) ){
     VTable *p = vtabDisconnectAll(db, pTab);
 
-    rc = sqlite3SafetyOff(db);
     assert( rc==SQLITE_OK );
     rc = p->pMod->pModule->xDestroy(p->pVtab);
-    (void)sqlite3SafetyOn(db);
 
     /* Remove the sqlite3_vtab* from the aVTrans[] array, if applicable */
     if( rc==SQLITE_OK ){
@@ -788,10 +775,8 @@ static void callFinaliser(sqlite3 *db, int offset){
 int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
   int i;
   int rc = SQLITE_OK;
-  int rcsafety;
   VTable **aVTrans = db->aVTrans;
 
-  rc = sqlite3SafetyOff(db);
   db->aVTrans = 0;
   for(i=0; rc==SQLITE_OK && i<db->nVTrans; i++){
     int (*x)(sqlite3_vtab *);
@@ -804,11 +789,6 @@ int sqlite3VtabSync(sqlite3 *db, char **pzErrmsg){
     }
   }
   db->aVTrans = aVTrans;
-  rcsafety = sqlite3SafetyOn(db);
-
-  if( rc==SQLITE_OK ){
-    rc = rcsafety;
-  }
   return rc;
 }
 

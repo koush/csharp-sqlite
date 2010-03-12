@@ -44,7 +44,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -481,12 +481,12 @@ return rc;
 **
 ** NULL is returned if there is an allocation error.
 */
-static string sqlite3Utf16to8(sqlite3 db, string z, int nByte){
+static string sqlite3Utf16to8(sqlite3 db, string z, int nByte, u8 enc){
 Debugger.Break (); // TODO -
 Mem m = Pool.Allocate_Mem();
 //  memset(&m, 0, sizeof(m));
 //  m.db = db;
-//  sqlite3VdbeMemSetStr(&m, z, nByte, SQLITE_UTF16NATIVE, SQLITE_STATIC);
+//  sqlite3VdbeMemSetStr(&m, z, nByte, enc, SQLITE_STATIC);
 //  sqlite3VdbeChangeEncoding(&m, SQLITE_UTF8);
 //  if( db.mallocFailed !=0{
 //    sqlite3VdbeMemRelease(&m);
@@ -494,7 +494,9 @@ Mem m = Pool.Allocate_Mem();
 //  }
 //  Debug.Assert( (m.flags & MEM_Term)!=0 || db.mallocFailed !=0);
 //  Debug.Assert( (m.flags & MEM_Str)!=0 || db.mallocFailed !=0);
-return m.z;// ( m.flags & MEM_Dyn ) != 0 ? m.z : sqlite3DbStrDup( db, m.z );
+  assert( (m.flags & MEM_Dyn)!=0 || db->mallocFailed );
+  assert( m.z || db->mallocFailed );
+  return m.z;
 }
 
 /*

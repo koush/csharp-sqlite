@@ -39,7 +39,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -320,11 +320,6 @@ namespace Community.CsharpSqlite
       addr = sqlite3VdbeAddOp4( pParse.pVdbe, opcode, in2, dest, in1,
       p4, P4_COLLSEQ );
       sqlite3VdbeChangeP5( pParse.pVdbe, (u8)p5 );
-      if ( ( p5 & SQLITE_AFF_MASK ) != SQLITE_AFF_NONE )
-      {
-        sqlite3ExprCacheAffinityChange( pParse, in1, 1 );
-        sqlite3ExprCacheAffinityChange( pParse, in2, 1 );
-      }
       return addr;
     }
 
@@ -4036,7 +4031,7 @@ break;
     ** just might result in some slightly slower code.  But returning
     ** an incorrect 0 or 1 could lead to a malfunction.
     */
-    static int sqlite3ExprCompare( Expr pA, Expr pB )
+    static int sqlite3ExprCompare(Expr pA, Expr pB)
     {
       int i;
       if ( pA == null || pB == null )

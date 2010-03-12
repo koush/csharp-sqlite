@@ -41,7 +41,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -244,7 +244,7 @@ pParse.nVtabLock = 0;
         pParse.rc = SQLITE_DONE;
         pParse.colNamesSet = 0;
       }
-      else if ( pParse.rc == SQLITE_OK )
+      else 
       {
         pParse.rc = SQLITE_ERROR;
       }
@@ -2215,15 +2215,13 @@ destroyRootPage( pParse, pIdx.tnum, iDb );
       //}
       Debug.Assert( pParse.nErr == 0 );
       Debug.Assert( pName.nSrc == 1 );
-      pTab = sqlite3LocateTable( pParse, isView,
+      if (noErr != 0) db.suppressErr++;
+      pTab = sqlite3LocateTable(pParse, isView,
       pName.a[0].zName, pName.a[0].zDatabase );
+      if (noErr != 0) db.suppressErr--;
 
       if ( pTab == null )
       {
-        if ( noErr != 0 )
-        {
-          sqlite3ErrorClear( pParse );
-        }
         goto exit_drop_table;
       }
       iDb = sqlite3SchemaToIndex( db, pTab.pSchema );

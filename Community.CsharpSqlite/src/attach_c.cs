@@ -26,7 +26,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -184,9 +184,14 @@ namespace Community.CsharpSqlite
         pPager = sqlite3BtreePager( aNew.pBt );
         sqlite3PagerLockingMode( pPager, db.dfltLockMode );
         sqlite3PagerJournalMode( pPager, db.dfltJournalMode );
+        sqlite3BtreeSecureDelete(aNew.pBt,
+                                 sqlite3BtreeSecureDelete(db.aDb[0].pBt, -1));
       }
-      aNew.zName = zName;// sqlite3DbStrDup( db, zName );
       aNew.safety_level = 3;
+      aNew.zName = zName;//sqlite3DbStrDup(db, zName);
+      //if( rc==SQLITE_OK && aNew.zName==0 ){
+      //  rc = SQLITE_NOMEM;
+      //}
 
 #if SQLITE_HAS_CODEC
 if( rc==SQLITE_OK ){
@@ -218,18 +223,16 @@ break;
 }
 #endif
 
-      /* If the file was opened successfully, read the schema for the new database.
-** If this fails, or if opening the file failed, then close the file and
-** remove the entry from the db.aDb[] array. i.e. put everything back the way
-** we found it.
-*/
+    /* If the file was opened successfully, read the schema for the new database.
+    ** If this fails, or if opening the file failed, then close the file and
+    ** remove the entry from the db.aDb[] array. i.e. put everything back the way
+    ** we found it.
+    */
       if ( rc == SQLITE_OK )
       {
-        sqlite3SafetyOn( db );
         sqlite3BtreeEnterAll( db );
         rc = sqlite3Init( db, ref zErrDyn );
         sqlite3BtreeLeaveAll( db );
-        sqlite3SafetyOff( db );
       }
       if ( rc != 0 )
       {

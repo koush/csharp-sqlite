@@ -26,7 +26,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -617,6 +617,7 @@ sqlite3ParserStackPeak(pEngine)
       if ( pParse.zErrMsg != null )
       {
         pzErrMsg = pParse.zErrMsg;
+        sqlite3_log(pParse.rc, "%s", pzErrMsg);
         pParse.zErrMsg = "";
         nErr++;
       }

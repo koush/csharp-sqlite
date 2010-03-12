@@ -235,7 +235,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -471,6 +471,7 @@ namespace Community.CsharpSqlite
       public MemPage pPage1;         /* First page of the database */
       public bool readOnly;          /* True if the underlying file is readonly */
       public bool pageSizeFixed;     /* True if the page size can no longer be changed */
+      public bool secureDelete;      /* True if secure_delete is enabled */
 #if !SQLITE_OMIT_AUTOVACUUM
       public bool autoVacuum;         /* True if auto-vacuum is enabled */
       public bool incrVacuum;         /* True if incr-vacuum is enabled */
@@ -517,6 +518,7 @@ public u8 isPending;            /* If waiting for read-locks to clear */
       public u16 nSize;     /* Size of the cell content on the main b-tree page */
       public bool Equals( CellInfo ci )
       {
+        if ( ci.iCell >= ci.pCell.Length || iCell >= this.pCell.Length) return false; 
         if ( ci.pCell[ci.iCell] != this.pCell[iCell] ) return false;
         if ( ci.nKey != this.nKey || ci.nData != this.nData || ci.nPayload != this.nPayload ) return false;
         if ( ci.nHeader != this.nHeader || ci.nLocal != this.nLocal ) return false;

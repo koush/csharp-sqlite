@@ -27,7 +27,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -653,9 +653,7 @@ return;
       }
       else
       {
-        sqlite3SafetyOff( db );
         rc = sqlite3_exec( db, zSql, (dxCallback)analysisLoader, sInfo, 0 );
-        sqlite3SafetyOn( db );
         sqlite3DbFree( db, ref zSql );
       }
 
@@ -675,15 +673,12 @@ return;
         //if( !zSql ){
         //rc = SQLITE_NOMEM;
         //}else{
-        sqlite3SafetyOff( db );
         string sDummy = ""; rc = sqlite3_prepare( db, zSql, -1, ref pStmt, ref sDummy );
-        sqlite3SafetyOn( db );
         sqlite3DbFree(db, ref zSql);
         //}
 
         if ( rc == SQLITE_OK )
         {
-          sqlite3SafetyOff( db );
           while ( sqlite3_step( pStmt ) == SQLITE_ROW )
           {
             string zIndex = sqlite3_column_text( pStmt, 0 );
@@ -747,7 +742,6 @@ return;
             }
           }
           rc = sqlite3_finalize( ref pStmt );
-          sqlite3SafetyOn( db );
         }
       }
 #endif

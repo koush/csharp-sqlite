@@ -25,7 +25,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -364,6 +364,7 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
       Db pDb;
       Vdbe v = pParse.pVdbe = sqlite3VdbeCreate( db );
       if ( v == null ) return;
+      sqlite3VdbeRunOnlyOnce(v);
       pParse.nMem = 2;
 
       /* Interpret the [database.] part of the pragma statement. iDb is the
@@ -517,10 +518,40 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
           else
 
             /*
-            **  PRAGMA [database.]page_count
+            **  PRAGMA [database.]secure_delete
+            **  PRAGMA [database.]secure_delete=ON/OFF
             **
-            ** Return the number of pages in the specified database.
+            ** The first form reports the current setting for the
+            ** secure_delete flag.  The second form changes the secure_delete
+            ** flag setting and reports thenew value.
             */
+            if (sqlite3StrICmp(zLeft, "secure_delete") == 0)
+            {
+              Btree pBt = pDb.pBt;
+              int b = -1;
+              Debug.Assert(pBt != null);
+              if (zRight != null)
+              {
+                b = getBoolean(zRight);
+              }
+              if (pId2.n == 0 && b >= 0)
+              {
+                int ii;
+                for (ii = 0; ii < db.nDb; ii++)
+                {
+                  sqlite3BtreeSecureDelete(db.aDb[ii].pBt, b);
+                }
+              }
+              b = sqlite3BtreeSecureDelete(pBt, b);
+              returnSingleInt(pParse, "secure_delete", b);
+            }
+
+            else
+              /*
+              **  PRAGMA [database.]page_count
+              **
+              ** Return the number of pages in the specified database.
+              */
             if ( sqlite3StrICmp( zLeft, "page_count" ) == 0 )
             {
               int iReg;
@@ -1615,6 +1646,27 @@ new VdbeOpList( OP_ResultRow,       1,  1,  0)
                                                         else
 #endif // * SQLITE_OMIT_SCHEMA_VERSION_PRAGMAS */
 
+#if !SQLITE_OMIT_COMPILEOPTION_DIAGS
+  /*
+  **   PRAGMA compile_options
+  **
+  ** Return the names of all compile-time options used in this build,
+  ** one option per row.
+  */
+  if( sqlite3StrICmp(zLeft, "compile_options")==0 ){
+    int i = 0;
+    string zOpt;
+    sqlite3VdbeSetNumCols(v, 1);
+    pParse.nMem = 1;
+    sqlite3VdbeSetColName(v, 0, COLNAME_NAME, "compile_option", SQLITE_STATIC);
+    while ((zOpt = sqlite3_compileoption_get(i++)) != null)
+    {
+      sqlite3VdbeAddOp4(v, OP_String8, 0, 1, 0, zOpt, 0);
+      sqlite3VdbeAddOp2(v, OP_ResultRow, 1, 1);
+    }
+  }else
+#endif //* SQLITE_OMIT_COMPILEOPTION_DIAGS */
+
 #if SQLITE_DEBUG || SQLITE_TEST
                                                           /*
 ** Report the current state of file logs for all databases
@@ -1681,25 +1733,17 @@ sqlite3_rekey(db, zKey, i/2);
 if( sqlite3StrICmp(zLeft, "activate_extensions")==0 ){
 #if SQLITE_HAS_CODEC
 if( sqlite3StrNICmp(zRight, "see-", 4)==0 ){
-extern void sqlite3_activate_see(const char*);
 sqlite3_activate_see(&zRight[4]);
 }
 #endif
 #if SQLITE_ENABLE_CEROD
 if( sqlite3StrNICmp(zRight, "cerod-", 6)==0 ){
-extern void sqlite3_activate_cerod(const char*);
 sqlite3_activate_cerod(&zRight[6]);
 }
 #endif
 }else
 #endif
                                                           { /* Empty ELSE clause */}
-
-      /* Code an OP_Expire at the end of each PRAGMA program to cause
-      ** the VDBE implementing the pragma to expire. Most (all?) pragmas
-      ** are only valid for a single execution.
-      */
-      sqlite3VdbeAddOp2( v, OP_Expire, 1, 0 );
 
       /*
       ** Reset the safety level, in case the fullfsync flag or synchronous

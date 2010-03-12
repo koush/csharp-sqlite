@@ -69,7 +69,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4dy
     **
     **  $Header$
     *************************************************************************
@@ -610,8 +610,10 @@ const int SQLITE_PRINT_BUF_SIZE = 50;
           case etEXP:
           case etGENERIC:
             realvalue = (double)va_arg( ap, "double" );
-#if !SQLITE_OMIT_FLOATING_POINT
-            if ( precision < 0 ) precision = 6;         /* Set default precision */
+#if SQLITE_OMIT_FLOATING_POINT
+        length = 0;
+#else
+            if (precision < 0) precision = 6;         /* Set default precision */
             if ( precision > etBUFSIZE / 2 - 10 ) precision = etBUFSIZE / 2 - 10;
             if ( realvalue < 0.0 )
             {
@@ -804,7 +806,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
               length = width;
               bufpt = 0;
             }
-#endif
+#endif //* !defined(SQLITE_OMIT_FLOATING_POINT) */
             break;
           case etSIZE:
             ap[0] = pAccum.nChar; // *(va_arg(ap,int*)) = pAccum.nChar;
@@ -868,7 +870,7 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
               isnull = ( escarg == "" || escarg == "NULL\0" );
               if ( isnull ) escarg = ( xtype == etSQLESCAPE2 ) ? "NULL\0" : "(NULL)\0";
               k = precision;
-              for ( i = n = 0; ( ch = escarg[i] ) != 0 && k != 0; i++, k-- )
+              for (i = n = 0; k != 0 && (ch = escarg[i]) != 0; i++, k--)
               {
                 if ( ch == q ) n++;
               }
@@ -1226,6 +1228,39 @@ for(idx=precision, rounder=0.4999; idx>0; idx--, rounder*=0.1);
       z = sqlite3StrAccumFinish( acc );
       return ( zBuf = z );
     }
+
+/*
+** This is the routine that actually formats the sqlite3_log() message.
+** We house it in a separate routine from sqlite3_log() to avoid using
+** stack space on small-stack systems when logging is disabled.
+**
+** sqlite3_log() must render into a static buffer.  It cannot dynamically
+** allocate memory because it might be called while the memory allocator
+** mutex is held.
+*/
+static void renderLogMsg(int iErrCode, string zFormat, params object[] ap){
+  //StrAccum acc;                          /* String accumulator */
+  //char zMsg[SQLITE_PRINT_BUF_SIZE*3];    /* Complete log message */
+
+  sqlite3StrAccumInit(acc, null, SQLITE_PRINT_BUF_SIZE * 3, 0);
+  acc.useMalloc = 0;
+  sqlite3VXPrintf(acc, 0, zFormat, ap);
+  sqlite3GlobalConfig.xLog(sqlite3GlobalConfig.pLogArg, iErrCode,
+                           sqlite3StrAccumFinish(acc));
+}
+
+/*
+** Format and write a message to the log if logging is enabled.
+*/
+static void sqlite3_log(int iErrCode, string zFormat, params va_list[] ap )
+{
+  //va_list ap;                             /* Vararg list */
+  if( sqlite3GlobalConfig.xLog != null){
+    va_start(ap, zFormat);
+    renderLogMsg(iErrCode, zFormat, ap);
+    va_end(ap);
+  }
+}
 
 #if SQLITE_DEBUG || DEBUG || TRACE
     /*

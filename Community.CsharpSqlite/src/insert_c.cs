@@ -27,7 +27,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -1454,25 +1454,40 @@ isView = false;
               ** the triggers and remove both the table and index b-tree entries.
               **
               ** Otherwise, if there are no triggers or the recursive-triggers
-              ** flag is not set, call GenerateRowIndexDelete(). This removes
-              ** the index b-tree entries only. The table b-tree entry will be 
-              ** replaced by the new entry when it is inserted.  */
+              ** flag is not set, but the table has one or more indexes, call 
+              ** GenerateRowIndexDelete(). This removes the index b-tree entries 
+              ** only. The table b-tree entry will be replaced by the new entry 
+              ** when it is inserted.  
+              **
+              ** If either GenerateRowDelete() or GenerateRowIndexDelete() is called,
+              ** also invoke MultiWrite() to indicate that this VDBE may require
+              ** statement rollback (if the statement is aborted after the delete
+              ** takes place). Earlier versions called sqlite3MultiWrite() regardless,
+              ** but being more selective here allows statements like:
+              **
+              **   REPLACE INTO t(rowid) VALUES($newrowid)
+              **
+              ** to run without a statement journal if there are no indexes on the
+              ** table.
+              */
               Trigger pTrigger = null;
               if ( ( pParse.db.flags & SQLITE_RecTriggers ) != 0 )
               {
                 int iDummy = 0;
                 pTrigger = sqlite3TriggersExist( pParse, pTab, TK_DELETE, null, ref iDummy );
               }
-              sqlite3MultiWrite( pParse );
               if ( pTrigger != null || sqlite3FkRequired( pParse, pTab, null, 0 ) != 0 )
               {
+                sqlite3MultiWrite(pParse);
                 sqlite3GenerateRowDelete(
                     pParse, pTab, baseCur, regRowid, 0, pTrigger, OE_Replace
                 );
               }
               else
+                if (pTab.pIndex != null)
               {
-                sqlite3GenerateRowIndexDelete( pParse, pTab, baseCur, 0 );
+                  sqlite3MultiWrite(pParse);
+                  sqlite3GenerateRowIndexDelete(pParse, pTab, baseCur, 0);
               }
               seenReplace = true;
               break;
@@ -1987,20 +2002,20 @@ isView = false;
         }
       }
 #if !SQLITE_OMIT_CHECK
-      if ( pDest.pCheck != null && sqlite3ExprCompare( pSrc.pCheck, pDest.pCheck ) != 0 )
+      if (pDest.pCheck != null && 0 != sqlite3ExprCompare(pSrc.pCheck, pDest.pCheck))
       {
         return 0;   /* Tables have different CHECK constraints.  Ticket #2252 */
       }
 #endif
 
       /* If we get this far, it means either:
-**
-**    *   We can always do the transfer if the table contains an
-**        an integer primary key
-**
-**    *   We can conditionally do the transfer if the destination
-**        table is empty.
-*/
+      **
+      **    *   We can always do the transfer if the table contains an
+      **        an integer primary key
+      **
+      **    *   We can conditionally do the transfer if the destination
+      **        table is empty.
+      */
 #if  SQLITE_TEST
       sqlite3_xferopt_count.iValue++;
 #endif

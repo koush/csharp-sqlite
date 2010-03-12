@@ -47,7 +47,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -114,47 +114,49 @@ namespace Community.CsharpSqlite
 //#include <inttypes.h>
 #endif
 
+    /*
+** The number of samples of an index that SQLite takes in order to 
+** construct a histogram of the table content when running ANALYZE
+** and with SQLITE_ENABLE_STAT2
+*/
     //#define SQLITE_INDEX_SAMPLES 10
     public const int SQLITE_INDEX_SAMPLES = 10;
 
     /*
-** This macro is used to "hide" some ugliness in casting an int
-** value to a ptr value under the MSVC 64-bit compiler.   Casting
-** non 64-bit values to ptr types results in a "hard" error with
-** the MSVC 64-bit compiler which this attempts to avoid.
-**
-** A simple compiler pragma or casting sequence could not be found
-** to correct this in all situations, so this macro was introduced.
-**
-** It could be argued that the intptr_t type could be used in this
-** case, but that type is not available on all compilers, or
-** requires the #include of specific headers which differs between
-** platforms.
-**
-** Ticket #3860:  The llvm-gcc-4.2 compiler from Apple chokes on
-** the ((void*)&((char*)0)[X]) construct.  But MSVC chokes on ((void*)(X)).
-** So we have to define the macros in different ways depending on the
-** compiler.
-*/
-    //#if defined(__GNUC__)
-    //# if defined(HAVE_STDINT_H)
-    //#   define SQLITE_INT_TO_PTR(X)  ((void*)(intptr_t)(X))
-    //#   define SQLITE_PTR_TO_INT(X)  ((int)(intptr_t)(X))
-    //# else
-    //#   define SQLITE_INT_TO_PTR(X)  ((void*)(X))
-    //#   define SQLITE_PTR_TO_INT(X)  ((int)(X))
-    //# endif
-    //#else
-    //# define SQLITE_INT_TO_PTR(X)   ((void*)&((char*)0)[X])
-    //# define SQLITE_PTR_TO_INT(X)   ((int)(((char*)X)-(char*)0))
+    ** The following macros are used to cast pointers to integers and
+    ** integers to pointers.  The way you do this varies from one compiler
+    ** to the next, so we have developed the following set of #if statements
+    ** to generate appropriate macros for a wide range of compilers.
+    **
+    ** The correct "ANSI" way to do this is to use the intptr_t type. 
+    ** Unfortunately, that typedef is not available on all compilers, or
+    ** if it is available, it requires an #include of specific headers
+    ** that very from one machine to the next.
+    **
+    ** Ticket #3860:  The llvm-gcc-4.2 compiler from Apple chokes on
+    ** the ((void*)&((char*)0)[X]) construct.  But MSVC chokes on ((void*)(X)).
+    ** So we have to define the macros in different ways depending on the
+    ** compiler.
+    */
+    //#if defined(__PTRDIFF_TYPE__)  /* This case should work for GCC */
+    //# define SQLITE_INT_TO_PTR(X)  ((void*)(__PTRDIFF_TYPE__)(X))
+    //# define SQLITE_PTR_TO_INT(X)  ((int)(__PTRDIFF_TYPE__)(X))
+    //#elif !defined(__GNUC__)       /* Works for compilers other than LLVM */
+    //# define SQLITE_INT_TO_PTR(X)  ((void*)&((char*)0)[X])
+    //# define SQLITE_PTR_TO_INT(X)  ((int)(((char*)X)-(char*)0))
+    //#elif defined(HAVE_STDINT_H)   /* Use this case if we have ANSI headers */
+    //# define SQLITE_INT_TO_PTR(X)  ((void*)(intptr_t)(X))
+    //# define SQLITE_PTR_TO_INT(X)  ((int)(intptr_t)(X))
+    //#else                          /* Generates a warning - but it always works */
+    //# define SQLITE_INT_TO_PTR(X)  ((void*)(X))
+    //# define SQLITE_PTR_TO_INT(X)  ((int)(X))
     //#endif
 
-
     /*
-** The SQLITE_THREADSAFE macro must be defined as either 0 or 1.
-** Older versions of SQLite used an optional THREADSAFE macro.
-** We support that for legacy
-*/
+    ** The SQLITE_THREADSAFE macro must be defined as either 0 or 1.
+    ** Older versions of SQLite used an optional THREADSAFE macro.
+    ** We support that for legacy
+    */
 #if !SQLITE_THREADSAFE
 #if THREADSAFE
 //# define SQLITE_THREADSAFE THREADSAFE
@@ -176,7 +178,7 @@ const int SQLITE_THREADSAFE = 1;
     //# define SQLITE_DEFAULT_MEMSTATUS 1
     const int SQLITE_DEFAULT_MEMSTATUS = 0;
 #else
-    const int SQLITE_DEFAULT_MEMSTATUS = 1;
+const int SQLITE_DEFAULT_MEMSTATUS = 1;
 #endif
 
     /*
@@ -185,23 +187,18 @@ const int SQLITE_THREADSAFE = 1;
 **
 **     SQLITE_SYSTEM_MALLOC          // Use normal system malloc()
 **     SQLITE_MEMDEBUG               // Debugging version of system malloc()
-**     SQLITE_MEMORY_SIZE            // internal allocator #1
-**     SQLITE_MMAP_HEAP_SIZE         // internal mmap() allocator
-**     SQLITE_POW2_MEMORY_SIZE       // internal power-of-two allocator
+**
+** (Historical note:  There used to be several other options, but we've
+** pared it down to just these two.)
 **
 ** If none of the above are defined, then set SQLITE_SYSTEM_MALLOC as
 ** the default.
 */
     //#if defined(SQLITE_SYSTEM_MALLOC)+defined(SQLITE_MEMDEBUG)+\
-    //    defined(SQLITE_MEMORY_SIZE)+defined(SQLITE_MMAP_HEAP_SIZE)+\
-    //    defined(SQLITE_POW2_MEMORY_SIZE)>1
     //# error "At most one of the following compile-time configuration options\
-    // is allows: SQLITE_SYSTEM_MALLOC, SQLITE_MEMDEBUG, SQLITE_MEMORY_SIZE,\
-    // SQLITE_MMAP_HEAP_SIZE, SQLITE_POW2_MEMORY_SIZE"
+    // is allows: SQLITE_SYSTEM_MALLOC, SQLITE_MEMDEBUG"
     //#endif
     //#if defined(SQLITE_SYSTEM_MALLOC)+defined(SQLITE_MEMDEBUG)+\
-    //    defined(SQLITE_MEMORY_SIZE)+defined(SQLITE_MMAP_HEAP_SIZE)+\
-    //    defined(SQLITE_POW2_MEMORY_SIZE)==0
     //# define SQLITE_SYSTEM_MALLOC 1
     //#endif
 
@@ -267,7 +264,7 @@ void sqlite3Coverage(int);
 //# define testcase(X)  if( X ){ sqlite3Coverage(__LINE__); }
 #else
     //# define testcase(X)
-    static void testcase<T>( T X ) { }
+    static void testcase<T>(T X) { }
 #endif
 
     /*
@@ -316,20 +313,20 @@ void sqlite3Coverage(int);
 //# define NEVER(X)       (0)
 #elif !NDEBUG
     //# define ALWAYS(X)      ((X)?1:(assert(0),0))
-    static bool ALWAYS( bool X ) { if ( X != true ) Debug.Assert( false ); return true; }
-    static int ALWAYS( int X ) { if ( X == 0 ) Debug.Assert( false ); return 1; }
-    static bool ALWAYS<T>( T X ) { if ( X == null ) Debug.Assert( false ); return true; }
+    static bool ALWAYS(bool X) { if (X != true) Debug.Assert(false); return true; }
+    static int ALWAYS(int X) { if (X == 0) Debug.Assert(false); return 1; }
+    static bool ALWAYS<T>(T X) { if (X == null) Debug.Assert(false); return true; }
 
     //# define NEVER(X)       ((X)?(assert(0),1):0)
-    static bool NEVER( bool X ) { if ( X == true ) Debug.Assert( false ); return false; }
-    static byte NEVER( byte X ) { if ( X != 0 ) Debug.Assert( false ); return 0; }
-    static int NEVER( int X ) { if ( X != 0 ) Debug.Assert( false ); return 0; }
-    static bool NEVER<T>( T X ) { if ( X != null ) Debug.Assert( false ); return false; }
+    static bool NEVER(bool X) { if (X == true) Debug.Assert(false); return false; }
+    static byte NEVER(byte X) { if (X != 0) Debug.Assert(false); return 0; }
+    static int NEVER(int X) { if (X != 0) Debug.Assert(false); return 0; }
+    static bool NEVER<T>(T X) { if (X != null) Debug.Assert(false); return false; }
 #else
 //# define ALWAYS(X)      (X)
-    static bool ALWAYS(bool X) { return X; }
-    static byte ALWAYS(byte X) { return X; }
-    static int ALWAYS(int X) { return X; }
+static bool ALWAYS(bool X) { return X; }
+static byte ALWAYS(byte X) { return X; }
+static int ALWAYS(int X) { return X; }
 static bool ALWAYS<T>( T X ) { return true; }
 
 //# define NEVER(X)       (X)
@@ -350,9 +347,9 @@ static bool NEVER<T>(T X) { return false; }
 //# define unlikely(X)  __builtin_expect((X),0)
 #else
     //# define likely(X)    !!(X)
-    static bool likely( bool X ) { return !!X; }
+    static bool likely(bool X) { return !!X; }
     //# define unlikely(X)  !!(X)
-    static bool unlikely( bool X ) { return !!X; }
+    static bool unlikely(bool X) { return !!X; }
 #endif
 
     //#include "sqlite3.h"
@@ -380,7 +377,7 @@ static bool NEVER<T>(T X) { return false; }
 //# undef SQLITE_HAVE_ISNAN
 #endif
 #if !SQLITE_BIG_DBL
-    const double SQLITE_BIG_DBL = ( ( (sqlite3_int64)1 ) << 60 );//# define SQLITE_BIG_DBL (1e99)
+    const double SQLITE_BIG_DBL = (((sqlite3_int64)1) << 60);//# define SQLITE_BIG_DBL (1e99)
 #endif
 
     /*
@@ -394,36 +391,27 @@ static bool NEVER<T>(T X) { return false; }
     static int OMIT_TEMPDB = 0;
 #endif
 
-    /*
-** If the following macro is set to 1, then NULL values are considered
-** distinct when determining whether or not two entries are the same
-** in a UNIQUE index.  This is the way PostgreSQL, Oracle, DB2, MySQL,
-** OCELOT, and Firebird all work.  The SQL92 spec explicitly says this
-** is the way things are suppose to work.
-**
-** If the following macro is set to 0, the NULLs are indistinct for
-** a UNIQUE index.  In this mode, you can only have a single NULL entry
-** for a column declared UNIQUE.  This is the way Informix and SQL Server
-** work.
-*/
-    const int NULL_DISTINCT_FOR_UNIQUE = 1;
 
     /*
-    ** The "file format" number is an integer that is incremented whenever
-    ** the VDBE-level file format changes.  The following macros define the
-    ** the default file format for new databases and the maximum file format
-    ** that the library can read.
-    */
+** The "file format" number is an integer that is incremented whenever
+** the VDBE-level file format changes.  The following macros define the
+** the default file format for new databases and the maximum file format
+** that the library can read.
+*/
     static public int SQLITE_MAX_FILE_FORMAT = 4;//#define SQLITE_MAX_FILE_FORMAT 4
     //#if !SQLITE_DEFAULT_FILE_FORMAT
     static int SQLITE_DEFAULT_FILE_FORMAT = 1;//# define SQLITE_DEFAULT_FILE_FORMAT 1
     //#endif
 
+    /*
+    ** Determine whether triggers are recursive by default.  This can be
+    ** changed at run-time using a pragma.
+    */
 #if !SQLITE_DEFAULT_RECURSIVE_TRIGGERS
     //# define SQLITE_DEFAULT_RECURSIVE_TRIGGERS 0
     static public bool SQLITE_DEFAULT_RECURSIVE_TRIGGERS = false;
 #else
-        static public bool SQLITE_DEFAULT_RECURSIVE_TRIGGERS = true;
+static public bool SQLITE_DEFAULT_RECURSIVE_TRIGGERS = true;
 #endif
 
 
@@ -513,7 +501,7 @@ static bool NEVER<T>(T X) { return false; }
     ** have to specify the value in the less intuitive manner shown:
     */
     //#define SQLITE_MAX_U32  ((((u64)1)<<32)-1)
-    const u32 SQLITE_MAX_U32 = (u32)( ( ( (u64)1 ) << 32 ) - 1 );
+    const u32 SQLITE_MAX_U32 = (u32)((((u64)1) << 32) - 1);
 
 
     /*
@@ -532,7 +520,7 @@ const int ;//#define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
 #else
     static u8 SQLITE_BIGENDIAN = 0;//#define SQLITE_BIGENDIAN    (*(char *)(&sqlite3one)==0)
     static u8 SQLITE_LITTLEENDIAN = 1;//#define SQLITE_LITTLEENDIAN (*(char *)(&sqlite3one)==1)
-    static u8 SQLITE_UTF16NATIVE = ( SQLITE_BIGENDIAN != 0 ? SQLITE_UTF16BE : SQLITE_UTF16LE );//#define SQLITE_UTF16NATIVE (SQLITE_BIGENDIAN?SQLITE_UTF16BE:SQLITE_UTF16LE)
+    static u8 SQLITE_UTF16NATIVE = (SQLITE_BIGENDIAN != 0 ? SQLITE_UTF16BE : SQLITE_UTF16LE);//#define SQLITE_UTF16NATIVE (SQLITE_BIGENDIAN?SQLITE_UTF16BE:SQLITE_UTF16LE)
 #endif
 
     /*
@@ -550,13 +538,13 @@ const int ;//#define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
     ** to force 8-byte alignment on 64-bit architectures.
     */
     //#define ROUND8(x)     (((x)+7)&~7)
-    static int ROUND8( int x ) { return ( x + 7 ) & ~7; }
+    static int ROUND8(int x) { return (x + 7) & ~7; }
 
     /*
     ** Round down to the nearest multiple of 8
     */
     //#define ROUNDDOWN8(x) ((x)&~7)
-    static int ROUNDDOWN8( int x ) { return x & ~7; }
+    static int ROUNDDOWN8(int x) { return x & ~7; }
 
     /*
     ** Assert that the pointer X is aligned to an 8-byte boundary.  This
@@ -606,15 +594,15 @@ const int ;//#define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
     /*
     ** The name of the schema table.
     */
-    static string SCHEMA_TABLE( int x ) //#define SCHEMA_TABLE(x)  ((!OMIT_TEMPDB)&&(x==1)?TEMP_MASTER_NAME:MASTER_NAME)
-    { return ( ( OMIT_TEMPDB == 0 ) && ( x == 1 ) ? TEMP_MASTER_NAME : MASTER_NAME ); }
+    static string SCHEMA_TABLE(int x) //#define SCHEMA_TABLE(x)  ((!OMIT_TEMPDB)&&(x==1)?TEMP_MASTER_NAME:MASTER_NAME)
+    { return ((OMIT_TEMPDB == 0) && (x == 1) ? TEMP_MASTER_NAME : MASTER_NAME); }
 
     /*
     ** A convenience macro that returns the number of elements in
     ** an array.
     */
     //#define ArraySize(X)    ((int)(sizeof(X)/sizeof(X[0])))
-    static int ArraySize<T>( T[] x ) { return x.Length; }
+    static int ArraySize<T>(T[] x) { return x.Length; }
 
     /*
     ** The following value as a destructor means to use sqlite3DbFree().
@@ -667,10 +655,10 @@ void *sqlite3_wsd_find(void *K, int L);
 ** cases the parameters are named as per the usual conventions.
 */
     //#define UNUSED_PARAMETER(x) (void)(x)
-    static void UNUSED_PARAMETER<T>( T x ) { }
+    static void UNUSED_PARAMETER<T>(T x) { }
 
     //#define UNUSED_PARAMETER2(x,y) UNUSED_PARAMETER(x),UNUSED_PARAMETER(y)
-    static void UNUSED_PARAMETER2<T1, T2>( T1 x, T2 y ) { UNUSED_PARAMETER( x ); UNUSED_PARAMETER( y ); }
+    static void UNUSED_PARAMETER2<T1, T2>(T1 x, T2 y) { UNUSED_PARAMETER(x); UNUSED_PARAMETER(y); }
 
     /*
     ** Forward references to structures
@@ -679,7 +667,6 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct AuthContext AuthContext;
     //typedef struct AutoincInfo AutoincInfo;
     //typedef struct Bitvec Bitvec;
-    //typedef struct RowSet RowSet;
     //typedef struct CollSeq CollSeq;
     //typedef struct Column Column;
     //typedef struct Db Db;
@@ -699,6 +686,7 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct Module Module;
     //typedef struct NameContext NameContext;
     //typedef struct Parse Parse;
+    //typedef struct RowSet RowSet;
     //typedef struct Savepoint Savepoint;
     //typedef struct Select Select;
     //typedef struct SrcList SrcList;
@@ -706,9 +694,9 @@ void *sqlite3_wsd_find(void *K, int L);
     //typedef struct Table Table;
     //typedef struct TableLock TableLock;
     //typedef struct Token Token;
+    //typedef struct Trigger Trigger;
     //typedef struct TriggerPrg TriggerPrg;
     //typedef struct TriggerStep TriggerStep;
-    //typedef struct Trigger Trigger;
     //typedef struct UnpackedRecord UnpackedRecord;
     //typedef struct VTable VTable;
     //typedef struct Walker Walker;
@@ -773,7 +761,7 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
 #endif
       public Schema Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
@@ -785,17 +773,17 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
 
     /*
     ** These macros can be used to test, set, or clear bits in the
-    ** Db.flags field.
+    ** Db.pSchema->flags field.
     */
     //#define DbHasProperty(D,I,P)     (((D)->aDb[I].pSchema->flags&(P))==(P))
-    static bool DbHasProperty( sqlite3 D, int I, ushort P ) { return ( D.aDb[I].pSchema.flags & P ) == P; }
+    static bool DbHasProperty(sqlite3 D, int I, ushort P) { return (D.aDb[I].pSchema.flags & P) == P; }
     //#define DbHasAnyProperty(D,I,P)  (((D)->aDb[I].pSchema->flags&(P))!=0)
     //#define DbSetProperty(D,I,P)     (D)->aDb[I].pSchema->flags|=(P)
-    static void DbSetProperty( sqlite3 D, int I, ushort P ) { D.aDb[I].pSchema.flags = (u16)( D.aDb[I].pSchema.flags | P ); }
+    static void DbSetProperty(sqlite3 D, int I, ushort P) { D.aDb[I].pSchema.flags = (u16)(D.aDb[I].pSchema.flags | P); }
     //#define DbClearProperty(D,I,P)   (D)->aDb[I].pSchema->flags&=~(P)
-    static void DbClearProperty( sqlite3 D, int I, ushort P ) { D.aDb[I].pSchema.flags = (u16)( D.aDb[I].pSchema.flags & ~P ); }
+    static void DbClearProperty(sqlite3 D, int I, ushort P) { D.aDb[I].pSchema.flags = (u16)(D.aDb[I].pSchema.flags & ~P); }
     /*
-    ** Allowed values for the DB.flags field.
+    ** Allowed values for the DB.pSchema->flags field.
     **
     ** The DB_SchemaLoaded flag is set after the database schema has been
     ** read into internal hash tables.
@@ -866,7 +854,7 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
     };
 
     /*
-    ** Each database is an instance of the following structure.
+    ** Each database connection is an instance of the following structure.
     **
     ** The sqlite.lastRowid records the last insert rowid generated by an
     ** insert statement.  Inserts on views do not affect its value.  Each
@@ -907,6 +895,7 @@ public   sqlite3 db;                    /* "Owner" connection. See comment above
       public u8 dfltLockMode;              /* Default locking-mode for attached dbs */
       public u8 dfltJournalMode;           /* Default journal mode for attached dbs */
       public int nextAutovac;              /* Autovac setting after VACUUM if >=0 */
+      public u8 suppressErr;               /* Do not issue error messages if true */
       public int nextPagesize;             /* Pagesize after VACUUM if >0 */
       public int nTable;                   /* Number of tables in the database */
       public CollSeq pDfltColl;            /* The default collating sequence (BINARY) */
@@ -963,11 +952,11 @@ public object pAuthArg;               /* 1st argument to the access auth functio
       public int nProgressOps;                  /* Number of opcodes for progress callback */
 #endif
 #if !SQLITE_OMIT_VIRTUALTABLE
-      public Hash aModule;                  /* populated by sqlite3_create_module() */
-      public Table pVTab;                   /* vtab with active Connect/Create method */
-      public VTable aVTrans;                /* Virtual tables with open transactions */
-      public int nVTrans;                   /* Allocated size of aVTrans */
-      public VTable pDisconnect;            /* Disconnect these in next sqlite3_prepare() */
+public Hash aModule;                  /* populated by sqlite3_create_module() */
+public Table pVTab;                   /* vtab with active Connect/Create method */
+public VTable aVTrans;                /* Virtual tables with open transactions */
+public int nVTrans;                   /* Allocated size of aVTrans */
+public VTable pDisconnect;            /* Disconnect these in next sqlite3_prepare() */
 #endif
       public FuncDefHash aFunc = new FuncDefHash();       /* Hash table of connection functions */
       public Hash aCollSeq = new Hash();                  /* All collating sequences */
@@ -1002,7 +991,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     ** A macro to discover the encoding of a database.
     */
     //#define ENC(db) ((db)->aDb[0].pSchema->enc)
-    static u8 ENC( sqlite3 db ) { return db.aDb[0].pSchema.enc; }
+    static u8 ENC(sqlite3 db) { return db.aDb[0].pSchema.enc; }
 
     /*
     ** Possible values for the sqlite3.flags.
@@ -1043,7 +1032,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     const int SQLITE_VdbeListing = 0x00008000; /* Debug listings of VDBE programs */
     const int SQLITE_WriteSchema = 0x00010000; /* OK to update SQLITE_MASTER */
     const int SQLITE_NoReadlock = 0x00020000; /* Readlocks are omitted when 
-                                              ** accessing read-only databases */
+                              ** accessing read-only databases */
     const int SQLITE_IgnoreChecks = 0x00040000; /* Do not enforce check constraints */
     const int SQLITE_ReadUncommitted = 0x0080000; /* For shared-cache mode */
     const int SQLITE_LegacyFileFmt = 0x00100000; /* Create new databases in format 1 */
@@ -1073,10 +1062,10 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     const int SQLITE_OptMask = 0x1f; /* Mask of all disablable opts */
 
     /*
-** Possible values for the sqlite.magic field.
-** The numbers are obtained at random and have no special meaning, other
-** than being distinct from one another.
-*/
+    ** Possible values for the sqlite.magic field.
+    ** The numbers are obtained at random and have no special meaning, other
+    ** than being distinct from one another.
+    */
     const int SQLITE_MAGIC_OPEN = 0x1029a697;   //#define SQLITE_MAGIC_OPEN     0xa029a697  /* Database is open */
     const int SQLITE_MAGIC_CLOSED = 0x2f3c2d33; //#define SQLITE_MAGIC_CLOSED   0x9f3c2d33  /* Database is closed */
     const int SQLITE_MAGIC_SICK = 0x3b771290;   //#define SQLITE_MAGIC_SICK     0x4b771290  /* Error and awaiting close */
@@ -1106,7 +1095,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
       public FuncDef()
       { }
 
-      public FuncDef( i16 nArg, u8 iPrefEnc, u8 iflags, object pUserData, FuncDef pNext, dxFunc xFunc, dxStep xStep, dxFinal xFinalize, string zName, FuncDef pHash )
+      public FuncDef(i16 nArg, u8 iPrefEnc, u8 iflags, object pUserData, FuncDef pNext, dxFunc xFunc, dxStep xStep, dxFinal xFinalize, string zName, FuncDef pHash)
       {
         this.nArg = nArg;
         this.iPrefEnc = iPrefEnc;
@@ -1119,7 +1108,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
         this.zName = zName;
         this.pHash = pHash;
       }
-      public FuncDef( string zName, u8 iPrefEnc, i16 nArg, int iArg, u8 iflags, dxFunc xFunc )
+      public FuncDef(string zName, u8 iPrefEnc, i16 nArg, int iArg, u8 iflags, dxFunc xFunc)
       {
         this.nArg = nArg;
         this.iPrefEnc = iPrefEnc;
@@ -1132,7 +1121,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
         this.zName = zName;
       }
 
-      public FuncDef( string zName, u8 iPrefEnc, i16 nArg, int iArg, u8 iflags, dxStep xStep, dxFinal xFinal )
+      public FuncDef(string zName, u8 iPrefEnc, i16 nArg, int iArg, u8 iflags, dxStep xStep, dxFinal xFinal)
       {
         this.nArg = nArg;
         this.iPrefEnc = iPrefEnc;
@@ -1145,7 +1134,7 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
         this.zName = zName;
       }
 
-      public FuncDef( string zName, u8 iPrefEnc, i16 nArg, object arg, dxFunc xFunc, u8 flags )
+      public FuncDef(string zName, u8 iPrefEnc, i16 nArg, object arg, dxFunc xFunc, u8 flags)
       {
         this.nArg = nArg;
         this.iPrefEnc = iPrefEnc;
@@ -1208,8 +1197,8 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     //  {nArg, SQLITE_UTF8, bNC*SQLITE_FUNC_NEEDCOLL, \
     //SQLITE_INT_TO_PTR(iArg), 0, xFunc, 0, 0, #zName, 0}
 
-    static FuncDef FUNCTION( string zName, i16 nArg, int iArg, u8 bNC, dxFunc xFunc )
-    { return new FuncDef( zName, SQLITE_UTF8, nArg, iArg, (u8)( bNC * SQLITE_FUNC_NEEDCOLL ), xFunc ); }
+    static FuncDef FUNCTION(string zName, i16 nArg, int iArg, u8 bNC, dxFunc xFunc)
+    { return new FuncDef(zName, SQLITE_UTF8, nArg, iArg, (u8)(bNC * SQLITE_FUNC_NEEDCOLL), xFunc); }
 
     //#define STR_FUNCTION(zName, nArg, pArg, bNC, xFunc) \
     //  {nArg, SQLITE_UTF8, bNC*SQLITE_FUNC_NEEDCOLL, \
@@ -1217,15 +1206,15 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
 
     //#define LIKEFUNC(zName, nArg, arg, flags) \
     //  {nArg, SQLITE_UTF8, flags, (void *)arg, 0, likeFunc, 0, 0, #zName, 0}
-    static FuncDef LIKEFUNC( string zName, i16 nArg, object arg, u8 flags )
-    { return new FuncDef( zName, SQLITE_UTF8, nArg, arg, likeFunc, flags ); }
+    static FuncDef LIKEFUNC(string zName, i16 nArg, object arg, u8 flags)
+    { return new FuncDef(zName, SQLITE_UTF8, nArg, arg, likeFunc, flags); }
 
     //#define AGGREGATE(zName, nArg, arg, nc, xStep, xFinal) \
     //  {nArg, SQLITE_UTF8, nc*SQLITE_FUNC_NEEDCOLL, \
     //SQLITE_INT_TO_PTR(arg), 0, 0, xStep,xFinal,#zName,0}
 
-    static FuncDef AGGREGATE( string zName, i16 nArg, int arg, u8 nc, dxStep xStep, dxFinal xFinal )
-    { return new FuncDef( zName, SQLITE_UTF8, nArg, arg, (u8)( nc * SQLITE_FUNC_NEEDCOLL ), xStep, xFinal ); }
+    static FuncDef AGGREGATE(string zName, i16 nArg, int arg, u8 nc, dxStep xStep, dxFinal xFinal)
+    { return new FuncDef(zName, SQLITE_UTF8, nArg, arg, (u8)(nc * SQLITE_FUNC_NEEDCOLL), xStep, xFinal); }
 
     /*
     ** All current savepoints are stored in a linked list starting at
@@ -1266,9 +1255,9 @@ sqlite3 *pNextBlocked;        /* Next in list of all blocked connections */
     };
 
     /*
-** information about each column of an SQL table is held in an instance
-** of this structure.
-*/
+    ** information about each column of an SQL table is held in an instance
+    ** of this structure.
+    */
     public class Column
     {
       public string zName;      /* Name of this column */
@@ -1285,7 +1274,7 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
       public Column Copy()
       {
         Column cp = (Column)MemberwiseClone();
-        if ( cp.pDflt != null ) cp.pDflt = pDflt.Copy();
+        if (cp.pDflt != null) cp.pDflt = pDflt.Copy();
         return cp;
       }
     };
@@ -1322,7 +1311,7 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
 
       public CollSeq Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
@@ -1485,9 +1474,9 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
       public int addColOffset;  /* Offset in CREATE TABLE stmt to add a new column */
 #endif
 #if !SQLITE_OMIT_VIRTUALTABLE
-      public VTable pVTable;      /* List of VTable objects. */
-      public int nModuleArg;      /* Number of arguments to the module */
-      public string[] azModuleArg;/* Text of all module args. [0] is module name */
+public VTable pVTable;      /* List of VTable objects. */
+public int nModuleArg;      /* Number of arguments to the module */
+public string[] azModuleArg;/* Text of all module args. [0] is module name */
 #endif
       public Trigger pTrigger;  /* List of SQL triggers on this table */
       public Schema pSchema;    /* Schema that contains this table */
@@ -1495,15 +1484,15 @@ public   u8 isHidden;     /* True if this column is 'hidden' */
 
       public Table Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           Table cp = (Table)MemberwiseClone();
-          if ( pIndex != null ) cp.pIndex = pIndex.Copy();
-          if ( pSelect != null ) cp.pSelect = pSelect.Copy();
-          if ( pTrigger != null ) cp.pTrigger = pTrigger.Copy();
-          if ( pFKey != null ) cp.pFKey = pFKey.Copy();
+          if (pIndex != null) cp.pIndex = pIndex.Copy();
+          if (pSelect != null) cp.pSelect = pSelect.Copy();
+          if (pTrigger != null) cp.pTrigger = pTrigger.Copy();
+          if (pFKey != null) cp.pFKey = pFKey.Copy();
 #if !SQLITE_OMIT_CHECK
           // Don't Clone Checks, only copy reference via Memberwise Clone above --
           //if ( pCheck != null ) cp.pCheck = pCheck.Copy();
@@ -1552,9 +1541,9 @@ static bool IsVirtual( Table X) { return (X.tabFlags & TF_Virtual)!=0;}
 static bool IsVirtual( Column X) { return X.isHidden!=0;}
 #else
     //#  define IsVirtual(X)      0
-    static bool IsVirtual( Table T ) { return false; }
+    static bool IsVirtual(Table T) { return false; }
     //#  define IsHiddenColumn(X) 0
-    static bool IsHiddenColumn( Column C ) { return false; }
+    static bool IsHiddenColumn(Column C) { return false; }
 #endif
 
     /*
@@ -1598,7 +1587,7 @@ static bool IsVirtual( Column X) { return X.isHidden!=0;}
 
       public FKey Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
@@ -1751,7 +1740,7 @@ static bool IsVirtual( Column X) { return X.isHidden!=0;}
 
       public Index Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
@@ -1812,22 +1801,22 @@ set { _n = value; }
         this.z = null;
         this.n = 0;
       }
-      public Token( string z, Int32 n )
+      public Token(string z, Int32 n)
       {
         this.z = z;
         this.n = n;
       }
       public Token Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           Token cp = (Token)MemberwiseClone();
-          if ( z == null || z.Length == 0 )
+          if (z == null || z.Length == 0)
             cp.n = 0;
           else
-            if ( n > z.Length ) cp.n = z.Length;
+            if (n > z.Length) cp.n = z.Length;
           return cp;
         }
       }
@@ -1883,12 +1872,12 @@ set { _n = value; }
 
       public AggInfo Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           AggInfo cp = (AggInfo)MemberwiseClone();
-          if ( pGroupBy != null ) cp.pGroupBy = pGroupBy.Copy();
+          if (pGroupBy != null) cp.pGroupBy = pGroupBy.Copy();
           return cp;
         }
       }
@@ -2035,10 +2024,10 @@ public int iValue;            /* Integer value if EP_IntValue */
       *********************************************************************/
 
       public int iTable;            /* TK_COLUMN: cursor number of table holding column
-                                    ** TK_REGISTER: register number
-                                    ** TK_TRIGGER: 1 -> new, 0 -> old */
+                    ** TK_REGISTER: register number
+                    ** TK_TRIGGER: 1 -> new, 0 -> old */
       public ynVar iColumn;         /* TK_COLUMN: column index.  -1 for rowid.
-                                    ** TK_VARIABLE: variable number (always >= 1). */
+                    ** TK_VARIABLE: variable number (always >= 1). */
       public i16 iAgg;              /* Which entry in pAggInfo->aCol[] or ->aFunc[] */
       public i16 iRightJoinTable;   /* If EP_FromJoin, the right table of the join */
       public u8 flags2;             /* Second set of flags.  EP2_... */
@@ -2057,7 +2046,7 @@ get { return _op; }
 set { _op = value; }
 }
 #endif
-      public void CopyFrom( Expr cf )
+      public void CopyFrom(Expr cf)
       {
         op = cf.op;
         affinity = cf.affinity;
@@ -2083,25 +2072,25 @@ set { _op = value; }
 
       public Expr Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
-          return Copy( flags );
+          return Copy(flags);
       }
 
-      public Expr Copy( int flag )
+      public Expr Copy(int flag)
       {
         Expr cp = new Expr();
         cp.op = op;
         cp.affinity = affinity;
         cp.flags = flags;
         cp.u = u;
-        if ( ( flag & EP_TokenOnly ) != 0 ) return cp;
-        if ( pLeft != null ) cp.pLeft = pLeft.Copy();
-        if ( pRight != null ) cp.pRight = pRight.Copy();
+        if ((flag & EP_TokenOnly) != 0) return cp;
+        if (pLeft != null) cp.pLeft = pLeft.Copy();
+        if (pRight != null) cp.pRight = pRight.Copy();
         cp.x = x;
         cp.pColl = pColl;
-        if ( ( flag & EP_Reduced ) != 0 ) return cp;
+        if ((flag & EP_Reduced) != 0) return cp;
         cp.iTable = iTable;
         cp.iColumn = iColumn;
         cp.iAgg = iAgg;
@@ -2171,7 +2160,7 @@ set { _op = value; }
     */
 #if SQLITE_DEBUG
     //# define ExprSetIrreducible(X)  (X)->flags2 |= EP2_Irreducible
-    static void ExprSetIrreducible( Expr X ) { X.flags2 |= EP2_Irreducible; }
+    static void ExprSetIrreducible(Expr X) { X.flags2 |= EP2_Irreducible; }
 #else
 //# define ExprSetIrreducible(X)
 static void ExprSetIrreducible( Expr X ) { }
@@ -2182,13 +2171,13 @@ static void ExprSetIrreducible( Expr X ) { }
 ** Expr.flags field.
 */
     //#define ExprHasProperty(E,P)     (((E)->flags&(P))==(P))
-    static bool ExprHasProperty( Expr E, int P ) { return ( E.flags & P ) == P; }
+    static bool ExprHasProperty(Expr E, int P) { return (E.flags & P) == P; }
     //#define ExprHasAnyProperty(E,P)  (((E)->flags&(P))!=0)
-    static bool ExprHasAnyProperty( Expr E, int P ) { return ( E.flags & P ) != 0; }
+    static bool ExprHasAnyProperty(Expr E, int P) { return (E.flags & P) != 0; }
     //#define ExprSetProperty(E,P)     (E)->flags|=(P)
-    static void ExprSetProperty( Expr E, int P ) { E.flags = (ushort)( E.flags | P ); }
+    static void ExprSetProperty(Expr E, int P) { E.flags = (ushort)(E.flags | P); }
     //#define ExprClearProperty(E,P)   (E)->flags&=~(P)
-    static void ExprClearProperty( Expr E, int P ) { E.flags = (ushort)( E.flags & ~P ); }
+    static void ExprClearProperty(Expr E, int P) { E.flags = (ushort)(E.flags & ~P); }
 
     /*
     ** Macros to determine the number of bytes required by a normal Expr
@@ -2238,12 +2227,12 @@ static void ExprSetIrreducible( Expr X ) { }
 
       public ExprList Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           ExprList cp = (ExprList)MemberwiseClone();
-          a.CopyTo( cp.a, 0 );
+          a.CopyTo(cp.a, 0);
           return cp;
         }
       }
@@ -2290,12 +2279,12 @@ static void ExprSetIrreducible( Expr X ) { }
 
       public IdList Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           IdList cp = (IdList)MemberwiseClone();
-          a.CopyTo( cp.a, 0 );
+          a.CopyTo(cp.a, 0);
           return cp;
         }
       }
@@ -2314,7 +2303,7 @@ static void ExprSetIrreducible( Expr X ) { }
     ** The number of bits in a Bitmask.  "BMS" means "BitMask Size".
     */
     //#define BMS  ((int)(sizeof(Bitmask)*8))
-    const int BMS = ( (int)( sizeof( Bitmask ) * 8 ) );
+    const int BMS = ((int)(sizeof(Bitmask) * 8));
 
 
     /*
@@ -2357,12 +2346,12 @@ static void ExprSetIrreducible( Expr X ) { }
       public SrcList_item[] a;/* One entry for each identifier on the list */
       public SrcList Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           SrcList cp = (SrcList)MemberwiseClone();
-          if ( a != null ) a.CopyTo( cp.a, 0 );
+          if (a != null) a.CopyTo(cp.a, 0);
           return cp;
         }
       }
@@ -2590,22 +2579,22 @@ static void ExprSetIrreducible( Expr X ) { }
 
       public Select Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           Select cp = (Select)MemberwiseClone();
-          if ( pEList != null ) cp.pEList = pEList.Copy();
-          if ( pSrc != null ) cp.pSrc = pSrc.Copy();
-          if ( pWhere != null ) cp.pWhere = pWhere.Copy();
-          if ( pGroupBy != null ) cp.pGroupBy = pGroupBy.Copy();
-          if ( pHaving != null ) cp.pHaving = pHaving.Copy();
-          if ( pOrderBy != null ) cp.pOrderBy = pOrderBy.Copy();
-          if ( pPrior != null ) cp.pPrior = pPrior.Copy();
-          if ( pNext != null ) cp.pNext = pNext.Copy();
-          if ( pRightmost != null ) cp.pRightmost = pRightmost.Copy();
-          if ( pLimit != null ) cp.pLimit = pLimit.Copy();
-          if ( pOffset != null ) cp.pOffset = pOffset.Copy();
+          if (pEList != null) cp.pEList = pEList.Copy();
+          if (pSrc != null) cp.pSrc = pSrc.Copy();
+          if (pWhere != null) cp.pWhere = pWhere.Copy();
+          if (pGroupBy != null) cp.pGroupBy = pGroupBy.Copy();
+          if (pHaving != null) cp.pHaving = pHaving.Copy();
+          if (pOrderBy != null) cp.pOrderBy = pOrderBy.Copy();
+          if (pPrior != null) cp.pPrior = pPrior.Copy();
+          if (pNext != null) cp.pNext = pNext.Copy();
+          if (pRightmost != null) cp.pRightmost = pRightmost.Copy();
+          if (pLimit != null) cp.pLimit = pLimit.Copy();
+          if (pOffset != null) cp.pOffset = pOffset.Copy();
           return cp;
         }
       }
@@ -2668,7 +2657,7 @@ static void ExprSetIrreducible( Expr X ) { }
         this.iMem = 0;
         this.nMem = 0;
       }
-      public SelectDest( u8 eDest, char affinity, int iParm )
+      public SelectDest(u8 eDest, char affinity, int iParm)
       {
         this.eDest = eDest;
         this.affinity = affinity;
@@ -2676,7 +2665,7 @@ static void ExprSetIrreducible( Expr X ) { }
         this.iMem = 0;
         this.nMem = 0;
       }
-      public SelectDest( u8 eDest, char affinity, int iParm, int iMem, int nMem )
+      public SelectDest(u8 eDest, char affinity, int iParm, int iMem, int nMem)
       {
         this.eDest = eDest;
         this.affinity = affinity;
@@ -2739,21 +2728,21 @@ static void ExprSetIrreducible( Expr X ) { }
     };
 
     /*
-** An SQL parser context.  A copy of this structure is passed through
-** the parser and down into all the parser action routine in order to
-** carry around information that is global to the entire parse.
-**
-** The structure is divided into two parts.  When the parser and code
-** generate call themselves recursively, the first part of the structure
-** is constant but the second part is reset at the beginning and end of
-** each recursion.
-**
-** The nTableLock and aTableLock variables are only used if the shared-cache
-** feature is enabled (if sqlite3Tsd()->useSharedData is true). They are
-** used to store the set of table-locks required by the statement being
-** compiled. Function sqlite3TableLock() is used to add entries to the
-** list.
-*/
+    ** An SQL parser context.  A copy of this structure is passed through
+    ** the parser and down into all the parser action routine in order to
+    ** carry around information that is global to the entire parse.
+    **
+    ** The structure is divided into two parts.  When the parser and code
+    ** generate call themselves recursively, the first part of the structure
+    ** is constant but the second part is reset at the beginning and end of
+    ** each recursion.
+    **
+    ** The nTableLock and aTableLock variables are only used if the shared-cache
+    ** feature is enabled (if sqlite3Tsd()->useSharedData is true). They are
+    ** used to store the set of table-locks required by the statement being
+    ** compiled. Function sqlite3TableLock() is used to add entries to the
+    ** list.
+    */
     public class yColCache
     {
       public int iTable;           /* Table cursor number */
@@ -2844,7 +2833,7 @@ public Table[] apVtabLock;        /* Pointer to virtual tables needing locking *
       // We need to create instances of the col cache
       public Parse()
       {
-        for ( int i = 0; i < this.aColCache.Length; i++ ) { this.aColCache[i] = new yColCache(); }
+        for (int i = 0; i < this.aColCache.Length; i++) { this.aColCache[i] = new yColCache(); }
       }
 
       public void ResetMembers() // Need to clear all the following variables during each recursion
@@ -2876,7 +2865,7 @@ apVtabLoc = null;
       Parse[] SaveBuf = new Parse[10];  //For Recursion Storage
       public void RestoreMembers()  // Need to clear all the following variables during each recursion
       {
-        if ( SaveBuf[nested] != null )
+        if (SaveBuf[nested] != null)
           nVar = SaveBuf[nested].nVar;
         nVarExpr = SaveBuf[nested].nVarExpr;
         nVarExprAlloc = SaveBuf[nested].nVarExprAlloc;
@@ -2994,17 +2983,17 @@ the <column-list> is stored here */
 
       public Trigger Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
           Trigger cp = (Trigger)MemberwiseClone();
-          if ( pWhen != null ) cp.pWhen = pWhen.Copy();
-          if ( pColumns != null ) cp.pColumns = pColumns.Copy();
-          if ( pSchema != null ) cp.pSchema = pSchema.Copy();
-          if ( pTabSchema != null ) cp.pTabSchema = pTabSchema.Copy();
-          if ( step_list != null ) cp.step_list = step_list.Copy();
-          if ( pNext != null ) cp.pNext = pNext.Copy();
+          if (pWhen != null) cp.pWhen = pWhen.Copy();
+          if (pColumns != null) cp.pColumns = pColumns.Copy();
+          if (pSchema != null) cp.pSchema = pSchema.Copy();
+          if (pTabSchema != null) cp.pTabSchema = pTabSchema.Copy();
+          if (step_list != null) cp.step_list = step_list.Copy();
+          if (pNext != null) cp.pNext = pNext.Copy();
           return cp;
         }
       }
@@ -3077,7 +3066,7 @@ the <column-list> is stored here */
       }
       public TriggerStep Copy()
       {
-        if ( this == null )
+        if (this == null)
           return null;
         else
         {
@@ -3119,11 +3108,11 @@ the <column-list> is stored here */
       public u8 tooBig;           /* Becomes true if string size exceeds limits */
       public Mem Context;
 
-      public StrAccum( int n )
+      public StrAccum(int n)
       {
         db = null;
-        zBase = new StringBuilder( n );
-        zText = new StringBuilder( n );
+        zBase = new StringBuilder(n);
+        zText = new StringBuilder(n);
         nChar = 0;
         nAlloc = n;
         mxAlloc = 0;
@@ -3182,8 +3171,10 @@ the <column-list> is stored here */
       public int isPCacheInit;                 /* True after malloc is initialized */
       public sqlite3_mutex pInitMutex;         /* Mutex used by sqlite3_initialize() */
       public int nRefInitMutex;                /* Number of users of pInitMutex */
+      public dxLog xLog; //void (*xLog)(void*,int,const char*); /* Function for logging */
+      public object pLogArg;                   /* First argument to xLog() */
 
-      public Sqlite3Config( int bMemstat, int bCoreMutex, bool bFullMutex, int mxStrlen, int szLookaside, int nLookaside
+      public Sqlite3Config(int bMemstat, int bCoreMutex, bool bFullMutex, int mxStrlen, int szLookaside, int nLookaside
       , sqlite3_mem_methods m
       , sqlite3_mutex_methods mutex
       , sqlite3_pcache_methods pcache
@@ -3205,6 +3196,8 @@ the <column-list> is stored here */
       , int isPCacheInit
       , sqlite3_mutex pInitMutex
       , int nRefInitMutex
+      , dxLog xLog
+      , object pLogArg
       )
       {
         this.bMemstat = bMemstat != 0;
@@ -3235,6 +3228,8 @@ the <column-list> is stored here */
         this.isPCacheInit = isPCacheInit;
         this.pInitMutex = pInitMutex;
         this.nRefInitMutex = nRefInitMutex;
+        this.xLog = xLog;
+        this.pLogArg = pLogArg;
       }
     };
 
@@ -3282,44 +3277,62 @@ the <column-list> is stored here */
     //    while( (*zIn & 0xc0)==0x80 ){ zIn++; }             \
     //  }                                                    \
     //}
-    static void SQLITE_SKIP_UTF8( string zIn, ref int iz )
+    static void SQLITE_SKIP_UTF8(string zIn, ref int iz)
     {
       iz++;
-      if ( iz < zIn.Length && zIn[iz - 1] >= 0xC0 )
+      if (iz < zIn.Length && zIn[iz - 1] >= 0xC0)
       {
-        while ( iz < zIn.Length && ( zIn[iz] & 0xC0 ) == 0x80 ) { iz++; }
+        while (iz < zIn.Length && (zIn[iz] & 0xC0) == 0x80) { iz++; }
       }
     }
     static void SQLITE_SKIP_UTF8(
-    byte[] zIn, ref int iz )
+    byte[] zIn, ref int iz)
     {
       iz++;
-      if ( iz < zIn.Length && zIn[iz - 1] >= 0xC0 )
+      if (iz < zIn.Length && zIn[iz - 1] >= 0xC0)
       {
-        while ( iz < zIn.Length && ( zIn[iz] & 0xC0 ) == 0x80 ) { iz++; }
+        while (iz < zIn.Length && (zIn[iz] & 0xC0) == 0x80) { iz++; }
       }
     }
 
     /*
-    ** The SQLITE_CORRUPT_BKPT macro can be either a constant (for production
-    ** builds) or a function call (for debugging).  If it is a function call,
-    ** it allows the operator to set a breakpoint at the spot where database
-    ** corruption is first detected.
+    ** The SQLITE_*_BKPT macros are substitutes for the error codes with
+    ** the same name but without the _BKPT suffix.  These macros invoke
+    ** routines that report the line-number on which the error originated
+    ** using sqlite3_log().  The routines also provide a convenient place
+    ** to set a debugger breakpoint.
     */
-#if SQLITE_DEBUG || DEBUG
-    static int SQLITE_CORRUPT_BKPT()
-    {
-      return sqlite3Corrupt();
-    }
+    //int sqlite3CorruptError(int);
+    //int sqlite3MisuseError(int);
+    //int sqlite3CantopenError(int);
+#if DEBUG
+    //#define SQLITE_CORRUPT_BKPT sqlite3CorruptError(__LINE__)
+    static int SQLITE_CORRUPT_BKPT() { return sqlite3CorruptError(0); }
+
+    //#define SQLITE_MISUSE_BKPT sqlite3MisuseError(__LINE__)
+    static int SQLITE_MISUSE_BKPT() { return sqlite3MisuseError(0); }
+
+    //#define SQLITE_CANTOPEN_BKPT sqlite3CantopenError(__LINE__)
+    static int SQLITE_CANTOPEN_BKPT() { return sqlite3CantopenError(0); }
 #else
-//#define SQLITE_CORRUPT_BKPT SQLITE_CORRUPT
-const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
+static int SQLITE_CORRUPT_BKPT() {return SQLITE_CORRUPT;}
+static int SQLITE_MISUSE_BKPT() {return SQLITE_MISUSE;}
+static int SQLITE_CANTOPEN_BKPT() {return SQLITE_CANTOPEN;}
 #endif
 
     /*
-** The ctype.h header is needed for non-ASCII systems.  It is also
-** needed by FTS3 when FTS3 is included in the amalgamation.
+** FTS4 is really an extension for FTS3.  It is enabled using the
+** SQLITE_ENABLE_FTS3 macro.  But to avoid confusion we also all
+** the SQLITE_ENABLE_FTS4 macro to serve as an alisse for SQLITE_ENABLE_FTS3.
 */
+    //#if defined(SQLITE_ENABLE_FTS4) && !defined(SQLITE_ENABLE_FTS3)
+    //# define SQLITE_ENABLE_FTS3
+    //#endif
+
+    /*
+    ** The ctype.h header is needed for non-ASCII systems.  It is also
+    ** needed by FTS3 when FTS3 is included in the amalgamation.
+    */
     //#if !defined(SQLITE_ASCII) || \
     //    (defined(SQLITE_ENABLE_FTS3) && defined(SQLITE_AMALGAMATION))
     //# include <ctype.h>
@@ -3335,22 +3348,22 @@ const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
     //# define sqlite3Toupper(x)  ((x)&~(sqlite3CtypeMap[(unsigned char)(x)]&0x20))
 
     //# define sqlite3Isspace(x)   (sqlite3CtypeMap[(unsigned char)(x)]&0x01)
-    static bool sqlite3Isspace( byte x ) { return ( sqlite3CtypeMap[(byte)( x )] & 0x01 ) != 0; }
-    static bool sqlite3Isspace( char x ) { return x < 256 && ( sqlite3CtypeMap[(byte)( x )] & 0x01 ) != 0; }
+    static bool sqlite3Isspace(byte x) { return (sqlite3CtypeMap[(byte)(x)] & 0x01) != 0; }
+    static bool sqlite3Isspace(char x) { return x < 256 && (sqlite3CtypeMap[(byte)(x)] & 0x01) != 0; }
 
     //# define sqlite3Isalnum(x)   (sqlite3CtypeMap[(unsigned char)(x)]&0x06)
-    static bool sqlite3Isalnum( byte x ) { return ( sqlite3CtypeMap[(byte)( x )] & 0x06 ) != 0; }
-    static bool sqlite3Isalnum( char x ) { return x < 256 && ( sqlite3CtypeMap[(byte)( x )] & 0x06 ) != 0; }
+    static bool sqlite3Isalnum(byte x) { return (sqlite3CtypeMap[(byte)(x)] & 0x06) != 0; }
+    static bool sqlite3Isalnum(char x) { return x < 256 && (sqlite3CtypeMap[(byte)(x)] & 0x06) != 0; }
 
     //# define sqlite3Isalpha(x)   (sqlite3CtypeMap[(unsigned char)(x)]&0x02)
 
     //# define sqlite3Isdigit(x)   (sqlite3CtypeMap[(unsigned char)(x)]&0x04)
-    static bool sqlite3Isdigit( byte x ) { return ( sqlite3CtypeMap[( (byte)x )] & 0x04 ) != 0; }
-    static bool sqlite3Isdigit( char x ) { return x < 256 && ( sqlite3CtypeMap[( (byte)x )] & 0x04 ) != 0; }
+    static bool sqlite3Isdigit(byte x) { return (sqlite3CtypeMap[((byte)x)] & 0x04) != 0; }
+    static bool sqlite3Isdigit(char x) { return x < 256 && (sqlite3CtypeMap[((byte)x)] & 0x04) != 0; }
 
     //# define sqlite3Isxdigit(x)  (sqlite3CtypeMap[(unsigned char)(x)]&0x08)
-    static bool sqlite3Isxdigit( byte x ) { return ( sqlite3CtypeMap[( (byte)x )] & 0x08 ) != 0; }
-    static bool sqlite3Isxdigit( char x ) { return x < 256 && ( sqlite3CtypeMap[( (byte)x )] & 0x08 ) != 0; }
+    static bool sqlite3Isxdigit(byte x) { return (sqlite3CtypeMap[((byte)x)] & 0x08) != 0; }
+    static bool sqlite3Isxdigit(char x) { return x < 256 && (sqlite3CtypeMap[((byte)x)] & 0x08) != 0; }
 
     //# define sqlite3Tolower(x)   (sqlite3UpperToLower[(unsigned char)(x)])
 #else
@@ -3407,12 +3420,12 @@ const int SQLITE_CORRUPT_BKPT = SQLITE_CORRUPT;
 //# define sqlite3StackFree(D,P)
 #else
 #if FALSE
-    //# define sqlite3StackAllocRaw(D,N)   sqlite3DbMallocRaw(D,N)
-    static void sqlite3StackAllocRaw( sqlite3 D, int N ) { sqlite3DbMallocRaw( D, N ); }
-    //# define sqlite3StackAllocZero(D,N)  sqlite3DbMallocZero(D,N)
-    static void sqlite3StackAllocZero( sqlite3 D, int N ) { sqlite3DbMallocZero( D, N ); }
-    //# define sqlite3StackFree(D,P)       sqlite3DbFree(D,P)
-    static void sqlite3StackFree( sqlite3 D, object P ) {sqlite3DbFree( D, P ); }
+//# define sqlite3StackAllocRaw(D,N)   sqlite3DbMallocRaw(D,N)
+static void sqlite3StackAllocRaw( sqlite3 D, int N ) { sqlite3DbMallocRaw( D, N ); }
+//# define sqlite3StackAllocZero(D,N)  sqlite3DbMallocZero(D,N)
+static void sqlite3StackAllocZero( sqlite3 D, int N ) { sqlite3DbMallocZero( D, N ); }
+//# define sqlite3StackFree(D,P)       sqlite3DbFree(D,P)
+static void sqlite3StackFree( sqlite3 D, object P ) {sqlite3DbFree( D, P ); }
 #endif
 #endif
 
@@ -3434,7 +3447,11 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //void sqlite3StatusAdd(int, int);
     //void sqlite3StatusSet(int, int);
 
-    //int sqlite3IsNaN(double);
+    //#ifndef SQLITE_OMIT_FLOATING_POINT
+    //  int sqlite3IsNaN(double);
+    //#else
+    //# define sqlite3IsNaN(X)  0
+    //#endif
 
     //void sqlite3VXPrintf(StrAccum*, int, const char*, va_list);
 #if!SQLITE_OMIT_TRACE
@@ -3451,7 +3468,6 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
 #endif
     //void sqlite3SetString(char **, sqlite3*, const char*, ...);
     //void sqlite3ErrorMsg(Parse*, const char*, ...);
-    //void sqlite3ErrorClear(Parse*);
     //int sqlite3Dequote(char*);
     //int sqlite3KeywordCode(const unsigned char*, int);
     //int sqlite3RunParser(Parse*, const char*, char **);
@@ -3621,13 +3637,6 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //void sqlite3RegisterBuiltinFunctions(sqlite3*);
     //void sqlite3RegisterDateTimeFunctions(void);
     //void sqlite3RegisterGlobalFunctions(void);
-    //#if SQLITE_DEBUG
-    //  int sqlite3SafetyOn(sqlite3*);
-    //  int sqlite3SafetyOff(sqlite3*);
-    //#else
-    //# define sqlite3SafetyOn(A) 0
-    //# define sqlite3SafetyOff(A) 0
-    //#endif
     //int sqlite3SafetyCheckOk(sqlite3*);
     //int sqlite3SafetyCheckSickOrOk(sqlite3*);
     //void sqlite3ChangeCookie(Parse*, int);
@@ -3654,42 +3663,42 @@ const sqlite3_mem_methods *sqlite3MemGetMemsys5(void);
     //void sqlite3DeleteTrigger(sqlite3*, Trigger*);
     //void sqlite3UnlinkAndDeleteTrigger(sqlite3*,int,const char*);
     //  u32  sqlite3TriggerColmask(Parse*,Trigger*,ExprList*,int,int,Table*,int);
-//# define sqlite3ParseToplevel(p) ((p)->pToplevel ? (p)->pToplevel : (p))
-    static Parse sqlite3ParseToplevel( Parse p ) { return p.pToplevel != null ? p.pToplevel : p; }
+    //# define sqlite3ParseToplevel(p) ((p)->pToplevel ? (p)->pToplevel : (p))
+    static Parse sqlite3ParseToplevel(Parse p) { return p.pToplevel != null ? p.pToplevel : p; }
 #else
-    static void sqlite3BeginTrigger( Parse A, Token B, Token C, int D, int E, IdList F, SrcList G, Expr H, int I, int J ) { }
-    static void sqlite3FinishTrigger( Parse P, TriggerStep TS, Token T ) { }
-    static TriggerStep sqlite3TriggerSelectStep( sqlite3 A, Select B ) { return null; }
-    static TriggerStep sqlite3TriggerInsertStep( sqlite3 A, Token B, IdList C, ExprList D, Select E, u8 F ) { return null; }
-    static TriggerStep sqlite3TriggerUpdateStep( sqlite3 A, Token B, ExprList C, Expr D, u8 E ) { return null; }
-    static TriggerStep sqlite3TriggerDeleteStep( sqlite3 A, Token B, Expr C ) { return null; }
-    static u32 sqlite3TriggerColmask( Parse A, Trigger B, ExprList C, int D, int E, Table F, int G ) { return 0; }
+static void sqlite3BeginTrigger( Parse A, Token B, Token C, int D, int E, IdList F, SrcList G, Expr H, int I, int J ) { }
+static void sqlite3FinishTrigger( Parse P, TriggerStep TS, Token T ) { }
+static TriggerStep sqlite3TriggerSelectStep( sqlite3 A, Select B ) { return null; }
+static TriggerStep sqlite3TriggerInsertStep( sqlite3 A, Token B, IdList C, ExprList D, Select E, u8 F ) { return null; }
+static TriggerStep sqlite3TriggerUpdateStep( sqlite3 A, Token B, ExprList C, Expr D, u8 E ) { return null; }
+static TriggerStep sqlite3TriggerDeleteStep( sqlite3 A, Token B, Expr C ) { return null; }
+static u32 sqlite3TriggerColmask( Parse A, Trigger B, ExprList C, int D, int E, Table F, int G ) { return 0; }
 
-    //# define sqlite3TriggersExist(B,C,D,E,F) 0
-    static Trigger sqlite3TriggersExist( Parse B, Table C, int D, ExprList E, ref int F ) { return null; }
+//# define sqlite3TriggersExist(B,C,D,E,F) 0
+static Trigger sqlite3TriggersExist( Parse B, Table C, int D, ExprList E, ref int F ) { return null; }
 
-    //# define sqlite3DeleteTrigger(A,B)
-    static void sqlite3DeleteTrigger( sqlite3 A, ref Trigger B ) { }
-    static void sqlite3DeleteTriggerStep( sqlite3 A, ref TriggerStep B ) { }
+//# define sqlite3DeleteTrigger(A,B)
+static void sqlite3DeleteTrigger( sqlite3 A, ref Trigger B ) { }
+static void sqlite3DeleteTriggerStep( sqlite3 A, ref TriggerStep B ) { }
 
-    //# define sqlite3DropTriggerPtr(A,B)
-    static void sqlite3DropTriggerPtr( Parse A, Trigger B ) { }
-    static void sqlite3DropTrigger( Parse A, SrcList B, int C ) { }
+//# define sqlite3DropTriggerPtr(A,B)
+static void sqlite3DropTriggerPtr( Parse A, Trigger B ) { }
+static void sqlite3DropTrigger( Parse A, SrcList B, int C ) { }
 
-    //# define sqlite3UnlinkAndDeleteTrigger(A,B,C)
-    static void sqlite3UnlinkAndDeleteTrigger( sqlite3 A, int B, string C ) { }
+//# define sqlite3UnlinkAndDeleteTrigger(A,B,C)
+static void sqlite3UnlinkAndDeleteTrigger( sqlite3 A, int B, string C ) { }
 
-    //# define sqlite3CodeRowTrigger(A,B,C,D,E,F,G,H,I)
-    static void sqlite3CodeRowTrigger( Parse A, Trigger B, int C, ExprList D, int E, Table F, int G, int H, int I ) { }
+//# define sqlite3CodeRowTrigger(A,B,C,D,E,F,G,H,I)
+static void sqlite3CodeRowTrigger( Parse A, Trigger B, int C, ExprList D, int E, Table F, int G, int H, int I ) { }
 
-    //# define sqlite3CodeRowTriggerDirect(A,B,C,D,E,F)
-    static Trigger sqlite3TriggerList( Parse pParse, Table pTab ) { return null; } //# define sqlite3TriggerList(X, Y) 0
+//# define sqlite3CodeRowTriggerDirect(A,B,C,D,E,F)
+static Trigger sqlite3TriggerList( Parse pParse, Table pTab ) { return null; } //# define sqlite3TriggerList(X, Y) 0
 
-    //# define sqlite3ParseToplevel(p) p
-    static Parse sqlite3ParseToplevel( Parse p ) { return p; }
+//# define sqlite3ParseToplevel(p) p
+static Parse sqlite3ParseToplevel( Parse p ) { return p; }
 
-    //# define sqlite3TriggerOldmask(A,B,C,D,E,F) 0
-    static u32 sqlite3TriggerOldmask( Parse A, Trigger B, int C, ExprList D, Table E, int F ) { return 0; }
+//# define sqlite3TriggerOldmask(A,B,C,D,E,F) 0
+static u32 sqlite3TriggerOldmask( Parse A, Trigger B, int C, ExprList D, Table E, int F ) { return 0; }
 #endif
 
     //int sqlite3JoinType(Parse*, Token*, Token*, Token*);
@@ -3703,16 +3712,16 @@ void sqlite3AuthContextPop(AuthContext*);
 int sqlite3AuthReadCol(Parse*, const char *, const char *, int);
 #else
     //# define sqlite3AuthRead(a,b,c,d)
-    static void sqlite3AuthRead( Parse a, Expr b, Schema c, SrcList d ) { }
+    static void sqlite3AuthRead(Parse a, Expr b, Schema c, SrcList d) { }
 
     //# define sqlite3AuthCheck(a,b,c,d,e)    SQLITE_OK
-    static int sqlite3AuthCheck( Parse a, int b, string c, byte[] d, byte[] e ) { return SQLITE_OK; }
+    static int sqlite3AuthCheck(Parse a, int b, string c, byte[] d, byte[] e) { return SQLITE_OK; }
 
     //# define sqlite3AuthContextPush(a,b,c)
-    static void sqlite3AuthContextPush( Parse a, AuthContext b, string c ) { }
+    static void sqlite3AuthContextPush(Parse a, AuthContext b, string c) { }
 
     //# define sqlite3AuthContextPop(a)  ((void)(a))
-    static Parse sqlite3AuthContextPop( Parse a ) { return a; }
+    static Parse sqlite3AuthContextPop(Parse a) { return a; }
 #endif
     //void sqlite3Attach(Parse*, Expr*, Expr*, Expr*);
     //void sqlite3Detach(Parse*, Expr*);
@@ -3792,7 +3801,7 @@ int sqlite3AuthReadCol(Parse*, const char *, const char *, int);
     //                      //  void(*)(void*));
     //void sqlite3ValueFree(sqlite3_value*);
     //sqlite3_value *sqlite3ValueNew(sqlite3 *);
-    //char *sqlite3Utf16to8(sqlite3 *, const void*, int);
+    //char *sqlite3Utf16to8(sqlite3 *, const void*, int, u8);
     //#ifdef SQLITE_ENABLE_STAT2
     //char *sqlite3Utf8to16(sqlite3 *, u8, char *, int, int *);
     //#endif
@@ -3873,8 +3882,8 @@ int sqlite3ParserStackPeak(void*);
 //void sqlite3TableLock(Parse *, int, int, u8, const char *);
 #else
     //#define sqlite3TableLock(v,w,x,y,z)
-    static void sqlite3TableLock( Parse p, int p1, int p2, u8 p3, byte[] p4 ) { }
-    static void sqlite3TableLock( Parse p, int p1, int p2, u8 p3, string p4 ) { }
+    static void sqlite3TableLock(Parse p, int p1, int p2, u8 p3, byte[] p4) { }
+    static void sqlite3TableLock(Parse p, int p1, int p2, u8 p3, string p4) { }
 #endif
 
 #if SQLITE_TEST
@@ -3883,34 +3892,34 @@ int sqlite3ParserStackPeak(void*);
 
 #if SQLITE_OMIT_VIRTUALTABLE
     //#  define sqlite3VtabClear(Y)
-    static void sqlite3VtabClear( Table Y ) { }
+    static void sqlite3VtabClear(Table Y) { }
 
     //#  define sqlite3VtabSync(X,Y) SQLITE_OK
-    static int sqlite3VtabSync( sqlite3 X, string Y ) { return SQLITE_OK; }
+    static int sqlite3VtabSync(sqlite3 X, string Y) { return SQLITE_OK; }
 
     //#  define sqlite3VtabRollback(X)
-    static void sqlite3VtabRollback( sqlite3 X ) { }
+    static void sqlite3VtabRollback(sqlite3 X) { }
 
     //#  define sqlite3VtabCommit(X)
-    static void sqlite3VtabCommit( sqlite3 X ) { }
+    static void sqlite3VtabCommit(sqlite3 X) { }
 
     //#  define sqlite3VtabInSync(db) 0
     //#  define sqlite3VtabLock(X) 
-    static void sqlite3VtabLock( VTable X ) { }
+    static void sqlite3VtabLock(VTable X) { }
 
     //#  define sqlite3VtabUnlock(X)
-    static void sqlite3VtabUnlock( VTable X ) { }
+    static void sqlite3VtabUnlock(VTable X) { }
 
     //#  define sqlite3VtabUnlockList(X)
-    static void sqlite3VtabUnlockList( sqlite3 X ) { }
+    static void sqlite3VtabUnlockList(sqlite3 X) { }
 
-    static void sqlite3VtabArgExtend( Parse P, Token T ) { }//#  define sqlite3VtabArgExtend(P, T)
-    static void sqlite3VtabArgInit( Parse P ) { }//#  define sqlite3VtabArgInit(P)
-    static void sqlite3VtabBeginParse( Parse P, Token T, Token T1, Token T2 ) { }//#  define sqlite3VtabBeginParse(P, T, T1, T2);
-    static void sqlite3VtabFinishParse<T>( Parse P, T t ) { }//#  define sqlite3VtabFinishParse(P, T)
-    static bool sqlite3VtabInSync( sqlite3 db ) { return false; }
+    static void sqlite3VtabArgExtend(Parse P, Token T) { }//#  define sqlite3VtabArgExtend(P, T)
+    static void sqlite3VtabArgInit(Parse P) { }//#  define sqlite3VtabArgInit(P)
+    static void sqlite3VtabBeginParse(Parse P, Token T, Token T1, Token T2) { }//#  define sqlite3VtabBeginParse(P, T, T1, T2);
+    static void sqlite3VtabFinishParse<T>(Parse P, T t) { }//#  define sqlite3VtabFinishParse(P, T)
+    static bool sqlite3VtabInSync(sqlite3 db) { return false; }
 
-    static VTable sqlite3GetVTable( sqlite3 db, Table T ) { return null; }
+    static VTable sqlite3GetVTable(sqlite3 db, Table T) { return null; }
 #else
 //void sqlite3VtabClear(Table*);
 //int sqlite3VtabSync(sqlite3 db, int rc);
@@ -3949,38 +3958,38 @@ static bool sqlite3VtabInSync( sqlite3 db ) { return ( db.nVTrans > 0 && db.aVTr
     ** provided (enforcement of FK constraints requires the triggers sub-system).
     */
 #if !(SQLITE_OMIT_FOREIGN_KEY) && !(SQLITE_OMIT_TRIGGER)
-  //void sqlite3FkCheck(Parse*, Table*, int, int);
-  //void sqlite3FkDropTable(Parse*, SrcList *, Table*);
-  //void sqlite3FkActions(Parse*, Table*, ExprList*, int);
-  //int sqlite3FkRequired(Parse*, Table*, int*, int);
-  //u32 sqlite3FkOldmask(Parse*, Table*);
-  //FKey *sqlite3FkReferences(Table *);
+    //void sqlite3FkCheck(Parse*, Table*, int, int);
+    //void sqlite3FkDropTable(Parse*, SrcList *, Table*);
+    //void sqlite3FkActions(Parse*, Table*, ExprList*, int);
+    //int sqlite3FkRequired(Parse*, Table*, int*, int);
+    //u32 sqlite3FkOldmask(Parse*, Table*);
+    //FKey *sqlite3FkReferences(Table *);
 #else
-    //#define sqlite3FkActions(a,b,c,d)
-    static void sqlite3FkActions( Parse a, Table b, ExprList c, int d ) { }
+//#define sqlite3FkActions(a,b,c,d)
+static void sqlite3FkActions( Parse a, Table b, ExprList c, int d ) { }
 
-    //#define sqlite3FkCheck(a,b,c,d)
-    static void sqlite3FkCheck( Parse a, Table b, int c, int d ) { }
+//#define sqlite3FkCheck(a,b,c,d)
+static void sqlite3FkCheck( Parse a, Table b, int c, int d ) { }
 
-    //#define sqlite3FkDropTable(a,b,c)
-    static void sqlite3FkDropTable( Parse a, SrcList b, Table c ) { }
+//#define sqlite3FkDropTable(a,b,c)
+static void sqlite3FkDropTable( Parse a, SrcList b, Table c ) { }
 
-    //#define sqlite3FkOldmask(a,b)      0
-    static u32 sqlite3FkOldmask( Parse a, Table b ) { return 0; }
+//#define sqlite3FkOldmask(a,b)      0
+static u32 sqlite3FkOldmask( Parse a, Table b ) { return 0; }
 
-    //#define sqlite3FkRequired(a,b,c,d) 0
-    static int sqlite3FkRequired( Parse a, Table b, int[] c, int d ) { return 0; }
+//#define sqlite3FkRequired(a,b,c,d) 0
+static int sqlite3FkRequired( Parse a, Table b, int[] c, int d ) { return 0; }
 #endif
 #if !SQLITE_OMIT_FOREIGN_KEY
     //void sqlite3FkDelete(Table*);
 #else
-    //#define sqlite3FkDelete(a)
-    static void sqlite3FkDelete(Table a) {}                 
+//#define sqlite3FkDelete(a)
+static void sqlite3FkDelete(Table a) {}                 
 #endif
 
     /*
-    ** Available fault injectors.  Should be numbered beginning with 0.
-    */
+** Available fault injectors.  Should be numbered beginning with 0.
+*/
     const int SQLITE_FAULTINJECTOR_MALLOC = 0;//#define SQLITE_FAULTINJECTOR_MALLOC     0
     const int SQLITE_FAULTINJECTOR_COUNT = 1;//#define SQLITE_FAULTINJECTOR_COUNT      1
 
@@ -4008,7 +4017,7 @@ static bool sqlite3VtabInSync( sqlite3 db ) { return ( db.nVTrans > 0 && db.aVTr
 //  int sqlite3JournalCreate(sqlite3_file *);
 #else
     //#define sqlite3JournalSize(pVfs) ((pVfs)->szOsFile)
-    static int sqlite3JournalSize( sqlite3_vfs pVfs ) { return pVfs.szOsFile; }
+    static int sqlite3JournalSize(sqlite3_vfs pVfs) { return pVfs.szOsFile; }
 #endif
 
     //void sqlite3MemJournalOpen(sqlite3_file *);
@@ -4033,9 +4042,9 @@ void sqlite3ConnectionBlocked(sqlite3 *, sqlite3 *);
 void sqlite3ConnectionUnlocked(sqlite3 *db);
 void sqlite3ConnectionClosed(sqlite3 *db);
 #else
-    static void sqlite3ConnectionBlocked( sqlite3 x, sqlite3 y ) { } //#define sqlite3ConnectionBlocked(x,y)
-    static void sqlite3ConnectionUnlocked( sqlite3 x ) { }                   //#define sqlite3ConnectionUnlocked(x)
-    static void sqlite3ConnectionClosed( sqlite3 x ) { }                     //#define sqlite3ConnectionClosed(x)
+    static void sqlite3ConnectionBlocked(sqlite3 x, sqlite3 y) { } //#define sqlite3ConnectionBlocked(x,y)
+    static void sqlite3ConnectionUnlocked(sqlite3 x) { }                   //#define sqlite3ConnectionUnlocked(x)
+    static void sqlite3ConnectionClosed(sqlite3 x) { }                     //#define sqlite3ConnectionClosed(x)
 #endif
 
 #if SQLITE_DEBUG
@@ -4056,9 +4065,9 @@ static void IOTRACE( string X, params object[] ap ) { if ( SQLite3IoTrace ) { pr
 //SQLITE_EXTERN void (*sqlite3IoTrace)(const char*,...);
 #else
     //#define IOTRACE(A)
-    static void IOTRACE( string F, params object[] ap ) { }
+    static void IOTRACE(string F, params object[] ap) { }
     //#define sqlite3VdbeIOTraceSql(X)
-    static void sqlite3VdbeIOTraceSql( Vdbe X ) { }
+    static void sqlite3VdbeIOTraceSql(Vdbe X) { }
 #endif
 
     //#endif

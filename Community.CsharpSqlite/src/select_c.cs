@@ -31,7 +31,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -3778,21 +3778,23 @@ sqlite3ErrorMsg(pParse, "too many columns in result set");
       SrcList_item pFrom;
 
       Debug.Assert( ( p.selFlags & SF_Resolved ) != 0 );
-      Debug.Assert( ( p.selFlags & SF_HasTypeInfo ) == 0 );
-      p.selFlags |= SF_HasTypeInfo;
-      pParse = pWalker.pParse;
-      pTabList = p.pSrc;
-      for ( i = 0; i < pTabList.nSrc; i++ )//, pFrom++ )
+      if ((p.selFlags & SF_HasTypeInfo) == 0)
       {
-        pFrom = pTabList.a[i];
-        Table pTab = pFrom.pTab;
-        if ( ALWAYS( pTab != null ) && ( pTab.tabFlags & TF_Ephemeral ) != 0 )
+        p.selFlags |= SF_HasTypeInfo;
+        pParse = pWalker.pParse;
+        pTabList = p.pSrc;
+        for (i = 0; i < pTabList.nSrc; i++)//, pFrom++ )
         {
-          /* A sub-query in the FROM clause of a SELECT */
-          Select pSel = pFrom.pSelect;
-          Debug.Assert( pSel != null );
-          while ( pSel.pPrior != null ) pSel = pSel.pPrior;
-          selectAddColumnTypeAndCollation( pParse, pTab.nCol, pTab.aCol, pSel );
+          pFrom = pTabList.a[i];
+          Table pTab = pFrom.pTab;
+          if (ALWAYS(pTab != null) && (pTab.tabFlags & TF_Ephemeral) != 0)
+          {
+            /* A sub-query in the FROM clause of a SELECT */
+            Select pSel = pFrom.pSelect;
+            Debug.Assert(pSel != null);
+            while (pSel.pPrior != null) pSel = pSel.pPrior;
+            selectAddColumnTypeAndCollation(pParse, pTab.nCol, pTab.aCol, pSel);
+          }
         }
       }
       return WRC_Continue;

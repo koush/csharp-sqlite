@@ -35,7 +35,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -1299,7 +1299,7 @@ return 1;
       Expr pExpr;                      /* The expression to be analyzed */
       Bitmask prereqLeft;              /* Prerequesites of the pExpr.pLeft */
       Bitmask prereqAll;               /* Prerequesites of pExpr */
-      Bitmask extraRight = 0;          /* */
+      Bitmask extraRight = 0;           /* Extra dependencies on LEFT JOIN */
       Expr pStr1 = null;               /* RHS of LIKE/GLOB operator */
       bool isComplete = false;         /* RHS of LIKE/GLOB ends with wildcard */
       bool noCase = false;             /* LIKE/GLOB distinguishes case */
@@ -1388,7 +1388,8 @@ return 1;
           pLeft = pDup.pLeft;
           pNew.leftCursor = pLeft.iTable;
           pNew.u.leftColumn = pLeft.iColumn;
-          pNew.prereqRight = prereqLeft;
+          testcase((prereqLeft | extraRight) != prereqLeft);
+          pNew.prereqRight = prereqLeft | extraRight;
           pNew.prereqAll = prereqAll;
           pNew.eOperator = operatorMask(pDup.op);
         }
@@ -2039,12 +2040,10 @@ sqlite3_vtab *pVtab = sqlite3GetVTable(pParse.db, pTab).pVtab;
 int i;
 int rc;
 
-(void)sqlite3SafetyOff(pParse.db);
 WHERETRACE("xBestIndex for %s\n", pTab.zName);
 TRACE_IDX_INPUTS(p);
 rc = pVtab.pModule.xBestIndex(pVtab, p);
 TRACE_IDX_OUTPUTS(p);
-(void)sqlite3SafetyOn(pParse.db);
 
 if( rc!=SQLITE_OK ){
 if( rc==SQLITE_NOMEM ){

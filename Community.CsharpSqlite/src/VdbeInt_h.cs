@@ -427,6 +427,7 @@ set { _flags = value; }
       public int explain;            /* True if EXPLAIN present on SQL command */
       public bool changeCntOn;       /* True to update the change-counter */
       public bool expired;           /* True if the VM needs to be recompiled */
+      public u8 runOnlyOnce;         /* Automatically expire on reset */
       public int minWriteFileFormat; /* Minimum file format for writable database files */
       public int inVtabMethod;       /* See comments above */
       public bool usesStmtJournal;   /* True if uses a statement journal */
@@ -560,7 +561,11 @@ ct.pLruNext=pLruNext;
     //int sqlite3VdbeMemNulTerminate(Mem*);
     //int sqlite3VdbeMemSetStr(Mem*, const char*, int, u8, void(*)(void*));
     //void sqlite3VdbeMemSetInt64(Mem*, i64);
+#if SQLITE_OMIT_FLOATING_POINT
+    //# define sqlite3VdbeMemSetDouble sqlite3VdbeMemSetInt64
+#else
     //void sqlite3VdbeMemSetDouble(Mem*, double);
+#endif
     //void sqlite3VdbeMemSetNull(Mem*);
     //void sqlite3VdbeMemSetZeroBlob(Mem*,int);
     //void sqlite3VdbeMemSetRowSet(Mem*);

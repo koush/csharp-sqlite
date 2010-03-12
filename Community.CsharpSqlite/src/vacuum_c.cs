@@ -31,7 +31,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -41,9 +41,24 @@ namespace Community.CsharpSqlite
 
 #if !SQLITE_OMIT_VACUUM && !SQLITE_OMIT_ATTACH
     /*
+** Finalize a prepared statement.  If there was an error, store the
+** text of the error message in *pzErrMsg.  Return the result code.
+*/
+    static int vacuumFinalize(sqlite3 db, sqlite3_stmt pStmt, string pzErrMsg)
+    {
+      int rc;
+      rc = sqlite3VdbeFinalize((Vdbe)pStmt);
+      if (rc!=0)
+      {
+        sqlite3SetString(ref pzErrMsg, db, sqlite3_errmsg(db));
+      }
+      return rc;
+    }
+
+    /*
 ** Execute zSql on database db. Return an error code.
 */
-    static int execSql( sqlite3 db, string zSql )
+    static int execSql(sqlite3 db, string pzErrMsg, string zSql)
     {
       sqlite3_stmt pStmt = null;
 #if !NDEBUG
@@ -57,7 +72,8 @@ namespace Community.CsharpSqlite
       string Dummy = null;
       if ( SQLITE_OK != sqlite3_prepare( db, zSql, -1, ref pStmt, ref Dummy ) )
       {
-        return sqlite3_errcode( db );
+        sqlite3SetString(ref pzErrMsg, db, sqlite3_errmsg(db));
+        return sqlite3_errcode(db);
       }
 #if !NDEBUG
       rc = sqlite3_step( pStmt );
@@ -66,14 +82,14 @@ namespace Community.CsharpSqlite
 #else
 sqlite3_step(pStmt);
 #endif
-      return sqlite3_finalize( ref pStmt );
+      return vacuumFinalize(db, pStmt, pzErrMsg);
     }
 
     /*
     ** Execute zSql on database db. The statement returns exactly
     ** one column. Execute this as SQL on the same database.
     */
-    static int execExecSql( sqlite3 db, string zSql )
+    static int execExecSql(sqlite3 db, string pzErrMsg, string zSql)
     {
       sqlite3_stmt pStmt = null;
       int rc;
@@ -84,15 +100,15 @@ sqlite3_step(pStmt);
 
       while ( SQLITE_ROW == sqlite3_step( pStmt ) )
       {
-        rc = execSql( db, sqlite3_column_text( pStmt, 0 ) );
+        rc = execSql(db, pzErrMsg, sqlite3_column_text(pStmt, 0));
         if ( rc != SQLITE_OK )
         {
-          sqlite3_finalize( ref pStmt );
+          vacuumFinalize(db, pStmt, pzErrMsg);
           return rc;
         }
       }
 
-      return sqlite3_finalize( ref pStmt );
+      return vacuumFinalize(db, pStmt, pzErrMsg);
     }
 
     /*
@@ -167,9 +183,16 @@ sqlite3_step(pStmt);
       ** time to parse and run the PRAGMA to turn journalling off than it does
       ** to write the journal header file.
       */
-      zSql = "ATTACH '' AS vacuum_db;";
-      rc = execSql( db, zSql );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
+      if (sqlite3TempInMemory(db))
+      {
+        zSql = "ATTACH ':memory:' AS vacuum_db;";
+      }
+      else
+      {
+        zSql = "ATTACH '' AS vacuum_db;";
+      }
+      rc = execSql(db, pzErrMsg, zSql);
+      if (rc != SQLITE_OK) goto end_of_vacuum;
       pDb = db.aDb[db.nDb - 1];
       Debug.Assert( db.aDb[db.nDb - 1].zName == "vacuum_db" );
       pTemp = db.aDb[db.nDb - 1].pBt;
@@ -201,7 +224,7 @@ if( nKey ) db.nextPagesize = 0;
         rc = SQLITE_NOMEM;
         goto end_of_vacuum;
       }
-      rc = execSql( db, "PRAGMA vacuum_db.synchronous=OFF" );
+      rc = execSql( db, pzErrMsg, "PRAGMA vacuum_db.synchronous=OFF" );
       if ( rc != SQLITE_OK )
       {
         goto end_of_vacuum;
@@ -213,23 +236,23 @@ if( nKey ) db.nextPagesize = 0;
 #endif
 
       /* Begin a transaction */
-      rc = execSql( db, "BEGIN EXCLUSIVE;" );
+      rc = execSql(db, pzErrMsg, "BEGIN EXCLUSIVE;");
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
 
       /* Query the schema of the main database. Create a mirror schema
       ** in the temporary database.
       */
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'CREATE TABLE vacuum_db.' || substr(sql,14) " +
       "  FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence'" +
       "   AND rootpage>0"
       );
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'CREATE INDEX vacuum_db.' || substr(sql,14)" +
       "  FROM sqlite_master WHERE sql LIKE 'CREATE INDEX %' " );
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'CREATE UNIQUE INDEX vacuum_db.' || substr(sql,21) " +
       "  FROM sqlite_master WHERE sql LIKE 'CREATE UNIQUE INDEX %'" );
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
@@ -238,7 +261,7 @@ if( nKey ) db.nextPagesize = 0;
       ** an "INSERT INTO vacuum_db.xxx SELECT * FROM main.xxx;" to copy
       ** the contents to the temporary database.
       */
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
       "|| ' SELECT * FROM main.' || quote(name) || ';'" +
       "FROM main.sqlite_master " +
@@ -250,12 +273,12 @@ if( nKey ) db.nextPagesize = 0;
 
       /* Copy over the sequence table
       */
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'DELETE FROM vacuum_db.' || quote(name) || ';' " +
       "FROM vacuum_db.sqlite_master WHERE name='sqlite_sequence' "
       );
       if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql( db,
+      rc = execExecSql(db, pzErrMsg,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
       "|| ' SELECT * FROM main.' || quote(name) || ';' " +
       "FROM vacuum_db.sqlite_master WHERE name=='sqlite_sequence';"
@@ -268,7 +291,7 @@ if( nKey ) db.nextPagesize = 0;
       ** associated storage, so all we have to do is copy their entries
       ** from the SQLITE_MASTER table.
       */
-      rc = execSql( db,
+      rc = execSql(db, pzErrMsg,
       "INSERT INTO vacuum_db.sqlite_master " +
       "  SELECT type, name, tbl_name, rootpage, sql" +
       "    FROM main.sqlite_master" +

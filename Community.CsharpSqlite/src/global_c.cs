@@ -25,7 +25,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -178,13 +178,15 @@ namespace Community.CsharpSqlite
     0,                         /* mxParserStack */
     false,                     /* sharedCacheEnabled */
       /* All the rest should always be initialized to zero */
-   0,                          /* isInit */
-   0,                          /* inProgress */
-   0,                          /* isMutexInit */
-   0,                          /* isMallocInit */
-   0,                          /* isPCacheInit */
-   null,                       /* pInitMutex */
-   0                           /* nRefInitMutex */
+    0,                         /* isInit */
+    0,                         /* inProgress */
+    0,                         /* isMutexInit */
+    0,                         /* isMallocInit */
+    0,                         /* isPCacheInit */
+    null,                      /* pInitMutex */
+    0,                         /* nRefInitMutex */
+    null,                      /* xLog */
+    0                          /* pLogArg */
     );
 
     /*

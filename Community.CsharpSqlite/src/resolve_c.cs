@@ -39,7 +39,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -794,9 +794,12 @@ return WRC_Prune;
     Expr pE           /* The specific ORDER BY term */
     )
     {
-      int i = 0;             /* Loop counter */
-      ExprList pEList;  /* The columns of the result set */
+      int i = 0;         /* Loop counter */
+      ExprList pEList;   /* The columns of the result set */
       NameContext nc;    /* Name context for resolving pE */
+      sqlite3 db;        /* Database connection */
+      int rc;            /* Return code from subprocedures */
+      u8 savedSuppErr;   /* Saved value of db->suppressErr */
 
       Debug.Assert( sqlite3ExprIsInteger( pE, ref i ) == 0 );
       pEList = pSelect.pEList;
@@ -809,11 +812,12 @@ return WRC_Prune;
       nc.pEList = pEList;
       nc.allowAgg = 1;
       nc.nErr = 0;
-      if ( sqlite3ResolveExprNames( nc, ref pE ) != 0 )
-      {
-        sqlite3ErrorClear( pParse );
-        return 0;
-      }
+      db = pParse.db;
+      savedSuppErr = db.suppressErr;
+      db.suppressErr = 1;
+      rc = sqlite3ResolveExprNames(nc, ref pE);
+      db.suppressErr = savedSuppErr;
+      if (rc != 0) return 0;
 
       /* Try to match the ORDER BY expression against an expression
       ** in the result set.  Return an 1-based index of the matching

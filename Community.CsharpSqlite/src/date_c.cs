@@ -61,7 +61,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -1296,8 +1296,8 @@ FUNCTION("current_timestamp", 0, 0, 0, (dxFunc)ctimestampFunc),
 FUNCTION("current_date",      0, 0, 0, (dxFunc)cdateFunc     ),
 #else
 STR_FUNCTION("current_time",      0, "%H:%M:%S",          0, currentTimeFunc),
-STR_FUNCTION("current_timestamp", 0, "%Y-%m-%d",          0, currentTimeFunc),
-STR_FUNCTION("current_date",      0, "%Y-%m-%d %H:%M:%S", 0, currentTimeFunc),
+STR_FUNCTION("current_date",      0, "%Y-%m-%d",          0, currentTimeFunc),
+STR_FUNCTION("current_timestamp", 0, "%Y-%m-%d %H:%M:%S", 0, currentTimeFunc),
 #endif
 };
       int i;

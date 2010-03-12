@@ -31,7 +31,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -62,11 +62,7 @@ namespace Community.CsharpSqlite
           }
         }
         pData.rc = //db.mallocFailed != 0 ? SQLITE_NOMEM :
-#if SQLITE_DEBUG
         SQLITE_CORRUPT_BKPT();
-#else
-SQLITE_CORRUPT;
-#endif
       }
     }
 
@@ -249,9 +245,7 @@ SQLITE_CORRUPT;
       initData.iDb = iDb;
       initData.rc = SQLITE_OK;
       initData.pzErrMsg = pzErrMsg;
-      sqlite3SafetyOff(db);
       sqlite3InitCallback(initData, 3, azArg, null);
-      sqlite3SafetyOn(db);
       if (initData.rc != 0)
       {
         rc = initData.rc;
@@ -392,7 +386,6 @@ SQLITE_CORRUPT;
         zSql = sqlite3MPrintf(db,
         "SELECT name, rootpage, sql FROM '%q'.%s ORDER BY rowid",
         db.aDb[iDb].zName, zMasterName);
-        sqlite3SafetyOff(db);
 #if ! SQLITE_OMIT_AUTHORIZATION
 {
 int (*xAuth)(void*,int,const char*,const char*,const char*,const char*);
@@ -406,7 +399,6 @@ db.xAuth = xAuth;
 }
 #endif
         if (rc == SQLITE_OK) rc = initData.rc;
-        sqlite3SafetyOn(db);
         sqlite3DbFree(db, ref zSql);
 #if !SQLITE_OMIT_ANALYZE
         if (rc == SQLITE_OK)
@@ -642,11 +634,6 @@ db.xAuth = xAuth;
       pParse.pReprepare = pReprepare;
       pParse.sLastToken.z = "";
 
-      if (sqlite3SafetyOn(db))
-      {
-        rc = SQLITE_MISUSE;
-        goto end_prepare;
-      }
       Debug.Assert(ppStmt == null);//  assert( ppStmt && *ppStmt==0 );
       //Debug.Assert( 0 == db.mallocFailed );
       Debug.Assert(sqlite3_mutex_held(db.mutex));
@@ -685,7 +672,6 @@ db.xAuth = xAuth;
           {
             string zDb = db.aDb[i].zName;
             sqlite3Error(db, rc, "database schema is locked: %s", zDb);
-            sqlite3SafetyOff(db);
             testcase(db.flags & SQLITE_ReadUncommitted);
             goto end_prepare;
           }
@@ -704,7 +690,6 @@ db.xAuth = xAuth;
         if (nBytes > mxLen)
         {
           sqlite3Error(db, SQLITE_TOOBIG, "statement too long");
-          sqlite3SafetyOff(db);
           rc = sqlite3ApiExit(db, SQLITE_TOOBIG);
           goto end_prepare;
         }
@@ -775,11 +760,6 @@ db.xAuth = xAuth;
       }
 #endif
 
-      if (sqlite3SafetyOff(db))
-      {
-        rc = SQLITE_MISUSE;
-      }
-
       Debug.Assert(db.init.busy == 0 || saveSqlFlag == 0);
       if (db.init.busy == 0)
       {
@@ -838,7 +818,7 @@ db.xAuth = xAuth;
       ppStmt = null;
       if (!sqlite3SafetyCheckOk(db))
       {
-        return SQLITE_MISUSE;
+        return SQLITE_MISUSE_BKPT();
       }
       sqlite3_mutex_enter(db.mutex);
       sqlite3BtreeEnterAll(db);
@@ -882,7 +862,7 @@ db.xAuth = xAuth;
           //        db.mallocFailed = 1;
         }
         Debug.Assert(pNew == null);
-        return (rc == SQLITE_LOCKED) ? SQLITE_LOCKED : SQLITE_SCHEMA;
+        return rc;
       }
       else
       {
@@ -972,10 +952,10 @@ int rc = SQLITE_OK;
 assert( ppStmt );
 *ppStmt = 0;
 if( !sqlite3SafetyCheckOk(db) ){
-return SQLITE_MISUSE;
+return SQLITE_MISUSE_BKPT;
 }
 sqlite3_mutex_enter(db.mutex);
-zSql8 = sqlite3Utf16to8(db, zSql, nBytes);
+zSql8 = sqlite3Utf16to8(db, zSql, nBytes, SQLITE_UTF16NATIVE);
 if( zSql8 !=""){
 rc = sqlite3LockAndPrepare(db, zSql8, -1, saveSqlFlag, null, ref ppStmt, ref zTail8);
 }

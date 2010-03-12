@@ -23,7 +23,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -109,13 +109,6 @@ int sqlite3_blob_open(
     memset(pParse, 0, sizeof(Parse));
     pParse->db = db;
 
-    if( sqlite3SafetyOn(db) ){
-      sqlite3DbFree(db, zErr);
-      sqlite3StackFree(db, pParse);
-      sqlite3_mutex_leave(db->mutex);
-      return SQLITE_MISUSE;
-    }
-
     sqlite3BtreeEnterAll(db);
     pTab = sqlite3LocateTable(pParse, 0, zTable, zDb);
     if( pTab && IsVirtual(pTab) ){
@@ -135,7 +128,6 @@ int sqlite3_blob_open(
         pParse->zErrMsg = 0;
       }
       rc = SQLITE_ERROR;
-      (void)sqlite3SafetyOff(db);
       sqlite3BtreeLeaveAll(db);
       goto blob_open_out;
     }
@@ -150,7 +142,6 @@ int sqlite3_blob_open(
       sqlite3DbFree(db, zErr);
       zErr = sqlite3MPrintf(db, "no such column: \"%s\"", zColumn);
       rc = SQLITE_ERROR;
-      (void)sqlite3SafetyOff(db);
       sqlite3BtreeLeaveAll(db);
       goto blob_open_out;
     }
@@ -191,7 +182,6 @@ int sqlite3_blob_open(
         sqlite3DbFree(db, zErr);
         zErr = sqlite3MPrintf(db, "cannot open %s column for writing", zFault);
         rc = SQLITE_ERROR;
-        (void)sqlite3SafetyOff(db);
         sqlite3BtreeLeaveAll(db);
         goto blob_open_out;
       }
@@ -241,8 +231,6 @@ int sqlite3_blob_open(
     }
    
     sqlite3BtreeLeaveAll(db);
-    rc = sqlite3SafetyOff(db);
-    if( NEVER(rc!=SQLITE_OK) || db->mallocFailed ){
       goto blob_open_out;
     }
 
@@ -343,7 +331,7 @@ static int blobReadWrite(
   Vdbe *v;
   sqlite3 *db;
 
-  if( p==0 ) return SQLITE_MISUSE;
+  if( p==0 ) return SQLITE_MISUSE_BKPT();
   db = p->db;
   sqlite3_mutex_enter(db->mutex);
   v = (Vdbe*)p->pStmt;

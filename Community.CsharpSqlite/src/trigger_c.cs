@@ -23,7 +23,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -157,7 +157,8 @@ namespace Community.CsharpSqlite
         goto trigger_cleanup;
       }
       pTab = sqlite3SrcListLookup( pParse, pTableName );
-      if ( pName2.n == 0 && pTab != null && pTab.pSchema == db.aDb[1].pSchema )
+      if (db.init.busy == 0 && pName2.n == 0 && pTab != null
+            && pTab.pSchema == db.aDb[1].pSchema)
       {
         iDb = 1;
       }
@@ -304,9 +305,9 @@ trigger_cleanup:
       string zName;                       /* Name of trigger */
 
       sqlite3 db = pParse.db;             /* The database */
-      DbFixer sFix = new DbFixer();
-      int iDb;                        /* Database containing the trigger */
-      Token nameToken = new Token();  /* Trigger name for error reporting */
+      DbFixer sFix = new DbFixer();       /* Fixer object */
+      int iDb;                            /* Database containing the trigger */
+      Token nameToken = new Token();      /* Trigger name for error reporting */
 
       pTrig = pParse.pNewTrigger;
       pParse.pNewTrigger = null;
@@ -327,7 +328,7 @@ trigger_cleanup:
         goto triggerfinish_cleanup;
       }
 
-      /* if we are not initializing, and this trigger is not on a TEMP table,
+      /* if we are not initializing,
       ** build the sqlite_master entry
       */
       if ( 0 == db.init.busy )

@@ -45,7 +45,7 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7
+    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
     **
     **  $Header$
     *************************************************************************
@@ -412,6 +412,14 @@ pOp.cnt = 0;
       {
         p.aLabel[j] = p.nOp;
       }
+    }
+
+    /*
+    ** Mark the VDBE as one that can only be run one time.
+    */
+    static void sqlite3VdbeRunOnlyOnce(Vdbe p)
+    {
+      p.runOnlyOnce = 1;
     }
 
 #if SQLITE_DEBUG //* sqlite3AssertMayAbort() logic */
@@ -1473,9 +1481,6 @@ break;
       Mem pMem;
       Debug.Assert( p.explain != 0 );
       Debug.Assert( p.magic == VDBE_MAGIC_RUN );
-#if SQL_DEBUG
-Debug.Assert(db.magic == SQLITE_MAGIC_BUSY);
-#endif
       Debug.Assert( p.rc == SQLITE_OK || p.rc == SQLITE_BUSY || p.rc == SQLITE_NOMEM );
       /* Even though this opcode does not use dynamic strings for
       ** the result, result columns may become dynamic if the user calls
@@ -2013,9 +2018,7 @@ if( pCx.pVtabCursor ){
 sqlite3_vtab_cursor pVtabCursor = pCx.pVtabCursor;
 const sqlite3_module pModule = pCx.pModule;
 p.inVtabMethod = 1;
-sqlite3SafetyOff(p.db);
 pModule.xClose(pVtabCursor);
-sqlite3SafetyOn(p.db);
 p.inVtabMethod = 0;
 }
 #endif
@@ -2211,9 +2214,7 @@ p.inVtabMethod = 0;
       /* If there are any write-transactions at all, invoke the commit hook */
       if ( needXcommit && db.xCommitCallback != null )
       {
-        sqlite3SafetyOff( db );
         rc = db.xCommitCallback( db.pCommitArg );
-        sqlite3SafetyOn( db );
         if ( rc != 0 )
         {
           return SQLITE_CONSTRAINT;
@@ -2745,13 +2746,18 @@ sqlite3BtreeEnterAll(p.db);
         /* If eStatementOp is non-zero, then a statement transaction needs to
         ** be committed or rolled back. Call sqlite3VdbeCloseStatement() to
         ** do so. If this operation returns an error, and the current statement
-        ** error code is SQLITE_OK or SQLITE_CONSTRAINT, then set the error
-        ** code to the new value.
+        ** error code is SQLITE_OK or SQLITE_CONSTRAINT, then promote the
+        ** current statement error code.
+        **
+        ** Note that sqlite3VdbeCloseStatement() can only fail if eStatementOp
+        ** is SAVEPOINT_ROLLBACK.  But if p->rc==SQLITE_OK then eStatementOp
+        ** must be SAVEPOINT_RELEASE.  Hence the NEVER(p->rc==SQLITE_OK) in 
+        ** the following code.
         */
-        if ( eStatementOp != 0 )
+        if (eStatementOp != 0)
         {
           rc = sqlite3VdbeCloseStatement( p, eStatementOp );
-          if ( rc != 0 && ( p.rc == SQLITE_OK || p.rc == SQLITE_CONSTRAINT ) )
+          if ( rc != 0 && (NEVER( p.rc == SQLITE_OK) || p.rc == SQLITE_CONSTRAINT ) )
           {
             p.rc = rc;
             sqlite3DbFree( db, ref p.zErrMsg );
@@ -2845,9 +2851,7 @@ sqlite3BtreeEnterAll(p.db);
       ** error, then it might not have been halted properly.  So halt
       ** it now.
       */
-      sqlite3SafetyOn( db );
       sqlite3VdbeHalt( p );
-      sqlite3SafetyOff( db );
 
       /* If the VDBE has be run even partially, then transfer the error code
       ** and error message from the VDBE into the main database structure.  But
@@ -2873,6 +2877,7 @@ sqlite3BtreeEnterAll(p.db);
         //{
         //  sqlite3Error( db, SQLITE_OK, 0 );
         //}
+        if (p.runOnlyOnce != 0) p.expired = true;
       }
       else if ( p.rc != 0 && p.expired )
       {
@@ -3869,11 +3874,7 @@ swapMixedEndianFloat(x);
     idx_rowid_corruption:
       //testcase( m.zMalloc != 0 );
       sqlite3VdbeMemRelease( m );
-#if SQLITE_DEBUG
       return SQLITE_CORRUPT_BKPT();
-#else
-return SQLITE_CORRUPT_BKPT;
-#endif
     }
 
     /*
@@ -3906,7 +3907,7 @@ return SQLITE_CORRUPT_BKPT;
       if ( nCellKey <= 0 || nCellKey > 0x7fffffff )
       {
         res = 0;
-        return SQLITE_CORRUPT;
+        return SQLITE_CORRUPT_BKPT();
       }
 
       m = sqlite3Malloc( m );
