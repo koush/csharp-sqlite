@@ -188,7 +188,6 @@ foreach PGSZ {512 2048 4096 8192} {
     ifcapable {vacuum} {execsql VACUUM}
   } {}
   integrity_check pagesize-2.$PGSZ.17
-}
 
   db close
   file delete -force test.db
@@ -215,5 +214,6 @@ foreach PGSZ {512 2048 4096 8192} {
       PRAGMA temp.page_size;
     "
   } [list $PGSZ $PGSZ]
+}
 
 finish_test

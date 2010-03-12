@@ -8,7 +8,7 @@ do_test SIMPLE_SQLITE_VERSION {
     execsql { 
     SELECT SQLITE_VERSION(), SQLITE_SOURCE_ID();
   }
-} {3.6.22.C# {Ported to C# from 2010-01-05 15:30:36 28d0d7710761114a44a1a3a425a6883c661f06e7}}
+} {3.6.23.C# {Ported to C# from 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d}}
 
 # Uncomment the _RunWorking line to run all the tests
 # or copy one of test filenames 
@@ -112,10 +112,12 @@ source $testdir/corrupt9.test
 source $testdir/corruptA.test
 source $testdir/corruptB.test
 source $testdir/corruptD.test
+source $testdir/corruptE.test
 source $testdir/count.test
 source $testdir/crash8.test
 source $testdir/createtab.test
 source $testdir/cse.test
+source $testdir/ctime.test
 source $testdir/date.test
 source $testdir/default.test
 source $testdir/delete.test

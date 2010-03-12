@@ -14,7 +14,7 @@
 #  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
 #  C#-SQLite is an independent reimplementation of the SQLite software library
 #
-#  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+#  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
 #
 #  $Header: C#-SQLite/test/tester.tcl,v 2009/12/11 20:47:52 Noah $
 #
@@ -979,11 +979,18 @@ proc drop_all_tables {{db db}} {
     set pk [$db one "PRAGMA foreign_keys"]
     $db eval "PRAGMA foreign_keys = OFF"
   }
-  foreach {t type} [$db eval {
-    SELECT name, type FROM sqlite_master 
-    WHERE type IN('table', 'view') AND name NOT like 'sqlite_%'
-  }] {
-    $db eval "DROP $type $t"
+  foreach {idx name file} [db eval {PRAGMA database_list}] {
+    if {$idx==1} {
+      set master sqlite_temp_master
+    } else {
+      set master $name.sqlite_master
+    }
+    foreach {t type} [$db eval "
+      SELECT name, type FROM $master
+      WHERE type IN('table', 'view') AND name NOT like 'sqlite_%'
+    "] {
+      $db eval "DROP $type $t"
+    }
   }
   ifcapable trigger&&foreignkey {
     $db eval " PRAGMA foreign_keys = $pk "
