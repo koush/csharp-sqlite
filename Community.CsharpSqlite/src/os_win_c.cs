@@ -1942,7 +1942,7 @@ pFile.zDeleteOnClose = zConverted;
         {
            try
            {
-            var name = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+            string name = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
             FileStream fs = File.Create(name);
             fs.Close();
             File.Delete(name);

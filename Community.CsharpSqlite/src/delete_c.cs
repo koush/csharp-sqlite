@@ -604,7 +604,7 @@ sqlite3AuthContextPop(sContext);
       if ( pTab.pSelect == null )
       {
         sqlite3GenerateRowIndexDelete( pParse, pTab, iCur, 0 );
-        sqlite3VdbeAddOp2( v, OP_Delete, iCur, ( count != 0 ? OPFLAG_NCHANGE : 0 ) );
+        sqlite3VdbeAddOp2( v, OP_Delete, iCur, ( count != 0 ? (int)OPFLAG_NCHANGE : 0 ) );
         if ( count != 0 )
         {
           sqlite3VdbeChangeP4( v, -1, pTab.zName, P4_STATIC );

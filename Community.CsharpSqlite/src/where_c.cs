@@ -4034,7 +4034,7 @@ OP_IdxLT             /* 2: (end_constraints && bRev) */
       ** only generate code for the first table in pTabList and assume that
       ** any cursors associated with subsequent tables are uninitialized.
       */
-      nTabList = ((wctrlFlags & WHERE_ONETABLE_ONLY) != 0) ? 1 : pTabList.nSrc;
+      nTabList = ((wctrlFlags & WHERE_ONETABLE_ONLY) != 0) ? 1 : (int)pTabList.nSrc;
 
       /* Allocate and initialize the WhereInfo structure that will become the
       ** return value. A single allocation is used to store the WhereInfo

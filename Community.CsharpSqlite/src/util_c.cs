@@ -810,7 +810,7 @@ return sqlite3Atoi64(z, pResult);
     }
     static int getVarint(byte[] p, int offset, ref i64 v)
     {
-      v = offset >= p.Length ? 0 : p[offset + 0];
+      v = offset >= p.Length ? 0 : (int)p[offset + 0];
       if ( v <= 0x7F ) return 1;
       if ( offset + 1 >= p.Length )
       { v = 65535; return 2; }
