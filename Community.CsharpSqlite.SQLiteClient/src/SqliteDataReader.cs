@@ -216,7 +216,8 @@ namespace Community.CsharpSqlite.SQLiteClient
 								// If the column was declared as a 'date' or 'datetime', let's play
 								// nice and return a DateTime (version 3 only).
 								if (declmode[i] == 2)
-									data_row[i] = DateTime.Parse((string)data_row[i]);
+                  if (data_row[i] == null) data_row[i] = null;
+                  else data_row[i] = DateTime.Parse((string)data_row[i]);
 								break;
 							case 4:
 								int blobbytes = Sqlite3.sqlite3_column_bytes16 (pVm, i);

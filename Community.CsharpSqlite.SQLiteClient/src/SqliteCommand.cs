@@ -305,7 +305,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 				else if (ptype.Equals (typeof (DateTime))) 
 				{
 					DateTime dt = (DateTime)param.Value;
-                    err = (SqliteError)Sqlite3.sqlite3_bind_int64(pStmt, i, dt.ToFileTime());
+                    err = (SqliteError)Sqlite3.sqlite3_bind_text(pStmt,i,dt.ToString(),-1,null);
 				} 
 				else if (ptype.Equals (typeof (Double))) 
 				{
