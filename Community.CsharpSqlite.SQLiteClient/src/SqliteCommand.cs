@@ -326,8 +326,12 @@ namespace Community.CsharpSqlite.SQLiteClient
 				else if (ptype.Equals (typeof (Byte[]))) 
 				{
                     err = (SqliteError)Sqlite3.sqlite3_bind_blob(pStmt, i, (byte[])param.Value, ((byte[])param.Value).Length, null);
-				} 
-				else 
+				}
+        else if (ptype.Equals(typeof(Guid)))
+        {
+          err = (SqliteError)Sqlite3.sqlite3_bind_text(pStmt, i, param.Value.ToString(), param.Value.ToString().Length, null);
+        }
+        else 
 				{
 					throw new ApplicationException("Unkown Parameter Type");
 				}
