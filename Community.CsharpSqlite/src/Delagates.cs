@@ -14,6 +14,7 @@ using System;
 using System.Text;
 using HANDLE = System.IntPtr;
 using sqlite3_int64 = System.Int64;
+using i16 = System.Int16;
 using u32 = System.UInt32;
 using u64 = System.UInt64;
 
@@ -99,6 +100,12 @@ namespace Community.CsharpSqlite
     public delegate void dxReiniter(DbPage dbPage);   /* Call this routine when reloading pages */
 
     public delegate void dxFreeSchema(Schema schema);
+
+#if SQLITE_HAS_CODEC
+    public delegate byte[] dxCodec( codec_ctx pCodec, byte[] D, uint pageNumber, int X ); //void *(*xCodec)(void*,void*,Pgno,int); /* Routine for en/decoding data */
+    public delegate void dxCodecSizeChng( codec_ctx pCodec, int pageSize, i16 nReserve ); //void (*xCodecSizeChng)(void*,int,int); /* Notify of page size changes */
+    public delegate void dxCodecFree( ref codec_ctx pCodec ); //void (*xCodecFree)(void*); /* Destructor for the codec */
+#endif
 
     //Module
     public delegate void dxDestroy(ref PgHdr pDestroyArg);

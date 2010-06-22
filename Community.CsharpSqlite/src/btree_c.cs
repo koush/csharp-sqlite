@@ -2384,7 +2384,7 @@ if( p.pNext ) p.pNext.pPrev = p.pPrev;
 ** If parameter nReserve is less than zero, then the number of reserved
 ** bytes per page is left unchanged.
 **
-** If the iFix!=null then the pageSizeFixed flag is set so that the page size
+** If iFix!=0 then the pageSizeFixed flag is set so that the page size
 ** and autovacuum mode can no longer be changed.
 */
     static int sqlite3BtreeSetPageSize( Btree p, int pageSize, int nReserve, int iFix )

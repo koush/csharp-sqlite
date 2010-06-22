@@ -207,13 +207,14 @@ sqlite3_step(pStmt);
 
       /* A VACUUM cannot change the pagesize of an encrypted database. */
 #if SQLITE_HAS_CODEC
-if( db.nextPagesize ){
-extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
-int nKey;
-char *zKey;
-sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
-if( nKey ) db.nextPagesize = 0;
-}
+      if ( db.nextPagesize != 0 )
+      {
+        //extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
+        int nKey;
+        string zKey;
+        sqlite3CodecGetKey( db, 0, out zKey, out nKey ); // sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
+        if ( nKey != 0 ) db.nextPagesize = 0;
+      }
 #endif
 
       if ( sqlite3BtreeSetPageSize( pTemp, sqlite3BtreeGetPageSize( pMain ), nRes, 0 ) != 0

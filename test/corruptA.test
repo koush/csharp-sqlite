@@ -18,6 +18,12 @@
 
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
+# Skip this whole file if a codec is active
+#
+if {[sqlite3 -has-codec]} {
+  finish_test
+  return
+}
 
 
 # Create a database to work with.

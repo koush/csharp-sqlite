@@ -28,6 +28,10 @@ if $AUTOVACUUM {
   return
 }
 
+# Disable encryption on the database for this test.
+  sqlite3 db test.db 
+  
+  
 # Ticket #1121 - make sure vacuum works if all autoincrement tables
 # have been deleted.
 #

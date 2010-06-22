@@ -790,7 +790,7 @@ return TCL.TCL_OK;
       zKey = argv[2].ToString();
       nKey = zKey.Length;
 #if SQLITE_HAS_CODEC
-sqlite3_key(db, zKey, nKey);
+      sqlite3_key(db, zKey, nKey);
 #endif
       return TCL.TCL_OK;
     }
@@ -820,7 +820,7 @@ sqlite3_key(db, zKey, nKey);
       zKey = argv[2].ToString();
       nKey = zKey.Length;
 #if SQLITE_HAS_CODEC
-sqlite3_rekey(db, zKey, nKey);
+      sqlite3_rekey( db, zKey, nKey );
 #endif
       return TCL.TCL_OK;
     }

@@ -95,7 +95,7 @@ ifcapable lock_proxy_pragmas&&prefer_proxy_locking {
     testfixture $::tf1 "sqlite3_test_control_pending_byte $::sqlite_pending_byte"
     testfixture $::tf1 {
       set sqlite_hostid_num 2    
-      sqlite3 db test.db -key xyzzy
+      sqlite3 db test.db
       set lockpath [db eval {
         PRAGMA lock_proxy_file=":auto:";
         select * from sqlite_master;

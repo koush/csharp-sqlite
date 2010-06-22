@@ -18,10 +18,15 @@
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 
+# Do not use a codec for tests in this file, as the database file is
+# manipulated directly using tcl scripts. See proc [set_file_format].
+#
+do_not_use_codec
 
 # Create a database.
 #
 do_test rdonly-1.1 {
+  sqlite3 db test.db
   execsql {
     CREATE TABLE t1(x);
     INSERT INTO t1 VALUES(1);

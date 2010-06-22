@@ -25,6 +25,12 @@ ifcapable !pager_pragmas||!autovacuum {
   finish_test
   return
 }
+# Skip this whole file if a codec is active
+#
+if {[sqlite3 -has-codec]} {
+  finish_test
+  return
+}
 
 # Create a database to work with.
 #

@@ -25,6 +25,12 @@ ifcapable !pager_pragmas {
   finish_test
   return
 }
+# Skip this whole file if a codec is active
+#
+if {[sqlite3 -has-codec]} {
+  finish_test
+  return
+}
 
 # Return the offset to the first (trunk) page of the freelist.  Return
 # zero of the freelist is empty.

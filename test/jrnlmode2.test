@@ -82,7 +82,7 @@ do_test jrnlmode2-2.3 {
 } {0}
 
 do_test jrnlmode2-2.4 {
-  sqlite3 db2 test.db -readonly 1
+    sqlite3 db2 test.db -readonly 1
   catchsql { SELECT * FROM t1 } db2
 } {0 {1 2 3 4 5 6}}
 
@@ -91,7 +91,7 @@ do_test jrnlmode2-2.5 {
 } {}
 
 do_test jrnlmode2-2.6 {
-  sqlite3 db2 test.db -readonly 1
+    sqlite3 db2 test.db -readonly 1
   catchsql { SELECT * FROM t1 } db2
 } {0 {1 2 3 4 5 6}}
 

@@ -20,6 +20,9 @@ ifcapable {!pager_pragmas} {
   return
 }
 
+# Disable encryption on the database for this test.
+sqlite3 db test.db
+
 # This module does not work right if the cache spills at unexpected
 # moments.  So disable the soft-heap-limit.
 #

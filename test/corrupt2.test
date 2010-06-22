@@ -18,6 +18,13 @@
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 
+# Skip this whole file if a codec is active
+#
+if {[sqlite3 -has-codec]} {
+  finish_test
+  return
+}
+
 # The following tests - corrupt2-1.* - create some databases corrupted in
 # specific ways and ensure that SQLite detects them as corrupt.
 #

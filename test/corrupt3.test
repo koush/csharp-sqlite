@@ -25,6 +25,13 @@ ifcapable !pager_pragmas {
   return
 }
 
+# Skip this whole file if a codec is active
+#
+if {[sqlite3 -has-codec]} {
+  finish_test
+  return
+}
+
 # Create a database with an overflow page.
 #
 do_test corrupt3-1.1 {

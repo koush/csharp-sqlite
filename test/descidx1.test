@@ -17,6 +17,14 @@
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 
+# Do not use a codec for tests in this file, as the database file is
+# manipulated directly using tcl scripts. See proc [set_file_format].
+#
+do_not_use_codec
+
+db close
+sqlite3 db test.db
+
 db eval {PRAGMA legacy_file_format=OFF}
 
 # This procedure sets the value of the file-format in file 'test.db'

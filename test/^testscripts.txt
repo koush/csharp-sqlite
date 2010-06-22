@@ -4,16 +4,16 @@
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 
+# Uncomment the _RunWorking line to run all the tests
+# or copy one of test filenames 
+# or enter TCL commands such as the ones that are listed 
+# after these comments
+
 do_test SIMPLE_SQLITE_VERSION {
     execsql { 
     SELECT SQLITE_VERSION(), SQLITE_SOURCE_ID();
   }
 } {3.6.23.C# {Ported to C# from 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d}}
-
-# Uncomment the _RunWorking line to run all the tests
-# or copy one of test filenames 
-# or enter TCL commands such as the ones that are listed 
-# after these comments
 
 #source $testdir/_RunWorking.txt
 ##########################################################################################

@@ -15,7 +15,7 @@
     <OldToolsVersion>2.0</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -39,7 +39,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF  SQLITE_POOL_MEM</DefineConstants>
+    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_ENABLE_OVERSIZE_CELL_CHECK SQLITE_HAS_CODEC SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF  SQLITE_POOL_MEM</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
@@ -76,7 +76,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF  SQLITE_POOL_MEM SQLITE_ENABLE_OVERSIZE_CELL_CHECK</DefineConstants>
+    <DefineConstants>DEBUG;TRUE WIN32 _MSC_VER SQLITE_ASCII SQLITE_DEBUG SQLITE_DISABLE_LFS  SQLITE_HAS_CODEC SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_TEST VDBE_PROFILE_OFF  SQLITE_POOL_MEM SQLITE_ENABLE_OVERSIZE_CELL_CHECK NET_35</DefineConstants>
     <NoWarn>0168 ; 0169; 0414; 0618; 0649</NoWarn>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
@@ -93,8 +93,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Management" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Community.CsharpSqlite\src\alter_c.cs">
@@ -135,6 +139,9 @@
     </Compile>
     <Compile Include="..\Community.CsharpSqlite\src\complete_c.cs">
       <Link>Community.CsharpSqlite\complete_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\crypto.cs">
+      <Link>Community.CsharpSqlite\crypto.cs</Link>
     </Compile>
     <Compile Include="..\Community.CsharpSqlite\src\ctime_cs.cs">
       <Link>Community.CsharpSqlite\ctime_cs.cs</Link>
@@ -850,6 +857,9 @@
     </None>
     <None Include="..\test\analyze.test">
       <Link>test\analyze.test</Link>
+    </None>
+    <None Include="..\test\analyze2.test">
+      <Link>test\analyze2.test</Link>
     </None>
     <None Include="..\test\async.test">
       <Link>test\async.test</Link>

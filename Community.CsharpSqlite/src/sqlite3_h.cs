@@ -4029,7 +4029,6 @@ namespace Community.CsharpSqlite
     //  void(*)(void*,sqlite3*,int eTextRep,const void*)
     //);
 
-#if SQLITE_HAS_CODEC
     /*
     ** Specify the key for an encrypted database.  This routine should be
     ** called right after sqlite3_open().
@@ -4058,11 +4057,11 @@ namespace Community.CsharpSqlite
 ** Specify the activation key for a SEE database.  Unless 
 ** activated, none of the SEE routines will work.
 */
-SQLITE_API void sqlite3_activate_see(
-  const char *zPassPhrase        /* Activation phrase */
-);
-#endif
-
+    // propietary stuff for comercial SEE routines
+    
+    //SQLITE_API void sqlite3_activate_see(
+    //  const char *zPassPhrase        /* Activation phrase */
+    //);
 #if SQLITE_ENABLE_CEROD
 /*
 ** Specify the activation key for a CEROD database.  Unless 

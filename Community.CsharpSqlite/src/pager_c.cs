@@ -134,16 +134,43 @@ namespace Community.CsharpSqlite
     /*
     ** A macro used for invoking the codec if there is one
     */
+
+    // The E parameter is what executes when there is an error, 
+    // cannot implement here, since this is not really a macro
+    // calling code must be modified to call E when truen
+
 #if SQLITE_HAS_CODEC
 //# define CODEC1(P,D,N,X,E) \
-if( P->xCodec && P->xCodec(P->pCodec,D,N,X)==0 ){ E; }
-//# define CODEC2(P,D,N,X,E,O) \
-if( P->xCodec==0 ){ O=(char*)D; }else \
-if( (O=(char*)(P->xCodec(P->pCodec,D,N,X)))==0 ){ E; }
+//if( P->xCodec && P->xCodec(P->pCodec,D,N,X)==0 ){ E; }
+    static bool CODEC1(Pager P, byte[] D, uint N /* page number */, int X /* E (moved to caller */) 
+    {
+        return ((P.xCodec != null) && (P.xCodec(P.pCodec, D, N, X) == null));
+    } 
+
+    // The E parameter is what executes when there is an error, 
+    // cannot implement here, since this is not really a macro
+    // calling code must be modified to call E when truen
+
+    //# define CODEC2(P,D,N,X,E,O) \
+//if( P->xCodec==0 ){ O=(char*)D; }else \
+//if( (O=(char*)(P->xCodec(P->pCodec,D,N,X)))==0 ){ E; }
+    static bool CODEC2(Pager P, byte[] D, uint N, int X, ref byte[] O)
+    {
+        if (P.xCodec == null)
+        {
+          O = D; // do nothing
+            return false;
+        }
+        else
+        {
+            return ((O = P.xCodec(P.pCodec, D, N, X)) == null);
+  }
+}
 #else
     //# define CODEC1(P,D,N,X,E)   /* NO-OP */
+    static bool CODEC1 (Pager P, byte[] D, uint N /* page number */, int X /* E (moved to caller */)  { return false; }
     //# define CODEC2(P,D,N,X,E,O) O=(char*)D
-    static void CODEC2( Pager P, byte[] D, uint N, int X, int E, ref byte[] O ) { O = D; }
+    static bool CODEC2( Pager P, byte[] D, uint N, int X, ref byte[] O ) { O = D; return false; }
 #endif
 
     /*
@@ -348,10 +375,13 @@ if( (O=(char*)(P->xCodec(P->pCodec,D,N,X)))==0 ){ E; }
 #endif
       public dxReiniter xReiniter; //(DbPage*,int);/* Call this routine when reloading pages */
 #if SQLITE_HAS_CODEC
-void *(*xCodec)(void*,void*,Pgno,int); /* Routine for en/decoding data */
-void (*xCodecSizeChng)(void*,int,int); /* Notify of page size changes */
-void (*xCodecFree)(void*);             /* Destructor for the codec */
-void *pCodec;               /* First argument to xCodec... methods */
+//void *(*xCodec)(void*,void*,Pgno,int); 
+      public dxCodec xCodec;                 /* Routine for en/decoding data */
+//void (*xCodecSizeChng)(void*,int,int); 
+      public dxCodecSizeChng xCodecSizeChng; /* Notify of page size changes */
+//void (*xCodecFree)(void*);             
+      public dxCodecFree xCodecFree;         /* Destructor for the codec */
+      public codec_ctx pCodec;              /* First argument to xCodec... methods */
 #endif
       public byte[] pTmpSpace;               /* Pager.pageSize bytes of space for tmp use */
       public i64 journalSizeLimit;           /* Size limit for persistent journal files */
@@ -1715,13 +1745,9 @@ sqlite3PcacheIterateDirty(pPager.pPCache, pager_set_pagehash);
         }
         if ( pPager.pBackup != null )
         {
-#if SQLITE_HAS_CODEC
-CODEC1( pPager, aData, pgno, 3, rc = SQLITE_NOMEM );
-#endif
+          if ( CODEC1( pPager, aData, pgno, SQLITE_DECRYPT ) ) rc = SQLITE_NOMEM; // CODEC1( pPager, aData, pgno, 3, rc = SQLITE_NOMEM );
           sqlite3BackupUpdate( pPager.pBackup, pgno, (u8[])aData );
-#if SQLITE_HAS_CODEC
-CODEC2( pPager, aData, pgno, 7, rc = SQLITE_NOMEM, aData);
-#endif
+          if ( CODEC2( pPager, aData, pgno, SQLITE_ENCRYPT_READ_CTX,ref aData ) ) rc = SQLITE_NOMEM;//CODEC2( pPager, aData, pgno, 7, rc = SQLITE_NOMEM, aData);
         }
       }
       else if ( 0 == isMainJrnl && pPg == null )
@@ -1795,9 +1821,7 @@ pPg.pageHash = pager_pagehash(pPg);
         }
 
         /* Decode the page just read from disk */
-#if SQLITE_HAS_CODEC
-CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
-#endif
+        if ( CODEC1( pPager, pData, pPg.pgno, SQLITE_DECRYPT ) ) rc = SQLITE_NOMEM; //CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
         sqlite3PcacheRelease( pPg );
       }
       return rc;
@@ -2243,7 +2267,6 @@ CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
         }
       }
       /*NOTREACHED*/
-      Debugger.Break();
 
     end_playback:
       /* Following a rollback, the database file should be back in its original
@@ -2566,12 +2589,13 @@ CODEC1(pPager, pData, pPg.pgno, 3, rc=SQLITE_NOMEM);
     ** to the codec.
     */
 #if SQLITE_HAS_CODEC
-static void pagerReportSize(Pager *pPager){
-if( pPager->xCodecSizeChng ){
-pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
-(int)pPager->nReserve);
-}
-}
+    static void pagerReportSize( Pager pPager )
+    {
+      if ( pPager.xCodecSizeChng != null )
+      {
+        pPager.xCodecSizeChng( pPager.pCodec, pPager.pageSize,        (short)pPager.nReserve );
+      }
+    }
 #else
     //# define pagerReportSize(X)     /* No-op if we do not support a codec */
     static void pagerReportSize( Pager pPager ) { }
@@ -2971,7 +2995,7 @@ pPager->xCodecSizeChng(pPager->pCodec, pPager->pageSize,
       sqlite3PcacheClose( pPager.pPCache );
 
 #if SQLITE_HAS_CODEC
-if( pPager->xCodecFree ) pPager->xCodecFree(pPager->pCodec);
+      if ( pPager.xCodecFree != null ) pPager.xCodecFree(ref pPager.pCodec );
 #endif
       Debug.Assert( null == pPager.aSavepoint && !pPager.pInJournal );
       Debug.Assert( !isOpen( pPager.jfd ) && !isOpen( pPager.sjfd ) );
@@ -3224,7 +3248,7 @@ static Pgno sqlite3PagerPagenumber( DbPage pPg )    {      return pPg.pgno;    }
           byte[] pData = null;                                   /* Data to write */
 
           /* Encode the database */
-          CODEC2( pPager, pList.pData, pgno, 6, SQLITE_NOMEM, ref pData );//     CODEC2(pPager, pList->pData, pgno, 6, return SQLITE_NOMEM, pData);
+          if (CODEC2( pPager, pList.pData, pgno, SQLITE_ENCRYPT_WRITE_CTX, ref pData )) return SQLITE_NOMEM;//     CODEC2(pPager, pList->pData, pgno, 6, return SQLITE_NOMEM, pData);
 
           /* Write out the page data. */
           rc = sqlite3OsWrite( pPager.fd, pData, pPager.pageSize, offset );
@@ -3292,7 +3316,7 @@ pList.pageHash = pager_pagehash(pList);
         i64 offset = pPager.nSubRec * ( 4 + pPager.pageSize );
         byte[] pData2 = null;
 
-        CODEC2( pPager, pData, pPg.pgno, 7, SQLITE_NOMEM, ref pData2 );//CODEC2(pPager, pData, pPg.pgno, 7, return SQLITE_NOMEM, pData2);
+        if ( CODEC2( pPager, pData, pPg.pgno, SQLITE_ENCRYPT_READ_CTX, ref pData2 ) ) return SQLITE_NOMEM;//CODEC2(pPager, pData, pPg.pgno, 7, return SQLITE_NOMEM, pData2);
         PAGERTRACE( "STMT-JOURNAL %d page %d\n", PAGERID( pPager ), pPg.pgno );
         Debug.Assert( pageInJournal( pPg ) || pPg.pgno > pPager.dbOrigSize );
         rc = write32bits( pPager.sjfd, offset, pPg.pgno );
@@ -3915,9 +3939,7 @@ Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
         Buffer.BlockCopy( pPg.pData, 24, pPager.dbFileVers, 0, pPager.dbFileVers.Length );
       }
       }
-#if SQLITE_HAS_CODEC
-CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
-#endif
+      if ( CODEC1( pPager, pPg.pData, pPg.pgno, SQLITE_DECRYPT ) ) rc = SQLITE_NOMEM; //CODEC1(pPager, pPg.pData, pPg.pgno, 3, rc = SQLITE_NOMEM);
 #if SQLITE_TEST
       int iValue;
       iValue = sqlite3_pager_readdb_count.iValue;
@@ -4737,7 +4759,7 @@ CHECK_PAGE(pPg);
             ** contains the database locks.  The following Debug.Assert verifies
             ** that we do not. */
             Debug.Assert( pPg.pgno != ( ( PENDING_BYTE / ( pPager.pageSize ) ) + 1 ) );//PAGER_MJ_PGNO(pPager) );
-            CODEC2( pPager, pData, pPg.pgno, 7, SQLITE_NOMEM, ref pData2 );//        CODEC2(pPager, pData, pPg->pgno, 7, return SQLITE_NOMEM, pData2);
+            if ( CODEC2( pPager, pData, pPg.pgno, SQLITE_ENCRYPT_READ_CTX, ref pData2 ) ) return SQLITE_NOMEM;  // CODEC2(pPager, pData, pPg->pgno, 7, return SQLITE_NOMEM, pData2);
             cksum = pager_cksum( pPager, pData2 );
             rc = write32bits( pPager.jfd, pPager.journalOff, (u32)pPg.pgno );
             if ( rc == SQLITE_OK )
@@ -5079,9 +5101,13 @@ int DIRECT_MODE = isDirectMode;
           /* If running in direct mode, write the contents of page 1 to the file. */
           if ( DIRECT_MODE )
           {
-            u8[] zBuf = pPgHdr.pData;
+            u8[] zBuf = null;
             Debug.Assert( pPager.dbFileSize > 0 );
-            rc = sqlite3OsWrite( pPager.fd, zBuf, pPager.pageSize, 0 );
+            if ( CODEC2( pPager, pPgHdr.pData, 1, SQLITE_ENCRYPT_WRITE_CTX, ref zBuf ) ) return rc = SQLITE_NOMEM;//CODEC2(pPager, pPgHdr->pData, 1, 6, rc=SQLITE_NOMEM, zBuf);
+            if ( rc == SQLITE_OK )
+            {
+              rc = sqlite3OsWrite( pPager.fd, zBuf, pPager.pageSize, 0 );
+            }
 
             if ( rc == SQLITE_OK )
             {
@@ -5741,23 +5767,26 @@ rc = pager_incr_changecounter(pPager, 0);
 /*
 ** Set or retrieve the codec for this pager
 */
-static void sqlite3PagerSetCodec(
-Pager *pPager,
-void *(*xCodec)(void*,void*,Pgno,int),
-void (*xCodecSizeChng)(void*,int,int),
-void (*xCodecFree)(void*),
-void *pCodec
-){
-if( pPager->xCodecFree ) pPager->xCodecFree(pPager->pCodec);
- pPager->xCodec = pPager->memDb ? 0 : xCodec;
-pPager->xCodecSizeChng = xCodecSizeChng;
-pPager->xCodecFree = xCodecFree;
-pPager->pCodec = pCodec;
-pagerReportSize(pPager);
-}
-static void *sqlite3PagerGetCodec(Pager *pPager){
-return pPager->pCodec;
-}
+    static void sqlite3PagerSetCodec(
+    Pager pPager,
+    dxCodec xCodec,                 //void *(*xCodec)(void*,void*,Pgno,int),
+    dxCodecSizeChng xCodecSizeChng, //void (*xCodecSizeChng)(void*,int,int),
+    dxCodecFree xCodecFree,         //void (*xCodecFree)(void*),
+    codec_ctx pCodec
+    )
+    {
+      if ( pPager.xCodecFree != null ) pPager.xCodecFree( ref pPager.pCodec );
+      pPager.xCodec = (pPager.memDb!=0) ? null : xCodec;
+      pPager.xCodecSizeChng = xCodecSizeChng;
+      pPager.xCodecFree = xCodecFree;
+      pPager.pCodec = pCodec;
+      pagerReportSize( pPager );
+    }
+
+    static object sqlite3PagerGetCodec( Pager pPager )
+    {
+      return pPager.pCodec;
+    }
 #endif
 
 #if !SQLITE_OMIT_AUTOVACUUM
@@ -6074,5 +6103,5 @@ MEMDB != 0
       return pPager.pBackup;
     }
 #endif // * SQLITE_OMIT_DISKIO */
-  }
+}
 }

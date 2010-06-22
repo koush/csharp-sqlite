@@ -151,6 +151,18 @@ sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_PRNG );
       sqlite3_mutex_leave( mutex );
     }
 
+    static void sqlite3_randomness(byte[] pBuf, int Offset, int N)
+    {
+      i64 iBuf = System.DateTime.Now.Ticks;
+      sqlite3_mutex_enter( mutex );
+      while ( N-- > 0 )
+      {
+        iBuf = (u32)( ( iBuf << 8 ) + randomu8() );//  zBuf[N] = randomu8();
+        pBuf[Offset++] = (byte)iBuf;
+      }
+      sqlite3_mutex_leave( mutex );
+    }
+
 #if !SQLITE_OMIT_BUILTIN_TEST
     /*
 ** For testing purposes, we sometimes want to preserve the state of

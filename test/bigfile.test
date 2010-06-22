@@ -18,6 +18,8 @@
 set testdir [file dirname $argv0]
 source $testdir/tester.tcl
 
+do_not_use_codec
+
 # If SQLITE_DISABLE_LFS is defined, omit this file.
 ifcapable !lfs {
   finish_test

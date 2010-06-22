@@ -194,36 +194,38 @@ namespace Community.CsharpSqlite
       //}
 
 #if SQLITE_HAS_CODEC
-if( rc==SQLITE_OK ){
-extern int sqlite3CodecAttach(sqlite3*, int, const void*, int);
-extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
-int nKey;
-char *zKey;
-int t = sqlite3_value_type(argv[2]);
-switch( t ){
-case SQLITE_INTEGER:
-case SQLITE_FLOAT:
-zErrDyn = sqlite3DbStrDup(db, "Invalid key value");
-rc = SQLITE_ERROR;
-break;
+      if ( rc == SQLITE_OK )
+      {
+        //extern int sqlite3CodecAttach(sqlite3*, int, const void*, int);
+        //extern void sqlite3CodecGetKey(sqlite3*, int, void**, int*);
+        int nKey;
+        string zKey;
+        int t = sqlite3_value_type( argv[2] );
+        switch ( t )
+        {
+          case SQLITE_INTEGER:
+          case SQLITE_FLOAT:
+            zErrDyn = "Invalid key value"; //sqlite3DbStrDup( db, "Invalid key value" );
+            rc = SQLITE_ERROR;
+            break;
 
-case SQLITE_TEXT:
-case SQLITE_BLOB:
-nKey = sqlite3_value_bytes(argv[2]);
-zKey = (char *)sqlite3_value_blob(argv[2]);
-rc = sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
-break;
+          case SQLITE_TEXT:
+          case SQLITE_BLOB:
+            nKey = sqlite3_value_bytes( argv[2] );
+            zKey = sqlite3_value_blob( argv[2] ).ToString(); // (char *)sqlite3_value_blob(argv[2]);
+            rc = sqlite3CodecAttach( db, db.nDb - 1, zKey, nKey );
+            break;
 
-case SQLITE_NULL:
-/* No key specified.  Use the key from the main database */
-sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
-rc = sqlite3CodecAttach(db, db.nDb-1, zKey, nKey);
-break;
-}
-}
+          case SQLITE_NULL:
+            /* No key specified.  Use the key from the main database */
+            sqlite3CodecGetKey( db, 0, out zKey, out nKey ); //sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
+            rc = sqlite3CodecAttach( db, db.nDb - 1, zKey, nKey );
+            break;
+        }
+      }
 #endif
 
-    /* If the file was opened successfully, read the schema for the new database.
+      /* If the file was opened successfully, read the schema for the new database.
     ** If this fails, or if opening the file failed, then close the file and
     ** remove the entry from the db.aDb[] array. i.e. put everything back the way
     ** we found it.
