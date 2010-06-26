@@ -502,8 +502,9 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
       if ( zKey != null && pDb.pBt != null )
       {
         Aes.KeySize = 256;
-
-
+#if !SQLITE_SILVERLIGHT
+        Aes.Padding = PaddingMode.None;
+#endif
         codec_ctx ctx;
         int rc;
         Pager pPager = pDb.pBt.pBt.pPager;
@@ -608,7 +609,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
         if ( pDb.pBt != null )
         {
           codec_ctx ctx = null;
-          int rc, page_count = 0;
+          int rc;
+          Pgno page_count = 0;
           Pgno pgno;
           PgHdr page = null;
           Pager pPager = pDb.pBt.pBt.pPager;

@@ -80,7 +80,7 @@ namespace Community.CsharpSqlite
     */
     public class FilePoint
     {
-      public int iOffset;           /* Offset from the beginning of the file */
+      public long iOffset;           /* Offset from the beginning of the file */
       public FileChunk pChunk;      /* Specific chunk into which cursor points */
     };
 
@@ -255,7 +255,7 @@ namespace Community.CsharpSqlite
     /*
     ** Query the size of the file in bytes.
     */
-    static int memjrnlFileSize( sqlite3_file pJfd, ref int pSize )
+    static int memjrnlFileSize( sqlite3_file pJfd, ref long pSize )
     {
       MemJournal p = (MemJournal)pJfd;
       pSize = p.endpoint.iOffset;

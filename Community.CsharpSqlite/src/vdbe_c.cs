@@ -6391,7 +6391,7 @@ break;
           case OP_Pagecount:
             {            /* out2-prerelease */
               int p1;
-              int nPage = 0;
+              Pgno nPage = 0;
               Pager pPager;
 
               p1 = pOp.p1;

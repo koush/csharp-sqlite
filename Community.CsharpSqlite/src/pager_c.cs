@@ -724,8 +724,8 @@ pPg.pageHash==pager_pagehash(pPg) );
     {
       int rc;                       /* Return code */
       int len = 0;                  /* Length in bytes of master journal name */
-      int szJ = 0;                  /* Total size in bytes of journal file pJrnl */
-      int cksum = 0;                /* MJ checksum value read from journal */
+      i64  szJ = 0;                 /* Total size in bytes of journal file pJrnl */
+      u32 cksum = 0;                /* MJ checksum value read from journal */
       int u;                        /* Unsigned loop counter */
       byte[] aMagic = new byte[8];  /* A buffer to hold the magic header */
 
@@ -733,12 +733,12 @@ pPg.pageHash==pager_pagehash(pPg) );
 
       if ( SQLITE_OK != ( rc = sqlite3OsFileSize( pJrnl, ref szJ ) )
       || szJ < 16
-      || SQLITE_OK != ( rc = read32bits( pJrnl, szJ - 16, ref len ) )
+      || SQLITE_OK != ( rc = read32bits( pJrnl, (int)(szJ - 16), ref len ) )
       || len >= nMaster
       || SQLITE_OK != ( rc = read32bits( pJrnl, szJ - 12, ref cksum ) )
       || SQLITE_OK != ( rc = sqlite3OsRead( pJrnl, aMagic, 8, szJ - 8 ) )
       || memcmp( aMagic, aJournalMagic, 8 ) != 0
-      || SQLITE_OK != ( rc = sqlite3OsRead( pJrnl, zMaster, len, szJ - 16 - len ) )
+      || SQLITE_OK != ( rc = sqlite3OsRead( pJrnl, zMaster, len, (long)(szJ - 16 - len ) ) )
       )
       {
         return rc;
@@ -848,11 +848,11 @@ pPg.pageHash==pager_pagehash(pPg) );
         */
         if ( rc == SQLITE_OK && iLimit > 0 )
         {
-          int sz = 0;
+          i64  sz = 0;
           rc = sqlite3OsFileSize( pPager.jfd, ref sz );
           if ( rc == SQLITE_OK && sz > iLimit )
           {
-            rc = sqlite3OsTruncate( pPager.jfd, (int)iLimit );
+            rc = sqlite3OsTruncate( pPager.jfd, iLimit );
           }
         }
       }
@@ -1131,7 +1131,7 @@ pPg.pageHash==pager_pagehash(pPg) );
       int rc;                          /* Return code */
       int nMaster;                     /* Length of string zMaster */
       i64 iHdrOff;                     /* Offset of header in journal file */
-      int jrnlSize = 0;                  /* Size of journal file on disk */
+      i64  jrnlSize = 0;                  /* Size of journal file on disk */
       u32 cksum = 0;                   /* Checksum of string zMaster */
 
       if ( null == zMaster || pPager.setMaster != 0
@@ -2007,10 +2007,10 @@ pPg.pageHash = pager_pagehash(pPg);
       int rc = SQLITE_OK;
       if ( pPager.state >= PAGER_EXCLUSIVE && isOpen( pPager.fd ) )
       {
-        int currentSize = 0; int newSize;
+        i64  currentSize = 0; i64  newSize;
         /* TODO: Is it safe to use Pager.dbFileSize here? */
         rc = sqlite3OsFileSize( pPager.fd, ref currentSize );
-        newSize = (int)( pPager.pageSize * nPage );
+        newSize =  pPager.pageSize * nPage ;
         if ( rc == SQLITE_OK && currentSize != newSize )
         {
           if ( currentSize > newSize )
@@ -2124,7 +2124,7 @@ pPg.pageHash = pager_pagehash(pPg);
     static int pager_playback( Pager pPager, int isHot )
     {
       sqlite3_vfs pVfs = pPager.pVfs;
-      int szJ = 0;             /* Size of the journal file in bytes */
+      i64  szJ = 0;            /* Size of the journal file in bytes */
       u32 nRec = 0;            /* Number of Records in the journal */
       u32 u;                   /* Unsigned loop counter */
       u32 mxPg = 0;            /* Size of the original file in pages */
@@ -2687,13 +2687,13 @@ pPg.pageHash = pager_pagehash(pPg);
     **
     ** Regardless of mxPage, return the current maximum page count.
     */
-    static long sqlite3PagerMaxPageCount( Pager pPager, int mxPage )
+    static Pgno sqlite3PagerMaxPageCount( Pager pPager, Pgno mxPage )
     {
       if ( mxPage > 0 )
       {
-        pPager.mxPgno = (Pgno)mxPage;
+        pPager.mxPgno = mxPage;
       }
-      int idummy = 0;
+      Pgno idummy = 0;
       sqlite3PagerPagecount( pPager, ref idummy );
       return pPager.mxPgno;
     }
@@ -2770,9 +2770,9 @@ pPg.pageHash = pager_pagehash(pPg);
     ** Otherwise, if everything is successful, then SQLITE_OK is returned
     ** and *pnPage is set to the number of pages in the database.
     */
-    static int sqlite3PagerPagecount( Pager pPager, ref int pnPage )
+    static int sqlite3PagerPagecount( Pager pPager, ref Pgno pnPage )
     {
-      int nPage;               /* Value to return via *pnPage */
+      Pgno nPage;               /* Value to return via *pnPage */
 
       /* If the pager is already in the error state, return the error code. */
       if ( pPager.errCode != 0 )
@@ -2783,12 +2783,12 @@ pPg.pageHash = pager_pagehash(pPg);
       /* Determine the number of pages in the file. Store this in nPage. */
       if ( pPager.dbSizeValid )
       {
-        nPage = (int)pPager.dbSize;
+        nPage = pPager.dbSize;
       }
       else
       {
         int rc;                 /* Error returned by OsFileSize() */
-        int n = 0;              /* File size in bytes returned by OsFileSize() */
+        i64  n = 0;             /* File size in bytes returned by OsFileSize() */
 
         Debug.Assert( isOpen( pPager.fd ) || pPager.tempFile );
         if ( isOpen( pPager.fd ) && ( 0 != ( rc = sqlite3OsFileSize( pPager.fd, ref n ) ) ) )
@@ -2802,12 +2802,12 @@ pPg.pageHash = pager_pagehash(pPg);
         }
         else
         {
-          nPage = n / pPager.pageSize;
+          nPage = (Pgno)( n / pPager.pageSize );
         }
         if ( pPager.state != PAGER_UNLOCK )
         {
-          pPager.dbSize = (Pgno)nPage;
-          pPager.dbFileSize = (Pgno)nPage;
+          pPager.dbSize = nPage;
+          pPager.dbFileSize = nPage;
           pPager.dbSizeValid = true;
         }
       }
@@ -2818,7 +2818,7 @@ pPg.pageHash = pager_pagehash(pPg);
       */
       if ( nPage > pPager.mxPgno )
       {
-        pPager.mxPgno = (Pgno)nPage;
+        pPager.mxPgno = nPage;
       }
 
       /* Set the output variable and return SQLITE_OK */
@@ -3816,7 +3816,7 @@ szPageDflt = ii;
         rc = sqlite3OsCheckReservedLock( pPager.fd, ref locked );
         if ( rc == SQLITE_OK && locked == 0 )
         {
-          int nPage = 0;
+          Pgno nPage = 0;
 
           /* Check the size of the database file. If it consists of 0 pages,
           ** then delete the journal file. See the header comment above for
@@ -4151,7 +4151,7 @@ Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
           ** it can be neglected.
           */
           byte[] dbFileVers = new byte[pPager.dbFileVers.Length];
-          int idummy = 0;
+          Pgno idummy = 0;
           sqlite3PagerPagecount( pPager, ref  idummy );
 
           if ( pPager.errCode != 0 )
@@ -4327,7 +4327,7 @@ Debug.Assert(  pPager.state>=PAGER_SHARED && 0==MEMDB );
       {
         /* The pager cache has created a new page. Its content needs to 
         ** be initialized.  */
-        int nMax = 0;
+        Pgno nMax = 0;
 #if SQLITE_TEST
         PAGER_INCR( ref pPager.nMiss );
 #endif
@@ -4531,7 +4531,7 @@ pPg.pageHash = pager_pagehash(pPg);
       ** the call to PagerPagecount() can be removed.
       */
       testcase( pPager.dbSizeValid == false );
-      int idummy = 0; sqlite3PagerPagecount( pPager, ref idummy );
+      Pgno idummy = 0; sqlite3PagerPagecount( pPager, ref idummy );
 
       pPager.pInJournal = sqlite3BitvecCreate( pPager.dbSize );// sqlite3MallocZero(pPager.dbSize / 8 + 1);
       if ( pPager.pInJournal == null )
@@ -4875,9 +4875,9 @@ CHECK_PAGE(pPg);
 
       if ( nPagePerSector > 1 )
       {
-        int nPageCount = 0;      /* Total number of pages in database file */
-        u32 pg1;                 /* First page of the sector pPg is located on. */
-        u32 nPage;               /* Number of pages starting at pg1 to journal */
+        Pgno nPageCount = 0;     /* Total number of pages in database file */
+        Pgno pg1;                /* First page of the sector pPg is located on. */
+        Pgno nPage;              /* Number of pages starting at pg1 to journal */
         int ii;                  /* Loop counter */
         bool needSync = false;   /* True if any page has PGHDR_NEED_SYNC */
 

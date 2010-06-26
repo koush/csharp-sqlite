@@ -103,7 +103,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       DO_OS_MALLOC_TEST( id );
       return id.pMethods.xSync( id, flags );
     }
-    static int sqlite3OsFileSize( sqlite3_file id, ref int pSize )
+    static int sqlite3OsFileSize( sqlite3_file id, ref long pSize )
     {
       return id.pMethods.xFileSize( id, ref pSize );
     }

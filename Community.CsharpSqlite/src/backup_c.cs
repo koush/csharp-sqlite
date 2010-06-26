@@ -310,7 +310,7 @@ namespace Community.CsharpSqlite
     */
     static int backupTruncateFile( sqlite3_file pFile, int iSize )
     {
-      int iCurrent = 0;
+      long iCurrent = 0;
       int rc = sqlite3OsFileSize( pFile, ref iCurrent );
       if ( rc == SQLITE_OK && iCurrent > iSize )
       {
@@ -353,7 +353,7 @@ namespace Community.CsharpSqlite
         Pager pSrcPager = sqlite3BtreePager( p.pSrc );    /* Source pager */
         Pager pDestPager = sqlite3BtreePager( p.pDest );   /* Dest pager */
         int ii;                            /* Iterator variable */
-        int nSrcPage = -1;                 /* Size of source db in pages */
+        Pgno nSrcPage = 0;                 /* Size of source db in pages */
         int bCloseTrans = 0;               /* True if src db requires unlocking */
 
         /* If the source pager is currently in a write-transaction, return
@@ -394,7 +394,7 @@ namespace Community.CsharpSqlite
         {
           rc = sqlite3PagerPagecount( pSrcPager, ref nSrcPage );
         }
-        for ( ii = 0; ( nPage < 0 || ii < nPage ) && p.iNext <= (Pgno)nSrcPage && 0 == rc; ii++ )
+        for ( ii = 0; ( nPage < 0 || ii < nPage ) && p.iNext <= nSrcPage && 0 == rc; ii++ )
         {
           Pgno iSrcPg = p.iNext;                 /* Source page number */
           if ( iSrcPg != PENDING_BYTE_PAGE( p.pSrc.pBt ) )
@@ -411,9 +411,9 @@ namespace Community.CsharpSqlite
         }
         if ( rc == SQLITE_OK )
         {
-          p.nPagecount = (u32)nSrcPage;
-          p.nRemaining = (u32)( nSrcPage + 1 - p.iNext );
-          if ( p.iNext > (Pgno)nSrcPage )
+          p.nPagecount = nSrcPage;
+          p.nRemaining = ( nSrcPage + 1 - p.iNext );
+          if ( p.iNext > nSrcPage )
           {
             rc = SQLITE_DONE;
           }
@@ -435,7 +435,7 @@ namespace Community.CsharpSqlite
         {
           int nSrcPagesize = sqlite3BtreeGetPageSize( p.pSrc );
           int nDestPagesize = sqlite3BtreeGetPageSize( p.pDest );
-          int nDestTruncate;
+          Pgno nDestTruncate;
           if ( p.pDestDb != null )
           {
             sqlite3ResetInternalSchema( p.pDestDb, 0 );
@@ -456,7 +456,7 @@ namespace Community.CsharpSqlite
           if ( nSrcPagesize < nDestPagesize )
           {
             int ratio = nDestPagesize / nSrcPagesize;
-            nDestTruncate = ( nSrcPage + ratio - 1 ) / ratio;
+            nDestTruncate = (Pgno)( ( nSrcPage + ratio - 1 ) / ratio );
             if ( nDestTruncate == (int)PENDING_BYTE_PAGE( p.pDest.pBt ) )
             {
               nDestTruncate--;
@@ -464,9 +464,9 @@ namespace Community.CsharpSqlite
           }
           else
           {
-            nDestTruncate = nSrcPage * ( nSrcPagesize / nDestPagesize );
+            nDestTruncate = (Pgno)( nSrcPage * ( nSrcPagesize / nDestPagesize ) );
           }
-          sqlite3PagerTruncateImage( pDestPager, (u32)nDestTruncate );
+          sqlite3PagerTruncateImage( pDestPager, nDestTruncate );
 
           if ( nSrcPagesize < nDestPagesize )
           {

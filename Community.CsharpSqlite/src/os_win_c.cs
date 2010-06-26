@@ -945,7 +945,7 @@ return SQLITE_OK;
     /*
     ** Determine the current size of a file in bytes
     */
-    static int sqlite3_fileSize( sqlite3_file id, ref int pSize )
+    static int sqlite3_fileSize( sqlite3_file id, ref long pSize )
     {
       //DWORD upperBits;
       //DWORD lowerBits;

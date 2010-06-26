@@ -5,6 +5,8 @@ using System.Text;
 using i64 = System.Int64;
 using u8 = System.Byte;
 
+using Pgno = System.UInt32;
+
 namespace Community.CsharpSqlite
 {
   public partial class Sqlite3
@@ -503,15 +505,15 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
           if ( sqlite3StrICmp( zLeft, "max_page_count" ) == 0 )
           {
             Btree pBt = pDb.pBt;
-            int newMax = 0;
+            Pgno newMax = 0;
             Debug.Assert( pBt != null );
             if ( zRight != null )
             {
-              newMax = atoi( zRight );
+              newMax = (Pgno)atoi( zRight );
             }
             if ( ALWAYS( pBt ) )
             {
-              newMax = (int)sqlite3BtreeMaxPageCount( pBt, newMax );
+              newMax = sqlite3BtreeMaxPageCount( pBt, newMax );
             }
             returnSingleInt( pParse, "max_page_count", newMax );
           }

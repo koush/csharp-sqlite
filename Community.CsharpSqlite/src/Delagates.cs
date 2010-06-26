@@ -66,7 +66,7 @@ namespace Community.CsharpSqlite
     public delegate int dxCheckReservedLock(sqlite3_file File_ID, ref int pRes);
     public delegate int dxDeviceCharacteristics(sqlite3_file File_ID);
     public delegate int dxFileControl(sqlite3_file File_ID, int op, ref int pArgs);
-    public delegate int dxFileSize(sqlite3_file File_ID, ref int size);
+    public delegate int dxFileSize(sqlite3_file File_ID, ref long size);
     public delegate int dxLock(sqlite3_file File_ID, int locktype);
     public delegate int dxRead(sqlite3_file File_ID, byte[] buffer, int amount, sqlite3_int64 offset);
     public delegate int dxSectorSize(sqlite3_file File_ID);
