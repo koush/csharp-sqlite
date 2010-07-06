@@ -963,7 +963,7 @@ return SQLITE_OK;
       //  return SQLITE_IOERR_FSTAT;
       //}
       //pSize = (((sqlite3_int64)upperBits)<<32) + lowerBits;
-      pSize = id.fs.CanRead ? (int)id.fs.Length : 0;
+      pSize = id.fs.CanRead ? id.fs.Length : 0;
       return SQLITE_OK;
     }
 
@@ -1587,8 +1587,7 @@ return SQLITE_OK;
       //    free(zOut);
       //  }
 #if SQLITE_SILVERLIGHT
-        zBuf = "Unknown error";
-        return 0;
+      zBuf = "Unknown error";
 #else
       zBuf = Marshal.GetLastWin32Error().ToString();//new Win32Exception( Marshal.GetLastWin32Error() ).Message;
 #endif

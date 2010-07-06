@@ -6514,7 +6514,7 @@ sqlite3VdbePrintOp(stdout, origPc, aOp[origPc]);
              pc, p.zSql, p.zErrMsg);
       sqlite3VdbeHalt(p);
       //if ( rc == SQLITE_IOERR_NOMEM ) db.mallocFailed = 1;
-      rc = SQLITE_ERROR;
+       rc = SQLITE_ERROR;
       if (resetSchemaOnFault) sqlite3ResetInternalSchema(db, 0);
 
     /* This is the only way out of this procedure.  We have to

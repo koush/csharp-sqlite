@@ -5533,8 +5533,8 @@ static void assertParentIndex(MemPage pParent, int iIdx, Pgno iChild) { }
       {
         /* There are no pages on the freelist, so create a new page at the
         ** end of the file */
-        int nPage = (int)pagerPagecount( pBt );
-        pPgno = (u32)nPage + 1;
+        Pgno nPage = pagerPagecount(pBt);
+        pPgno = nPage + 1;
 
         if ( pPgno == PENDING_BYTE_PAGE( pBt ) )
         {

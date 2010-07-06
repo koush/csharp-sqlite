@@ -583,7 +583,10 @@ namespace Community.CsharpSqlite.SQLiteClient
 		{
 			return parent_conn.LastInsertRowId;
 		}
-		
+    public string GetLastError()
+    {
+      return Sqlite3.sqlite3_errmsg(parent_conn.Handle2);
+    }
 		private string GetError3() {
 		    return Sqlite3.sqlite3_errmsg(parent_conn.Handle2);
 			//return Marshal.PtrToStringUni (Sqlite.sqlite3_errmsg16 (parent_conn.Handle));

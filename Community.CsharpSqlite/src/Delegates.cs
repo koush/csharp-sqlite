@@ -3,7 +3,7 @@
 **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
 **  C#-SQLite is an independent reimplementation of the SQLite software library
 **
-**  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/Delagates.cs $
+**  Repository path : $HeadURL: https://sqlitecs.googlecode.com/svn/trunk/C%23SQLite/src/Delegates.cs $
 **  Revision        : $Revision$
 **  Last Change Date: $LastChangedDate: 2009-08-04 13:34:52 -0700 (Tue, 04 Aug 2009) $
 **  Last Changed By : $LastChangedBy: noah.hart $
@@ -205,7 +205,7 @@ namespace Community.CsharpSqlite
     public delegate void dxIter(PgHdr p);
 
 
-#if NET_35
+#if NET_35 || NET_40
     //API Simplifications -- Actions
     public static Action<sqlite3_context, String, Int32, dxDel> ResultBlob = sqlite3_result_blob;
     public static Action<sqlite3_context, Double> ResultDouble = sqlite3_result_double;
@@ -287,7 +287,7 @@ namespace Community.CsharpSqlite
 
   }
 }
-
+#if !NET_35 && !NET_40
 namespace System
 {
   // Summary:
@@ -370,3 +370,4 @@ namespace System
   public delegate TResult Func<T1, T2, T3, T4, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4);
   public delegate TResult Func<T1, T2, T3, T4, T5, TResult>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5);
 }
+#endif

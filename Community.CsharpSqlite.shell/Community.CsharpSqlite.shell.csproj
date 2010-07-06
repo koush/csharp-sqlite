@@ -95,8 +95,8 @@
     <Compile Include="..\Community.CsharpSqlite\src\date_c.cs">
       <Link>Community.CsharpSqlite\date_c.cs</Link>
     </Compile>
-    <Compile Include="..\Community.CsharpSqlite\src\Delagates.cs">
-      <Link>Community.CsharpSqlite\Delagates.cs</Link>
+    <Compile Include="..\Community.CsharpSqlite\src\Delegates.cs">
+      <Link>Community.CsharpSqlite\Delegates.cs</Link>
     </Compile>
     <Compile Include="..\Community.CsharpSqlite\src\delete_c.cs">
       <Link>Community.CsharpSqlite\delete_c.cs</Link>

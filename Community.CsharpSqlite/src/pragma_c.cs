@@ -1723,21 +1723,26 @@ new VdbeOpList( OP_ResultRow,       1,  1,  0)
                                                                 if ( !String.IsNullOrEmpty( zRight ) && ( sqlite3StrICmp( zLeft, "hexkey" ) == 0 ||
                                                                 sqlite3StrICmp( zLeft, "hexrekey" ) == 0 ) )
                                                                 {
-                                                                  int i, h1, h2;
-                                                                  StringBuilder zKey = new StringBuilder( 40 );
-                                                                  for ( i = 0; ( h1 = zRight[i] ) != 0 && ( h2 = zRight[i + 1] ) != 0; i += 2 )
+                                                                  StringBuilder zKey = new StringBuilder(40);
+                                                                  zRight.ToLower(new System.Globalization.CultureInfo("en-us"));
+                                                                  // expected '0x0102030405060708090a0b0c0d0e0f10'
+                                                                  if (zRight.Length != 34)
+                                                                    return;
+
+                                                                  for (int i = 2; i < zRight.Length; i += 2)
                                                                   {
-                                                                    h1 += 9 * ( 1 & ( h1 >> 6 ) );
-                                                                    h2 += 9 * ( 1 & ( h2 >> 6 ) );
-                                                                    zKey.Append( Convert.ToChar( ( h2 & 0x0f ) | ( ( h1 & 0xf ) << 4 ) ) );
+                                                                    int h1 = zRight[i]; int h2 = zRight[i + 1];
+                                                                    h1 += 9 * (1 & (h1 >> 6));
+                                                                    h2 += 9 * (1 & (h2 >> 6));
+                                                                    zKey.Append(Convert.ToChar((h2 & 0x0f) | ((h1 & 0xf) << 4)));
                                                                   }
                                                                   if ( ( zLeft[3] & 0xf ) == 0xb )
                                                                   {
-                                                                    sqlite3_key( db, zKey.ToString(), i / 2 );
+                                                                    sqlite3_key(db, zKey.ToString(), zKey.Length);
                                                                   }
                                                                   else
                                                                   {
-                                                                    sqlite3_rekey( db, zKey.ToString(), i / 2 );
+                                                                    sqlite3_rekey(db, zKey.ToString(), zKey.Length);
                                                                   }
 }else
 #endif
