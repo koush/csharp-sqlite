@@ -103,7 +103,6 @@
     </Compile>
     <Compile Include="src\SqliteConnection.cs">
     </Compile>
-    <Compile Include="src\SqliteConnectionFactory.cs" />
     <Compile Include="src\SqliteConnectionStringBuilder.cs" />
     <Compile Include="src\SqliteDataAdapter.cs">
       <SubType>Component</SubType>

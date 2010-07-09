@@ -33,6 +33,7 @@
 using System;
 using System.Data;
 #if NET_2_0
+using System.IO;
 using System.Data.Common;
 #endif
 using System.Text;
@@ -144,6 +145,9 @@ namespace Community.CsharpSqlite.SQLiteClient
 			get { return db_version; }
 		}
 
+#if NET_2_0
+      override
+#endif
       public string ServerVersion
       {
         get { return Sqlite3.sqlite3_libversion(); }
@@ -537,8 +541,8 @@ namespace Community.CsharpSqlite.SQLiteClient
 
     DataTable GetSchemaTables( string[] restrictionValues )
     {
-      SqliteCommand cmd = CreateCommand();
-      cmd = new SqliteCommand( "SELECT type, name, tbl_name, rootpage, sql " +
+      SqliteCommand cmd = new SqliteCommand(
+                    "SELECT type, name, tbl_name, rootpage, sql " +
                     " FROM sqlite_master " +
                     " WHERE (name = :pname or (:pname is null)) " +
                     " AND type = 'table' " +
@@ -555,15 +559,15 @@ namespace Community.CsharpSqlite.SQLiteClient
       }
       ValidateIdentifier( restrictionValues[0] );
 
-      SqliteCommand cmd = CreateCommand();
+      SqliteCommand cmd = (SqliteCommand)CreateCommand();
       cmd.CommandText = string.Format( "PRAGMA table_info({0})", restrictionValues[0] );
       return GetSchemaDataTable( cmd, restrictionValues );
     }
 
     DataTable GetSchemaTriggers( string[] restrictionValues )
     {
-      SqliteCommand cmd = CreateCommand();
-      cmd = new SqliteCommand( "SELECT type, name, tbl_name, rootpage, sql " +
+      SqliteCommand cmd = new SqliteCommand(
+                    "SELECT type, name, tbl_name, rootpage, sql " +
                     " FROM sqlite_master " +
                     " WHERE (tbl_name = :pname or :pname is null) " +
                     " AND type = 'trigger' " +
@@ -580,7 +584,7 @@ namespace Community.CsharpSqlite.SQLiteClient
       }
       ValidateIdentifier( restrictionValues[0] );
 
-      SqliteCommand cmd = CreateCommand();
+      SqliteCommand cmd = (SqliteCommand)CreateCommand();
       cmd.CommandText = string.Format( "PRAGMA index_info({0})", restrictionValues[0] );
       return GetSchemaDataTable( cmd, restrictionValues );
     }
@@ -593,7 +597,7 @@ namespace Community.CsharpSqlite.SQLiteClient
       }
       ValidateIdentifier( restrictionValues[0] );
 
-      SqliteCommand cmd = CreateCommand();
+      SqliteCommand cmd = (SqliteCommand)CreateCommand();
       cmd.CommandText = string.Format( "PRAGMA index_list({0})", restrictionValues[0] );
       return GetSchemaDataTable( cmd, restrictionValues );
     }
@@ -606,7 +610,7 @@ namespace Community.CsharpSqlite.SQLiteClient
       }
       ValidateIdentifier( restrictionValues[0] );
 
-      SqliteCommand cmd = CreateCommand();
+      SqliteCommand cmd = (SqliteCommand)CreateCommand();
       cmd.CommandText = string.Format( "PRAGMA foreign_key_list({0})", restrictionValues[0] );
       return GetSchemaDataTable( cmd, restrictionValues );
     }
@@ -619,8 +623,8 @@ namespace Community.CsharpSqlite.SQLiteClient
 
     DataTable GetSchemaViews( string[] restrictionValues )
     {
-      SqliteCommand cmd = CreateCommand();
-      cmd = new SqliteCommand( "SELECT type, name, tbl_name, rootpage, sql " +
+      SqliteCommand cmd = new SqliteCommand(
+                    "SELECT type, name, tbl_name, rootpage, sql " +
                     " FROM sqlite_master " +
                     " WHERE (name = :pname or :pname is null) " +
                     " AND type = 'view' " +
