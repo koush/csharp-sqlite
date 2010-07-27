@@ -135,7 +135,8 @@ namespace Community.CsharpSqlite.SQLiteClient
 		/// Gets or sets a Transact-SQL statement or stored procedure to delete 
 		/// records from the data set.
 		/// </summary>
-		public IDbCommand DeleteCommand {
+    public new IDbCommand DeleteCommand
+    {
 			get { return _deleteCommand; }
 			set { _deleteCommand = value; }
 		}
@@ -144,7 +145,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 		/// Gets or sets a Transact-SQL statement or stored procedure to insert 
 		/// new records into the data source.
 		/// </summary>
-		public IDbCommand InsertCommand {
+		public new IDbCommand InsertCommand {
 			get { return _insertCommand; }
 			set { _insertCommand = value; }
 		}
@@ -153,7 +154,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 		/// Gets or sets a Transact-SQL statement or stored procedure used to 
 		/// select records in the data source.
 		/// </summary>
-		public IDbCommand SelectCommand {
+		public new IDbCommand SelectCommand {
 			get { return _selectCommand; }
 			set { _selectCommand = value; }
 		}
@@ -162,7 +163,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 		/// Gets or sets a Transact-SQL statement or stored procedure used to 
 		/// update records in the data source.
 		/// </summary>
-		public IDbCommand UpdateCommand {
+		public new IDbCommand UpdateCommand {
 			get { return _updateCommand; }
 			set { _updateCommand = value; }
 		}

@@ -478,7 +478,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 		}
 #endif
 		
-		public new SqliteDataReader ExecuteReader (CommandBehavior behavior)
+		public SqliteDataReader ExecuteReader (CommandBehavior behavior)
 		{
 			int r;
 			return ExecuteReader (behavior, true, out r);
