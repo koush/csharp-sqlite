@@ -255,7 +255,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 					continue;
 				}
 					
-				Type ptype = param.Value.GetType ();
+				Type ptype = param.Value.GetType();
 				if (ptype.IsEnum)
 					ptype = Enum.GetUnderlyingType (ptype);
 				
@@ -305,9 +305,13 @@ namespace Community.CsharpSqlite.SQLiteClient
 				else if (ptype.Equals (typeof (DateTime))) 
 				{
 					DateTime dt = (DateTime)param.Value;
-                    err = (SqliteError)Sqlite3.sqlite3_bind_text(pStmt,i,dt.ToString(),-1,null);
-				} 
-				else if (ptype.Equals (typeof (Double))) 
+                    err =(SqliteError)Sqlite3.sqlite3_bind_text(pStmt,i,dt.ToString("yyyy-MM-dd  HH:mm:ss"),-1,null);
+        }
+        else if (ptype.Equals(typeof(Decimal)))
+        {
+          err = (SqliteError)Sqlite3.sqlite3_bind_double(pStmt, i, Decimal.ToDouble((Decimal)param.Value));
+        }
+        else if (ptype.Equals(typeof(Double))) 
 				{
                     err = (SqliteError)Sqlite3.sqlite3_bind_double(pStmt, i, (Double)param.Value);
 				}
