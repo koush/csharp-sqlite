@@ -201,8 +201,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 								// Or if it was declared a date or datetime, do the reverse of what we
 								// do for DateTime parameters.
 								else if (declmode[i] == 2)
-									data_row[i] = DateTime.FromFileTime(val);
-								
+									data_row[i] = DateTime.FromFileTime(val);								
 								else
 									data_row[i] = val;
 									
@@ -217,7 +216,7 @@ namespace Community.CsharpSqlite.SQLiteClient
 								// nice and return a DateTime (version 3 only).
 								if (declmode[i] == 2)
                   if (data_row[i] == null) data_row[i] = null;
-                  else data_row[i] = DateTime.Parse((string)data_row[i]);
+                  else data_row[i] = DateTime.Parse((string)data_row[i], System.Globalization.CultureInfo.InvariantCulture);
 								break;
 							case 4:
 								int blobbytes = Sqlite3.sqlite3_column_bytes16 (pVm, i);
