@@ -1,0 +1,319 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.20506</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{D677FBFD-23C4-43BD-977A-0444AF237B5F}</ProjectGuid>
+    <ProjectTypeGuids>{C089C8C0-30E0-4E22-80C0-CE093F111A43};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Community.CsharpSqlite.WindowsPhone7</RootNamespace>
+    <AssemblyName>Community.CsharpSqlite.WindowsPhone7</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SilverlightVersion>$(TargetFrameworkVersion)</SilverlightVersion>
+    <TargetFrameworkProfile>WindowsPhone</TargetFrameworkProfile>
+    <TargetFrameworkIdentifier>Silverlight</TargetFrameworkIdentifier>
+    <SilverlightApplication>false</SilverlightApplication>
+    <ValidateXaml>true</ValidateXaml>
+    <ThrowErrorsInValidation>true</ThrowErrorsInValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>Bin\Debug</OutputPath>
+    <DefineConstants>TRACE;DEBUG;SQLITE_SILVERLIGHT TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_MEM_POOL SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>Bin\Release</OutputPath>
+    <DefineConstants>TRACE;SQLITE_SILVERLIGHT TRUE WIN32 _MSC_VER NDEBUG NO_TCL SQLITE_ASCII SQLITE_DISABLE_LFS SQLITE_MEM_POOL SQLITE_MUTEX_OMIT SQLITE_OMIT_AUTHORIZATION SQLITE_OMIT_DEPRECATED SQLITE_OMIT_GET_TABLE SQLITE_OMIT_INCRBLOB SQLITE_OMIT_LOOKASIDE SQLITE_OMIT_SHARED_CACHE SQLITE_OMIT_UTF16 SQLITE_OMIT_VIRTUALTABLE SQLITE_OS_WIN SQLITE_SYSTEM_MALLOC VDBE_PROFILE_OFF WINDOWS_PHONE</DefineConstants>
+    <NoStdLib>true</NoStdLib>
+    <NoConfig>true</NoConfig>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.Windows" />
+    <Reference Include="system" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Net" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Community.CsharpSqlite\src\alter_c.cs">
+      <Link>src\alter_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\analyze_c.cs">
+      <Link>src\analyze_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\attach_c.cs">
+      <Link>src\attach_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\auth_c.cs">
+      <Link>src\auth_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\backup_c.cs">
+      <Link>src\backup_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\bitvec_c.cs">
+      <Link>src\bitvec_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\btmutex_c.cs">
+      <Link>src\btmutex_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\BtreeInt_h.cs">
+      <Link>src\BtreeInt_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\btree_c.cs">
+      <Link>src\btree_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\Btree_h.cs">
+      <Link>src\Btree_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\build_c.cs">
+      <Link>src\build_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\callback_c.cs">
+      <Link>src\callback_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\complete_c.cs">
+      <Link>src\complete_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\crypto.cs">
+      <Link>src\crypto.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\ctime_cs.cs">
+      <Link>src\ctime_cs.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\date_c.cs">
+      <Link>src\date_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\Delegates.cs">
+      <Link>src\Delegates.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\delete_c.cs">
+      <Link>src\delete_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\expr_c.cs">
+      <Link>src\expr_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\fault_c.cs">
+      <Link>src\fault_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\fkey_c.cs">
+      <Link>src\fkey_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\func_c.cs">
+      <Link>src\func_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\global_c.cs">
+      <Link>src\global_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\hash_c.cs">
+      <Link>src\hash_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\Hash_h.cs">
+      <Link>src\Hash_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\hwtime_c.cs">
+      <Link>src\hwtime_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\insert_c.cs">
+      <Link>src\insert_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\journal_c.cs">
+      <Link>src\journal_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\keywordhash_h.cs">
+      <Link>src\keywordhash_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\legacy_c.cs">
+      <Link>src\legacy_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\loadext_c.cs">
+      <Link>src\loadext_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\main_c.cs">
+      <Link>src\main_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\malloc_c.cs">
+      <Link>src\malloc_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\memjournal_c.cs">
+      <Link>src\memjournal_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\mem_Pool.cs">
+      <Link>src\mem_Pool.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\mutex_c.cs">
+      <Link>src\mutex_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\mutex_h.cs">
+      <Link>src\mutex_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\mutex_noop_c.cs">
+      <Link>src\mutex_noop_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\mutex_w32.cs">
+      <Link>src\mutex_w32.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\notify_c.cs">
+      <Link>src\notify_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\opcodes_c.cs">
+      <Link>src\opcodes_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\opcodes_h.cs">
+      <Link>src\opcodes_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\os_c.cs">
+      <Link>src\os_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\os_common_h.cs">
+      <Link>src\os_common_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\os_h.cs">
+      <Link>src\os_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\os_win_c.cs">
+      <Link>src\os_win_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pager_c.cs">
+      <Link>src\pager_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pager_h.cs">
+      <Link>src\pager_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\parse_c.cs">
+      <Link>src\parse_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\parse_h.cs">
+      <Link>src\parse_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pcache1_c.cs">
+      <Link>src\pcache1_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pcache_c.cs">
+      <Link>src\pcache_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pcache_h.cs">
+      <Link>src\pcache_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\pragma_c.cs">
+      <Link>src\pragma_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\prepare_c.cs">
+      <Link>src\prepare_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\printf_c.cs">
+      <Link>src\printf_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\random_c.cs">
+      <Link>src\random_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\resolve_c.cs">
+      <Link>src\resolve_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\rowset_c.cs">
+      <Link>src\rowset_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\select_c.cs">
+      <Link>src\select_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\sqlite3ext_h.cs">
+      <Link>src\sqlite3ext_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\sqlite3_h.cs">
+      <Link>src\sqlite3_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\sqliteicu_h.cs">
+      <Link>src\sqliteicu_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\sqliteInt_h.cs">
+      <Link>src\sqliteInt_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\sqliteLimit_h.cs">
+      <Link>src\sqliteLimit_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\status_c.cs">
+      <Link>src\status_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\table_c.cs">
+      <Link>src\table_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\tokenize_c.cs">
+      <Link>src\tokenize_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\trigger_c.cs">
+      <Link>src\trigger_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\update_c.cs">
+      <Link>src\update_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\utf_c.cs">
+      <Link>src\utf_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\util_c.cs">
+      <Link>src\util_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vacuum_c.cs">
+      <Link>src\vacuum_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbeapi_c.cs">
+      <Link>src\vdbeapi_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbeaux_c.cs">
+      <Link>src\vdbeaux_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbeblob_c.cs">
+      <Link>src\vdbeblob_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\VdbeInt_h.cs">
+      <Link>src\VdbeInt_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbemem_c.cs">
+      <Link>src\vdbemem_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbetrace_c.cs">
+      <Link>src\vdbetrace_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vdbe_c.cs">
+      <Link>src\vdbe_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\Vdbe_h.cs">
+      <Link>src\Vdbe_h.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\vtab_c.cs">
+      <Link>src\vtab_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\walker_c.cs">
+      <Link>src\walker_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\where_c.cs">
+      <Link>src\where_c.cs</Link>
+    </Compile>
+    <Compile Include="..\Community.CsharpSqlite\src\_Custom.cs">
+      <Link>src\_Custom.cs</Link>
+    </Compile>
+    <Compile Include="MissingMethods.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.$(TargetFrameworkProfile).Overrides.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight for Phone\$(TargetFrameworkVersion)\Microsoft.Silverlight.CSharp.targets" />
+  <ProjectExtensions />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

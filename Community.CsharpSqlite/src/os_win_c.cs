@@ -1717,7 +1717,9 @@ dwFlagsAndAttributes |= FileOptions.RandomAccess; // FILE_FLAG_RANDOM_ACCESS;
           try
           {
             retries--;
-#if !SQLITE_SILVERLIGHT
+#if WINDOWS_PHONE
+            fs = new System.IO.IsolatedStorage.IsolatedStorageFileStream(zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication());
+#elif !SQLITE_SILVERLIGHT
             fs = new FileStream( zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096, dwFlagsAndAttributes );
 #else
             fs = new FileStream(zConverted, dwCreationDisposition, dwDesiredAccess, dwShareMode, 4096);
@@ -1849,14 +1851,22 @@ pFile.zDeleteOnClose = zConverted;
         //       && (++cnt < MX_DELETION_ATTEMPTS)
         //       && (Sleep(100), 1) );
         {
+#if WINDOWS_PHONE
+          if ( !System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().FileExists( zFilename ) )
+#else
           if ( !File.Exists( zFilename ) )
+#endif
           {
             rc = SQLITE_IOERR;
             break;
           }
           try
           {
+#if WINDOWS_PHONE
+            System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().DeleteFile(zFilename);
+#else
             File.Delete( zConverted );
+#endif
             rc = SQLITE_OK;
           }
           catch ( IOException e )
@@ -1930,14 +1940,22 @@ pFile.zDeleteOnClose = zConverted;
       // Do a quick test to prevent the try/catch block
       if ( flags == SQLITE_ACCESS_EXISTS )
       {
+#if WINDOWS_PHONE
+        pResOut = System.IO.IsolatedStorage.IsolatedStorageFile.GetUserStoreForApplication().FileExists( zFilename ) ? 1 : 0;
+#else
         pResOut = File.Exists( zFilename ) ? 1 : 0;
+#endif
         return SQLITE_OK;
       }
       //
       try
       {
+#if WINDOWS_PHONE
+        if (new DirectoryInfo(zFilename).Exists)
+#else
         attr = File.GetAttributes( zFilename );// GetFileAttributesW( (WCHAR*)zConverted );
         if ( attr == FileAttributes.Directory )
+#endif
         {
            try
            {
@@ -2027,7 +2045,11 @@ return SQLITE_OK;
         // will happen on exit; was   free(zConverted);
         try
         {
-          zOut = Path.GetFullPath( zRelative ); // was unicodeToUtf8(zTemp);
+#if WINDOWS_PHONE
+            zOut = zRelative;
+#else
+            zOut = Path.GetFullPath(zRelative); // was unicodeToUtf8(zTemp);
+#endif
         }
         catch ( IOException e )
         { zOut = zRelative; }

@@ -3246,7 +3246,11 @@ fclose(out);
         if ( serial_type == 7 )
         {
           //Debug.Assert( sizeof( v) == sizeof(pMem.r));
+#if WINDOWS_PHONE
+          v = (ulong)Community.CsharpSqlite.WindowsPhone7.MissingMethods.DoubleToInt64Bits(pMem.r);
+#else
           v = (ulong)BitConverter.DoubleToInt64Bits( pMem.r );// memcpy( &v, pMem.r, v ).Length;
+#endif
 #if  SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 swapMixedEndianFloat( v );
 #endif
@@ -3384,7 +3388,11 @@ swapMixedEndianFloat(t2);
 #if  SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 swapMixedEndianFloat(x);
 #endif
+#if WINDOWS_PHONE
+              pMem.r = Community.CsharpSqlite.WindowsPhone7.MissingMethods.Int64BitsToDouble((long)x);
+#else
               pMem.r = BitConverter.Int64BitsToDouble( (long)x );// memcpy(pMem.r, x, sizeof(x))
+#endif
               pMem.flags = (u16)( sqlite3IsNaN( pMem.r ) ? MEM_Null : MEM_Real );
             }
             return 8;
@@ -3503,7 +3511,11 @@ swapMixedEndianFloat(t2);
 #if  SQLITE_MIXED_ENDIAN_64BIT_FLOAT
 swapMixedEndianFloat(x);
 #endif
+#if WINDOWS_PHONE
+              pMem.r = Community.CsharpSqlite.WindowsPhone7.MissingMethods.Int64BitsToDouble((long)x);
+#else
               pMem.r = BitConverter.Int64BitsToDouble( (long)x );// memcpy(pMem.r, x, sizeof(x))
+#endif
               pMem.flags = MEM_Real;
             }
             return 8;

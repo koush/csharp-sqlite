@@ -6037,7 +6037,9 @@ if (false)
       if ( pRC != 0 ) return;
 
       Debug.Assert( idx >= 0 && idx < pPage.nCell );
+#if !WINDOWS_PHONE
       Debug.Assert( sz == cellSize( pPage, idx ) );
+#endif
       Debug.Assert( sqlite3PagerIswriteable( pPage.pDbPage ) );
       Debug.Assert( sqlite3_mutex_held( pPage.pBt.mutex ) );
       data = pPage.aData;
