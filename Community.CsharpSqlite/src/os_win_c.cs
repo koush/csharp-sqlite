@@ -1508,7 +1508,11 @@ return SQLITE_OK;
         zRandom.Append((char)zChars[(int)(iRandom % (zChars.Length - 1))]);
       }
       //  zBuf[j] = 0;
+#if WINDOWS_PHONE
+      zBuf.Append(SQLITE_TEMP_FILE_PREFIX + zRandom.ToString());
+#else
       zBuf.Append(Path.GetTempPath() + SQLITE_TEMP_FILE_PREFIX + zRandom.ToString());
+#endif
       //for(i=sqlite3Strlen30(zTempPath); i>0 && zTempPath[i-1]=='\\'; i--){}
       //zTempPath[i] = 0;
       //sqlite3_snprintf(nBuf-30, zBuf,
