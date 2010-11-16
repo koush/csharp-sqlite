@@ -931,7 +931,7 @@ __attribute__((aligned(8)))
     {
       string val = sqlite3_value_text(columnMem(pStmt, i));
       columnMallocFailure(pStmt);
-      if (String.IsNullOrEmpty(val)) return null; return val;
+      return val;
     }
 
     public static sqlite3_value sqlite3_column_value(sqlite3_stmt pStmt, int i)
