@@ -2630,7 +2630,7 @@ return;
       return 0;
     }
 #else
-static int usedAsColumnCache( Parse pParse, int iFrom, int iTo ){return 1;}
+static int usedAsColumnCache( Parse pParse, int iFrom, int iTo ){return 0;}
 #endif //* SQLITE_DEBUG || SQLITE_COVERAGE_TEST */
 
 
