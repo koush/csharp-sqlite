@@ -30,9 +30,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-08-23 18:52:01 42537b60566f288167f1b5864a5435986838e3a3
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -138,10 +137,10 @@ struct sqlite3PrngType *p = &GLOBAL(struct sqlite3PrngType, sqlite3Prng);
     */
     static void sqlite3_randomness( int N, ref i64 pBuf )
     {
-      //u8[] zBuf = new u8[N];
+      u8[] zBuf = new u8[N];
       pBuf = 0;
 #if SQLITE_THREADSAFE
-sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_PRNG );
+      sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_PRNG );
 #endif
       sqlite3_mutex_enter( mutex );
       while ( N-- > 0 )
@@ -151,9 +150,12 @@ sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_PRNG );
       sqlite3_mutex_leave( mutex );
     }
 
-    static void sqlite3_randomness(byte[] pBuf, int Offset, int N)
+    static void sqlite3_randomness( byte[] pBuf, int Offset, int N )
     {
       i64 iBuf = System.DateTime.Now.Ticks;
+#if SQLITE_THREADSAFE
+  sqlite3_mutex mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_PRNG);
+#endif
       sqlite3_mutex_enter( mutex );
       while ( N-- > 0 )
       {

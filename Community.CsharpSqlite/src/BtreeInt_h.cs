@@ -66,7 +66,7 @@ namespace Community.CsharpSqlite
     **
     ** The file is divided into pages.  The first page is called page 1,
     ** the second is page 2, and so forth.  A page number of zero indicates
-    ** "no such page".  The page size can be any power of 2 between 512 and 32768.
+    ** "no such page".  The page size can be any power of 2 between 512 and 65536.
     ** Each page can be either a btree page, a freelist page, an overflow
     ** page, or a pointer-map page.
     **
@@ -235,9 +235,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2011-01-28 17:03:50 ed759d5a9edb3bba5f48f243df47be29e3fe8cd7
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -246,7 +245,10 @@ namespace Community.CsharpSqlite
     ** size give above.
     */
     //#define MX_CELL_SIZE(pBt)  (pBt.pageSize-8)
-    static int MX_CELL_SIZE( BtShared pBt ) { return ( pBt.pageSize - 8 ); }
+    static int MX_CELL_SIZE( BtShared pBt )
+    {
+      return (int)( pBt.pageSize - 8 );
+    }
 
     /* The maximum number of cells on a single page of the database.  This
     ** assumes a minimum cell size of 6 bytes  (4 bytes for the cell itself
@@ -254,7 +256,10 @@ namespace Community.CsharpSqlite
     ** small cells will be rare, but they are possible.
     */
     //#define MX_CELL(pBt) ((pBt.pageSize-8)/6)
-    static int MX_CELL( BtShared pBt ) { return ( ( pBt.pageSize - 8 ) / 6 ); }
+    static int MX_CELL( BtShared pBt )
+    {
+      return ( (int)( pBt.pageSize - 8 ) / 6 );
+    }
 
     /* Forward declarations */
     //typedef struct MemPage MemPage;
@@ -307,7 +312,7 @@ namespace Community.CsharpSqlite
         _OvflCell cp = new _OvflCell();
         if ( pCell != null )
         {
-          cp.pCell = sqlite3Malloc(pCell.Length);
+          cp.pCell = sqlite3Malloc( pCell.Length );
           Buffer.BlockCopy( pCell, 0, cp.pCell, 0, pCell.Length );
         }
         cp.idx = idx;
@@ -335,13 +340,28 @@ namespace Community.CsharpSqlite
       public DbPage pDbPage;      /* Pager page handle */
       public Pgno pgno;           /* Page number for this page */
 
+      //public byte[] aData
+      //{
+      //  get
+      //  {
+      //    Debug.Assert( pgno != 1 || pDbPage.pData == _aData );
+      //    return _aData;
+      //  }
+      //  set
+      //  {
+      //    _aData = value;
+      //    Debug.Assert( pgno != 1 || pDbPage.pData == _aData );
+      //  }
+      //}
+
       public MemPage Copy()
       {
         MemPage cp = (MemPage)MemberwiseClone();
         if ( aOvfl != null )
         {
           cp.aOvfl = new _OvflCell[aOvfl.Length];
-          for ( int i = 0; i < aOvfl.Length; i++ ) cp.aOvfl[i] = aOvfl[i].Copy();
+          for ( int i = 0; i < aOvfl.Length; i++ )
+            cp.aOvfl[i] = aOvfl[i].Copy();
         }
         if ( aData != null )
         {
@@ -413,7 +433,7 @@ namespace Community.CsharpSqlite
       public Btree pNext;       /* List of other sharable Btrees from the same db */
       public Btree pPrev;       /* Back pointer of the same list */
 #if !SQLITE_OMIT_SHARED_CACHE
-      BtLock lock;              /* Object used to lock page 1 */
+BtLock lock;              /* Object used to lock page 1 */
 #endif
     };
 
@@ -472,18 +492,22 @@ namespace Community.CsharpSqlite
       public bool readOnly;          /* True if the underlying file is readonly */
       public bool pageSizeFixed;     /* True if the page size can no longer be changed */
       public bool secureDelete;      /* True if secure_delete is enabled */
+      public bool initiallyEmpty;    /* Database is empty at start of transaction */
+      public u8 openFlags;           /* Flags to sqlite3BtreeOpen() */
 #if !SQLITE_OMIT_AUTOVACUUM
       public bool autoVacuum;         /* True if auto-vacuum is enabled */
       public bool incrVacuum;         /* True if incr-vacuum is enabled */
 #endif
-      public u16 pageSize;            /* Total number of bytes on a page */
-      public u16 usableSize;          /* Number of usable bytes on each page */
+      public u8 inTransaction;        /* Transaction state */
+      public bool doNotUseWAL;        /* If true, do not open write-ahead-log file */
       public u16 maxLocal;            /* Maximum local payload in non-LEAFDATA tables */
       public u16 minLocal;            /* Minimum local payload in non-LEAFDATA tables */
       public u16 maxLeaf;             /* Maximum local payload in a LEAFDATA table */
       public u16 minLeaf;             /* Minimum local payload in a LEAFDATA table */
-      public u8 inTransaction;        /* Transaction state */
+      public u32 pageSize;            /* Total number of bytes on a page */
+      public u32 usableSize;          /* Number of usable bytes on each page */
       public int nTransaction;        /* Number of open transactions (read + write) */
+      public Pgno nPage;              /* Number of pages in the database */
       public Schema pSchema;          /* Pointer to space allocated by sqlite3BtreeSchema() */
       public dxFreeSchema xFreeSchema;/* Destructor for BtShared.pSchema */
       public sqlite3_mutex mutex;     /* Non-recursive mutex required to access this struct */
@@ -507,8 +531,8 @@ public u8 isPending;            /* If waiting for read-locks to clear */
     //typedef struct CellInfo CellInfo;
     public struct CellInfo
     {
-      public byte[] pCell;  /* Pointer to the start of cell content */
       public int iCell;     /* Offset to start of cell content -- Needed for C# */
+      public byte[] pCell;  /* Pointer to the start of cell content */
       public i64 nKey;      /* The key for INTKEY tables, or number of bytes in key */
       public u32 nData;     /* Number of bytes of data */
       public u32 nPayload;  /* Total amount of payload */
@@ -518,11 +542,16 @@ public u8 isPending;            /* If waiting for read-locks to clear */
       public u16 nSize;     /* Size of the cell content on the main b-tree page */
       public bool Equals( CellInfo ci )
       {
-        if ( ci.iCell >= ci.pCell.Length || iCell >= this.pCell.Length) return false; 
-        if ( ci.pCell[ci.iCell] != this.pCell[iCell] ) return false;
-        if ( ci.nKey != this.nKey || ci.nData != this.nData || ci.nPayload != this.nPayload ) return false;
-        if ( ci.nHeader != this.nHeader || ci.nLocal != this.nLocal ) return false;
-        if ( ci.iOverflow != this.iOverflow || ci.nSize != this.nSize ) return false;
+        if ( ci.iCell >= ci.pCell.Length || iCell >= this.pCell.Length )
+          return false;
+        if ( ci.pCell[ci.iCell] != this.pCell[iCell] )
+          return false;
+        if ( ci.nKey != this.nKey || ci.nData != this.nData || ci.nPayload != this.nPayload )
+          return false;
+        if ( ci.nHeader != this.nHeader || ci.nLocal != this.nLocal )
+          return false;
+        if ( ci.iOverflow != this.iOverflow || ci.nSize != this.nSize )
+          return false;
         return true;
       }
     };
@@ -563,20 +592,20 @@ public u8 isPending;            /* If waiting for read-locks to clear */
       public Pgno pgnoRoot;            /* The root page of this tree */
       public sqlite3_int64 cachedRowid; /* Next rowid cache.  0 means not valid */
       public CellInfo info = new CellInfo();           /* A parse of the cell we are pointing at */
+      public byte[] pKey;             /* Saved key that was cursor's last known position */
+      public i64 nKey;                /* Size of pKey, or last integer key */
+      public int skipNext;            /* Prev() is noop if negative. Next() is noop if positive */
       public u8 wrFlag;               /* True if writable */
       public u8 atLast;               /* VdbeCursor pointing to the last entry */
       public bool validNKey;          /* True if info.nKey is valid */
       public int eState;              /* One of the CURSOR_XXX constants (see below) */
-      public byte[] pKey;             /* Saved key that was cursor's last known position */
-      public i64 nKey;                /* Size of pKey, or last integer key */
-      public int skipNext;            /* Prev() is noop if negative. Next() is noop if positive */
 #if !SQLITE_OMIT_INCRBLOB
-public bool isIncrblobHandle;   /* True if this cursor is an incr. io handle */
 public Pgno[] aOverflow;         /* Cache of overflow page locations */
+public bool isIncrblobHandle;   /* True if this cursor is an incr. io handle */
 #endif
       public i16 iPage;                                          /* Index of current page in apPage */
-      public MemPage[] apPage = new MemPage[BTCURSOR_MAX_DEPTH]; /* Pages from root to current page */
       public u16[] aiIdx = new u16[BTCURSOR_MAX_DEPTH];           /* Current index in apPage[i] */
+      public MemPage[] apPage = new MemPage[BTCURSOR_MAX_DEPTH]; /* Pages from root to current page */
 
       public void Clear()
       {
@@ -594,8 +623,8 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
         nKey = 0;
         skipNext = 0;
 #if !SQLITE_OMIT_INCRBLOB
-      isIncrblobHandle=false;
-      aOverflow= null;
+isIncrblobHandle=false;
+aOverflow= null;
 #endif
         iPage = 0;
       }
@@ -641,7 +670,10 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
     */
     //# define PENDING_BYTE_PAGE(pBt) PAGER_MJ_PGNO(pBt)
     // TODO -- Convert PENDING_BYTE_PAGE to inline
-    static u32 PENDING_BYTE_PAGE( BtShared pBt ) { return (u32)PAGER_MJ_PGNO( pBt.pPager ); }
+    static u32 PENDING_BYTE_PAGE( BtShared pBt )
+    {
+      return (u32)PAGER_MJ_PGNO( pBt.pPager );
+    }
 
     /*
     ** These macros define the location of the pointer-map entry for a
@@ -659,11 +691,20 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
     ** this test.
     */
     //#define PTRMAP_PAGENO(pBt, pgno) ptrmapPageno(pBt, pgno)
-    static Pgno PTRMAP_PAGENO( BtShared pBt, Pgno pgno ) { return ptrmapPageno( pBt, pgno ); }
+    static Pgno PTRMAP_PAGENO( BtShared pBt, Pgno pgno )
+    {
+      return ptrmapPageno( pBt, pgno );
+    }
     //#define PTRMAP_PTROFFSET(pgptrmap, pgno) (5*(pgno-pgptrmap-1))
-    static u32 PTRMAP_PTROFFSET( u32 pgptrmap, u32 pgno ) { return ( 5 * ( pgno - pgptrmap - 1 ) ); }
+    static u32 PTRMAP_PTROFFSET( u32 pgptrmap, u32 pgno )
+    {
+      return ( 5 * ( pgno - pgptrmap - 1 ) );
+    }
     //#define PTRMAP_ISPAGE(pBt, pgno) (PTRMAP_PAGENO((pBt),(pgno))==(pgno))
-    static bool PTRMAP_ISPAGE( BtShared pBt, u32 pgno ) { return ( PTRMAP_PAGENO( ( pBt ), ( pgno ) ) == ( pgno ) ); }
+    static bool PTRMAP_ISPAGE( BtShared pBt, u32 pgno )
+    {
+      return ( PTRMAP_PAGENO( ( pBt ), ( pgno ) ) == ( pgno ) );
+    }
     /*
     ** The pointer map is a lookup table that identifies the parent page for
     ** each child page in the database file.  The parent page is the page that
@@ -719,7 +760,7 @@ public Pgno[] aOverflow;         /* Cache of overflow page locations */
       Debug.Assert( p.pBt.inTransaction >= p.inTrans );
     }
 #else
-    static void btreeIntegrity(Btree p) { }
+static void btreeIntegrity(Btree p) { }
 #endif
 
     /*
@@ -751,7 +792,7 @@ public static bool ISAUTOVACUUM =false;
       public int mxErr;         /* Stop accumulating errors when this reaches zero */
       public int nErr;          /* Number of messages written to zErrMsg so far */
       //public int mallocFailed;  /* A memory allocation error has occurred */
-      public StrAccum errMsg = new StrAccum(100); /* Accumulate the error message text here */
+      public StrAccum errMsg = new StrAccum( 100 ); /* Accumulate the error message text here */
     };
 
     /*
@@ -759,13 +800,21 @@ public static bool ISAUTOVACUUM =false;
     */
     //#define get2byte(x)   ((x)[0]<<8 | (x)[1])
     static int get2byte( byte[] p, int offset )
-    { return p[offset + 0] << 8 | p[offset + 1]; }
+    {
+      return p[offset + 0] << 8 | p[offset + 1];
+    }
 
     //#define put2byte(p,v) ((p)[0] = (u8)((v)>>8), (p)[1] = (u8)(v))
     static void put2byte( byte[] pData, int Offset, u32 v )
-    { pData[Offset + 0] = (byte)( v >> 8 ); pData[Offset + 1] = (byte)v; }
+    {
+      pData[Offset + 0] = (byte)( v >> 8 );
+      pData[Offset + 1] = (byte)v;
+    }
     static void put2byte( byte[] pData, int Offset, int v )
-    { pData[Offset + 0] = (byte)( v >> 8 ); pData[Offset + 1] = (byte)v; }
+    {
+      pData[Offset + 0] = (byte)( v >> 8 );
+      pData[Offset + 1] = (byte)v;
+    }
 
     //#define get4byte sqlite3Get4byte
     //#define put4byte sqlite3Put4byte

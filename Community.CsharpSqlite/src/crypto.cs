@@ -20,7 +20,6 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2010 Noah B Hart, Diego Torres
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  $Header$
     *************************************************************************
     */
 
@@ -72,7 +71,9 @@ namespace Community.CsharpSqlite
 static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace )sqlite3DebugPrintf( T, ap ); }
 #else
     //#define CODEC_TRACE(X)
-    static void CODEC_TRACE( string T, params object[] ap ) { }
+    static void CODEC_TRACE( string T, params object[] ap )
+    {
+    }
 #endif
 
     //void sqlite3FreeCodecArg(void *pCodecArg);
@@ -89,15 +90,23 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
       public ICryptoTransform encryptor;
       public ICryptoTransform decryptor;
 
-      public cipher_ctx Copy( )
+      public cipher_ctx Copy()
       {
         cipher_ctx c = new cipher_ctx();
         c.derive_key = derive_key;
         c.pass = pass;
         c.pass_sz = pass_sz;
-        if ( key != null ) { c.key = new byte[key.Length]; key.CopyTo( c.key, 0 ); }
+        if ( key != null )
+        {
+          c.key = new byte[key.Length];
+          key.CopyTo( c.key, 0 );
+        }
         c.key_sz = key_sz;
-        if ( iv != null ) { c.iv = new byte[iv.Length]; iv.CopyTo( c.iv, 0 ); }
+        if ( iv != null )
+        {
+          c.iv = new byte[iv.Length];
+          iv.CopyTo( c.iv, 0 );
+        }
         c.iv_sz = iv_sz;
         c.encryptor = encryptor;
         c.decryptor = decryptor;
@@ -109,9 +118,17 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
         ct.derive_key = derive_key;
         ct.pass = pass;
         ct.pass_sz = pass_sz;
-        if ( key != null ) { ct.key = new byte[key.Length]; key.CopyTo( ct.key, 0 ); }
+        if ( key != null )
+        {
+          ct.key = new byte[key.Length];
+          key.CopyTo( ct.key, 0 );
+        }
         ct.key_sz = key_sz;
-        if ( iv != null ) { ct.iv = new byte[iv.Length]; iv.CopyTo( ct.iv, 0 ); }
+        if ( iv != null )
+        {
+          ct.iv = new byte[iv.Length];
+          iv.CopyTo( ct.iv, 0 );
+        }
         ct.iv_sz = iv_sz;
         ct.encryptor = encryptor;
         ct.decryptor = decryptor;
@@ -126,14 +143,16 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
       public cipher_ctx read_ctx;
       public cipher_ctx write_ctx;
 
-      public codec_ctx Copy(  )
+      public codec_ctx Copy()
       {
         codec_ctx c = new codec_ctx();
         c.mode_rekey = mode_rekey;
         c.buffer = sqlite3MemMalloc( buffer.Length );
         c.pBt = pBt;
-        if ( read_ctx != null ) c.read_ctx = read_ctx.Copy();
-        if ( write_ctx != null ) c.write_ctx = write_ctx.Copy();
+        if ( read_ctx != null )
+          c.read_ctx = read_ctx.Copy();
+        if ( write_ctx != null )
+          c.write_ctx = write_ctx.Copy();
         return c;
       }
     }
@@ -143,7 +162,11 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
     const int CIPHER_DECRYPT = 0;        //#define CIPHER_DECRYPT 0
     const int CIPHER_ENCRYPT = 1;        //#define CIPHER_ENCRYPT 1
 
+#if NET_2_0
+    static RijndaelManaged Aes = new RijndaelManaged();
+#else
     static AesManaged Aes = new AesManaged();
+#endif
 
     /* BEGIN CRYPTO */
     static void sqlite3pager_get_codec( Pager pPager, ref codec_ctx ctx )
@@ -188,7 +211,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
     {
       if ( ptr != null )
       {
-        if ( sz > 0 ) Array.Clear( ptr, 0, sz );//memset( ptr, 0, sz ); 
+        if ( sz > 0 )
+          Array.Clear( ptr, 0, sz );//memset( ptr, 0, sz ); 
         sqlite3_free( ref ptr );
       }
     }
@@ -241,8 +265,10 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
       cipher_ctx ctx = ictx;
       CODEC_TRACE( "cipher_ctx_free: entered ictx=%d\n", ictx );
       ctx.pass = null;//codec_free(ctx.pass, ctx.pass_sz);
-      if ( ctx.key != null ) Array.Clear( ctx.key, 0, ctx.key.Length );//codec_free(ctx.key, ctx.key_sz);
-      if ( ctx.iv != null ) Array.Clear( ctx.iv, 0, ctx.iv.Length );
+      if ( ctx.key != null )
+        Array.Clear( ctx.key, 0, ctx.key.Length );//codec_free(ctx.key, ctx.key_sz);
+      if ( ctx.iv != null )
+        Array.Clear( ctx.iv, 0, ctx.iv.Length );
       ictx = new cipher_ctx();// codec_free( ref ctx, sizeof( cipher_ctx ) );
     }
 
@@ -282,7 +308,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
       if ( c1.key_sz == c2.key_sz
       && c1.pass_sz == c2.pass_sz
       && c1.pass == c2.pass
-      ) return 0;
+      )
+        return 0;
       return 1;
     }
 
@@ -317,12 +344,12 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
 
       if ( c_ctx.pass != null && c_ctx.pass_sz > 0 )
       { // if pass is not null
-        if ( ( c_ctx.pass_sz == ( c_ctx.key_sz * 2 ) + 3 ) && sqlite3StrNICmp( c_ctx.pass, "x'", 2 ) == 0 )
+        if ( ( c_ctx.pass_sz == ( c_ctx.key_sz * 2 ) + 3 ) && c_ctx.pass.StartsWith( "x'", StringComparison.InvariantCultureIgnoreCase ) )
         {
           int n = c_ctx.pass_sz - 3; /* adjust for leading x' and tailing ' */
           string z = c_ctx.pass.Substring( 2 );// + 2; /* adjust lead offset of x' */
           CODEC_TRACE( "codec_key_derive: deriving key from hex\n" );
-          c_ctx.key = sqlite3HexToBlob( null, z, n);
+          c_ctx.key = sqlite3HexToBlob( null, z, n );
         }
         else
         {
@@ -332,6 +359,12 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
           c_ctx.key_sz = 32;
           c_ctx.key = k1.GetBytes( c_ctx.key_sz );
         }
+#if NET_2_0
+        Aes.BlockSize = 0x80;
+        Aes.FeedbackSize = 8;
+        Aes.KeySize = 0x100;
+        Aes.Mode = CipherMode.CBC;
+#endif
         c_ctx.encryptor = Aes.CreateEncryptor( c_ctx.key, c_ctx.iv );
         c_ctx.decryptor = Aes.CreateDecryptor( c_ctx.key, c_ctx.iv );
         return SQLITE_OK;
@@ -405,7 +438,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
 
         c_ctx.derive_key = true;
 
-        if ( for_ctx == 2 ) cipher_ctx_copy( for_ctx != 0 ? ctx.read_ctx : ctx.write_ctx, c_ctx );
+        if ( for_ctx == 2 )
+          cipher_ctx_copy( for_ctx != 0 ? ctx.read_ctx : ctx.write_ctx, c_ctx );
         return SQLITE_OK;
       }
       return SQLITE_ERROR;
@@ -420,12 +454,13 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
         codec_ctx ctx = null;
         cipher_ctx c_ctx;
         sqlite3pager_get_codec( pDb.pBt.pBt.pPager, ref ctx );
-          c_ctx = for_ctx != 0 ? ctx.write_ctx : ctx.read_ctx;
+        c_ctx = for_ctx != 0 ? ctx.write_ctx : ctx.read_ctx;
 
-          cipher_ctx_set_pass( c_ctx, zKey, nKey );
-          c_ctx.derive_key = true;
+        cipher_ctx_set_pass( c_ctx, zKey, nKey );
+        c_ctx.derive_key = true;
 
-          if ( for_ctx == 2 ) cipher_ctx_copy( for_ctx != 0 ? ctx.read_ctx : ctx.write_ctx, c_ctx );
+        if ( for_ctx == 2 )
+          cipher_ctx_copy( for_ctx != 0 ? ctx.read_ctx : ctx.write_ctx, c_ctx );
         return SQLITE_OK;
       }
       return SQLITE_ERROR;
@@ -470,21 +505,25 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
 
 
       CODEC_TRACE( "sqlite3Codec: switch mode=%d offset=%d\n", mode, offset );
-      if ( ctx.buffer.Length != pg_sz ) ctx.buffer = sqlite3MemMalloc(pg_sz);
+      if ( ctx.buffer.Length != pg_sz )
+        ctx.buffer = sqlite3MemMalloc( pg_sz );
       switch ( mode )
       {
         case SQLITE_DECRYPT:
-          codec_cipher( ctx.read_ctx, pgno, CIPHER_DECRYPT, pg_sz, pData,  ctx.buffer);
-          if ( pgno == 1 ) Buffer.BlockCopy( Encoding.UTF8.GetBytes( SQLITE_FILE_HEADER ), 0, ctx.buffer, 0, FILE_HEADER_SZ );// memcpy( ctx.buffer, SQLITE_FILE_HEADER, FILE_HEADER_SZ ); /* copy file header to the first 16 bytes of the page */
+          codec_cipher( ctx.read_ctx, pgno, CIPHER_DECRYPT, pg_sz, pData, ctx.buffer );
+          if ( pgno == 1 )
+            Buffer.BlockCopy( Encoding.UTF8.GetBytes( SQLITE_FILE_HEADER ), 0, ctx.buffer, 0, FILE_HEADER_SZ );// memcpy( ctx.buffer, SQLITE_FILE_HEADER, FILE_HEADER_SZ ); /* copy file header to the first 16 bytes of the page */
           Buffer.BlockCopy( ctx.buffer, 0, pData, 0, pg_sz ); //memcpy( pData, ctx.buffer, pg_sz ); /* copy buffer data back to pData and return */
           return pData;
         case SQLITE_ENCRYPT_WRITE_CTX: /* encrypt */
-          if ( pgno == 1 ) Buffer.BlockCopy( ctx.write_ctx.iv, 0, ctx.buffer, 0, FILE_HEADER_SZ );//memcpy( ctx.buffer, ctx.iv, FILE_HEADER_SZ ); /* copy salt to output buffer */
-          codec_cipher( ctx.write_ctx, pgno, CIPHER_ENCRYPT, pg_sz, pData, ctx.buffer);
+          if ( pgno == 1 )
+            Buffer.BlockCopy( ctx.write_ctx.iv, 0, ctx.buffer, 0, FILE_HEADER_SZ );//memcpy( ctx.buffer, ctx.iv, FILE_HEADER_SZ ); /* copy salt to output buffer */
+          codec_cipher( ctx.write_ctx, pgno, CIPHER_ENCRYPT, pg_sz, pData, ctx.buffer );
           return ctx.buffer; /* return persistent buffer data, pData remains intact */
         case SQLITE_ENCRYPT_READ_CTX:
-          if ( pgno == 1 ) Buffer.BlockCopy( ctx.read_ctx.iv, 0, ctx.buffer, 0, FILE_HEADER_SZ );//memcpy( ctx.buffer, ctx.iv, FILE_HEADER_SZ ); /* copy salt to output buffer */
-          codec_cipher( ctx.read_ctx, pgno, CIPHER_ENCRYPT, pg_sz, pData, ctx.buffer);
+          if ( pgno == 1 )
+            Buffer.BlockCopy( ctx.read_ctx.iv, 0, ctx.buffer, 0, FILE_HEADER_SZ );//memcpy( ctx.buffer, ctx.iv, FILE_HEADER_SZ ); /* copy salt to output buffer */
+          codec_cipher( ctx.read_ctx, pgno, CIPHER_ENCRYPT, pg_sz, pData, ctx.buffer );
           return ctx.buffer; /* return persistent buffer data, pData remains intact */
         default:
           return pData;
@@ -516,13 +555,15 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
 
         ctx.pBt = pDb.pBt; /* assign pointer to database btree structure */
 
-        if ( ( rc = cipher_ctx_init( ref ctx.read_ctx ) ) != SQLITE_OK ) return rc;
-        if ( ( rc = cipher_ctx_init( ref ctx.write_ctx ) ) != SQLITE_OK ) return rc;
+        if ( ( rc = cipher_ctx_init( ref ctx.read_ctx ) ) != SQLITE_OK )
+          return rc;
+        if ( ( rc = cipher_ctx_init( ref ctx.write_ctx ) ) != SQLITE_OK )
+          return rc;
 
         /* pre-allocate a page buffer of PageSize bytes. This will
         be used as a persistent buffer for encryption and decryption
         operations to avoid overhead of multiple memory allocations*/
-        ctx.buffer = sqlite3MemMalloc(sqlite3BtreeGetPageSize( ctx.pBt ));//sqlite3Malloc(sqlite3BtreeGetPageSize(ctx.pBt);
+        ctx.buffer = sqlite3MemMalloc( sqlite3BtreeGetPageSize( ctx.pBt ) );//sqlite3Malloc(sqlite3BtreeGetPageSize(ctx.pBt);
         //if(ctx.buffer == null) return SQLITE_NOMEM;
 
         /* allocate space for salt data. Then read the first 16 bytes header as the salt for the key derivation */
@@ -544,7 +585,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
 
     static void sqlite3FreeCodecArg( ref codec_ctx pCodecArg )
     {
-      if ( pCodecArg == null ) return;
+      if ( pCodecArg == null )
+        return;
       codec_ctx_free( ref pCodecArg ); // wipe and free allocated memory for the context
     }
 
@@ -564,12 +606,16 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
         // If we are reopening an existing database, redo the header information setup 
         //
         BtShared pBt = db.aDb[0].pBt.pBt;
-        byte[] zDbHeader = sqlite3MemMalloc(pBt.pageSize);// pBt.pPager.pCodec.buffer;
+        byte[] zDbHeader = sqlite3MemMalloc( (int)pBt.pageSize );// pBt.pPager.pCodec.buffer;
         sqlite3PagerReadFileheader( pBt.pPager, zDbHeader.Length, zDbHeader );
         if ( sqlite3Get4byte( zDbHeader ) > 0 ) // Existing Database, need to reset some values
         {
           CODEC2( pBt.pPager, zDbHeader, 2, SQLITE_DECRYPT, ref zDbHeader );
           byte nReserve = zDbHeader[20];
+          pBt.pageSize = (uint)( ( zDbHeader[16] << 8 ) | ( zDbHeader[17] << 16 ) );
+          if ( pBt.pageSize < 512 || pBt.pageSize > SQLITE_MAX_PAGE_SIZE
+          || ( ( pBt.pageSize - 1 ) & pBt.pageSize ) != 0 )
+            pBt.pageSize = 0;
           pBt.pageSizeFixed = true;
 #if !SQLITE_OMIT_AUTOVACUUM
           pBt.autoVacuum = sqlite3Get4byte( zDbHeader, 36 + 4 * 4 ) != 0;
@@ -625,8 +671,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
             sqlite3pager_get_codec( pDb.pBt.pBt.pPager, ref ctx );
 
             /* prepare this setup as if it had already been initialized */
-              Buffer.BlockCopy( Encoding.UTF8.GetBytes( SQLITE_FILE_HEADER ), 0, ctx.read_ctx.iv, 0, FILE_HEADER_SZ );
-              ctx.read_ctx.key_sz = ctx.read_ctx.iv_sz = ctx.read_ctx.pass_sz = 0;
+            Buffer.BlockCopy( Encoding.UTF8.GetBytes( SQLITE_FILE_HEADER ), 0, ctx.read_ctx.iv, 0, FILE_HEADER_SZ );
+            ctx.read_ctx.key_sz = ctx.read_ctx.iv_sz = ctx.read_ctx.pass_sz = 0;
           }
 
           //if ( ctx.read_ctx.iv_sz != ctx.write_ctx.iv_sz )
@@ -639,8 +685,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
           //  sqlite3RunVacuum( ref error, db );
           //}
 
-            codec_set_pass_key( db, 0, pKey, nKey, 1 );
-            ctx.mode_rekey = 1;
+          codec_set_pass_key( db, 0, pKey, nKey, 1 );
+          ctx.mode_rekey = 1;
           /* do stuff here to rewrite the database
           ** 1. Create a transaction on the database
           ** 2. Iterate through each page, reading it and then writing it.
@@ -648,7 +694,7 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
           ** note: don't deallocate rekey since it may be used in a subsequent iteration
           */
           rc = sqlite3BtreeBeginTrans( pDb.pBt, 1 ); /* begin write transaction */
-          rc = sqlite3PagerPagecount( pPager, ref page_count );
+          sqlite3PagerPagecount( pPager, ref page_count );
           for ( pgno = 1; rc == SQLITE_OK && pgno <= page_count; pgno++ )
           { /* pgno's start at 1 see pager.c:pagerAcquire */
             if ( 0 == sqlite3pager_is_mj_pgno( pPager, pgno ) )
@@ -672,7 +718,8 @@ static void CODEC_TRACE( string T, params object[] ap ) { if ( sqlite3PagerTrace
             CODEC_TRACE( "sqlite3_rekey: committing\n" );
             db.nextPagesize = sqlite3BtreeGetPageSize( pDb.pBt );
             rc = sqlite3BtreeCommit( pDb.pBt );
-            if (ctx != null) cipher_ctx_copy( ctx.read_ctx, ctx.write_ctx );
+            if ( ctx != null )
+              cipher_ctx_copy( ctx.read_ctx, ctx.write_ctx );
           }
           else
           {

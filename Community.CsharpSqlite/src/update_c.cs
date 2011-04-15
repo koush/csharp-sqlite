@@ -27,9 +27,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-12-07 20:14:09 a586a4deeb25330037a49df295b36aaf624d0f45
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -143,8 +142,8 @@ namespace Community.CsharpSqlite
 
 #if !SQLITE_OMIT_TRIGGER
       bool isView;            /* True when updating a view (INSTEAD OF trigger) */
-  Trigger pTrigger;      /* List of triggers on pTab, if required */
-  int tmask = 0;         /* Mask of TRIGGER_BEFORE|TRIGGER_AFTER */
+      Trigger pTrigger;      /* List of triggers on pTab, if required */
+      int tmask = 0;         /* Mask of TRIGGER_BEFORE|TRIGGER_AFTER */
 #endif
       int newmask;           /* Mask of NEW.* columns accessed by BEFORE triggers */
 
@@ -168,24 +167,24 @@ namespace Community.CsharpSqlite
       /* Locate the table which we want to update.
       */
       pTab = sqlite3SrcListLookup( pParse, pTabList );
-      if ( pTab == null ) goto update_cleanup;
+      if ( pTab == null )
+        goto update_cleanup;
       iDb = sqlite3SchemaToIndex( pParse.db, pTab.pSchema );
 
       /* Figure out if we have any triggers and if the table being
       ** updated is a view.
       */
 #if !SQLITE_OMIT_TRIGGER
-  pTrigger = sqlite3TriggersExist(pParse, pTab, TK_UPDATE, pChanges, ref tmask);
-  isView = pTab.pSelect!=null;
-  Debug.Assert( pTrigger !=null|| tmask==0 );
+      pTrigger = sqlite3TriggersExist( pParse, pTab, TK_UPDATE, pChanges, ref tmask );
+      isView = pTab.pSelect != null;
+      Debug.Assert( pTrigger != null || tmask == 0 );
 #else
       const Trigger pTrigger = null;//# define pTrigger 0
-      const bool isView = false;    //# define isView 0
       const int tmask = 0;          //# define tmask 0
 #endif
-#if SQLITE_OMIT_VIEW
+#if SQLITE_OMIT_TRIGGER || SQLITE_OMIT_VIEW
 //    # undef isView
-const bool isView = false;
+      const bool isView = false;    //# define isView 0
 #endif
 
       if ( sqlite3ViewGetColumnNames( pParse, pTab ) != 0 )
@@ -198,7 +197,8 @@ const bool isView = false;
       }
       aXRef = new int[pTab.nCol];// sqlite3DbMallocRaw(db, sizeof(int) * pTab.nCol);
       //if ( aXRef == null ) goto update_cleanup;
-      for ( i = 0; i < pTab.nCol; i++ ) aXRef[i] = -1;
+      for ( i = 0; i < pTab.nCol; i++ )
+        aXRef[i] = -1;
 
       /* Allocate a cursors for the main database table and for all indices.
       ** The index cursors might not be used, but if they are used they
@@ -231,7 +231,7 @@ const bool isView = false;
         }
         for ( j = 0; j < pTab.nCol; j++ )
         {
-          if ( sqlite3StrICmp( pTab.aCol[j].zName, pChanges.a[i].zName ) == 0 )
+          if ( pTab.aCol[j].zName.Equals( pChanges.a[i].zName ,StringComparison.InvariantCultureIgnoreCase )  )
           {
             if ( j == pTab.iPKey )
             {
@@ -252,6 +252,7 @@ const bool isView = false;
           else
           {
             sqlite3ErrorMsg( pParse, "no such column: %s", pChanges.a[i].zName );
+            pParse.checkSchema = 1;
             goto update_cleanup;
           }
         }
@@ -276,11 +277,14 @@ aXRef[j] = -1;
       ** the value with a register number for indices that are to be used
       ** and with zero for unused indices.
       */
-      for ( nIdx = 0, pIdx = pTab.pIndex; pIdx != null; pIdx = pIdx.pNext, nIdx++ ) { }
+      for ( nIdx = 0, pIdx = pTab.pIndex; pIdx != null; pIdx = pIdx.pNext, nIdx++ )
+      {
+      }
       if ( nIdx > 0 )
       {
         aRegIdx = new int[nIdx]; // sqlite3DbMallocRaw(db, Index*.Length * nIdx);
-        if ( aRegIdx == null ) goto update_cleanup;
+        if ( aRegIdx == null )
+          goto update_cleanup;
       }
       for ( j = 0, pIdx = pTab.pIndex; pIdx != null; pIdx = pIdx.pNext, j++ )
       {
@@ -306,8 +310,10 @@ aXRef[j] = -1;
 
       /* Begin generating code. */
       v = sqlite3GetVdbe( pParse );
-      if ( v == null ) goto update_cleanup;
-      if ( pParse.nested == 0 ) sqlite3VdbeCountChanges( v );
+      if ( v == null )
+        goto update_cleanup;
+      if ( pParse.nested == 0 )
+        sqlite3VdbeCountChanges( v );
       sqlite3BeginWriteOperation( pParse, 1, iDb );
 
 #if !SQLITE_OMIT_VIRTUALTABLE
@@ -365,7 +371,8 @@ goto update_cleanup;
       sqlite3VdbeAddOp2( v, OP_Null, 0, regOldRowid );
       ExprList NullOrderby = null;
       pWInfo = sqlite3WhereBegin( pParse, pTabList, pWhere, ref NullOrderby, WHERE_ONEPASS_DESIRED );
-      if ( pWInfo == null ) goto update_cleanup;
+      if ( pWInfo == null )
+        goto update_cleanup;
       okOnePass = pWInfo.okOnePass != 0;
 
       /* Remember the rowid of every item to be updated.
@@ -397,7 +404,8 @@ goto update_cleanup;
         ** action, then we need to open all indices because we might need
         ** to be deleting some records.
         */
-        if ( !okOnePass ) sqlite3OpenTable( pParse, iCur, iDb, pTab, OP_OpenWrite );
+        if ( !okOnePass )
+          sqlite3OpenTable( pParse, iCur, iDb, pTab, OP_OpenWrite );
         if ( onError == OE_Replace )
         {
           openAll = true;
@@ -466,8 +474,7 @@ goto update_cleanup;
         {
           if ( aXRef[i] < 0 || oldmask == 0xffffffff || ( oldmask & ( 1 << i ) ) != 0 )
           {
-            sqlite3VdbeAddOp3( v, OP_Column, iCur, i, regOld + i );
-            sqlite3ColumnDefault( v, pTab, i, regOld + i );
+            sqlite3ExprCodeGetColumnOfTable( v, pTab, iCur, i, regOld + i );
           }
           else
           {
@@ -647,7 +654,7 @@ goto update_cleanup;
         sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "rows updated", SQLITE_STATIC );
       }
 
-    update_cleanup:
+update_cleanup:
 #if !SQLITE_OMIT_AUTHORIZATION
 sqlite3AuthContextPop(sContext);
 #endif
@@ -735,6 +742,7 @@ pSelect = sqlite3SelectNew(pParse, pEList, pSrc, pWhere, 0, 0, 0, 0, 0, 0);
 Debug.Assert( v );
 ephemTab = pParse.nTab++;
 sqlite3VdbeAddOp2(v, OP_OpenEphemeral, ephemTab, pTab.nCol+1+(pRowid!=0));
+sqlite3VdbeChangeP5(v, BTREE_UNORDERED);
 
 /* fill the ephemeral table
 */

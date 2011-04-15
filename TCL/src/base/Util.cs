@@ -11,10 +11,11 @@
 * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 *
 * Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-* $Header$
+*
 * RCS @(#) $Id: Util.java,v 1.10 2002/05/16 22:53:45 mdejong Exp $
 */
 using System;
+using System.Text;
 using Regexp = sunlabs.brazil.util.regexp.Regexp;
 namespace tcl.lang
 {
@@ -277,7 +278,7 @@ namespace tcl.lang
       }
       else if ( res.index < len )
       {
-        for ( i = res.index ; i < len ; i++ )
+        for ( i = res.index; i < len; i++ )
         {
           if ( !System.Char.IsWhiteSpace( s[i] ) )
           {
@@ -345,7 +346,7 @@ namespace tcl.lang
       }
       else if ( res.index < len )
       {
-        for ( i = res.index ; i < len ; i++ )
+        for ( i = res.index; i < len; i++ )
         {
           if ( !System.Char.IsWhiteSpace( s[i] ) )
           {
@@ -472,7 +473,7 @@ namespace tcl.lang
       c = s[i];
       if ( c == '-' )
       {
-//        sign = true;
+        //        sign = true;
         i += 1;
       }
       else
@@ -481,7 +482,7 @@ namespace tcl.lang
         {
           i += 1;
         }
-//        sign = false;
+        //        sign = false;
       }
 
       // Count the number of digits in the mantissa (including the decimal
@@ -489,7 +490,7 @@ namespace tcl.lang
 
       bool maybeZero = true;
       decPt = -1;
-      for ( mantSize = 0 ; ; mantSize += 1 )
+      for ( mantSize = 0; ; mantSize += 1 )
       {
         c = CharAt( s, i, len );
         if ( !System.Char.IsDigit( c ) )
@@ -616,7 +617,7 @@ namespace tcl.lang
       }
       else if ( res.index < len )
       {
-        for ( i = res.index ; i < len ; i++ )
+        for ( i = res.index; i < len; i++ )
         {
           if ( !System.Char.IsWhiteSpace( s[i] ) )
           {
@@ -637,7 +638,7 @@ namespace tcl.lang
     internal static string concat( int from, int to, TclObject[] argv )
     // The CmdArgs.
     {
-      System.Text.StringBuilder sbuf;
+      StringBuilder sbuf;
 
       if ( from > argv.Length )
       {
@@ -648,8 +649,8 @@ namespace tcl.lang
         to = argv.Length - 1;
       }
 
-      sbuf = new System.Text.StringBuilder();
-      for ( int i = from ; i <= to ; i++ )
+      sbuf = new StringBuilder();
+      for ( int i = from; i <= to; i++ )
       {
 
         string str = TrimLeft( argv[i].ToString() );
@@ -777,7 +778,7 @@ namespace tcl.lang
             pIndex++;
           }
 
-          for ( pIndex++ ; ( ( pIndex != patLen ) && ( patArr[pIndex] != ']' ) ) ; pIndex++ )
+          for ( pIndex++; ( ( pIndex != patLen ) && ( patArr[pIndex] != ']' ) ); pIndex++ )
           {
           }
           if ( pIndex == patLen )
@@ -821,7 +822,7 @@ namespace tcl.lang
       {
         return "";
       }
-      System.Text.StringBuilder buf = new System.Text.StringBuilder( length );
+      StringBuilder buf = new StringBuilder( length );
       buf.Append( System.Char.ToUpper( str[0] ) );
       buf.Append( str.Substring( 1 ).ToLower() );
       return buf.ToString();
@@ -831,7 +832,7 @@ namespace tcl.lang
       Regexp r = TclRegexp.compile( interp, pattern, false );
       return r.match( inString, (string[])null );
     }
-    internal static void appendElement( Interp interp, System.Text.StringBuilder sbuf, string s )
+    internal static void appendElement( Interp interp, StringBuilder sbuf, string s )
     {
       if ( sbuf.Length > 0 )
       {
@@ -846,7 +847,7 @@ namespace tcl.lang
       int openBraces = 0;
       bool inQuotes = false;
 
-      for ( ; i < len && System.Char.IsWhiteSpace( s[i] ) ; i++ )
+      for ( ; i < len && System.Char.IsWhiteSpace( s[i] ); i++ )
       {
         ;
       }
@@ -865,7 +866,7 @@ namespace tcl.lang
         inQuotes = true;
         i++;
       }
-      System.Text.StringBuilder sbuf = new System.Text.StringBuilder();
+      StringBuilder sbuf = new StringBuilder();
 
       while ( true )
       {
@@ -879,7 +880,7 @@ namespace tcl.lang
           {
             throw new TclException( interp, "unmatched open quote in list" );
           }
-          return new FindElemResult( i, sbuf.ToString() );
+          return new FindElemResult( i, sbuf.ToString(), openBraces );
         }
 
         c = s[i];
@@ -906,12 +907,12 @@ namespace tcl.lang
             {
               if ( i == len - 1 || System.Char.IsWhiteSpace( s[i + 1] ) )
               {
-                return new FindElemResult( i + 1, sbuf.ToString() );
+                return new FindElemResult( i + 1, sbuf.ToString(), openBraces );
               }
               else
               {
                 int errEnd;
-                for ( errEnd = i + 1 ; errEnd < len ; errEnd++ )
+                for ( errEnd = i + 1; errEnd < len; errEnd++ )
                 {
                   if ( System.Char.IsWhiteSpace( s[errEnd] ) )
                   {
@@ -960,7 +961,7 @@ namespace tcl.lang
           case '\t':
             if ( ( openBraces == 0 ) && !inQuotes )
             {
-              return new FindElemResult( i + 1, sbuf.ToString() );
+              return new FindElemResult( i + 1, sbuf.ToString(), openBraces );
             }
             else
             {
@@ -977,12 +978,12 @@ namespace tcl.lang
             {
               if ( i == len - 1 || System.Char.IsWhiteSpace( s[i + 1] ) )
               {
-                return new FindElemResult( i + 1, sbuf.ToString() );
+                return new FindElemResult( i + 1, sbuf.ToString(), openBraces );
               }
               else
               {
                 int errEnd;
-                for ( errEnd = i + 1 ; errEnd < len ; errEnd++ )
+                for ( errEnd = i + 1; errEnd < len; errEnd++ )
                 {
                   if ( System.Char.IsWhiteSpace( s[errEnd] ) )
                   {
@@ -1071,7 +1072,7 @@ namespace tcl.lang
       {
         flags |= USE_BRACES;
       }
-      for ( ; i < len ; i++ )
+      for ( ; i < len; i++ )
       {
         System.Diagnostics.Debug.WriteLine( "getting char at index " + i );
         System.Diagnostics.Debug.WriteLine( "char is '" + inString[i] + "'" );
@@ -1145,12 +1146,12 @@ namespace tcl.lang
         return "{}";
       }
 
-      System.Text.StringBuilder sbuf = new System.Text.StringBuilder();
+      StringBuilder sbuf = new StringBuilder();
 
       if ( ( ( flags & USE_BRACES ) != 0 ) && ( ( flags & TCL_DONT_USE_BRACES ) == 0 ) )
       {
         sbuf.Append( '{' );
-        for ( i = 0 ; i < len ; i++ )
+        for ( i = 0; i < len; i++ )
         {
           sbuf.Append( s[i] );
         }
@@ -1172,7 +1173,7 @@ namespace tcl.lang
           flags |= BRACES_UNMATCHED;
         }
 
-        for ( ; i < len ; i++ )
+        for ( ; i < len; i++ )
         {
           c = s[i];
           switch ( c )
@@ -1243,11 +1244,11 @@ namespace tcl.lang
       int patLen = pattern.Length;
       bool done = false;
 
-      for ( i = 0 ; i < strLen ; i++ )
+      for ( i = 0; i < strLen; i++ )
       {
         c = str[i];
         done = true;
-        for ( j = 0 ; j < patLen ; j++ )
+        for ( j = 0; j < patLen; j++ )
         {
           if ( c == pattern[j] )
           {
@@ -1350,9 +1351,9 @@ namespace tcl.lang
     internal static string printDouble( double number )
     // The number to format into a string.
     {
-      string s = FormatCmd.toString( number, precision, 10 ).Replace("E","e");
+      string s = FormatCmd.toString( number, precision, 10 ).Replace( "E", "e" );
       int length = s.Length;
-      for ( int i = 0 ; i < length ; i++ )
+      for ( int i = 0; i < length; i++ )
       {
         if ( ( s[i] == '.' ) || System.Char.IsLetter( s[i] ) )
         {
@@ -1366,7 +1367,7 @@ namespace tcl.lang
     {
       try
       {
-        
+
         // ATK return System_Renamed.getProperty(propName);
         return System.Environment.GetEnvironmentVariable( "os.name" );
       }
@@ -1440,7 +1441,7 @@ namespace tcl.lang
       }
       catch ( TclException e )
       {
-        // Do nothing when var does not exist.
+        // Do nothing when fixme does not exist.
       }
 
       string value;

@@ -79,9 +79,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-08-23 18:52:01 42537b60566f288167f1b5864a5435986838e3a3
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -444,7 +443,8 @@ namespace Community.CsharpSqlite
       }
       if ( p.pTree != null )
       {
-        RowSetEntry pHead = new RowSetEntry(), pTail = new RowSetEntry();
+        RowSetEntry pHead = new RowSetEntry();
+        RowSetEntry pTail = new RowSetEntry();
         rowSetTreeToList( p.pTree, ref  pHead, ref  pTail );
         p.pTree = null;
         p.pEntry = rowSetMerge( p.pEntry, pHead );

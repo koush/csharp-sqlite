@@ -8,7 +8,7 @@
 * WARRANTIES.
 * 
 * Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-* $Header$
+*
 * RCS @(#) $Id: Var.java,v 1.11 2003/01/09 02:15:39 mdejong Exp $
 *
 */
@@ -280,13 +280,26 @@ namespace tcl.lang
       }
       public int iValue
       {
-        get { return _Integer; }
-        set { _Integer = value; }
+        get
+        {
+          return _Integer;
+        }
+        set
+        {
+          _Integer = value;
+        }
       }
       public string sValue
       {
-        get { return _StringBuilder.ToString(); }
-        set { _StringBuilder.Length = 0; _StringBuilder.Append( value ); }
+        get
+        {
+          return _StringBuilder.ToString();
+        }
+        set
+        {
+          _StringBuilder.Length = 0;
+          _StringBuilder.Append( value );
+        }
       }
       public void Append( byte[] append )
       {
@@ -304,7 +317,10 @@ namespace tcl.lang
 
       public int Length
       {
-        get { return _StringBuilder.Length; }
+        get
+        {
+          return _StringBuilder.Length;
+        }
       }
     }
     /// <summary> Reference to the object the allows getting & setting the sqlite3 linked variable
@@ -325,7 +341,8 @@ namespace tcl.lang
         else
           to = TclInteger.newInstance( ( (SQLITE3_GETSET)sqlite3_get_set ).iValue );
       }
-      else to = TclString.newInstance( ( (SQLITE3_GETSET)sqlite3_get_set ).sValue );
+      else
+        to = TclString.newInstance( ( (SQLITE3_GETSET)sqlite3_get_set ).sValue );
       to.preserve();
       return to;
     }
@@ -374,7 +391,7 @@ namespace tcl.lang
 
     public override string ToString()
     {
-      System.Text.StringBuilder sb = new System.Text.StringBuilder();
+      StringBuilder sb = new StringBuilder();
       sb.Append( ns );
       if ( sb.Length == 2 )
       {
@@ -403,7 +420,7 @@ namespace tcl.lang
     protected internal SearchId getSearch( string s )
     {
       SearchId sid;
-      for ( int i = 0 ; i < sidVec.Count ; i++ )
+      for ( int i = 0; i < sidVec.Count; i++ )
       {
         sid = (SearchId)sidVec[i];
         if ( sid.equals( s ) )
@@ -425,7 +442,7 @@ namespace tcl.lang
     {
       SearchId curSid;
 
-      for ( int i = 0 ; i < sidVec.Count ; i++ )
+      for ( int i = 0; i < sidVec.Count; i++ )
       {
         curSid = (SearchId)sidVec[i];
         if ( curSid.equals( sid ) )
@@ -538,7 +555,7 @@ namespace tcl.lang
       // the part2's test and error reporting  or move that code in array set)
       elName = part2;
       int len = part1.Length;
-      for ( p = 0 ; p < len ; p++ )
+      for ( p = 0; p < len; p++ )
       {
         if ( part1[p] == '(' )
         {
@@ -748,7 +765,7 @@ namespace tcl.lang
 
       if ( (System.Object)elName == null )
       {
-        Var[] ret = new Var[2];
+        var ret = new Var[2];
         ret[0] = var;
         ret[1] = null;
         return ret;
@@ -836,7 +853,7 @@ namespace tcl.lang
         }
       }
 
-      Var[] ret2 = new Var[2];
+      var ret2 = new Var[2];
       ret2[0] = var; // The Var in the array
       ret2[1] = arrayVar; // The array (Hashtable) Var
       return ret2;
@@ -968,7 +985,8 @@ namespace tcl.lang
           return (TclObject)var.value;
         }
 
-        if ( var.isSQLITE3_Link() ) return var.sqlite3_get();
+        if ( var.isSQLITE3_Link() )
+          return var.sqlite3_get();
 
         if ( ( flags & TCL.VarFlag.LEAVE_ERR_MSG ) != 0 )
         {
@@ -1184,8 +1202,7 @@ namespace tcl.lang
         }
         else
         {
-          oldValue = (TclObject)
-          var.value;
+          oldValue = (TclObject)var.value;
 
           if ( ( flags & TCL.VarFlag.APPEND_VALUE ) != 0 )
           {
@@ -1648,7 +1665,7 @@ namespace tcl.lang
         var.traces = new ArrayList( 10 );
       }
 
-      TraceRecord rec = new TraceRecord();
+      var rec = new TraceRecord();
       rec.trace = proc;
       rec.flags = flags & ( TCL.VarFlag.TRACE_READS | TCL.VarFlag.TRACE_WRITES | TCL.VarFlag.TRACE_UNSETS | TCL.VarFlag.TRACE_ARRAY );
 
@@ -1746,7 +1763,7 @@ namespace tcl.lang
       if ( var.traces != null )
       {
         int len = var.traces.Count;
-        for ( int i = 0 ; i < len ; i++ )
+        for ( int i = 0; i < len; i++ )
         {
           TraceRecord rec = (TraceRecord)var.traces[i];
           if ( rec.trace == proc )
@@ -2035,7 +2052,7 @@ namespace tcl.lang
 
     internal static string getVariableFullName( Interp interp, Var var )
     {
-      System.Text.StringBuilder buff = new System.Text.StringBuilder();
+      StringBuilder buff = new StringBuilder();
 
       // Add the full name of the containing namespace (if any), followed by
       // the "::" separator, then the variable name.
@@ -2127,7 +2144,7 @@ namespace tcl.lang
         {
           if ( part1[len - 1] == ')' )
           {
-            for ( i = 0 ; i < len - 1 ; i++ )
+            for ( i = 0; i < len - 1; i++ )
             {
               if ( part1[i] == '(' )
               {
@@ -2160,7 +2177,7 @@ namespace tcl.lang
         }
         if ( ( array != null ) && ( array.traces != null ) )
         {
-          for ( i = 0 ; ( array.traces != null ) && ( i < array.traces.Count ) ; i++ )
+          for ( i = 0; ( array.traces != null ) && ( i < array.traces.Count ); i++ )
           {
             TraceRecord rec = (TraceRecord)array.traces[i];
             if ( ( rec.flags & flags ) != 0 )
@@ -2188,7 +2205,7 @@ namespace tcl.lang
           flags |= TCL.VarFlag.TRACE_DESTROYED;
         }
 
-        for ( i = 0 ; ( var.traces != null ) && ( i < var.traces.Count ) ; i++ )
+        for ( i = 0; ( var.traces != null ) && ( i < var.traces.Count ); i++ )
         {
           TraceRecord rec = (TraceRecord)var.traces[i];
           if ( ( rec.flags & flags ) != 0 )
@@ -2279,7 +2296,7 @@ namespace tcl.lang
       }
 
 
-      for ( search = table.Values.GetEnumerator() ; search.MoveNext() ; )
+      for ( search = table.Values.GetEnumerator(); search.MoveNext(); )
       {
         var = (Var)search.Current;
 
@@ -2397,7 +2414,7 @@ namespace tcl.lang
       Hashtable table = (Hashtable)var.value;
 
       Var dummyVar;
-      for ( search = table.Values.GetEnumerator() ; search.MoveNext() ; )
+      for ( search = table.Values.GetEnumerator(); search.MoveNext(); )
       {
         el = (Var)search.Current;
 

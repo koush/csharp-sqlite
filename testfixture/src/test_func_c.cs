@@ -7,7 +7,7 @@ using u8 = System.Byte;
 
 namespace Community.CsharpSqlite
 {
-#if !NO_TCL
+#if TCLSH
   using tcl.lang;
   using sqlite3_stmt = Sqlite3.Vdbe;
   using sqlite3_value = Sqlite3.Mem;
@@ -33,9 +33,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-08-23 18:52:01 42537b60566f288167f1b5864a5435986838e3a3
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqlite3.h"
@@ -82,11 +81,15 @@ namespace Community.CsharpSqlite
       Debug.Assert( argc == 2 );
 
       iMin = sqlite3_value_int( argv[0] );
-      if ( iMin < 0 ) iMin = 0;
-      if ( iMin >= zBuf.Capacity ) iMin = zBuf.Capacity - 1;
+      if ( iMin < 0 )
+        iMin = 0;
+      if ( iMin >= zBuf.Capacity )
+        iMin = zBuf.Capacity - 1;
       iMax = sqlite3_value_int( argv[1] );
-      if ( iMax < iMin ) iMax = iMin;
-      if ( iMax >= zBuf.Capacity ) iMax = zBuf.Capacity - 1;
+      if ( iMax < iMin )
+        iMax = iMin;
+      if ( iMax >= zBuf.Capacity )
+        iMax = zBuf.Capacity - 1;
       n = iMin;
       if ( iMax > iMin )
       {
@@ -96,13 +99,13 @@ namespace Community.CsharpSqlite
       }
       Debug.Assert( n < zBuf.Capacity );//sizeof( zBuf ) );
       i64 zRan = 0;
-      for ( i = 0 ; i < n ; i++ )
+      for ( i = 0; i < n; i++ )
       {
         sqlite3_randomness( 1, ref zRan );
         zBuf.Append( zSrc[(int)( Math.Abs( zRan ) % ( zSrc.Length - 1 ) )] );
       }
       //zBuf[n] = 0;
-      sqlite3_result_text( context, zBuf.ToString(), n, SQLITE_TRANSIENT );
+      sqlite3_result_text( context, zBuf, n, SQLITE_TRANSIENT );
     }
 
     /*
@@ -136,7 +139,8 @@ namespace Community.CsharpSqlite
 
       test_destructor_count_var++;
       Debug.Assert( nArg == 1 );
-      if ( sqlite3_value_type( argv[0] ) == SQLITE_NULL ) return;
+      if ( sqlite3_value_type( argv[0] ) == SQLITE_NULL )
+        return;
       len = sqlite3_value_bytes( argv[0] );
       zVal = "";//testContextMalloc( pCtx, len + 3 );
       if ( null == zVal )
@@ -218,7 +222,8 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     ** registration, the result for that argument is 1.  The overall result
     ** is the individual argument results separated by spaces.
     */
-    static void free_test_auxdata( ref string p ) {
+    static void free_test_auxdata( ref string p )
+    {
       p = null;
       sqlite3DbFree( null, ref p );
     }
@@ -230,15 +235,16 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
     {
       int i;
       StringBuilder zRet = new StringBuilder( nArg * 2 );//testContextMalloc( pCtx, nArg * 2 );
-      if ( null == zRet ) return;
+      if ( null == zRet )
+        return;
       //memset(zRet, 0, nArg*2);
-      for ( i = 0 ; i < nArg ; i++ )
+      for ( i = 0; i < nArg; i++ )
       {
         string z = sqlite3_value_text( argv[i] );
         if ( z != null )
         {
           int n;
-          string zAux = sqlite3_get_auxdata( pCtx, i );
+          string zAux = (string)sqlite3_get_auxdata( pCtx, i );
           if ( zAux != null )
           {
             zRet.Append( '1' );//[i * 2] = '1';
@@ -253,12 +259,12 @@ sqlite3_result_text16(pCtx, zVal, -1, destructor);
           if ( zAux != null )
           {
             zAux = z.Substring( 0, n );// memcpy( zAux, z, n );
-            sqlite3_set_auxdata( pCtx, i, zAux, free_test_auxdata );
+            sqlite3_set_auxdata( pCtx, i, zAux );
           }
           zRet.Append( ' ' );// zRet[i * 2 + 1] = ' ';
         }
       }
-      sqlite3_result_text( pCtx, zRet.ToString(), 2 * nArg - 1, free_test_auxdata );
+      sqlite3_result_text( pCtx, zRet, 2 * nArg - 1, free_test_auxdata );
     }
 
     /*
@@ -358,14 +364,14 @@ sqlite3_value_text(argv[0]);
         {
           sqlite3_result_value( pCtx, sqlite3_column_value( pStmt, 0 ) );
         }
-        rc = sqlite3_finalize( ref pStmt );
+        rc = sqlite3_finalize( pStmt );
       }
       if ( rc != 0 )
       {
         string zErr;
         Debug.Assert( pStmt == null );
         zErr = sqlite3_mprintf( "sqlite3_prepare_v2() error: %s", sqlite3_errmsg( db ) );
-        sqlite3_result_text(pCtx, zErr, -1, null);//sqlite3_free );
+        sqlite3_result_text( pCtx, zErr, -1, null );//sqlite3_free );
         sqlite3_result_error_code( pCtx, rc );
       }
     }
@@ -385,31 +391,38 @@ sqlite3_value_text(argv[0]);
       }
     }
 
-/*
-** convert one character from hex to binary
-*/
-static int testHexChar(char c){
-  if( c>='0' && c<='9' ){
-    return c - '0';
-  }else if( c>='a' && c<='f' ){
-    return c - 'a' + 10;
-  }else if( c>='A' && c<='F' ){
-    return c - 'A' + 10;
-  }
-  return 0;
-}
+    /*
+    ** convert one character from hex to binary
+    */
+    static int testHexChar( char c )
+    {
+      if ( c >= '0' && c <= '9' )
+      {
+        return c - '0';
+      }
+      else if ( c >= 'a' && c <= 'f' )
+      {
+        return c - 'a' + 10;
+      }
+      else if ( c >= 'A' && c <= 'F' )
+      {
+        return c - 'A' + 10;
+      }
+      return 0;
+    }
 
-/*
-** Convert hex to binary.
-*/
-static void testHexToBin(string zIn, ref string zOut){
-  for(int zIx =0; zIx < zIn.Length-1; zIx+=2)// zIn[0] && zIn[1] )
-  {
-    //*(zOut++) = (testHexChar(zIn[0])<<4) + testHexChar(zIn[1]);
-    zOut += (testHexChar(zIn[zIx])<<4) + testHexChar(zIn[zIx+1]);
-    //zIn += 2;
-  }
-}
+    /*
+    ** Convert hex to binary.
+    */
+    static void testHexToBin( string zIn, ref string zOut )
+    {
+      for ( int zIx = 0; zIx < zIn.Length - 1; zIx += 2 )// zIn[0] && zIn[1] )
+      {
+        //*(zOut++) = (testHexChar(zIn[0])<<4) + testHexChar(zIn[1]);
+        zOut += ( testHexChar( zIn[zIx] ) << 4 ) + testHexChar( zIn[zIx + 1] );
+        //zIn += 2;
+      }
+    }
 
 #if !SQLITE_OMIT_UTF16
 /*
@@ -439,31 +452,32 @@ static void testHexToUtf16be(
 }
 #endif
 
-/*
+    /*
 **      hex_to_utf8(HEX)
 **
 ** Convert the input string from HEX into binary.  Then return the
 ** result using sqlite3_result_text16le().
 */
-static void testHexToUtf8(
-  sqlite3_context pCtx, 
-  int nArg,
-  sqlite3_value[] argv
-){
-  int n;
-  string zIn;
-  string zOut = "";
-  Debug.Assert( nArg==1 );
-  n = sqlite3_value_bytes(argv[0]);
-  zIn = sqlite3_value_text(argv[0]);
-  //zOut = sqlite3_malloc( n/2 );
-  //if( zOut==0 ){
-  //  sqlite3_result_error_nomem(pCtx);
-  //}else{
-    testHexToBin(zIn, ref zOut);
-    sqlite3_result_text( pCtx, zOut, n / 2, null );//sqlite3_free );
-  //}
-}
+    static void testHexToUtf8(
+      sqlite3_context pCtx,
+      int nArg,
+      sqlite3_value[] argv
+    )
+    {
+      int n;
+      string zIn;
+      string zOut = "";
+      Debug.Assert( nArg == 1 );
+      n = sqlite3_value_bytes( argv[0] );
+      zIn = sqlite3_value_text( argv[0] );
+      //zOut = sqlite3_malloc( n/2 );
+      //if( zOut==0 ){
+      //  sqlite3_result_error_nomem(pCtx);
+      //}else{
+      testHexToBin( zIn, ref zOut );
+      sqlite3_result_text( pCtx, zOut, n / 2, null );//sqlite3_free );
+      //}
+    }
 
 #if !SQLITE_OMIT_UTF16
 /*
@@ -493,7 +507,7 @@ static void testHexToUtf16le(
 }
 #endif
 
-static int registerTestFunctions( sqlite3 db, ref string dummy1, sqlite3_api_routines dummy2 )
+    static int registerTestFunctions( sqlite3 db, ref string dummy1, sqlite3_api_routines dummy2 )
     {
       _aFuncs[] aFuncs = new _aFuncs[]  {
 new _aFuncs( "randstr",               2, SQLITE_UTF8, randStr    ),
@@ -514,7 +528,7 @@ new _aFuncs(  "test_isolation",        2, SQLITE_UTF8, test_isolation),
 };
       int i;
 
-      for ( i = 0 ; i < aFuncs.Length ; i++ )
+      for ( i = 0; i < aFuncs.Length; i++ )
       {//sizeof(aFuncs)/sizeof(aFuncs[0]); i++){
         sqlite3_create_function( db, aFuncs[i].zName, aFuncs[i].nArg,
         aFuncs[i].eTextRep, 0, aFuncs[i].xFunc, null, null );
@@ -554,8 +568,12 @@ new _aFuncs(  "test_isolation",        2, SQLITE_UTF8, test_isolation),
     /*
     ** A bogus step function and finalizer function.
     */
-    static void tStep( sqlite3_context a, int b, sqlite3_value[] c ) { }
-    static void tFinal( sqlite3_context a ) { }
+    static void tStep( sqlite3_context a, int b, sqlite3_value[] c )
+    {
+    }
+    static void tFinal( sqlite3_context a )
+    {
+    }
 
 
     /*
@@ -576,28 +594,36 @@ new _aFuncs(  "test_isolation",        2, SQLITE_UTF8, test_isolation),
       int rc;
       int mxArg;
 
-      if ( getDbPointer( interp, TCL.Tcl_GetString( objv[1] ), ref db ) != 0 ) return TCL.TCL_ERROR;
+      if ( getDbPointer( interp, TCL.Tcl_GetString( objv[1] ), ref db ) != 0 )
+        return TCL.TCL_ERROR;
 
       rc = sqlite3_create_function( db, "tx", 1, SQLITE_UTF8, 0, tStep, tStep, tFinal );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", 1, SQLITE_UTF8, 0, tStep, tStep, null );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", 1, SQLITE_UTF8, 0, tStep, null, tFinal );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", 1, SQLITE_UTF8, 0, null, null, tFinal );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", 1, SQLITE_UTF8, 0, null, tStep, null );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", -2, SQLITE_UTF8, 0, tStep, null, null );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "tx", 128, SQLITE_UTF8, 0, tStep, null, null );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       rc = sqlite3_create_function( db, "funcxx" +
       "_123456789_123456789_123456789_123456789_123456789" +
@@ -606,7 +632,8 @@ new _aFuncs(  "test_isolation",        2, SQLITE_UTF8, test_isolation),
       "_123456789_123456789_123456789_123456789_123456789" +
       "_123456789_123456789_123456789_123456789_123456789",
       1, SQLITE_UTF8, 0, tStep, null, null );
-      if ( rc != SQLITE_MISUSE ) goto abuse_err;
+      if ( rc != SQLITE_MISUSE )
+        goto abuse_err;
 
       /* This last function registration should actually work.  Generate
       ** a no-op function (that always returns NULL) and which has the
@@ -621,7 +648,8 @@ new _aFuncs(  "test_isolation",        2, SQLITE_UTF8, test_isolation),
       "_123456789_123456789_123456789_123456789_123456789" +
       "_123456789_123456789_123456789_123456789_123456789",
       mxArg, SQLITE_UTF8, 0, tStep, null, null );
-      if ( rc != SQLITE_OK ) goto abuse_err;
+      if ( rc != SQLITE_OK )
+        goto abuse_err;
 
       return TCL.TCL_OK;
 
@@ -648,7 +676,7 @@ new _aObjCmd( "abuse_create_function",         abuse_create_function  ),
       int i;
       //extern int Md5_Register(sqlite3*);
 
-      for ( i = 0 ; i < aObjCmd.Length ; i++ )
+      for ( i = 0; i < aObjCmd.Length; i++ )
       {//sizeof(aObjCmd)/sizeof(aObjCmd[0]); i++){
         TCL.Tcl_CreateObjCommand( interp, aObjCmd[i].zName, aObjCmd[i].xProc, null, null );
       }

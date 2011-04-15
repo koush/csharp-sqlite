@@ -28,9 +28,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-08-23 18:52:01 42537b60566f288167f1b5864a5435986838e3a3
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -42,12 +41,15 @@ namespace Community.CsharpSqlite
 #if !SQLITE_AMALGAMATION
 #if  SQLITE_ASCII
     //#define IdChar(C)  ((sqlite3CtypeMap[(unsigned char)C]&0x46)!=0)
-    static bool IdChar( u8 C ) { return ( sqlite3CtypeMap[(char)C] & 0x46 ) != 0; }
+    static bool IdChar( u8 C )
+    {
+      return ( sqlite3CtypeMap[(char)C] & 0x46 ) != 0;
+    }
 #endif
-#if  SQLITE_EBCDIC
+//#if  SQLITE_EBCDIC
 //extern const char sqlite3IsEbcdicIdChar[];
 //#define IdChar(C)  (((c=C)>=0x42 && sqlite3IsEbcdicIdChar[c-0x40]))
-#endif
+//#endif
 #endif // * SQLITE_AMALGAMATION */
 
 
@@ -126,7 +128,7 @@ namespace Community.CsharpSqlite
       int token;       /* Value of the next token */
 
 #if !SQLITE_OMIT_TRIGGER
-/* A complex statement machine used to detect the end of a CREATE TRIGGER
+      /* A complex statement machine used to detect the end of a CREATE TRIGGER
 ** statement.  This is the normal case.
 */
       u8[][] trans = new u8[][]       {
@@ -181,8 +183,12 @@ namespace Community.CsharpSqlite
                 break;
               }
               zIdx += 2;
-              while ( zIdx < zSql.Length && zSql[zIdx] != '*' || zIdx < zSql.Length - 1 && zSql[zIdx + 1] != '/' ) { zIdx++; }
-              if ( zIdx == zSql.Length ) return 0;
+              while ( zIdx < zSql.Length && zSql[zIdx] != '*' || zIdx < zSql.Length - 1 && zSql[zIdx + 1] != '/' )
+              {
+                zIdx++;
+              }
+              if ( zIdx == zSql.Length )
+                return 0;
               zIdx++;
               token = tkWS;
               break;
@@ -194,16 +200,24 @@ namespace Community.CsharpSqlite
                 token = tkOTHER;
                 break;
               }
-              while ( zIdx < zSql.Length && zSql[zIdx] != '\n' ) { zIdx++; }
-              if ( zIdx == zSql.Length ) return state == 1 ? 1 : 0;//if( *zSql==0 ) return state==1;
+              while ( zIdx < zSql.Length && zSql[zIdx] != '\n' )
+              {
+                zIdx++;
+              }
+              if ( zIdx == zSql.Length )
+                return state == 1 ? 1 : 0;//if( *zSql==0 ) return state==1;
               token = tkWS;
               break;
             }
           case '[':
             {   /* Microsoft-style identifiers in [...] */
               zIdx++;
-              while ( zIdx < zSql.Length && zSql[zIdx] != ']' ) { zIdx++; }
-              if ( zIdx == zSql.Length ) return 0;
+              while ( zIdx < zSql.Length && zSql[zIdx] != ']' )
+              {
+                zIdx++;
+              }
+              if ( zIdx == zSql.Length )
+                return 0;
               token = tkOTHER;
               break;
             }
@@ -213,21 +227,27 @@ namespace Community.CsharpSqlite
             {
               int c = zSql[zIdx];
               zIdx++;
-              while ( zIdx < zSql.Length && zSql[zIdx] != c ) { zIdx++; }
-              if ( zIdx == zSql.Length ) return 0;
+              while ( zIdx < zSql.Length && zSql[zIdx] != c )
+              {
+                zIdx++;
+              }
+              if ( zIdx == zSql.Length )
+                return 0;
               token = tkOTHER;
               break;
             }
           default:
             {
-#if SQLITE_EBCDIC
-        unsigned char c;
-#endif
+//#if SQLITE_EBCDIC
+//        unsigned char c;
+//#endif
               if ( IdChar( (u8)zSql[zIdx] ) )
               {
                 /* Keywords and unquoted identifiers */
                 int nId;
-                for ( nId = 1; ( zIdx + nId ) < zSql.Length && IdChar( (u8)zSql[zIdx + nId] ); nId++ ) { }
+                for ( nId = 1; ( zIdx + nId ) < zSql.Length && IdChar( (u8)zSql[zIdx + nId] ); nId++ )
+                {
+                }
 #if  SQLITE_OMIT_TRIGGER
                 token = tkOTHER;
 #else

@@ -2,10 +2,11 @@ using System.Diagnostics;
 
 namespace Community.CsharpSqlite
 {
-#if !NO_TCL
+#if TCLSH
   using tcl.lang;
   using Tcl_Interp = tcl.lang.Interp;
   using Tcl_Obj = tcl.lang.TclObject;
+  using System.Text;
 
 
   public partial class Sqlite3
@@ -26,9 +27,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2011-01-28 17:03:50 ed759d5a9edb3bba5f48f243df47be29e3fe8cd7
     **
-    **  $Header$
     *************************************************************************
     */
 
@@ -43,12 +43,15 @@ namespace Community.CsharpSqlite
     //const char *sqlite3TestErrorName(int);
 
     /* A countable mutex */
-    public class _sqlite3_mutex
+    public partial class sqlite3_mutex
     {
       public sqlite3_mutex pReal;
       public int eType;
     };
 
+    static Var.SQLITE3_GETSET disableInit = new Var.SQLITE3_GETSET( "disable_mutex_init" );
+    static Var.SQLITE3_GETSET disableTry = new Var.SQLITE3_GETSET( "disable_mutex_try" );    
+    
     /* State variables */
     public class test_mutex_globals
     {
@@ -56,20 +59,20 @@ namespace Community.CsharpSqlite
       public bool disableInit;              /* True to cause sqlite3_initalize() to fail */
       public bool disableTry;               /* True to force sqlite3_mutex_try() to fail */
       public bool isInit;                   /* True if initialized */
-      public sqlite3_mutex_methods m;      /* Interface to "real" mutex system */
-      public int[] aCounter = new int[8];              /* Number of grabs of each type of mutex */
-      public sqlite3_mutex[] aStatic = new sqlite3_mutex[6];     /* The six static mutexes */
+      public sqlite3_mutex_methods m = new sqlite3_mutex_methods(); /* Interface to "real" mutex system */
+      public int[] aCounter = new int[8];                           /* Number of grabs of each type of mutex */
+      public sqlite3_mutex[] aStatic = new sqlite3_mutex[6];        /* The six static mutexes */
     }
     static test_mutex_globals g = new test_mutex_globals();
 
     /* Return true if the countable mutex is currently held */
-    static int counterMutexHeld( _sqlite3_mutex p )
+    static bool counterMutexHeld( sqlite3_mutex p )
     {
       return g.m.xMutexHeld( p.pReal );
     }
 
     /* Return true if the countable mutex is not currently held */
-    static int counterMutexNotheld( _sqlite3_mutex p )
+    static bool counterMutexNotheld( sqlite3_mutex p )
     {
       return g.m.xMutexNotheld( p.pReal );
     }
@@ -82,7 +85,8 @@ namespace Community.CsharpSqlite
     static int counterMutexInit()
     {
       int rc;
-      if ( g.disableInit ) return g.disableInit ? 1 : 0;
+      if ( g.disableInit )
+        return g.disableInit ? 1 : 0;
       rc = g.m.xMutexInit();
       g.isInit = true;
       return rc;
@@ -100,31 +104,37 @@ namespace Community.CsharpSqlite
     /*
     ** Allocate a countable mutex
     */
-    //static sqlite3_mutex *counterMutexAlloc(int eType){
-    //  sqlite3_mutex pReal;
-    //  sqlite3_mutex pRet = 0;
+    static sqlite3_mutex counterMutexAlloc( int eType )
+    {
+      sqlite3_mutex pReal;
+      sqlite3_mutex pRet = null;
 
-    //  Debug.Assert( g.isInit );
-    //  Debug.Assert(eType<8 && eType>=0);
+      Debug.Assert( g.isInit );
+      Debug.Assert( eType < 8 && eType >= 0 );
 
-    //  pReal = g.m.xMutexAlloc(eType);
-    //  if( null==pReal ) return 0;
+      pReal = g.m.xMutexAlloc( eType );
+      if ( null == pReal )
+        return null;
 
-    //  if( eType==SQLITE_MUTEX_FAST || eType==SQLITE_MUTEX_RECURSIVE ){
-    //    pRet = (sqlite3_mutex *)malloc(sizeof(sqlite3_mutex));
-    //  }else{
-    //    pRet = &g.aStatic[eType-2];
-    //  }
+      if ( eType == SQLITE_MUTEX_FAST || eType == SQLITE_MUTEX_RECURSIVE )
+      {
+        pRet = new sqlite3_mutex();
+        ;//(sqlite3_mutex*)malloc( sizeof( sqlite3_mutex ) );
+      }
+      else
+      {
+        pRet = g.aStatic[eType - 2];
+      }
 
-    //  pRet.eType = eType;
-    //  pRet.pReal = pReal;
-    //  return pRet;
-    //}
+      pRet.eType = eType;
+      pRet.pReal = pReal;
+      return pRet;
+    }
 
     /*
     ** Free a countable mutex
     */
-    static void counterMutexFree( _sqlite3_mutex p )
+    static void counterMutexFree( sqlite3_mutex p )
     {
       Debug.Assert( g.isInit );
       g.m.xMutexFree( p.pReal );
@@ -137,7 +147,7 @@ namespace Community.CsharpSqlite
     /*
     ** Enter a countable mutex.  Block until entry is safe.
     */
-    static void counterMutexEnter( _sqlite3_mutex p )
+    static void counterMutexEnter( sqlite3_mutex p )
     {
       Debug.Assert( g.isInit );
       g.aCounter[p.eType]++;
@@ -147,17 +157,18 @@ namespace Community.CsharpSqlite
     /*
     ** Try to enter a mutex.  Return true on success.
     */
-    static int counterMutexTry( _sqlite3_mutex p )
+    static int counterMutexTry( sqlite3_mutex p )
     {
       Debug.Assert( g.isInit );
       g.aCounter[p.eType]++;
-      if ( g.disableTry ) return SQLITE_BUSY;
+      if ( g.disableTry )
+        return SQLITE_BUSY;
       return g.m.xMutexTry( p.pReal );
     }
 
     /* Leave a mutex
     */
-    static void counterMutexLeave( _sqlite3_mutex p )
+    static void counterMutexLeave( sqlite3_mutex p )
     {
       Debug.Assert( g.isInit );
       g.m.xMutexLeave( p.pReal );
@@ -211,96 +222,108 @@ namespace Community.CsharpSqlite
     /*
     ** install_mutex_counters BOOLEAN
     */
-    //static int test_install_mutex_counters(
-    //  void * clientData,
-    //  Tcl_Interp *interp,
-    //  int objc,
-    //  Tcl_Obj *CONST objv[]
-    //){
-    //  int rc = SQLITE_OK;
-    //  int isInstall;
+    static int test_install_mutex_counters(
+    object clientdata,
+    Tcl_Interp interp,
+    int objc,
+    Tcl_Obj[] objv
+    )
+    {
+      int rc = SQLITE_OK;
+      bool isInstall = false;
 
-    //  sqlite3_mutex_methods counter_methods = {
-    //    counterMutexInit,
-    //    counterMutexEnd,
-    //    counterMutexAlloc,
-    //    counterMutexFree,
-    //    counterMutexEnter,
-    //    counterMutexTry,
-    //    counterMutexLeave,
-    //    counterMutexHeld,
-    //    counterMutexNotheld
-    //  };
+      sqlite3_mutex_methods counter_methods = new sqlite3_mutex_methods(
+      (dxMutexInit)counterMutexInit,
+      (dxMutexEnd)counterMutexEnd,
+      (dxMutexAlloc)counterMutexAlloc,
+      (dxMutexFree)counterMutexFree,
+      (dxMutexEnter)counterMutexEnter,
+      (dxMutexTry)counterMutexTry,
+      (dxMutexLeave)counterMutexLeave,
+      (dxMutexHeld)counterMutexHeld,
+      (dxMutexNotheld)counterMutexNotheld
+      );
 
-    //  if( objc!=2 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, "BOOLEAN");
-    //    return TCL.TCL_ERROR;
-    //  }
-    //  if( TCL.TCL_OK!=Tcl_GetBooleanFromObj(interp, objv[1], isInstall) ){
-    //    return TCL.TCL_ERROR;
-    //  }
+      if ( objc != 2 )
+      {
+        TCL.Tcl_WrongNumArgs( interp, 1, objv, "BOOLEAN" );
+        return TCL.TCL_ERROR;
+      }
+      if ( TCL.Tcl_GetBoolean( interp, objv[1], ref isInstall ))
+      {
+        return TCL.TCL_ERROR;
+      }
 
-    //  Debug.Assert(isInstall==0 || isInstall==1);
-    //  Debug.Assert(g.isInstalled==0 || g.isInstalled==1);
-    //  if( isInstall==g.isInstalled ){
-    //    TCL.Tcl_AppendResult(interp, "mutex counters are ");
-    //    TCL.Tcl_AppendResult(interp, isInstall?"already installed":"not installed");
-    //    return TCL.TCL_ERROR;
-    //  }
+      Debug.Assert( isInstall == false || isInstall == true );
+      Debug.Assert( g.isInstalled == false || g.isInstalled == true );
+      if ( isInstall == g.isInstalled )
+      {
+        TCL.Tcl_AppendResult( interp, "mutex counters are " );
+        TCL.Tcl_AppendResult( interp, isInstall ? "already installed" : "not installed" );
+        return TCL.TCL_ERROR;
+      }
 
-    //  if( isInstall ){
-    //    Debug.Assert( g.m.xMutexAlloc==0 );
-    //    rc = sqlite3_config(SQLITE_CONFIG_GETMUTEX, g.m);
-    //    if( rc==SQLITE_OK ){
-    //      sqlite3_config(SQLITE_CONFIG_MUTEX, counter_methods);
-    //    }
-    //    g.disableTry = 0;
-    //  }else{
-    //    Debug.Assert( g.m.xMutexAlloc );
-    //    rc = sqlite3_config(SQLITE_CONFIG_MUTEX, g.m);
-    //    memset(&g.m, 0, sizeof(sqlite3_mutex_methods));
-    //  }
+      if ( isInstall )
+      {
+        Debug.Assert( g.m.xMutexAlloc == null );
+        rc = sqlite3_config( SQLITE_CONFIG_GETMUTEX, ref g.m );
+        if ( rc == SQLITE_OK )
+        {
+          sqlite3_config( SQLITE_CONFIG_MUTEX, counter_methods );
+        }
+        g.disableTry = false;
+      }
+      else
+      {
+        Debug.Assert( g.m.xMutexAlloc != null );
+        rc = sqlite3_config( SQLITE_CONFIG_MUTEX, g.m );
+        g.m = new sqlite3_mutex_methods();//        memset( &g.m, 0, sizeof( sqlite3_mutex_methods ) );
+      }
 
-    //  if( rc==SQLITE_OK ){
-    //    g.isInstalled = isInstall;
-    //  }
+      if ( rc == SQLITE_OK )
+      {
+        g.isInstalled = isInstall;
+      }
 
-    //  TCL.Tcl_SetResult(interp, (char *)sqlite3TestErrorName(rc), TCL.Tcl_VOLATILE);
-    //  return TCL.TCL_OK;
-    //}
+      TCL.Tcl_SetResult( interp, sqlite3TestErrorName( rc ), TCL.TCL_VOLATILE );
+      return TCL.TCL_OK;
+    }
 
     /*
     ** read_mutex_counters
     */
-    //static int test_read_mutex_counters(
-    //     object clientdata,
-    //      Tcl_Interp interp,
-    //      int objc,
-    //      Tcl_Obj[] objv
-    //){
-    //  Tcl_Obj pRet;
-    //  int ii;
-    //  char *aName[8] = {
-    //    "fast",        "recursive",   "static_master", "static_mem",
-    //    "static_open", "static_prng", "static_lru",    "static_lru2"
-    //  };
+    static int test_read_mutex_counters(
+    object clientdata,
+    Tcl_Interp interp,
+    int objc,
+    Tcl_Obj[] objv
+    )
+    {
+      Tcl_Obj pRet;
+      int ii;
+      string[] aName = new string[] {
+        "fast",        "recursive",   "static_master", "static_mem",
+        "static_open", "static_prng", "static_lru",    "static_pmem"
+      };
 
-    //  if( objc!=1 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, "");
-    //    return TCL.TCL_ERROR;
-    //  }
+      if ( objc != 1 )
+      {
+        TCL.Tcl_WrongNumArgs( interp, 1, objv, "" );
+        return TCL.TCL_ERROR;
+      }
 
-    //  pRet = TCL.Tcl_NewObj();
-    //  TCL.Tcl_IncrRefCount(pRet);
-    //  for(ii=0; ii<8; ii++){
-    //    TCL.Tcl_ListObjAppendElement(interp, pRet, TCL.Tcl_NewStringObj(aName[ii], -1));
-    //    TCL.Tcl_ListObjAppendElement(interp, pRet, TCL.Tcl_NewIntObj(g.aCounter[ii]));
-    //  }
-    //  TCL.Tcl_SetObjResult(interp, pRet);
-    //  TCL.Tcl_DecrRefCount(pRet);
+      pRet = TCL.Tcl_NewObj();
+      TCL.Tcl_IncrRefCount( pRet );
+      for ( ii = 0; ii < 8; ii++ )
+      {
+        TCL.Tcl_ListObjAppendElement( interp, pRet, TCL.Tcl_NewStringObj( aName[ii], -1 ) );
+        TCL.Tcl_ListObjAppendElement( interp, pRet, TCL.Tcl_NewIntObj( g.aCounter[ii] ) );
+      }
+      TCL.Tcl_SetObjResult( interp, pRet );
+      TCL.Tcl_DecrRefCount( ref pRet );
 
-    //  return TCL.TCL_OK;
-    //}
+      return TCL.TCL_OK;
+    }
 
     /*
     ** clear_mutex_counters
@@ -320,7 +343,7 @@ namespace Community.CsharpSqlite
         return TCL.TCL_ERROR;
       }
 
-      for ( ii = 0 ; ii < 8 ; ii++ )
+      for ( ii = 0; ii < 8; ii++ )
       {
         g.aCounter[ii] = 0;
       }
@@ -339,11 +362,11 @@ namespace Community.CsharpSqlite
     Tcl_Obj[] objv )
     {
 #if SQLITE_THREADSAFE
-sqlite3_mutex p = sqlite3_mutex_alloc( SQLITE_MUTEX_FAST );
-string zBuf = "";//[100];
-sqlite3_mutex_free( ref p );
-sqlite3_snprintf( 100, ref zBuf, "%p", p );
-TCL.Tcl_AppendResult( interp, zBuf );
+      sqlite3_mutex p = sqlite3_mutex_alloc( SQLITE_MUTEX_FAST );
+      StringBuilder zBuf = new StringBuilder( 100 );
+      sqlite3_mutex_free( p );
+      sqlite3_snprintf( 100, zBuf, "->%p", p );
+      TCL.Tcl_AppendResult( interp, zBuf );
 #endif
       return TCL.TCL_OK;
     }
@@ -373,11 +396,17 @@ TCL.Tcl_AppendResult( interp, zBuf );
     {
       try
       {
-        for ( index = 0 ; index < table.Length ; index++ )
-        { if ( table[index].zName == msg ) return false; }
+        for ( index = 0; index < table.Length; index++ )
+        {
+          if ( table[index].zName == msg )
+            return false;
+        }
         return true;
       }
-      catch { return true; }
+      catch
+      {
+        return true;
+      }
     }
 
 
@@ -406,7 +435,7 @@ new ConfigOption(null,0)
 
       if ( Tcl_GetIndexFromObjStruct( interp, objv[1], aOpt, s, "flag", 0, ref i ) )
       {
-        if ( TCL.Tcl_GetIntFromObj( interp, objv[1], ref i ) )
+        if ( TCL.TCL_OK != TCL.Tcl_GetIntFromObj( interp, objv[1], ref i ) )
         {
           return TCL.TCL_ERROR;
         }
@@ -433,43 +462,49 @@ new ConfigOption(null,0)
     //assert( db );
     //return db;
 
-    //static int test_enter_db_mutex(
-    //  void * clientData,
-    //  Tcl_Interp *interp,
-    //  int objc,
-    //  Tcl_Obj *CONST objv[]
-    //){
-    //  sqlite3 *db;
-    //  if( objc!=2 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, "DB");
-    //    return TCL.TCL_ERROR;
-    //  }
-    //  db = getDbPointer(interp, objv[1]);
-    //  if( !db ){
-    //    return TCL.TCL_ERROR;
-    //  }
-    //  sqlite3_mutex_enter(sqlite3_db_mutex(db));
-    //  return TCL.TCL_OK;
-    //}
+    static int test_enter_db_mutex(
+    object clientdata,
+    Tcl_Interp interp,
+    int objc,
+    Tcl_Obj[] objv
+    )
+    {
+      sqlite3 db = null;
+      if ( objc != 2 )
+      {
+        TCL.Tcl_WrongNumArgs( interp, 1, objv, "DB" );
+        return TCL.TCL_ERROR;
+      }
+      getDbPointer( interp, TCL.Tcl_GetString( objv[1] ), ref db );
+      if ( null == db )
+      {
+        return TCL.TCL_ERROR;
+      }
+      sqlite3_mutex_enter( sqlite3_db_mutex( db ) );
+      return TCL.TCL_OK;
+    }
 
-    //static int test_leave_db_mutex(
-    //  void * clientData,
-    //  Tcl_Interp *interp,
-    //  int objc,
-    //  Tcl_Obj *CONST objv[]
-    //){
-    //  sqlite3 *db;
-    //  if( objc!=2 ){
-    //    TCL.Tcl_WrongNumArgs(interp, 1, objv, "DB");
-    //    return TCL.TCL_ERROR;
-    //  }
-    //  db = getDbPointer(interp, objv[1]);
-    //  if( !db ){
-    //    return TCL.TCL_ERROR;
-    //  }
-    //  sqlite3_mutex_leave(sqlite3_db_mutex(db));
-    //  return TCL.TCL_OK;
-    //}
+    static int test_leave_db_mutex(
+    object clientdata,
+    Tcl_Interp interp,
+    int objc,
+    Tcl_Obj[] objv
+    )
+    {
+      sqlite3 db = null;
+      if ( objc != 2 )
+      {
+        TCL.Tcl_WrongNumArgs( interp, 1, objv, "DB" );
+        return TCL.TCL_ERROR;
+      }
+      getDbPointer( interp, TCL.Tcl_GetString( objv[1] ), ref db );
+      if ( null == db )
+      {
+        return TCL.TCL_ERROR;
+      }
+      sqlite3_mutex_leave( sqlite3_db_mutex( db ) );
+      return TCL.TCL_OK;
+    }
 
     static public int Sqlitetest_mutex_Init( Tcl_Interp interp )
     {
@@ -478,28 +513,28 @@ new ConfigOption(null,0)
       //  Tcl_ObjCmdProc *xProc;
       //}
       _aObjCmd[] aCmd = new _aObjCmd[]{
-new _aObjCmd( "sqlite3_shutdown",         test_shutdown ),
-new _aObjCmd( "sqlite3_initialize",       test_initialize ),
-new _aObjCmd( "sqlite3_config",           test_config ),
+new _aObjCmd( "sqlite3_shutdown", test_shutdown ), 
+new _aObjCmd( "sqlite3_initialize", test_initialize ), 
+new _aObjCmd( "sqlite3_config", test_config ), 
 
-//new _aCmd("enter_db_mutex",          (Tcl_ObjCmdProc*)test_enter_db_mutex },
-//new _aCmd( "leave_db_mutex",          (Tcl_ObjCmdProc*)test_leave_db_mutex },
+new _aObjCmd("enter_db_mutex", test_enter_db_mutex ), 
+new _aObjCmd( "leave_db_mutex", test_leave_db_mutex ), 
 
-//new _aCmd( "alloc_dealloc_mutex",     (Tcl_ObjCmdProc)test_alloc_mutex ),
-//new _aCmd( "install_mutex_counters",  (Tcl_ObjCmdProc)test_install_mutex_counters ),
-//new _aCmd( "read_mutex_counters",     (Tcl_ObjCmdProc)test_read_mutex_counters ),
-//new _aCmd( "clear_mutex_counters",    (Tcl_ObjCmdProc)test_clear_mutex_counters ),
+new _aObjCmd( "alloc_dealloc_mutex", test_alloc_mutex ), 
+new _aObjCmd( "install_mutex_counters", test_install_mutex_counters ), 
+new _aObjCmd( "read_mutex_counters", test_read_mutex_counters ), 
+new _aObjCmd( "clear_mutex_counters", test_clear_mutex_counters ), 
 };
       int i;
-      for ( i = 0 ; i < aCmd.Length ; i++ )
+      for ( i = 0; i < aCmd.Length; i++ )
       {//sizeof(aCmd)/sizeof(aCmd[0]); i++){
         TCL.Tcl_CreateObjCommand( interp, aCmd[i].zName, aCmd[i].xProc, null, null );
       }
 
-      //Tcl_LinkVar(interp, "disable_mutex_init",
-      //             g.disableInit, VarFlag.SQLITE3_LINK_INT  );
-      //Tcl_LinkVar(interp, "disable_mutex_try",
-      //            g.disableTry, VarFlag.SQLITE3_LINK_INT  );
+      TCL.Tcl_LinkVar(interp, "disable_mutex_init",disableInit, VarFlags.SQLITE3_LINK_INT );
+                   //g.disableInit, VarFlags.SQLITE3_LINK_INT );
+      TCL.Tcl_LinkVar( interp, "disable_mutex_try",disableTry, VarFlags.SQLITE3_LINK_INT );
+                  //g.disableTry, VarFlags.SQLITE3_LINK_INT );
       return SQLITE_OK;
     }
   }

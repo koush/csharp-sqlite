@@ -9,7 +9,7 @@ using u32 = System.UInt32;
 
 namespace tcl.lang
 {
-#if !NO_TCL
+#if TCLSH
   using lang;
   using Tcl_Channel = Channel;
   using Tcl_DString = TclString;
@@ -22,7 +22,11 @@ namespace tcl.lang
 
     // -- Conversion from TCL to tclsharp coding
     // Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-    // $Header$
+    public static void Tcl_AppendElement( Interp interp, StringBuilder toAppend )
+    {
+      interp.appendElement( toAppend.ToString() );
+    }
+
     public static void Tcl_AppendElement( Interp interp, string toAppend )
     {
       interp.appendElement( toAppend );
@@ -33,7 +37,8 @@ namespace tcl.lang
       if ( tos != null )
       {
         StringBuilder result = new StringBuilder( 100 );
-        for ( int i = 0 ; i < tos.Length && tos[i] != null ; i++ ) result.Append( tos[i].ToString() );
+        for ( int i = 0; i < tos.Length && tos[i] != null; i++ )
+          result.Append( tos[i].ToString() );
         interp.appendElement( result.ToString() );
       }
     }
@@ -43,7 +48,8 @@ namespace tcl.lang
       if ( strings != null )
       {
         StringBuilder result = new StringBuilder( 100 );
-        for ( int i = 0 ; i < strings.Length && strings[i] != null && strings[i] != "" ; i++ ) result.Append( strings[i] );
+        for ( int i = 0; i < strings.Length && strings[i] != null && strings[i] != ""; i++ )
+          result.Append( strings[i] );
         interp.appendElement( result.ToString() );
       }
     }
@@ -65,16 +71,37 @@ namespace tcl.lang
     }
 
 
+    public static bool Tcl_CreateCommandPointer( Interp interp, StringBuilder command, object clientData )
+    {
+      try
+      {
+        interp.createObjCommand( command.ToString(), null, clientData, null );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
+    }
+
     public static bool Tcl_CreateCommandPointer( Interp interp, string command, object clientData )
     {
-      try { interp.createObjCommand( command, null, clientData, null ); return false; }
-      catch { return true; }
+      try
+      {
+        interp.createObjCommand( command, null, clientData, null );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static void Tcl_DecrRefCount( ref TclObject to )
     {
       to.release();
-      if ( to.internalRep == null ) to = null;
+      if ( to.internalRep == null )
+        to = null;
     }
 
     public static int Tcl_DeleteCommand( Interp interp, string cmdName )
@@ -99,36 +126,58 @@ namespace tcl.lang
     }
 
     public static int Tcl_DStringLength( TclObject str )
-    { return str.ToString().Length; }
+    {
+      return str.ToString().Length;
+    }
 
     public static TclObject Tcl_DuplicateObj( TclObject to )
-    { return to.duplicate(); }
+    {
+      return to.duplicate();
+    }
 
     public static int Tcl_Eval( Interp interp, string s )
     {
-      try { interp.eval( s ); return 0; }
-      catch { return 1; };
+      try
+      {
+        interp.eval( s );
+        return 0;
+      }
+      catch
+      {
+        return 1;
+      };
     }
     public static int Tcl_EvalObjEx( Interp interp, TclObject tobj, int flags )
     {
-      try { interp.eval( tobj, flags ); return 0; }
+      try
+      {
+        interp.eval( tobj, flags );
+        return 0;
+      }
       catch ( TclException e )
       {
-        if ( e.getCompletionCode() == TCL.CompletionCode.RETURN ) return TCL_RETURN;
-        else if ( e.getCompletionCode() == TCL.CompletionCode.BREAK || interp.getResult().ToString() == "invoked \"break\" outside of a loop" ) return TCL_BREAK;
-        else return TCL_ERROR;
+        if ( e.getCompletionCode() == TCL.CompletionCode.RETURN )
+          return TCL_RETURN;
+        else if ( e.getCompletionCode() == TCL.CompletionCode.BREAK || interp.getResult().ToString() == "invoked \"break\" outside of a loop" )
+          return TCL_BREAK;
+        else
+          return TCL_ERROR;
       };
     }
 
     public static void Tcl_Free( ref TclObject[] to )
     {
-      if ( to != null ) for ( int i = 0 ; i < to.Length ; i++ ) while ( to[i] != null && to[i].refCount > 0 ) to[i].release();
+      if ( to != null )
+        for ( int i = 0; i < to.Length; i++ )
+          while ( to[i] != null && to[i].refCount > 0 )
+            to[i].release();
       to = null;
     }
 
     public static void Tcl_Free( ref TclObject to )
     {
-      while ( to.refCount > 0 ) to.release();
+      while ( to.refCount > 0 )
+        to.release();
     }
 
     public static void Tcl_Free<T>( ref T x ) where T : class
@@ -138,79 +187,154 @@ namespace tcl.lang
 
     public static bool Tcl_GetBoolean( Interp interp, TclObject to, ref int result )
     {
-      try { result = ( TclBoolean.get( interp, to ) ? 1 : 0 ); return false; }
-      catch { return true; }
+      try
+      {
+        result = ( TclBoolean.get( interp, to ) ? 1 : 0 );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetBoolean( Interp interp, TclObject to, ref bool result )
     {
-      try { result = TclBoolean.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        result = TclBoolean.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetBooleanFromObj( Interp interp, TclObject to, ref bool result )
     {
-      try { result = TclBoolean.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        result = TclBoolean.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetCommandInfo( Interp interp, string command, ref WrappedCommand value )
     {
-      try { value = interp.getObjCommand( command ); return false; }
-      catch { return true; }
+      try
+      {
+        value = interp.getObjCommand( command );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static byte[] Tcl_GetByteArrayFromObj( TclObject to, ref int n )
     {
-      n = TclByteArray.getLength(null, to);
+      n = TclByteArray.getLength( null, to );
       return Encoding.UTF8.GetBytes( to.ToString() );
     }
 
     public static bool Tcl_GetDouble( Interp interp, TclObject to, ref double value )
     {
-      try { value = TclDouble.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        value = TclDouble.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetDoubleFromObj( Interp interp, TclObject to, ref double value )
     {
       try
       {
-        if ( to.ToString() == "NaN" ) value = Double.NaN;
-        else value = TclDouble.get( interp, to );
+        if ( to.ToString() == "NaN" )
+          value = Double.NaN;
+        else
+          value = TclDouble.get( interp, to );
         return false;
       }
-      catch { return true; }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetIndexFromObj( Interp interp, TclObject to, string[] table, string msg, int flags, ref int index )
     {
-      try { index = TclIndex.get( interp, to, table, msg, flags ); return false; }
-      catch { return true; }
+      try
+      {
+        index = TclIndex.get( interp, to, table, msg, flags );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetInt( Interp interp, TclObject to, ref int value )
     {
-      try { value = TclInteger.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        value = TclInteger.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_GetInt( Interp interp, TclObject to, ref u32 value )
     {
-      try { value = (u32)TclInteger.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        value = (u32)TclInteger.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
-    public static bool Tcl_GetIntFromObj( Interp interp, TclObject to, ref int value )
+    public static int Tcl_GetIntFromObj( Interp interp, TclObject to, ref int value )
     {
-      try { value = TclInteger.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        value = TclInteger.get( interp, to );
+        return TCL.TCL_OK;
+      }
+      catch
+      {
+        return TCL.TCL_ERROR;
+      }
     }
 
     public static bool Tcl_GetLong( Interp interp, TclObject to, ref i64 value )
     {
-      try { value = (i64)TclLong.get( interp, to ); return false; }
-      catch { return true; }
+      try
+      {
+        value = (i64)TclLong.get( interp, to );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static TclObject Tcl_GetObjResult( Interp interp )
@@ -262,12 +386,17 @@ namespace tcl.lang
         if ( var.isVarScalar() && !var.isVarUndefined() )
         {
           to = (TclObject)var.value;
-          double D = 0;
-          if (!Double.TryParse(to.ToString(), out D)) { if (String.IsNullOrEmpty(to.typePtr)) to.typePtr = "string"; }
-          else if (to.typePtr == "ByteArray") to.typePtr = "bytearray";
-          else if (to.ToString().Contains(".")) to.typePtr = "double";
-          else to.typePtr = "int";
-
+          //if ( to.typePtr != "String" )
+          //{
+          //  double D = 0;
+          //  if ( !Double.TryParse( to.ToString(), out D ) ) { if ( String.IsNullOrEmpty( to.typePtr ) ) to.typePtr = "string"; }
+          //  else if ( to.typePtr == "ByteArray" )
+          //    to.typePtr = "bytearray";
+          //  else if ( to.ToString().Contains( "." ) )
+          //    to.typePtr = "double";
+          //  else
+          //    to.typePtr = "int";
+          //}
           return to;
         }
         if ( var.isSQLITE3_Link() )
@@ -276,7 +405,10 @@ namespace tcl.lang
         }
         return to;
       }
-      catch { return null; };
+      catch
+      {
+        return null;
+      };
     }
 
     public static TclObject Tcl_GetVarType( Interp interp, string part1, string part2, VarFlag flags )
@@ -286,7 +418,10 @@ namespace tcl.lang
         TclObject to = interp.getVar( part1, part2, flags );
         return to;
       }
-      catch { return null; };
+      catch
+      {
+        return null;
+      };
     }
 
     public static bool Tcl_GetWideIntFromObj( Interp interp, TclObject to, ref sqlite_int64 value )
@@ -294,11 +429,18 @@ namespace tcl.lang
       try
       {
         if ( to.ToString() == "NaN" )
-          unchecked { value = (long)Double.NaN; }
-        else value = TclLong.get( interp, to );
+          unchecked
+          {
+            value = (long)Double.NaN;
+          }
+        else
+          value = TclLong.get( interp, to );
         return false;
       }
-      catch { return true; };
+      catch
+      {
+        return true;
+      };
     }
 
     public static void Tcl_IncrRefCount( TclObject to )
@@ -322,7 +464,10 @@ namespace tcl.lang
         TclList.append( interp, to, elemObj );
         return false;
       }
-      catch { return true; }
+      catch
+      {
+        return true;
+      }
     }
 
     public static bool Tcl_ListObjGetElements( Interp interp, TclObject to, ref int nArg, ref Tcl_Obj[] aArg )
@@ -333,7 +478,10 @@ namespace tcl.lang
         nArg = aArg.Length;
         return false;
       }
-      catch { return true; }
+      catch
+      {
+        return true;
+      }
     }
 
     public static TclObject Tcl_NewBooleanObj( int value )
@@ -343,14 +491,18 @@ namespace tcl.lang
 
     public static TclObject Tcl_NewByteArrayObj( byte[] value, int bytes )
     {
-      if ( value == null || value.Length == 0 || bytes == 0 ) return TclByteArray.newInstance();
-      else return TclByteArray.newInstance( value, 0, bytes );
+      if ( value == null || value.Length == 0 || bytes == 0 )
+        return TclByteArray.newInstance();
+      else
+        return TclByteArray.newInstance( value, 0, bytes );
     }
 
     public static TclObject Tcl_NewByteArrayObj( string value, int bytes )
     {
-      if ( value == null || bytes == 0 ) return TclByteArray.newInstance();
-      else return TclByteArray.newInstance( System.Text.Encoding.UTF8.GetBytes( value.Substring( 0, bytes ) ) );
+      if ( value == null || bytes == 0 )
+        return TclByteArray.newInstance();
+      else
+        return TclByteArray.newInstance( System.Text.Encoding.UTF8.GetBytes( value.Substring( 0, bytes ) ) );
     }
 
     public static TclObject Tcl_NewDoubleObj( double value )
@@ -366,7 +518,8 @@ namespace tcl.lang
     public static TclObject Tcl_NewListObj( int nArg, TclObject[] aArg )
     {
       TclObject to = TclList.newInstance();
-      for ( int i = 0 ; i < nArg ; i++ ) TclList.append( null, to, aArg[i] );
+      for ( int i = 0; i < nArg; i++ )
+        TclList.append( null, to, aArg[i] );
       return to;
     }
 
@@ -385,9 +538,12 @@ namespace tcl.lang
 
     public static TclObject Tcl_NewStringObj( string value, int iLength )
     {
-      if ( value == null ) value = "";
-      else value = value.Split( '\0' )[0];
-      if ( iLength <= 0 ) iLength = value.Length;
+      if ( value == null )
+        value = "";
+      else
+        value = value.Split( '\0' )[0];
+      if ( iLength <= 0 )
+        iLength = value.Length;
       return TclString.newInstance( value.Substring( 0, iLength ) );
     }
 
@@ -400,12 +556,16 @@ namespace tcl.lang
     {
       try
       {
-        if ( part2 == null ) interp.setVar( toName, toValue, flags );
+        if ( part2 == null )
+          interp.setVar( toName, toValue, flags );
         else
           interp.setVar( toName.ToString(), part2.ToString(), toValue.ToString(), flags );
         return false;
       }
-      catch { return true; }
+      catch
+      {
+        return true;
+      }
     }
     public static void Tcl_PkgProvide( Interp interp, string name, string version )
     {
@@ -425,21 +585,30 @@ namespace tcl.lang
 
     public static bool Tcl_SetCommandInfo( Interp interp, string command, WrappedCommand value )
     {
-      try { value = interp.getObjCommand( command ); return false; }
-      catch { return true; }
+      try
+      {
+        value = interp.getObjCommand( command );
+        return false;
+      }
+      catch
+      {
+        return true;
+      }
     }
 
     public static void Tcl_SetIntObj( TclObject to, int result
       )
     {
-      while ( to.Shared ) to.release();
+      while ( to.Shared )
+        to.release();
       TclInteger.set( to, result );
       to.preserve();
     }
 
     public static void Tcl_SetLongObj( TclObject to, long result )
     {
-      while ( to.Shared ) to.release();
+      while ( to.Shared )
+        to.release();
       TclLong.set( to, result );
       to.preserve();
     }
@@ -448,6 +617,12 @@ namespace tcl.lang
     {
       interp.resetResult();
       interp.setResult( to );
+    }
+
+    public static void Tcl_SetResult( Interp interp, StringBuilder result, int dummy )
+    {
+      interp.resetResult();
+      interp.setResult( result.ToString() );
     }
 
     public static void Tcl_SetResult( Interp interp, string result, int dummy )
@@ -479,9 +654,10 @@ namespace tcl.lang
         int rc = 0;
         Tcl_Obj pCmd = Tcl_NewStringObj( Scriptname, -1 );
         Tcl_IncrRefCount( pCmd );
-        for ( int i = 0 ; i < argv.Length ; i++ )
+        for ( int i = 0; i < argv.Length; i++ )
         {
-          if ( argv[i] != null && argv[i] != " " ) rc = Tcl_ListObjAppendElement( interp, pCmd, Tcl_NewStringObj( argv[i], -1 ) ) ? 1 : 0;
+          if ( argv[i] != null && argv[i] != " " )
+            rc = Tcl_ListObjAppendElement( interp, pCmd, Tcl_NewStringObj( argv[i], -1 ) ) ? 1 : 0;
           if ( rc != 0 )
           {
             Tcl_DecrRefCount( ref pCmd );
@@ -492,14 +668,28 @@ namespace tcl.lang
         Tcl_DecrRefCount( ref pCmd );
         return rc == TCL_BREAK ? 1 : 0;
       }
-      catch { return 1; }
+      catch
+      {
+        return 1;
+      }
     }
 
     public static void Tcl_WrongNumArgs( Interp interp, int argc, TclObject[] argv, string message )
     {
-      throw new TclNumArgsException( interp, argc, argv, message  == null ? "option ?arg ...?" : message );
+      throw new TclNumArgsException( interp, argc, argv, message == null ? "option ?arg ...?" : message );
     }
 
+    public static Interp Tcl_GetSlave( Interp interp, string slaveInterp )
+    {
+      try
+      {
+        return ( (tcl.lang.InterpSlaveCmd)interp.slaveTable[slaveInterp] ).slaveInterp;
+      }
+      catch
+      {
+        return null;
+      }
+    }
   }
 #endif
 }

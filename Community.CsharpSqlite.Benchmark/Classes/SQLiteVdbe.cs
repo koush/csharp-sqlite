@@ -203,7 +203,7 @@ Sqlite3.sqlite3_reset
 #else
 Sqlite3.sqlite3_finalize
 #endif
-( ref vm );
+( vm );
     }
 
   }

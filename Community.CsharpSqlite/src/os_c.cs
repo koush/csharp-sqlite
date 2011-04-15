@@ -4,7 +4,7 @@ using System.Text;
 using HANDLE = System.IntPtr;
 using i64 = System.Int64;
 using u32 = System.UInt32;
-
+using sqlite3_int64 = System.Int64;
 
 namespace Community.CsharpSqlite
 {
@@ -29,9 +29,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-12-07 20:14:09 a586a4deeb25330037a49df295b36aaf624d0f45
     **
-    **  $Header$
     *************************************************************************
     */
     //#define _SQLITE_OS_C_ 1
@@ -55,12 +54,18 @@ namespace Community.CsharpSqlite
     **     sqlite3OsLock()
     **
     */
-#if (SQLITE_TEST) && !SQLITE_OS_WIN
-//#define DO_OS_MALLOC_TEST(x) if (!x || !sqlite3IsMemJournal(x)) {     \
-void *pTstAlloc = sqlite3Malloc(10);                             \
-if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
-//sqlite3_free(ref pTstAlloc);                                         \
-}
+#if (SQLITE_TEST)
+    static int sqlite3_memdebug_vfs_oom_test = 1;
+
+    //#define DO_OS_MALLOC_TEST(x)                                       \
+    //if (sqlite3_memdebug_vfs_oom_test && (!x || !sqlite3IsMemJournal(x))) {  \
+    //  void *pTstAlloc = sqlite3Malloc(10);                             \
+    //  if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
+    //  sqlite3_free(pTstAlloc);                                         \
+    //}
+    static void DO_OS_MALLOC_TEST( sqlite3_file x )
+    {
+    }
 #else
     //#define DO_OS_MALLOC_TEST(x)
     static void DO_OS_MALLOC_TEST( sqlite3_file x ) { }
@@ -86,7 +91,8 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     static int sqlite3OsRead( sqlite3_file id, byte[] pBuf, int amt, i64 offset )
     {
       DO_OS_MALLOC_TEST( id );
-      if ( pBuf == null ) pBuf = sqlite3Malloc(amt);
+      if ( pBuf == null )
+        pBuf = sqlite3Malloc( amt );
       return id.pMethods.xRead( id, pBuf, amt, offset );
     }
     static int sqlite3OsWrite( sqlite3_file id, byte[] pBuf, int amt, i64 offset )
@@ -121,7 +127,7 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       DO_OS_MALLOC_TEST( id );
       return id.pMethods.xCheckReservedLock( id, ref pResOut );
     }
-    static int sqlite3OsFileControl( sqlite3_file id, u32 op, ref int pArg )
+    static int sqlite3OsFileControl( sqlite3_file id, u32 op, ref sqlite3_int64 pArg )
     {
       return id.pMethods.xFileControl( id, (int)op, ref pArg );
     }
@@ -134,6 +140,30 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     static int sqlite3OsDeviceCharacteristics( sqlite3_file id )
     {
       return id.pMethods.xDeviceCharacteristics( id );
+    }
+
+    static int sqlite3OsShmLock( sqlite3_file id, int offset, int n, int flags )
+    {
+      return id.pMethods.xShmLock( id, offset, n, flags );
+    }
+    static void sqlite3OsShmBarrier( sqlite3_file id )
+    {
+      id.pMethods.xShmBarrier( id );
+    }
+
+    static int sqlite3OsShmUnmap( sqlite3_file id, int deleteFlag )
+    {
+      return id.pMethods.xShmUnmap( id, deleteFlag );
+    }
+    static int sqlite3OsShmMap(
+sqlite3_file id,              /* Database file handle */
+int iPage,
+int pgsz,
+int bExtend,                  /* True to extend file if necessary */
+ref object pp                 /* OUT: Pointer to mapping */
+)
+    {
+      return id.pMethods.xShmMap( id, iPage, pgsz, bExtend, ref pp );
     }
 
     /*
@@ -150,11 +180,11 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       int rc;
       DO_OS_MALLOC_TEST( null );
-      /* 0x7f3f is a mask of SQLITE_OPEN_ flags that are valid to be passed
+      /* 0x87f3f is a mask of SQLITE_OPEN_ flags that are valid to be passed
       ** down into the VFS layer.  Some SQLITE_OPEN_ flags (for example,
       ** SQLITE_OPEN_FULLMUTEX or SQLITE_OPEN_SHAREDCACHE) are blocked before
       ** reaching the VFS. */
-      rc = pVfs.xOpen( pVfs, zPath, pFile, flags & 0x7f3f, ref pFlagsOut );
+      rc = pVfs.xOpen( pVfs, zPath, pFile, flags & 0x87f3f, ref pFlagsOut );
       Debug.Assert( rc == SQLITE_OK || pFile.pMethods == null );
       return rc;
     }
@@ -183,9 +213,9 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
       return pVfs.xDlOpen( pVfs, zPath );
     }
 
-    static void sqlite3OsDlError( sqlite3_vfs pVfs, int nByte, ref string zBufOut )
+    static void sqlite3OsDlError( sqlite3_vfs pVfs, int nByte, string zBufOut )
     {
-      pVfs.xDlError( pVfs, nByte, ref zBufOut );
+      pVfs.xDlError( pVfs, nByte, zBufOut );
     }
     static object sqlite3OsDlSym( sqlite3_vfs pVfs, HANDLE pHdle, ref string zSym )
     {
@@ -204,9 +234,27 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       return pVfs.xSleep( pVfs, nMicro );
     }
-    static int sqlite3OsCurrentTime( sqlite3_vfs pVfs, ref double pTimeOut )
+
+    static int sqlite3OsCurrentTimeInt64( sqlite3_vfs pVfs, ref sqlite3_int64 pTimeOut )
     {
-      return pVfs.xCurrentTime( pVfs, ref pTimeOut );
+      int rc;
+      /* IMPLEMENTATION-OF: R-49045-42493 SQLite will use the xCurrentTimeInt64()
+      ** method to get the current date and time if that method is available
+      ** (if iVersion is 2 or greater and the function pointer is not NULL) and
+      ** will fall back to xCurrentTime() if xCurrentTimeInt64() is
+      ** unavailable.
+      */
+      if ( pVfs.iVersion >= 2 && pVfs.xCurrentTimeInt64 != null )
+      {
+        rc = pVfs.xCurrentTimeInt64( pVfs, ref pTimeOut );
+      }
+      else
+      {
+        double r = 0;
+        rc = pVfs.xCurrentTime( pVfs, ref r );
+        pTimeOut = (sqlite3_int64)( r * 86400000.0 );
+      }
+      return rc;
     }
 
     static int sqlite3OsOpenMalloc(
@@ -272,20 +320,23 @@ if (!pTstAlloc) return SQLITE_IOERR_NOMEM;                       \
     {
       sqlite3_vfs pVfs = null;
 #if SQLITE_THREADSAFE
-sqlite3_mutex mutex;
+      sqlite3_mutex mutex;
 #endif
 #if !SQLITE_OMIT_AUTOINIT
       int rc = sqlite3_initialize();
-      if ( rc != 0 ) return null;
+      if ( rc != 0 )
+        return null;
 #endif
 #if SQLITE_THREADSAFE
-mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER);
+      mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
 #endif
       sqlite3_mutex_enter( mutex );
       for ( pVfs = vfsList; pVfs != null; pVfs = pVfs.pNext )
       {
-        if ( zVfs == null || zVfs == "" ) break;
-        if ( zVfs == pVfs.zName ) break; //strcmp(zVfs, pVfs.zName) == null) break;
+        if ( zVfs == null || zVfs == "" )
+          break;
+        if ( zVfs == pVfs.zName )
+          break; //strcmp(zVfs, pVfs.zName) == null) break;
       }
       sqlite3_mutex_leave( mutex );
       return pVfs;
@@ -329,7 +380,8 @@ mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER);
       sqlite3_mutex mutex;
 #if !SQLITE_OMIT_AUTOINIT
       int rc = sqlite3_initialize();
-      if ( rc != 0 ) return rc;
+      if ( rc != 0 )
+        return rc;
 #endif
       mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
       sqlite3_mutex_enter( mutex );
@@ -355,7 +407,7 @@ mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER);
     static int sqlite3_vfs_unregister( sqlite3_vfs pVfs )
     {
 #if SQLITE_THREADSAFE
-sqlite3_mutex mutex = sqlite3MutexAlloc(SQLITE_MUTEX_STATIC_MASTER);
+      sqlite3_mutex mutex = sqlite3MutexAlloc( SQLITE_MUTEX_STATIC_MASTER );
 #endif
       sqlite3_mutex_enter( mutex );
       vfsUnlink( pVfs );

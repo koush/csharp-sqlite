@@ -8,12 +8,13 @@
 * WARRANTIES.
 * 
 * Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-* $Header$
+*
 * RCS @(#) $Id: TclList.java,v 1.5 2003/01/09 02:15:39 mdejong Exp $
 *
 */
 using System;
 using System.Collections;
+using System.Text;
 
 namespace tcl.lang
 {
@@ -48,7 +49,7 @@ namespace tcl.lang
     public void dispose()
     {
       int size = vector.Count;
-      for ( int i = 0 ; i < size ; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         ( (TclObject)vector[i] ).release();
       }
@@ -66,7 +67,7 @@ namespace tcl.lang
       int size = vector.Count;
       TclList newList = new TclList( size );
 
-      for ( int i = 0 ; i < size ; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         TclObject tobj = (TclObject)vector[i];
         tobj.preserve();
@@ -85,12 +86,12 @@ namespace tcl.lang
     /// </returns>
     public override string ToString()
     {
-      System.Text.StringBuilder sbuf = new System.Text.StringBuilder();
+      StringBuilder sbuf = new StringBuilder();
       int size = vector.Count;
 
       try
       {
-        for ( int i = 0 ; i < size ; i++ )
+        for ( int i = 0; i < size; i++ )
         {
           Object elm = vector[i];
           if ( elm != null )
@@ -203,8 +204,6 @@ namespace tcl.lang
       tobj.invalidateStringRep();
 
       TclList tlist = (TclList)tobj.InternalRep;
-
-      if ( !String.IsNullOrEmpty( elemObj.stringRep ) && elemObj.stringRep[0] == '{' ) elemObj = TclString.newInstance( elemObj.stringRep.Substring( 1, elemObj.stringRep.Length - 2 ) );
       elemObj.preserve();
       tlist.vector.Add( elemObj );
     }
@@ -253,7 +252,7 @@ namespace tcl.lang
 
       int size = tlist.vector.Count;
       TclObject[] objArray = new TclObject[size];
-      for ( int i = 0 ; i < size ; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         objArray[i] = (TclObject)tlist.vector[i];
       }
@@ -377,14 +376,14 @@ namespace tcl.lang
         {
           count = size - index;
         }
-        for ( i = 0 ; i < count ; i++ )
+        for ( i = 0; i < count; i++ )
         {
           TclObject obj = (TclObject)tlist.vector[index];
           obj.release();
           tlist.vector.RemoveAt( index );
         }
       }
-      for ( i = from ; i <= to ; i++ )
+      for ( i = from; i <= to; i++ )
       {
         elements[i].preserve();
         tlist.vector.Insert( index++, elements[i] );
@@ -427,7 +426,7 @@ namespace tcl.lang
       }
 
       TclObject[] objArray = new TclObject[size];
-      for ( int i = 0 ; i < size ; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         objArray[i] = (TclObject)tlist.vector[i];
       }
@@ -435,14 +434,15 @@ namespace tcl.lang
       QSort s = new QSort();
       int newsize = s.sort( interp, objArray, sortMode, sortIndex, sortIncreasing, command, unique );
 
-      for ( int i = 0 ; i < size   ; i++ )
+      for ( int i = 0; i < size; i++ )
       {
         if ( i < newsize )
         {
           tlist.vector[i] = objArray[i];
           objArray[i] = null;
         }
-        else tlist.vector.RemoveAt( newsize  );
+        else
+          tlist.vector.RemoveAt( newsize );
       }
     }
   }

@@ -12,12 +12,14 @@
 * WARRANTIES.
 * 
 * Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-* $Header$
+*
 * RCS @(#) $Id: Interp.java,v 1.44 2003/07/25 16:38:35 mdejong Exp $
 *
 */
 using System;
 using System.Collections;
+using System.IO;
+using System.Text;
 
 namespace tcl.lang
 {
@@ -103,7 +105,7 @@ namespace tcl.lang
 
     // Current working directory.
 
-    private System.IO.FileInfo workingDir;
+    private FileInfo workingDir;
 
     // Points to top-most in stack of all nested procedure
     // invocations.  null means there are no active procedures.
@@ -342,7 +344,7 @@ namespace tcl.lang
 
       // Init things that are specific to the Jacl implementation
 
-      workingDir = new System.IO.FileInfo( System.Environment.CurrentDirectory );
+      workingDir = new FileInfo( System.Environment.CurrentDirectory );
       noEval = 0;
 
       notifier = Notifier.getNotifierForThread( System.Threading.Thread.CurrentThread );
@@ -536,7 +538,7 @@ namespace tcl.lang
 
       // Close any remaining channels
 
-      for ( IDictionaryEnumerator e = interpChanTable.GetEnumerator() ; e.MoveNext() ; )
+      for ( IDictionaryEnumerator e = interpChanTable.GetEnumerator(); e.MoveNext(); )
       {
         Object key = e.Key;
         Channel chan = (Channel)e.Value;
@@ -544,7 +546,7 @@ namespace tcl.lang
         {
           chan.close();
         }
-        catch ( System.IO.IOException ex )
+        catch ( IOException ex )
         {
           // Ignore any IO errors
         }
@@ -617,6 +619,7 @@ namespace tcl.lang
       Extension.loadOnDemand( this, "lrange", "tcl.lang.LrangeCmd" );
       Extension.loadOnDemand( this, "lreplace", "tcl.lang.LreplaceCmd" );
       Extension.loadOnDemand( this, "lsearch", "tcl.lang.LsearchCmd" );
+      Extension.loadOnDemand( this, "lset", "tcl.lang.LsetCmd" );
       Extension.loadOnDemand( this, "lsort", "tcl.lang.LsortCmd" );
       Extension.loadOnDemand( this, "namespace", "tcl.lang.NamespaceCmd" );
       Extension.loadOnDemand( this, "open", "tcl.lang.OpenCmd" );
@@ -1063,7 +1066,7 @@ namespace tcl.lang
     // Token for the command.
     {
       Interp interp = this;
-      System.Text.StringBuilder name = new System.Text.StringBuilder();
+      StringBuilder name = new StringBuilder();
 
       // Add the full name of the containing namespace, followed by the "::"
       // separator, and the command name.
@@ -1105,7 +1108,8 @@ namespace tcl.lang
       {
         return -1;
       }
-      if ( cmd.deleteProc != null ) cmd.deleteProc( ref cmd.deleteData );
+      if ( cmd.deleteProc != null )
+        cmd.deleteProc( ref cmd.deleteData );
       return deleteCommandFromToken( cmd );
     }
     protected internal int deleteCommandFromToken( WrappedCommand cmd )
@@ -1154,7 +1158,7 @@ namespace tcl.lang
       // commands were created that refer back to this command. Delete these
       // imported commands now.
 
-      for ( ref_Renamed = cmd.importRef ; ref_Renamed != null ; ref_Renamed = nextRef )
+      for ( ref_Renamed = cmd.importRef; ref_Renamed != null; ref_Renamed = nextRef )
       {
         nextRef = ref_Renamed.next;
         importCmd = ref_Renamed.importedCmd;
@@ -1506,7 +1510,7 @@ namespace tcl.lang
         {
           result = updateReturnInfo();
         }
-        if (result != TCL.CompletionCode.EXIT && result != TCL.CompletionCode.OK && result != TCL.CompletionCode.ERROR && (evalFlags & Parser.TCL_ALLOW_EXCEPTIONS) == 0)
+        if ( result != TCL.CompletionCode.EXIT && result != TCL.CompletionCode.OK && result != TCL.CompletionCode.ERROR && ( evalFlags & Parser.TCL_ALLOW_EXCEPTIONS ) == 0 )
         {
           processUnexpectedResult( result );
         }
@@ -1615,8 +1619,8 @@ namespace tcl.lang
     private string readScriptFromFile( string sFilename )
     // The name of the file.
     {
-      System.IO.FileInfo sourceFile;
-      System.IO.StreamReader fs;
+      FileInfo sourceFile;
+      StreamReader fs;
       try
       {
         sourceFile = FileUtil.getNewFileObj( this, sFilename );
@@ -1626,7 +1630,7 @@ namespace tcl.lang
         resetResult();
         return null;
       }
-      catch ( System.IO.FileNotFoundException e )
+      catch ( FileNotFoundException e )
       {
         return null;
       }
@@ -1637,13 +1641,13 @@ namespace tcl.lang
       try
       {
         // HACK only UTF8 will be read
-        using ( fs = new System.IO.StreamReader( sourceFile.FullName, System.Text.Encoding.UTF8 ) )
+        using ( fs = new StreamReader( sourceFile.FullName, System.Text.Encoding.UTF8 ) )
         {
           // read all an do the new line conversations
           return fs.ReadToEnd().Replace( "\r\n", "\n" );
         }
       }
-      catch ( System.IO.IOException )
+      catch ( IOException )
       {
         return null;
       }
@@ -1686,7 +1690,7 @@ namespace tcl.lang
         {
           jar = (System.Net.HttpWebRequest)System.Net.WebRequest.Create( url );
         }
-        catch ( System.IO.IOException e2 )
+        catch ( IOException e2 )
         {
           return null;
         }
@@ -1710,7 +1714,7 @@ namespace tcl.lang
         }
       }
       // HACK
-      //			catch (System.IO.IOException e)
+      //			catch (IOException e)
       //			{
       //				return null;
       //			}
@@ -1723,10 +1727,10 @@ namespace tcl.lang
       {
         return (string)content;
       }
-      else if ( content is System.IO.Stream )
+      else if ( content is Stream )
       {
         // FIXME : use custom stream handler
-        System.IO.Stream fs = (System.IO.Stream)content;
+        Stream fs = (Stream)content;
 
         try
         {
@@ -1737,7 +1741,7 @@ namespace tcl.lang
           SupportClass.ReadInput( fs, ref charArray, 0, charArray.Length );
           return new string( SupportClass.ToCharArray( charArray ) );
         }
-        catch ( System.IO.IOException e2 )
+        catch ( IOException e2 )
         {
           return null;
         }
@@ -1751,20 +1755,20 @@ namespace tcl.lang
         return null;
       }
     }
-    private void closeInputStream( System.IO.Stream fs )
+    private void closeInputStream( Stream fs )
     {
       try
       {
         fs.Close();
       }
-      catch ( System.IO.IOException e )
+      catch ( IOException e )
       {
         ;
       }
     }
     internal void evalResource( string resName )
     {
-      //			System.IO.Stream stream = null;
+      //			Stream stream = null;
       //			
       //			try
       //			{
@@ -1801,8 +1805,8 @@ namespace tcl.lang
       //				if (System_Renamed.getProperty("java.version").StartsWith("1.2") && stream.GetType().FullName.Equals("java.util.zip.ZipFile$1"))
       //				{
       //					
-      //					System.IO.MemoryStream baos = new System.IO.MemoryStream(1024);
-      //					byte[] buffer = new byte[1024];
+      MemoryStream baos = new MemoryStream( 1024 );
+      byte[] buffer = new byte[1024];
       //					int numRead;
       //					
       //					// Read all data from the stream into a resizable buffer
@@ -1821,7 +1825,7 @@ namespace tcl.lang
       //					long available;
       //					available = stream.Length - stream.Position;
       //					int num = (int) available;
-      //					byte[] byteArray = new byte[num];
+      //          byte[] byteArray = new byte[num];
       //					int offset = 0;
       //					while (num > 0)
       //					{
@@ -1833,7 +1837,7 @@ namespace tcl.lang
       //					eval(new string(SupportClass.ToCharArray(SupportClass.ToByteArray(byteArray))), 0);
       //				}
       //			}
-      //			catch (System.IO.IOException e)
+      //			catch (IOException e)
       //			{
       //				return ;
       //			}
@@ -1973,7 +1977,7 @@ namespace tcl.lang
     {
       return new CallFrame( this );
     }
-    internal System.IO.FileInfo getWorkingDir()
+    internal FileInfo getWorkingDir()
     {
       if ( workingDir == null )
       {
@@ -1987,26 +1991,26 @@ namespace tcl.lang
         {
           resetResult();
         }
-        workingDir = new System.IO.FileInfo( Util.tryGetSystemProperty( "user.home", "." ) );
+        workingDir = new FileInfo( Util.tryGetSystemProperty( "user.home", "." ) );
       }
       return workingDir;
     }
     internal void setWorkingDir( string dirName )
     {
-      System.IO.FileInfo dirObj = FileUtil.getNewFileObj( this, dirName );
+      FileInfo dirObj = FileUtil.getNewFileObj( this, dirName );
 
       //  Use the canonical name of the path, if possible.
 
       try
       {
-        dirObj = new System.IO.FileInfo( dirObj.FullName );
+        dirObj = new FileInfo( dirObj.FullName );
       }
-      catch ( System.IO.IOException e )
+      catch ( IOException e )
       {
       }
 
 
-      if ( System.IO.Directory.Exists( dirObj.FullName ) )
+      if ( Directory.Exists( dirObj.FullName ) )
       {
         workingDir = dirObj;
       }
@@ -2319,7 +2323,7 @@ namespace tcl.lang
     }
     internal void hideUnsafeCommands()
     {
-      for ( int ix = 0 ; ix < unsafeCmds.Length ; ix++ )
+      for ( int ix = 0; ix < unsafeCmds.Length; ix++ )
       {
         try
         {
@@ -2384,7 +2388,7 @@ namespace tcl.lang
               localObjv = new TclObject[objv.Length + 1];
               localObjv[0] = TclString.newInstance( "unknown" );
               localObjv[0].preserve();
-              for ( int i = 0 ; i < objv.Length ; i++ )
+              for ( int i = 0; i < objv.Length; i++ )
               {
                 localObjv[i + 1] = objv[i];
               }
@@ -2444,17 +2448,17 @@ namespace tcl.lang
 
       if ( ( result == TCL.CompletionCode.ERROR ) && ( ( flags & INVOKE_NO_TRACEBACK ) == 0 ) && !errAlreadyLogged )
       {
-        System.Text.StringBuilder ds;
+        StringBuilder ds;
 
         if ( errInProgress )
         {
-          ds = new System.Text.StringBuilder( "\n    while invoking\n\"" );
+          ds = new StringBuilder( "\n    while invoking\n\"" );
         }
         else
         {
-          ds = new System.Text.StringBuilder( "\n    invoked from within\n\"" );
+          ds = new StringBuilder( "\n    invoked from within\n\"" );
         }
-        for ( int i = 0 ; i < objv.Length ; i++ )
+        for ( int i = 0; i < objv.Length; i++ )
         {
 
           ds.Append( objv[i].ToString() );
@@ -2525,7 +2529,7 @@ namespace tcl.lang
 
       if ( resolvers != null )
       {
-        for ( enum_Renamed = resolvers.GetEnumerator() ; enum_Renamed.MoveNext() ; )
+        for ( enum_Renamed = resolvers.GetEnumerator(); enum_Renamed.MoveNext(); )
         {
           res = (ResolverScheme)enum_Renamed.Current;
           if ( name.Equals( res.name ) )

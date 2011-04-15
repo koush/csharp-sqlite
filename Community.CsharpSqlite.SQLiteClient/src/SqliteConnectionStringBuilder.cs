@@ -28,7 +28,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#if NET_2_0
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -262,26 +261,22 @@ namespace Community.CsharpSqlite.SQLiteClient
 		}
 
 		static int ConvertToInt32 (object value) 
-                {
-                        return Int32.Parse (value.ToString (), CultureInfo.InvariantCulture);
-                }
+		{
+			return Int32.Parse (value.ToString (), CultureInfo.InvariantCulture);
+		}
 
-                static bool ConvertToBoolean (object value) 
-                {
-                        if (value == null)
-                                throw new ArgumentNullException ("null value cannot be converted" +
-                                                                 " to boolean");
-                        string upper = value.ToString ().ToUpper ().Trim ();
-                        if (upper == "YES" || upper == "TRUE")
-                                return true;
-                        if (upper == "NO" || upper == "FALSE")
-                                return false;
-                        throw new ArgumentException (String.Format ("Invalid boolean value: {0}",
-                                                                    value.ToString ()));
-                }
+		static bool ConvertToBoolean (object value) 
+		{
+			if (value == null)
+				throw new ArgumentNullException ("null value cannot be converted to boolean");
+			string upper = value.ToString ().ToUpper ().Trim ();
+			if (upper == "YES" || upper == "TRUE")
+				return true;
+			if (upper == "NO" || upper == "FALSE")
+				return false;
+			throw new ArgumentException (String.Format ("Invalid boolean value: {0}", value.ToString ()));
+		}
 		#endregion // Private Methods
 	}
  
-	
 }
-#endif // NET_2_0

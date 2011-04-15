@@ -6,6 +6,8 @@ using i64 = System.Int64;
 using u8 = System.Byte;
 
 using Pgno = System.UInt32;
+using sqlite3_int64 = System.Int64;
+using System.Globalization;
 
 namespace Community.CsharpSqlite
 {
@@ -27,9 +29,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-12-07 20:14:09 a586a4deeb25330037a49df295b36aaf624d0f45
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -58,7 +59,7 @@ namespace Community.CsharpSqlite
       int i, n;
       if ( sqlite3Isdigit( z[0] ) )
       {
-        return (u8)atoi( z );
+        return (u8)sqlite3Atoi( z );
       }
       n = sqlite3Strlen30( z );
       for ( i = 0; i < ArraySize( iLength ); i++ )
@@ -86,8 +87,10 @@ namespace Community.CsharpSqlite
     {
       if ( z != null )
       {
-        if ( 0 == sqlite3StrICmp( z, "exclusive" ) ) return PAGER_LOCKINGMODE_EXCLUSIVE;
-        if ( 0 == sqlite3StrICmp( z, "normal" ) ) return PAGER_LOCKINGMODE_NORMAL;
+        if ( z.Equals( "exclusive" ,StringComparison.InvariantCultureIgnoreCase ) )
+          return PAGER_LOCKINGMODE_EXCLUSIVE;
+        if ( z.Equals( "normal" ,StringComparison.InvariantCultureIgnoreCase ) )
+          return PAGER_LOCKINGMODE_NORMAL;
       }
       return PAGER_LOCKINGMODE_QUERY;
     }
@@ -102,9 +105,12 @@ namespace Community.CsharpSqlite
     static u8 getAutoVacuum( string z )
     {
       int i;
-      if ( 0 == sqlite3StrICmp( z, "none" ) ) return BTREE_AUTOVACUUM_NONE;
-      if ( 0 == sqlite3StrICmp( z, "full" ) ) return BTREE_AUTOVACUUM_FULL;
-      if ( 0 == sqlite3StrICmp( z, "incremental" ) ) return BTREE_AUTOVACUUM_INCR;
+      if ( z.Equals( "none" ,StringComparison.InvariantCultureIgnoreCase ) )
+        return BTREE_AUTOVACUUM_NONE;
+      if ( z.Equals( "full" ,StringComparison.InvariantCultureIgnoreCase ) )
+        return BTREE_AUTOVACUUM_FULL;
+      if ( z.Equals( "incremental" ,StringComparison.InvariantCultureIgnoreCase ) )
+        return BTREE_AUTOVACUUM_INCR;
       i = atoi( z );
       return (u8)( ( i >= 0 && i <= 2 ) ? i : 0 );
     }
@@ -122,11 +128,11 @@ namespace Community.CsharpSqlite
       {
         return z[0] - '0';
       }
-      else if ( sqlite3StrICmp( z, "file" ) == 0 )
+      else if ( z.Equals( "file" ,StringComparison.InvariantCultureIgnoreCase )  )
       {
         return 1;
       }
-      else if ( sqlite3StrICmp( z, "memory" ) == 0 )
+      else if ( z.Equals( "memory" ,StringComparison.InvariantCultureIgnoreCase )  )
       {
         return 2;
       }
@@ -171,7 +177,8 @@ namespace Community.CsharpSqlite
     {
       int ts = getTempStore( zStorageType );
       sqlite3 db = pParse.db;
-      if ( db.temp_store == ts ) return SQLITE_OK;
+      if ( db.temp_store == ts )
+        return SQLITE_OK;
       if ( invalidateTempStorage( pParse ) != SQLITE_OK )
       {
         return SQLITE_ERROR;
@@ -225,7 +232,11 @@ new sPragmaType( "count_changes",            SQLITE_CountRows     ),
 new sPragmaType( "empty_result_callbacks",   SQLITE_NullCallback  ),
 new sPragmaType( "legacy_file_format",       SQLITE_LegacyFileFmt ),
 new sPragmaType( "fullfsync",                SQLITE_FullFSync     ),
-new sPragmaType(  "reverse_unordered_selects", SQLITE_ReverseOrder  ),
+new sPragmaType( "checkpoint_fullfsync",     SQLITE_CkptFullFSync ),
+new sPragmaType(  "reverse_unordered_selects", SQLITE_ReverseOrder),
+#if !SQLITE_OMIT_AUTOMATIC_INDEX
+new sPragmaType(  "automatic_index",          SQLITE_AutoIndex    ),
+#endif
 #if SQLITE_DEBUG
 new sPragmaType( "sql_trace",                SQLITE_SqlTrace      ),
 new sPragmaType( "vdbe_listing",             SQLITE_VdbeListing   ),
@@ -243,10 +254,10 @@ new sPragmaType( "omit_readlock",            SQLITE_NoReadlock    ),
 new sPragmaType( "read_uncommitted",         SQLITE_ReadUncommitted ),
 new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
 
-    /* This flag may only be set if both foreign-key and trigger support
-    ** are present in the build.  */
+/* This flag may only be set if both foreign-key and trigger support
+** are present in the build.  */
 #if !(SQLITE_OMIT_FOREIGN_KEY) && !(SQLITE_OMIT_TRIGGER)
- new sPragmaType( "foreign_keys",             SQLITE_ForeignKeys ),
+new sPragmaType( "foreign_keys",             SQLITE_ForeignKeys ),
 #endif
 };
       int i;
@@ -254,7 +265,7 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
       for ( i = 0; i < ArraySize( aPragma ); i++ )//, p++)
       {
         p = aPragma[i];
-        if ( sqlite3StrICmp( zLeft, p.zName ) == 0 )
+        if ( zLeft.Equals( p.zName ,StringComparison.InvariantCultureIgnoreCase )  )
         {
           sqlite3 db = pParse.db;
           Vdbe v;
@@ -308,16 +319,52 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
       string zName;
       switch ( action )
       {
-        case OE_SetNull: zName = "SET NULL"; break;
-        case OE_SetDflt: zName = "SET DEFAULT"; break;
-        case OE_Cascade: zName = "CASCADE"; break;
-        case OE_Restrict: zName = "RESTRICT"; break;
-        default: zName = "NO ACTION";
-          Debug.Assert( action == OE_None ); break;
+        case OE_SetNull:
+          zName = "SET NULL";
+          break;
+        case OE_SetDflt:
+          zName = "SET DEFAULT";
+          break;
+        case OE_Cascade:
+          zName = "CASCADE";
+          break;
+        case OE_Restrict:
+          zName = "RESTRICT";
+          break;
+        default:
+          zName = "NO ACTION";
+          Debug.Assert( action == OE_None );
+          break;
       }
       return zName;
     }
 #endif
+
+    /*
+** Parameter eMode must be one of the PAGER_JOURNALMODE_XXX constants
+** defined in pager.h. This function returns the associated lowercase
+** journal-mode name.
+*/
+    static string sqlite3JournalModename( int eMode )
+    {
+      string[] azModeName = {
+"delete", "persist", "off", "truncate", "memory"
+#if !SQLITE_OMIT_WAL
+, "wal"
+#endif
+};
+      Debug.Assert( PAGER_JOURNALMODE_DELETE == 0 );
+      Debug.Assert( PAGER_JOURNALMODE_PERSIST == 1 );
+      Debug.Assert( PAGER_JOURNALMODE_OFF == 2 );
+      Debug.Assert( PAGER_JOURNALMODE_TRUNCATE == 3 );
+      Debug.Assert( PAGER_JOURNALMODE_MEMORY == 4 );
+      Debug.Assert( PAGER_JOURNALMODE_WAL == 5 );
+      Debug.Assert( eMode >= 0 && eMode <= ArraySize( azModeName ) );
+
+      if ( eMode == ArraySize( azModeName ) )
+        return null;
+      return azModeName[eMode];
+    }
 
     /*
     ** Process a pragma statement.
@@ -348,7 +395,9 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
 
     // OVERLOADS, so I don't need to rewrite parse.c
     static void sqlite3Pragma( Parse pParse, Token pId1, Token pId2, int null_4, int minusFlag )
-    { sqlite3Pragma( pParse, pId1, pId2, null, minusFlag ); }
+    {
+      sqlite3Pragma( pParse, pId1, pId2, null, minusFlag );
+    }
     static void sqlite3Pragma(
     Parse pParse,
     Token pId1,        /* First part of [database.]id field */
@@ -365,14 +414,16 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
       sqlite3 db = pParse.db;
       Db pDb;
       Vdbe v = pParse.pVdbe = sqlite3VdbeCreate( db );
-      if ( v == null ) return;
-      sqlite3VdbeRunOnlyOnce(v);
+      if ( v == null )
+        return;
+      sqlite3VdbeRunOnlyOnce( v );
       pParse.nMem = 2;
 
       /* Interpret the [database.] part of the pragma statement. iDb is the
       ** index of the database this pragma is being applied to in db.aDb[]. */
       iDb = sqlite3TwoPartName( pParse, pId1, pId2, ref pId );
-      if ( iDb < 0 ) return;
+      if ( iDb < 0 )
+        return;
       pDb = db.aDb[iDb];
 
       /* If the temp database has been explicitly named as part of the
@@ -384,7 +435,8 @@ new sPragmaType( "recursive_triggers",       SQLITE_RecTriggers ),
       }
 
       zLeft = sqlite3NameFromToken( db, pId );
-      if ( zLeft == "" ) return;
+      if ( zLeft == "" )
+        return;
       if ( minusFlag != 0 )
       {
         zRight = ( pValue == null ) ? "" : sqlite3MPrintf( db, "-%T", pValue );
@@ -413,13 +465,13 @@ goto pragma_out;
 ** page cache size value and the persistent page cache size value
 ** stored in the database file.
 **
-** The default cache size is stored in meta-value 2 of page 1 of the
-** database file.  The cache size is actually the absolute value of
-** this memory location.  The sign of meta-value 2 determines the
-** synchronous setting.  A negative value means synchronous is off
-** and a positive value means synchronous is on.
+** Older versions of SQLite would set the default cache size to a
+** negative number to indicate synchronous=OFF.  These days, synchronous
+** is always on by default regardless of the sign of the default cache
+** size.  But continue to take the absolute value of the default cache
+** size of historical compatibility.
 */
-      if ( sqlite3StrICmp( zLeft, "default_cache_size" ) == 0 )
+      if ( zLeft.Equals( "default_cache_size" ,StringComparison.InvariantCultureIgnoreCase )  )
       {
         VdbeOpList[] getCacheSize = new VdbeOpList[]{
 new VdbeOpList( OP_Transaction, 0, 0,        0),                         /* 0 */
@@ -432,7 +484,8 @@ new VdbeOpList( OP_Integer,     0, 1,        0),  /* 6 */
 new VdbeOpList( OP_ResultRow,   1, 1,        0),
 };
         int addr;
-        if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+        if ( sqlite3ReadSchema( pParse ) != 0 )
+          goto pragma_out;
         sqlite3VdbeUsesBtree( v, iDb );
         if ( null == zRight )
         {
@@ -446,14 +499,11 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
         }
         else
         {
-          int size = atoi( zRight );
-          if ( size < 0 ) size = -size;
+          int size = sqlite3Atoi( zRight );
+          if ( size < 0 )
+            size = -size;
           sqlite3BeginWriteOperation( pParse, 0, iDb );
           sqlite3VdbeAddOp2( v, OP_Integer, size, 1 );
-          sqlite3VdbeAddOp3( v, OP_ReadCookie, iDb, 2, BTREE_DEFAULT_CACHE_SIZE );
-          addr = sqlite3VdbeAddOp2( v, OP_IfPos, 2, 0 );
-          sqlite3VdbeAddOp2( v, OP_Integer, -size, 1 );
-          sqlite3VdbeJumpHere( v, addr );
           sqlite3VdbeAddOp3( v, OP_SetCookie, iDb, BTREE_DEFAULT_CACHE_SIZE, 1 );
           pDb.pSchema.cache_size = size;
           sqlite3BtreeSetCacheSize( pDb.pBt, pDb.pSchema.cache_size );
@@ -470,7 +520,7 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
         ** database page size value.  The value can only be set if
         ** the database has not yet been created.
         */
-        if ( sqlite3StrICmp( zLeft, "page_size" ) == 0 )
+        if ( zLeft.Equals( "page_size" ,StringComparison.InvariantCultureIgnoreCase )  )
         {
           Btree pBt = pDb.pBt;
           Debug.Assert( pBt != null );
@@ -484,7 +534,7 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
             /* Malloc may fail when setting the page-size, as there is an internal
             ** buffer that the pager module resizes using sqlite3_realloc().
             */
-            db.nextPagesize = atoi( zRight );
+            db.nextPagesize = sqlite3Atoi( zRight );
             if ( SQLITE_NOMEM == sqlite3BtreeSetPageSize( pBt, db.nextPagesize, -1, 0 ) )
             {
               ////        db.mallocFailed = 1;
@@ -494,76 +544,67 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
         else
 
           /*
-          **  PRAGMA [database.]max_page_count
-          **  PRAGMA [database.]max_page_count=N
+          **  PRAGMA [database.]secure_delete
+          **  PRAGMA [database.]secure_delete=ON/OFF
           **
           ** The first form reports the current setting for the
-          ** maximum number of pages in the database file.  The
-          ** second form attempts to change this setting.  Both
-          ** forms return the current setting.
+          ** secure_delete flag.  The second form changes the secure_delete
+          ** flag setting and reports thenew value.
           */
-          if ( sqlite3StrICmp( zLeft, "max_page_count" ) == 0 )
+          if ( zLeft.Equals( "secure_delete" ,StringComparison.InvariantCultureIgnoreCase )  )
           {
             Btree pBt = pDb.pBt;
-            Pgno newMax = 0;
+            int b = -1;
             Debug.Assert( pBt != null );
             if ( zRight != null )
             {
-              newMax = (Pgno)atoi( zRight );
+              b = getBoolean( zRight );
             }
-            if ( ALWAYS( pBt ) )
+            if ( pId2.n == 0 && b >= 0 )
             {
-              newMax = sqlite3BtreeMaxPageCount( pBt, newMax );
+              int ii;
+              for ( ii = 0; ii < db.nDb; ii++ )
+              {
+                sqlite3BtreeSecureDelete( db.aDb[ii].pBt, b );
+              }
             }
-            returnSingleInt( pParse, "max_page_count", newMax );
+            b = sqlite3BtreeSecureDelete( pBt, b );
+            returnSingleInt( pParse, "secure_delete", b );
           }
           else
-
             /*
-            **  PRAGMA [database.]secure_delete
-            **  PRAGMA [database.]secure_delete=ON/OFF
+            **  PRAGMA [database.]max_page_count
+            **  PRAGMA [database.]max_page_count=N
             **
             ** The first form reports the current setting for the
-            ** secure_delete flag.  The second form changes the secure_delete
-            ** flag setting and reports thenew value.
+            ** maximum number of pages in the database file.  The 
+            ** second form attempts to change this setting.  Both
+            ** forms return the current setting.
+            **
+            **  PRAGMA [database.]page_count
+            **
+            ** Return the number of pages in the specified database.
             */
-            if (sqlite3StrICmp(zLeft, "secure_delete") == 0)
-            {
-              Btree pBt = pDb.pBt;
-              int b = -1;
-              Debug.Assert(pBt != null);
-              if (zRight != null)
-              {
-                b = getBoolean(zRight);
-              }
-              if (pId2.n == 0 && b >= 0)
-              {
-                int ii;
-                for (ii = 0; ii < db.nDb; ii++)
-                {
-                  sqlite3BtreeSecureDelete(db.aDb[ii].pBt, b);
-                }
-              }
-              b = sqlite3BtreeSecureDelete(pBt, b);
-              returnSingleInt(pParse, "secure_delete", b);
-            }
-
-            else
-              /*
-              **  PRAGMA [database.]page_count
-              **
-              ** Return the number of pages in the specified database.
-              */
-            if ( sqlite3StrICmp( zLeft, "page_count" ) == 0 )
+            if ( zLeft.Equals( "page_count" ,StringComparison.InvariantCultureIgnoreCase ) 
+            || zLeft.Equals( "max_page_count" ,StringComparison.InvariantCultureIgnoreCase ) 
+            )
             {
               int iReg;
-              if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+              if ( sqlite3ReadSchema( pParse ) != 0 )
+                goto pragma_out;
               sqlite3CodeVerifySchema( pParse, iDb );
               iReg = ++pParse.nMem;
-              sqlite3VdbeAddOp2( v, OP_Pagecount, iDb, iReg );
+              if ( zLeft[0] == 'p' )
+              {
+                sqlite3VdbeAddOp2( v, OP_Pagecount, iDb, iReg );
+              }
+              else
+              {
+                sqlite3VdbeAddOp3( v, OP_MaxPgcnt, iDb, iReg, sqlite3Atoi( zRight ) );
+              }
               sqlite3VdbeAddOp2( v, OP_ResultRow, iReg, 1 );
               sqlite3VdbeSetNumCols( v, 1 );
-              sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "page_count", SQLITE_STATIC );
+              sqlite3VdbeSetColName( v, 0, COLNAME_NAME, zLeft, SQLITE_TRANSIENT );
             }
             else
 
@@ -577,7 +618,8 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
                 Vdbe _v;
                 int iReg;
                 _v = sqlite3GetVdbe( pParse );
-                if ( _v == null || sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                if ( _v == null || sqlite3ReadSchema( pParse ) != 0 )
+                  goto pragma_out;
                 sqlite3CodeVerifySchema( pParse, iDb );
                 iReg = ++pParse.nMem;
                 sqlite3VdbeAddOp2( _v, OP_Pagecount, iDb, iReg );
@@ -591,7 +633,7 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
                 **  PRAGMA [database.]locking_mode
                 **  PRAGMA [database.]locking_mode = (normal|exclusive)
                 */
-                if ( sqlite3StrICmp( zLeft, "locking_mode" ) == 0 )
+                if ( zLeft.Equals( "locking_mode" ,StringComparison.InvariantCultureIgnoreCase )  )
                 {
                   string zRet = "normal";
                   int eMode = getLockingMode( zRight );
@@ -643,73 +685,59 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
                 else
                   /*
                   **  PRAGMA [database.]journal_mode
-                  **  PRAGMA [database.]journal_mode = (delete|persist|off|truncate|memory)
+                  **  PRAGMA [database.]journal_mode =
+                  **                      (delete|persist|off|truncate|memory|wal|off)
                   */
                   if ( zLeft == "journal_mode" )
                   {
-                    int eMode;
-                    string[] azModeName = new string[] {
-"delete", "persist", "off", "truncate", "memory"
-};
+                    int eMode;        /* One of the PAGER_JOURNALMODE_XXX symbols */
+                    int ii;           /* Loop counter */
 
+                    /* Force the schema to be loaded on all databases.  This cases all
+                    ** database files to be opened and the journal_modes set. */
+                    if ( sqlite3ReadSchema( pParse ) != 0 )
+                    {
+                      goto pragma_out;
+                    }
+
+                    sqlite3VdbeSetNumCols( v, 1 );
+                    sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "journal_mode", SQLITE_STATIC );
                     if ( null == zRight )
                     {
+                      /* If there is no "=MODE" part of the pragma, do a query for the
+                      ** current mode */
                       eMode = PAGER_JOURNALMODE_QUERY;
                     }
                     else
                     {
+                      string zMode;
                       int n = sqlite3Strlen30( zRight );
-                      eMode = azModeName.Length - 1;//sizeof(azModeName)/sizeof(azModeName[0]) - 1;
-                      while (eMode >= 0 && String.Compare(zRight, azModeName[eMode], StringComparison.InvariantCultureIgnoreCase) != 0)
+                      for ( eMode = 0; ( zMode = sqlite3JournalModename( eMode ) ) != null; eMode++ )
                       {
-                        eMode--;
+                        if ( sqlite3StrNICmp( zRight, zMode, n ) == 0 )
+                          break;
+                      }
+                      if ( null == zMode )
+                      {
+                        /* If the "=MODE" part does not match any known journal mode,
+                        ** then do a query */
+                        eMode = PAGER_JOURNALMODE_QUERY;
                       }
                     }
-                    if ( pId2.n == 0 && eMode == PAGER_JOURNALMODE_QUERY )
+                    if ( eMode == PAGER_JOURNALMODE_QUERY && pId2.n == 0 )
                     {
-                      /* Simple "PRAGMA journal_mode;" statement. This is a query for
-                      ** the current default journal mode (which may be different to
-                      ** the journal-mode of the main database).
-                      */
-                      eMode = db.dfltJournalMode;
+                      /* Convert "PRAGMA journal_mode" into "PRAGMA main.journal_mode" */
+                      iDb = 0;
+                      pId2.n = 1;
                     }
-                    else
+                    for ( ii = db.nDb - 1; ii >= 0; ii-- )
                     {
-                      Pager pPager;
-                      if ( pId2.n == 0 )
+                      if ( db.aDb[ii].pBt != null && ( ii == iDb || pId2.n == 0 ) )
                       {
-                        /* This indicates that no database name was specified as part
-                        ** of the PRAGMA command. In this case the journal-mode must be
-                        ** set on all attached databases, as well as the main db file.
-                        **
-                        ** Also, the sqlite3.dfltJournalMode variable is set so that
-                        ** any subsequently attached databases also use the specified
-                        ** journal mode.
-                        */
-                        int ii;
-                        Debug.Assert( pDb == db.aDb[0] );
-                        for ( ii = 1; ii < db.nDb; ii++ )
-                        {
-                          if ( db.aDb[ii].pBt != null )
-                          {
-                            pPager = sqlite3BtreePager( db.aDb[ii].pBt );
-                            sqlite3PagerJournalMode( pPager, eMode );
-                          }
-                        }
-                        db.dfltJournalMode = (u8)eMode;
+                        sqlite3VdbeUsesBtree( v, ii );
+                        sqlite3VdbeAddOp3( v, OP_JournalMode, ii, 1, eMode );
                       }
-                      pPager = sqlite3BtreePager( pDb.pBt );
-                      eMode = sqlite3PagerJournalMode( pPager, eMode );
                     }
-                    Debug.Assert( eMode == PAGER_JOURNALMODE_DELETE
-                    || eMode == PAGER_JOURNALMODE_TRUNCATE
-                    || eMode == PAGER_JOURNALMODE_PERSIST
-                    || eMode == PAGER_JOURNALMODE_OFF
-                    || eMode == PAGER_JOURNALMODE_MEMORY );
-                    sqlite3VdbeSetNumCols( v, 1 );
-                    sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "journal_mode", SQLITE_STATIC );
-                    sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0,
-                    azModeName[eMode], P4_STATIC );
                     sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 1 );
                   }
                   else
@@ -720,14 +748,15 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
                     **
                     ** Get or set the size limit on rollback journal files.
                     */
-                    if ( sqlite3StrICmp( zLeft, "journal_size_limit" ) == 0 )
+                    if ( zLeft.Equals( "journal_size_limit" ,StringComparison.InvariantCultureIgnoreCase )  )
                     {
                       Pager pPager = sqlite3BtreePager( pDb.pBt );
                       i64 iLimit = -2;
                       if ( !String.IsNullOrEmpty( zRight ) )
                       {
-                        sqlite3Atoi64( zRight, ref iLimit );
-                        if ( iLimit < -1 ) iLimit = -1;
+                        sqlite3Atoi64( zRight, ref iLimit, 1000000, SQLITE_UTF8 );
+                        if ( iLimit < -1 )
+                          iLimit = -1;
                       }
                       iLimit = sqlite3PagerJournalSizeLimit( pPager, iLimit );
                       returnSingleInt( pParse, "journal_size_limit", iLimit );
@@ -744,7 +773,7 @@ new VdbeOpList( OP_ResultRow,   1, 1,        0),
 ** The value is one of:  0 NONE 1 FULL 2 INCREMENTAL
 */
 #if !SQLITE_OMIT_AUTOVACUUM
-                      if ( sqlite3StrICmp( zLeft, "auto_vacuum" ) == 0 )
+                      if ( zLeft.Equals( "auto_vacuum" ,StringComparison.InvariantCultureIgnoreCase )  )
                       {
                         Btree pBt = pDb.pBt;
                         Debug.Assert( pBt != null );
@@ -814,7 +843,7 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
 ** Do N steps of incremental vacuuming on a database.
 */
 #if !SQLITE_OMIT_AUTOVACUUM
-                        if ( sqlite3StrICmp( zLeft, "incremental_vacuum" ) == 0 )
+                        if ( zLeft.Equals( "incremental_vacuum" ,StringComparison.InvariantCultureIgnoreCase )  )
                         {
                           int iLimit = 0, addr;
                           if ( sqlite3ReadSchema( pParse ) != 0 )
@@ -851,17 +880,19 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
 ** to its default value when the database is closed and reopened.
 ** N should be a positive integer.
 */
-                          if ( sqlite3StrICmp( zLeft, "cache_size" ) == 0 )
+                          if ( zLeft.Equals( "cache_size" ,StringComparison.InvariantCultureIgnoreCase )  )
                           {
-                            if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                            if ( sqlite3ReadSchema( pParse ) != 0 )
+                              goto pragma_out;
                             if ( null == zRight )
                             {
                               returnSingleInt( pParse, "cache_size", pDb.pSchema.cache_size );
                             }
                             else
                             {
-                              int size = atoi( zRight );
-                              if ( size < 0 ) size = -size;
+                              int size = sqlite3Atoi( zRight );
+                              if ( size < 0 )
+                                size = -size;
                               pDb.pSchema.cache_size = size;
                               sqlite3BtreeSetCacheSize( pDb.pBt, pDb.pSchema.cache_size );
                             }
@@ -879,7 +910,7 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
                             ** Note that it is possible for the library compile-time options to
                             ** override this setting
                             */
-                            if ( sqlite3StrICmp( zLeft, "temp_store" ) == 0 )
+                            if ( zLeft.Equals( "temp_store" ,StringComparison.InvariantCultureIgnoreCase )  )
                             {
                               if ( zRight == null )
                               {
@@ -902,7 +933,7 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
                               ** If temporary directory is changed, then invalidateTempStorage.
                               **
                               */
-                              if ( sqlite3StrICmp( zLeft, "temp_store_directory" ) == 0 )
+                              if ( zLeft.Equals( "temp_store_directory" ,StringComparison.InvariantCultureIgnoreCase )  )
                               {
                                 if ( null == zRight )
                                 {
@@ -939,7 +970,7 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
                                   //sqlite3_free( ref sqlite3_temp_directory );
                                   if ( zRight.Length > 0 )
                                   {
-                                    sqlite3_temp_directory = zRight;//sqlite3DbStrDup(0, zRight);
+                                    sqlite3_temp_directory = zRight;//sqlite3_mprintf("%s", zRight);
                                   }
                                   else
                                   {
@@ -966,7 +997,7 @@ new VdbeOpList( OP_SetCookie,      0,               BTREE_INCR_VACUUM, 1),    /*
 ** the value sets a specific file to be used for database access locks.
 **
 */
-if ( sqlite3StrICmp( zLeft, "lock_proxy_file" ) == 0 )
+if ( zLeft.Equals( "lock_proxy_file" ,StringComparison.InvariantCultureIgnoreCase )  )
 {
 if ( zRight !="")
 {
@@ -1021,9 +1052,10 @@ else
 ** default value will be restored the next time the database is
 ** opened.
 */
-                                if ( sqlite3StrICmp( zLeft, "synchronous" ) == 0 )
+                                if ( zLeft.Equals( "synchronous" ,StringComparison.InvariantCultureIgnoreCase )  )
                                 {
-                                  if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                  if ( sqlite3ReadSchema( pParse ) != 0 )
+                                    goto pragma_out;
                                   if ( null == zRight )
                                   {
                                     returnSingleInt( pParse, "synchronous", pDb.safety_level - 1 );
@@ -1066,10 +1098,11 @@ else
 ** notnull:    True if 'NOT NULL' is part of column declaration
 ** dflt_value: The default value for the column, if any.
 */
-                                    if ( sqlite3StrICmp( zLeft, "table_info" ) == 0 && zRight != null )
+                                    if ( zLeft.Equals( "table_info" ,StringComparison.InvariantCultureIgnoreCase )  && zRight != null )
                                     {
                                       Table pTab;
-                                      if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                      if ( sqlite3ReadSchema( pParse ) != 0 )
+                                        goto pragma_out;
                                       pTab = sqlite3FindTable( db, zRight, zDb );
                                       if ( pTab != null )
                                       {
@@ -1113,11 +1146,12 @@ else
                                     }
                                     else
 
-                                      if ( sqlite3StrICmp( zLeft, "index_info" ) == 0 && zRight != null )
+                                      if ( zLeft.Equals( "index_info" ,StringComparison.InvariantCultureIgnoreCase )  && zRight != null )
                                       {
                                         Index pIdx;
                                         Table pTab;
-                                        if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                        if ( sqlite3ReadSchema( pParse ) != 0 )
+                                          goto pragma_out;
                                         pIdx = sqlite3FindIndex( db, zRight, zDb );
                                         if ( pIdx != null )
                                         {
@@ -1141,11 +1175,12 @@ else
                                       }
                                       else
 
-                                        if ( sqlite3StrICmp( zLeft, "index_list" ) == 0 && zRight != null )
+                                        if ( zLeft.Equals( "index_list" ,StringComparison.InvariantCultureIgnoreCase )  && zRight != null )
                                         {
                                           Index pIdx;
                                           Table pTab;
-                                          if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                          if ( sqlite3ReadSchema( pParse ) != 0 )
+                                            goto pragma_out;
                                           pTab = sqlite3FindTable( db, zRight, zDb );
                                           if ( pTab != null )
                                           {
@@ -1173,10 +1208,11 @@ else
                                         }
                                         else
 
-                                          if ( sqlite3StrICmp( zLeft, "database_list" ) == 0 )
+                                          if ( zLeft.Equals( "database_list" ,StringComparison.InvariantCultureIgnoreCase )  )
                                           {
                                             int i;
-                                            if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                            if ( sqlite3ReadSchema( pParse ) != 0 )
+                                              goto pragma_out;
                                             sqlite3VdbeSetNumCols( v, 3 );
                                             pParse.nMem = 3;
                                             sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "seq", SQLITE_STATIC );
@@ -1184,7 +1220,8 @@ else
                                             sqlite3VdbeSetColName( v, 2, COLNAME_NAME, "file", SQLITE_STATIC );
                                             for ( i = 0; i < db.nDb; i++ )
                                             {
-                                              if ( db.aDb[i].pBt == null ) continue;
+                                              if ( db.aDb[i].pBt == null )
+                                                continue;
                                               Debug.Assert( db.aDb[i].zName != null );
                                               sqlite3VdbeAddOp2( v, OP_Integer, i, 1 );
                                               sqlite3VdbeAddOp4( v, OP_String8, 0, 2, 0, db.aDb[i].zName, 0 );
@@ -1195,7 +1232,7 @@ else
                                           }
                                           else
 
-                                            if ( sqlite3StrICmp( zLeft, "collation_list" ) == 0 )
+                                            if ( zLeft.Equals( "collation_list" ,StringComparison.InvariantCultureIgnoreCase )  )
                                             {
                                               int i = 0;
                                               HashElem p;
@@ -1215,11 +1252,12 @@ else
 #endif // * SQLITE_OMIT_SCHEMA_PRAGMAS */
 
 #if !SQLITE_OMIT_FOREIGN_KEY
-                                              if ( sqlite3StrICmp( zLeft, "foreign_key_list" ) == 0 && zRight != null )
+                                              if ( zLeft.Equals( "foreign_key_list" ,StringComparison.InvariantCultureIgnoreCase )  && zRight != null )
                                               {
                                                 FKey pFK;
                                                 Table pTab;
-                                                if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                                if ( sqlite3ReadSchema( pParse ) != 0 )
+                                                  goto pragma_out;
                                                 pTab = sqlite3FindTable( db, zRight, zDb );
                                                 if ( pTab != null )
                                                 {
@@ -1267,7 +1305,7 @@ else
 #endif // * !SQLITE_OMIT_FOREIGN_KEY) */
 
 #if !NDEBUG
-                                                if ( sqlite3StrICmp( zLeft, "parser_trace" ) == 0 )
+                                                if ( zLeft.Equals( "parser_trace" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                 {
                                                   if ( zRight != null )
                                                   {
@@ -1287,7 +1325,7 @@ else
                                                   /* Reinstall the LIKE and GLOB functions.  The variant of LIKE
 ** used will be case sensitive or not depending on the RHS.
 */
-                                                  if ( sqlite3StrICmp( zLeft, "case_sensitive_like" ) == 0 )
+                                                  if ( zLeft.Equals( "case_sensitive_like" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                   {
                                                     if ( zRight != null )
                                                     {
@@ -1305,8 +1343,8 @@ else
 ** integrity_check designed to detect most database corruption
 ** without most of the overhead of a full integrity-check.
 */
-                                                    if ( sqlite3StrICmp( zLeft, "integrity_check" ) == 0
-                                                     || sqlite3StrICmp( zLeft, "quick_check" ) == 0
+                                                    if ( zLeft.Equals( "integrity_check" ,StringComparison.InvariantCultureIgnoreCase ) 
+                                                     || zLeft.Equals( "quick_check" ,StringComparison.InvariantCultureIgnoreCase ) 
                                                     )
                                                     {
                                                       const int SQLITE_INTEGRITY_CHECK_ERROR_MAX = 100;
@@ -1326,7 +1364,8 @@ new  VdbeOpList( OP_ResultRow,   3, 1,        0),
                                                       bool isQuick = ( zLeft[0] == 'q' );
 
                                                       /* Initialize the VDBE program */
-                                                      if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                                      if ( sqlite3ReadSchema( pParse ) != 0 )
+                                                        goto pragma_out;
                                                       pParse.nMem = 6;
                                                       sqlite3VdbeSetNumCols( v, 1 );
                                                       sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "integrity_check", SQLITE_STATIC );
@@ -1335,7 +1374,7 @@ new  VdbeOpList( OP_ResultRow,   3, 1,        0),
                                                       mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
                                                       if ( zRight != null )
                                                       {
-                                                        mxErr = atoi( zRight );
+                                                        sqlite3GetInt32( zRight, ref mxErr );
                                                         if ( mxErr <= 0 )
                                                         {
                                                           mxErr = SQLITE_INTEGRITY_CHECK_ERROR_MAX;
@@ -1350,7 +1389,8 @@ new  VdbeOpList( OP_ResultRow,   3, 1,        0),
                                                         Hash pTbls;
                                                         int cnt = 0;
 
-                                                        if ( OMIT_TEMPDB != 0 && i == 1 ) continue;
+                                                        if ( OMIT_TEMPDB != 0 && i == 1 )
+                                                          continue;
 
                                                         sqlite3CodeVerifySchema( pParse, i );
                                                         addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 ); /* Halt if out of errors */
@@ -1403,7 +1443,8 @@ new  VdbeOpList( OP_ResultRow,   3, 1,        0),
                                                           Index pIdx;
                                                           int loopTop;
 
-                                                          if ( pTab.pIndex == null ) continue;
+                                                          if ( pTab.pIndex == null )
+                                                            continue;
                                                           addr = sqlite3VdbeAddOp1( v, OP_IfPos, 1 );  /* Stop if out of errors */
                                                           sqlite3VdbeAddOp2( v, OP_Halt, 0, 0 );
                                                           sqlite3VdbeJumpHere( v, addr );
@@ -1498,7 +1539,7 @@ new VdbeOpList( OP_ResultRow,    2,  1,  0),
 ** new database files created using this database handle. It is only
 ** useful if invoked immediately after the main database i
 */
-                                                      if ( sqlite3StrICmp( zLeft, "encoding" ) == 0 )
+                                                      if ( zLeft.Equals( "encoding" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                       {
                                                         EncName[] encnames = new EncName[]  {
 new EncName( "UTF8",     SQLITE_UTF8        ),
@@ -1514,7 +1555,8 @@ new EncName( null, 0 )
                                                         int iEnc;
                                                         if ( null == zRight )
                                                         {    /* "PRAGMA encoding" */
-                                                          if ( sqlite3ReadSchema( pParse ) != 0 ) goto pragma_out;
+                                                          if ( sqlite3ReadSchema( pParse ) != 0 )
+                                                            goto pragma_out;
                                                           sqlite3VdbeSetNumCols( v, 1 );
                                                           sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "encoding", SQLITE_STATIC );
                                                           sqlite3VdbeAddOp2( v, OP_String8, 0, 1 );
@@ -1540,7 +1582,7 @@ if (
 {
 for ( iEnc = 0 ; encnames[iEnc].zName != null ; iEnc++ )
 {
-if ( 0 == sqlite3StrICmp( zRight, encnames[iEnc].zName ) )
+if ( zRight.Equals( encnames[iEnc].zName ,StringComparison.InvariantCultureIgnoreCase ) )
 {
 pParse.db.aDbStatic[0].pSchema.enc = encnames[iEnc].enc != 0 ? encnames[iEnc].enc : SQLITE_UTF16NATIVE;
 break;
@@ -1582,9 +1624,9 @@ sqlite3ErrorMsg( pParse, "unsupported encoding: %s", zRight );
 ** The user-version is not used internally by SQLite. It may be used by
 ** applications for any purpose.
 */
-                                                        if ( sqlite3StrICmp( zLeft, "schema_version" ) == 0
-                                                         || sqlite3StrICmp( zLeft, "user_version" ) == 0
-                                                         || sqlite3StrICmp( zLeft, "freelist_count" ) == 0
+                                                        if ( zLeft.Equals( "schema_version" ,StringComparison.InvariantCultureIgnoreCase ) 
+                                                         || zLeft.Equals( "user_version" ,StringComparison.InvariantCultureIgnoreCase ) 
+                                                         || zLeft.Equals( "freelist_count" ,StringComparison.InvariantCultureIgnoreCase ) 
                                                         )
                                                         {
                                                           int iCookie;   /* Cookie index. 1 for schema-cookie, 6 for user-cookie. */
@@ -1614,7 +1656,7 @@ new VdbeOpList( OP_SetCookie,      0,  0,  1),    /* 2 */
 };
                                                             int addr = sqlite3VdbeAddOpList( v, ArraySize( setCookie ), setCookie );
                                                             sqlite3VdbeChangeP1( v, addr, iDb );
-                                                            sqlite3VdbeChangeP1( v, addr + 1, atoi( zRight ) );
+                                                            sqlite3VdbeChangeP1( v, addr + 1, sqlite3Atoi( zRight ) );
                                                             sqlite3VdbeChangeP1( v, addr + 2, iDb );
                                                             sqlite3VdbeChangeP2( v, addr + 2, iCookie );
                                                           }
@@ -1634,135 +1676,171 @@ new VdbeOpList( OP_ResultRow,       1,  1,  0)
                                                             sqlite3VdbeSetColName( v, 0, COLNAME_NAME, zLeft, SQLITE_TRANSIENT );
                                                           }
                                                         }
-                                                        else if ( sqlite3StrICmp( zLeft, "reload_schema" ) == 0 )
+                                                        else if ( zLeft.Equals( "reload_schema" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                         {
                                                           /* force schema reloading*/
                                                           sqlite3ResetInternalSchema( db, 0 );
                                                         }
-                                                        else if ( sqlite3StrICmp( zLeft, "file_format" ) == 0 )
+                                                        else if ( zLeft.Equals( "file_format" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                         {
                                                           pDb.pSchema.file_format = (u8)atoi( zRight );
                                                           sqlite3ResetInternalSchema( db, 0 );
                                                         }
-
                                                         else
 #endif // * SQLITE_OMIT_SCHEMA_VERSION_PRAGMAS */
 
 #if !SQLITE_OMIT_COMPILEOPTION_DIAGS
-  /*
-  **   PRAGMA compile_options
-  **
-  ** Return the names of all compile-time options used in this build,
-  ** one option per row.
-  */
-  if( sqlite3StrICmp(zLeft, "compile_options")==0 ){
-    int i = 0;
-    string zOpt;
-    sqlite3VdbeSetNumCols(v, 1);
-    pParse.nMem = 1;
-    sqlite3VdbeSetColName(v, 0, COLNAME_NAME, "compile_option", SQLITE_STATIC);
-    while ((zOpt = sqlite3_compileoption_get(i++)) != null)
-    {
-      sqlite3VdbeAddOp4(v, OP_String8, 0, 1, 0, zOpt, 0);
-      sqlite3VdbeAddOp2(v, OP_ResultRow, 1, 1);
-    }
-  }else
-#endif //* SQLITE_OMIT_COMPILEOPTION_DIAGS */
-
-#if SQLITE_DEBUG || SQLITE_TEST
                                                           /*
-** Report the current state of file logs for all databases
+**   PRAGMA compile_options
+**
+** Return the names of all compile-time options used in this build,
+** one option per row.
 */
-                                                          if ( sqlite3StrICmp( zLeft, "lock_status" ) == 0 )
+                                                          if ( zLeft.Equals( "compile_options" ,StringComparison.InvariantCultureIgnoreCase )  )
                                                           {
-                                                            string[] azLockName = {
-"unlocked", "shared", "reserved", "pending", "exclusive"
-};
-                                                            int i;
-                                                            sqlite3VdbeSetNumCols( v, 2 );
-                                                            pParse.nMem = 2;
-                                                            sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "database", SQLITE_STATIC );
-                                                            sqlite3VdbeSetColName( v, 1, COLNAME_NAME, "status", SQLITE_STATIC );
-                                                            for ( i = 0; i < db.nDb; i++ )
+                                                            int i = 0;
+                                                            string zOpt;
+                                                            sqlite3VdbeSetNumCols( v, 1 );
+                                                            pParse.nMem = 1;
+                                                            sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "compile_option", SQLITE_STATIC );
+                                                            while ( ( zOpt = sqlite3_compileoption_get( i++ ) ) != null )
                                                             {
-                                                              Btree pBt;
-                                                              Pager pPager;
-                                                              string zState = "unknown";
-                                                              int j = 0;
-                                                              if ( db.aDb[i].zName == null ) continue;
-                                                              sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0, db.aDb[i].zName, P4_STATIC );
-                                                              pBt = db.aDb[i].pBt;
-                                                              if ( pBt == null || ( pPager = sqlite3BtreePager( pBt ) ) == null )
-                                                              {
-                                                                zState = "closed";
-                                                              }
-                                                              else if ( sqlite3_file_control( db, i != 0 ? db.aDb[i].zName : null,
-                                                       SQLITE_FCNTL_LOCKSTATE, ref j ) == SQLITE_OK )
-                                                              {
-                                                                zState = azLockName[j];
-                                                              }
-                                                              sqlite3VdbeAddOp4( v, OP_String8, 0, 2, 0, zState, P4_STATIC );
-                                                              sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 2 );
+                                                              sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0, zOpt, 0 );
+                                                              sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 1 );
                                                             }
                                                           }
                                                           else
-#endif
+#endif //* SQLITE_OMIT_COMPILEOPTION_DIAGS */
 
-#if SQLITE_HAS_CODEC
- // needed to support key/rekey/hexrekey with pragma cmds
-                                                            if ( sqlite3StrICmp( zLeft, "key" ) == 0 && !String.IsNullOrEmpty( zRight ) )
-                                                            {
-                                                              sqlite3_key( db, zRight, sqlite3Strlen30( zRight ) );
-                                                            }
-                                                            else
-                                                              if ( sqlite3StrICmp( zLeft, "rekey" ) == 0 && !String.IsNullOrEmpty( zRight ) )
-                                                              {
-                                                                sqlite3_rekey( db, zRight, sqlite3Strlen30( zRight ) );
-                                                              }
-                                                              else
-                                                                if ( !String.IsNullOrEmpty( zRight ) && ( sqlite3StrICmp( zLeft, "hexkey" ) == 0 ||
-                                                                sqlite3StrICmp( zLeft, "hexrekey" ) == 0 ) )
-                                                                {
-                                                                  StringBuilder zKey = new StringBuilder(40);
-                                                                  zRight.ToLower(new System.Globalization.CultureInfo("en-us"));
-                                                                  // expected '0x0102030405060708090a0b0c0d0e0f10'
-                                                                  if (zRight.Length != 34)
-                                                                    return;
 
-                                                                  for (int i = 2; i < zRight.Length; i += 2)
-                                                                  {
-                                                                    int h1 = zRight[i]; int h2 = zRight[i + 1];
-                                                                    h1 += 9 * (1 & (h1 >> 6));
-                                                                    h2 += 9 * (1 & (h2 >> 6));
-                                                                    zKey.Append(Convert.ToChar((h2 & 0x0f) | ((h1 & 0xf) << 4)));
-                                                                  }
-                                                                  if ( ( zLeft[3] & 0xf ) == 0xb )
-                                                                  {
-                                                                    sqlite3_key(db, zKey.ToString(), zKey.Length);
-                                                                  }
-                                                                  else
-                                                                  {
-                                                                    sqlite3_rekey(db, zKey.ToString(), zKey.Length);
-                                                                  }
+#if !SQLITE_OMIT_WAL
+/*
+**   PRAGMA [database.]wal_checkpoint
+**
+** Checkpoint the database.
+*/
+if( zLeft.Equals("wal_checkpoint", StringComparison.InvariantCultureIgnoreCase ) ){
+if( sqlite3ReadSchema(pParse) ) goto pragma_out;
+sqlite3VdbeAddOp3(v, OP_Checkpoint, pId2->z?iDb:SQLITE_MAX_ATTACHED, 0, 0);
+}else
+
+/*
+**   PRAGMA wal_autocheckpoint
+**   PRAGMA wal_autocheckpoint = N
+**
+** Configure a database connection to automatically checkpoint a database
+** after accumulating N frames in the log. Or query for the current value
+** of N.
+*/
+if( zLeft.Equals( "wal_autocheckpoint", StringComparison.InvariantCultureIgnoreCase ) ){
+if( zRight ){
+sqlite3_wal_autocheckpoint(db, sqlite3Atoi(zRight));
+}
+returnSingleInt(pParse, "wal_autocheckpoint", 
+db->xWalCallback==sqlite3WalDefaultHook ? 
+SQLITE_PTR_TO_INT(db->pWalArg) : 0);
 }else
 #endif
-#if SQLITE_HAS_CODEC || SQLITE_ENABLE_CEROD
-                                                                  if ( sqlite3StrICmp( zLeft, "activate_extensions" ) == 0 )
-                                                                  {
+
+#if SQLITE_DEBUG || SQLITE_TEST
+                                                            /*
+** Report the current state of file logs for all databases
+*/
+                                                            if ( zLeft.Equals( "lock_status" ,StringComparison.InvariantCultureIgnoreCase )  )
+                                                            {
+                                                              string[] azLockName = {
+"unlocked", "shared", "reserved", "pending", "exclusive"
+};
+                                                              int i;
+                                                              sqlite3VdbeSetNumCols( v, 2 );
+                                                              pParse.nMem = 2;
+                                                              sqlite3VdbeSetColName( v, 0, COLNAME_NAME, "database", SQLITE_STATIC );
+                                                              sqlite3VdbeSetColName( v, 1, COLNAME_NAME, "status", SQLITE_STATIC );
+                                                              for ( i = 0; i < db.nDb; i++ )
+                                                              {
+                                                                Btree pBt;
+                                                                Pager pPager;
+                                                                string zState = "unknown";
+                                                                sqlite3_int64 j = 0;
+                                                                if ( db.aDb[i].zName == null )
+                                                                  continue;
+                                                                sqlite3VdbeAddOp4( v, OP_String8, 0, 1, 0, db.aDb[i].zName, P4_STATIC );
+                                                                pBt = db.aDb[i].pBt;
+                                                                if ( pBt == null || ( pPager = sqlite3BtreePager( pBt ) ) == null )
+                                                                {
+                                                                  zState = "closed";
+                                                                }
+                                                                else if ( sqlite3_file_control( db, i != 0 ? db.aDb[i].zName : null,
+                                                         SQLITE_FCNTL_LOCKSTATE, ref j ) == SQLITE_OK )
+                                                                {
+                                                                  zState = azLockName[j];
+                                                                }
+                                                                sqlite3VdbeAddOp4( v, OP_String8, 0, 2, 0, zState, P4_STATIC );
+                                                                sqlite3VdbeAddOp2( v, OP_ResultRow, 1, 2 );
+                                                              }
+                                                            }
+                                                            else
+#endif
+
 #if SQLITE_HAS_CODEC
-                                                                    if ( !String.IsNullOrEmpty( zRight ) && zRight.Length > 4 && sqlite3StrNICmp( zRight, "see-", 4 ) == 0 )
+                                                              // needed to support key/rekey/hexrekey with pragma cmds
+                                                              if ( zLeft.Equals( "key" ,StringComparison.InvariantCultureIgnoreCase )  && !String.IsNullOrEmpty( zRight ) )
+                                                              {
+                                                                sqlite3_key( db, zRight, sqlite3Strlen30( zRight ) );
+                                                              }
+                                                              else
+                                                                if ( zLeft.Equals( "rekey" ,StringComparison.InvariantCultureIgnoreCase )  && !String.IsNullOrEmpty( zRight ) )
+                                                                {
+                                                                  sqlite3_rekey( db, zRight, sqlite3Strlen30( zRight ) );
+                                                                }
+                                                                else
+                                                                  if ( !String.IsNullOrEmpty( zRight ) && ( zLeft.Equals( "hexkey" ,StringComparison.InvariantCultureIgnoreCase )  ||
+                                                                  zLeft.Equals( "hexrekey" ,StringComparison.InvariantCultureIgnoreCase )  ) )
+                                                                  {
+                                                                    StringBuilder zKey = new StringBuilder( 40 );
+                                                                    zRight.ToLower( new CultureInfo( "en-us" ) );
+                                                                    // expected '0x0102030405060708090a0b0c0d0e0f10'
+                                                                    if ( zRight.Length != 34 )
+                                                                      return;
+
+                                                                    for ( int i = 2; i < zRight.Length; i += 2 )
                                                                     {
-                                                                      sqlite3_activate_see( zRight.Substring( 4 ) );
+                                                                      int h1 = zRight[i];
+                                                                      int h2 = zRight[i + 1];
+                                                                      h1 += 9 * ( 1 & ( h1 >> 6 ) );
+                                                                      h2 += 9 * ( 1 & ( h2 >> 6 ) );
+                                                                      zKey.Append( Convert.ToChar( ( h2 & 0x0f ) | ( ( h1 & 0xf ) << 4 ) ) );
                                                                     }
+                                                                    if ( ( zLeft[3] & 0xf ) == 0xb )
+                                                                    {
+                                                                      sqlite3_key( db, zKey.ToString(), zKey.Length );
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                      sqlite3_rekey( db, zKey.ToString(), zKey.Length );
+                                                                    }
+                                                                  }
+                                                                  else
+#endif
+#if SQLITE_HAS_CODEC || SQLITE_ENABLE_CEROD
+                                                                    if ( zLeft.Equals( "activate_extensions" ,StringComparison.InvariantCultureIgnoreCase )  )
+                                                                    {
+#if SQLITE_HAS_CODEC
+                                                                      if ( !String.IsNullOrEmpty( zRight ) && zRight.Length > 4 && sqlite3StrNICmp( zRight, "see-", 4 ) == 0 )
+                                                                      {
+                                                                        sqlite3_activate_see( zRight.Substring( 4 ) );
+                                                                      }
 #endif
 #if SQLITE_ENABLE_CEROD
 if( sqlite3StrNICmp(zRight, "cerod-", 6)==0 ){
 sqlite3_activate_cerod(&zRight[6]);
 }
 #endif
-}else
+                                                                    }
+                                                                    else
 #endif
-                                                          { /* Empty ELSE clause */}
+                                                                    { /* Empty ELSE clause */
+                                                                    }
 
       /*
       ** Reset the safety level, in case the fullfsync flag or synchronous
@@ -1772,10 +1850,11 @@ sqlite3_activate_cerod(&zRight[6]);
       if ( db.autoCommit != 0 )
       {
         sqlite3BtreeSetSafetyLevel( pDb.pBt, pDb.safety_level,
-          ( ( db.flags & SQLITE_FullFSync ) != 0 ) ? 1 : 0 );
+        ( ( db.flags & SQLITE_FullFSync ) != 0 ) ? 1 : 0,
+        ( ( db.flags & SQLITE_CkptFullFSync ) != 0 ) ? 1 : 0 );
       }
 #endif
-    pragma_out:
+pragma_out:
       sqlite3DbFree( db, ref zLeft );
       sqlite3DbFree( db, ref zRight );
       ;

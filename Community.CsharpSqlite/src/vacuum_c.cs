@@ -31,9 +31,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-12-07 20:14:09 a586a4deeb25330037a49df295b36aaf624d0f45
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -44,13 +43,13 @@ namespace Community.CsharpSqlite
 ** Finalize a prepared statement.  If there was an error, store the
 ** text of the error message in *pzErrMsg.  Return the result code.
 */
-    static int vacuumFinalize(sqlite3 db, sqlite3_stmt pStmt, string pzErrMsg)
+    static int vacuumFinalize( sqlite3 db, sqlite3_stmt pStmt, string pzErrMsg )
     {
       int rc;
-      rc = sqlite3VdbeFinalize((Vdbe)pStmt);
-      if (rc!=0)
+      rc = sqlite3VdbeFinalize( (Vdbe)pStmt );
+      if ( rc != 0 )
       {
-        sqlite3SetString(ref pzErrMsg, db, sqlite3_errmsg(db));
+        sqlite3SetString( ref pzErrMsg, db, sqlite3_errmsg( db ) );
       }
       return rc;
     }
@@ -58,7 +57,7 @@ namespace Community.CsharpSqlite
     /*
 ** Execute zSql on database db. Return an error code.
 */
-    static int execSql(sqlite3 db, string pzErrMsg, string zSql)
+    static int execSql( sqlite3 db, string pzErrMsg, string zSql )
     {
       sqlite3_stmt pStmt = null;
 #if !NDEBUG
@@ -72,8 +71,8 @@ namespace Community.CsharpSqlite
       string Dummy = null;
       if ( SQLITE_OK != sqlite3_prepare( db, zSql, -1, ref pStmt, ref Dummy ) )
       {
-        sqlite3SetString(ref pzErrMsg, db, sqlite3_errmsg(db));
-        return sqlite3_errcode(db);
+        sqlite3SetString( ref pzErrMsg, db, sqlite3_errmsg( db ) );
+        return sqlite3_errcode( db );
       }
 #if !NDEBUG
       rc = sqlite3_step( pStmt );
@@ -82,33 +81,34 @@ namespace Community.CsharpSqlite
 #else
 sqlite3_step(pStmt);
 #endif
-      return vacuumFinalize(db, pStmt, pzErrMsg);
+      return vacuumFinalize( db, pStmt, pzErrMsg );
     }
 
     /*
     ** Execute zSql on database db. The statement returns exactly
     ** one column. Execute this as SQL on the same database.
     */
-    static int execExecSql(sqlite3 db, string pzErrMsg, string zSql)
+    static int execExecSql( sqlite3 db, string pzErrMsg, string zSql )
     {
       sqlite3_stmt pStmt = null;
       int rc;
 
       string Dummy = null;
       rc = sqlite3_prepare( db, zSql, -1, ref pStmt, ref Dummy );
-      if ( rc != SQLITE_OK ) return rc;
+      if ( rc != SQLITE_OK )
+        return rc;
 
       while ( SQLITE_ROW == sqlite3_step( pStmt ) )
       {
-        rc = execSql(db, pzErrMsg, sqlite3_column_text(pStmt, 0));
+        rc = execSql( db, pzErrMsg, sqlite3_column_text( pStmt, 0 ) );
         if ( rc != SQLITE_OK )
         {
-          vacuumFinalize(db, pStmt, pzErrMsg);
+          vacuumFinalize( db, pStmt, pzErrMsg );
           return rc;
         }
       }
 
-      return vacuumFinalize(db, pStmt, pzErrMsg);
+      return vacuumFinalize( db, pStmt, pzErrMsg );
     }
 
     /*
@@ -146,11 +146,17 @@ sqlite3_step(pStmt);
       dxTrace saved_xTrace;   //void (*saved_xTrace)(void*,const char*);  /* Saved db->xTrace */
       Db pDb = null;          /* Database to detach at end of vacuum */
       bool isMemDb;           /* True if vacuuming a :memory: database */
-      int nRes;
+      int nRes;               /* Bytes of reserved space at the end of each page */
+      int nDb;                /* Number of attached databases */
 
       if ( 0 == db.autoCommit )
       {
         sqlite3SetString( ref pzErrMsg, db, "cannot VACUUM from within a transaction" );
+        return SQLITE_ERROR;
+      }
+      if ( db.activeVdbeCnt > 1 )
+      {
+        sqlite3SetString( ref pzErrMsg, db, "cannot VACUUM - SQL statements in progress" );
         return SQLITE_ERROR;
       }
 
@@ -161,7 +167,7 @@ sqlite3_step(pStmt);
       saved_nChange = db.nChange;
       saved_nTotalChange = db.nTotalChange;
       saved_xTrace = db.xTrace;
-      db.flags |= SQLITE_WriteSchema | SQLITE_IgnoreChecks;
+      db.flags |= SQLITE_WriteSchema | SQLITE_IgnoreChecks | SQLITE_PreferBuiltin;
       db.flags &= ~( SQLITE_ForeignKeys | SQLITE_ReverseOrder );
 
       db.xTrace = null;
@@ -183,7 +189,8 @@ sqlite3_step(pStmt);
       ** time to parse and run the PRAGMA to turn journalling off than it does
       ** to write the journal header file.
       */
-      if (sqlite3TempInMemory(db))
+      nDb = db.nDb;
+      if ( sqlite3TempInMemory( db ) )
       {
         zSql = "ATTACH ':memory:' AS vacuum_db;";
       }
@@ -191,8 +198,14 @@ sqlite3_step(pStmt);
       {
         zSql = "ATTACH '' AS vacuum_db;";
       }
-      rc = execSql(db, pzErrMsg, zSql);
-      if (rc != SQLITE_OK) goto end_of_vacuum;
+      rc = execSql( db, pzErrMsg, zSql );
+      if ( db.nDb > nDb )
+      {
+        pDb = db.aDb[db.nDb - 1];
+        Debug.Assert( pDb.zName == "vacuum_db" );
+      }
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
       pDb = db.aDb[db.nDb - 1];
       Debug.Assert( db.aDb[db.nDb - 1].zName == "vacuum_db" );
       pTemp = db.aDb[db.nDb - 1].pBt;
@@ -213,9 +226,17 @@ sqlite3_step(pStmt);
         int nKey;
         string zKey;
         sqlite3CodecGetKey( db, 0, out zKey, out nKey ); // sqlite3CodecGetKey(db, 0, (void**)&zKey, nKey);
-        if ( nKey != 0 ) db.nextPagesize = 0;
+        if ( nKey != 0 )
+          db.nextPagesize = 0;
       }
 #endif
+
+      /* Do not attempt to change the page size for a WAL database */
+      if ( sqlite3PagerGetJournalMode( sqlite3BtreePager( pMain ) )
+                                                   == PAGER_JOURNALMODE_WAL )
+      {
+        db.nextPagesize = 0;
+      }
 
       if ( sqlite3BtreeSetPageSize( pTemp, sqlite3BtreeGetPageSize( pMain ), nRes, 0 ) != 0
       || ( !isMemDb && sqlite3BtreeSetPageSize( pTemp, db.nextPagesize, nRes, 0 ) != 0 )
@@ -237,32 +258,36 @@ sqlite3_step(pStmt);
 #endif
 
       /* Begin a transaction */
-      rc = execSql(db, pzErrMsg, "BEGIN EXCLUSIVE;");
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
+      rc = execSql( db, pzErrMsg, "BEGIN EXCLUSIVE;" );
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
 
       /* Query the schema of the main database. Create a mirror schema
       ** in the temporary database.
       */
-      rc = execExecSql(db, pzErrMsg,
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'CREATE TABLE vacuum_db.' || substr(sql,14) " +
       "  FROM sqlite_master WHERE type='table' AND name!='sqlite_sequence'" +
       "   AND rootpage>0"
       );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql(db, pzErrMsg,
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'CREATE INDEX vacuum_db.' || substr(sql,14)" +
       "  FROM sqlite_master WHERE sql LIKE 'CREATE INDEX %' " );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql(db, pzErrMsg,
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'CREATE UNIQUE INDEX vacuum_db.' || substr(sql,21) " +
       "  FROM sqlite_master WHERE sql LIKE 'CREATE UNIQUE INDEX %'" );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
 
       /* Loop through the tables in the main database. For each, do
       ** an "INSERT INTO vacuum_db.xxx SELECT * FROM main.xxx;" to copy
       ** the contents to the temporary database.
       */
-      rc = execExecSql(db, pzErrMsg,
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
       "|| ' SELECT * FROM main.' || quote(name) || ';'" +
       "FROM main.sqlite_master " +
@@ -270,21 +295,24 @@ sqlite3_step(pStmt);
       "  AND rootpage>0"
 
       );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
 
       /* Copy over the sequence table
       */
-      rc = execExecSql(db, pzErrMsg,
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'DELETE FROM vacuum_db.' || quote(name) || ';' " +
       "FROM vacuum_db.sqlite_master WHERE name='sqlite_sequence' "
       );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
-      rc = execExecSql(db, pzErrMsg,
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
+      rc = execExecSql( db, pzErrMsg,
       "SELECT 'INSERT INTO vacuum_db.' || quote(name) " +
       "|| ' SELECT * FROM main.' || quote(name) || ';' " +
       "FROM vacuum_db.sqlite_master WHERE name=='sqlite_sequence';"
       );
-      if ( rc != SQLITE_OK ) goto end_of_vacuum;
+      if ( rc != SQLITE_OK )
+        goto end_of_vacuum;
 
 
       /* Copy the triggers, views, and virtual tables from the main database
@@ -292,14 +320,15 @@ sqlite3_step(pStmt);
       ** associated storage, so all we have to do is copy their entries
       ** from the SQLITE_MASTER table.
       */
-      rc = execSql(db, pzErrMsg,
+      rc = execSql( db, pzErrMsg,
       "INSERT INTO vacuum_db.sqlite_master " +
       "  SELECT type, name, tbl_name, rootpage, sql" +
       "    FROM main.sqlite_master" +
       "   WHERE type='view' OR type='trigger'" +
       "      OR (type='table' AND rootpage=0)"
       );
-      if ( rc != 0 ) goto end_of_vacuum;
+      if ( rc != 0 )
+        goto end_of_vacuum;
 
       /* At this point, unless the main db was completely empty, there is now a
       ** transaction open on the vacuum database, but not on the main database.
@@ -336,13 +365,16 @@ BTREE_USER_VERSION,       0,  /* Preserve the user version */
           ** we already have page 1 loaded into cache and marked dirty. */
           sqlite3BtreeGetMeta( pMain, aCopy[i], ref meta );
           rc = sqlite3BtreeUpdateMeta( pTemp, aCopy[i], (u32)( meta + aCopy[i + 1] ) );
-          if ( NEVER( rc != SQLITE_OK ) ) goto end_of_vacuum;
+          if ( NEVER( rc != SQLITE_OK ) )
+            goto end_of_vacuum;
         }
 
         rc = sqlite3BtreeCopyFile( pMain, pTemp );
-        if ( rc != SQLITE_OK ) goto end_of_vacuum;
+        if ( rc != SQLITE_OK )
+          goto end_of_vacuum;
         rc = sqlite3BtreeCommit( pTemp );
-        if ( rc != SQLITE_OK ) goto end_of_vacuum;
+        if ( rc != SQLITE_OK )
+          goto end_of_vacuum;
 #if !SQLITE_OMIT_AUTOVACUUM
         sqlite3BtreeSetAutoVacuum( pMain, sqlite3BtreeGetAutoVacuum( pTemp ) );
 #endif
@@ -350,12 +382,13 @@ BTREE_USER_VERSION,       0,  /* Preserve the user version */
       Debug.Assert( rc == SQLITE_OK );
       rc = sqlite3BtreeSetPageSize( pMain, sqlite3BtreeGetPageSize( pTemp ), nRes, 1 );
 
-    end_of_vacuum:
+end_of_vacuum:
       /* Restore the original value of db.flags */
       db.flags = saved_flags;
       db.nChange = saved_nChange;
       db.nTotalChange = saved_nTotalChange;
       db.xTrace = saved_xTrace;
+      sqlite3BtreeSetPageSize( pMain, -1, -1, 1 );
 
       /* Currently there is an SQL level transaction open on the vacuum
       ** database. No locks are held on any other files (since the main file

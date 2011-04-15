@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using va_list = System.Object;
 
 namespace Community.CsharpSqlite
 {
@@ -26,9 +27,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2009-12-07 16:39:13 1ed88e9d01e9eda5cbc622e7614277f29bcc551c
+    **  SQLITE_SOURCE_ID: 2010-08-23 18:52:01 42537b60566f288167f1b5864a5435986838e3a3
     **
-    **  $Header$
     *************************************************************************
     */
     //#if !_OS_COMMON_H_
@@ -44,21 +44,15 @@ namespace Community.CsharpSqlite
 
 #if SQLITE_DEBUG || TRACE
     static bool sqlite3OsTrace = false;
-    static void OSTRACE1( string X ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X ); }
-    static void OSTRACE2( string X, object Y ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y ); }
-    static void OSTRACE3( string X, object Y, object Z ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y, Z ); }
-    static void OSTRACE4( string X, object Y, object Z, object A ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y, Z, A ); }
-    static void OSTRACE5( string X, object Y, object Z, object A, object B ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y, Z, A, B ); }
-    static void OSTRACE6( string X, object Y, object Z, object A, object B, object C ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y, Z, A, B, C ); }
-    static void OSTRACE7( string X, object Y, object Z, object A, object B, object C, object D ) { if ( sqlite3OsTrace ) sqlite3DebugPrintf( X, Y, Z, A, B, C, D ); }
+    //#define OSTRACE(X)          if( sqlite3OSTrace ) sqlite3DebugPrintf X
+    static void OSTRACE( string X, params va_list[] ap )
+    {
+      if ( sqlite3OsTrace )
+        sqlite3DebugPrintf( X, ap );
+    }
 #else
-//#define OSTRACE1(X)
-//#define OSTRACE2(X,Y)
-//#define OSTRACE3(X,Y,Z)
-//#define OSTRACE4(X,Y,Z,A)
-//#define OSTRACE5(X,Y,Z,A,B)
-//#define OSTRACE6(X,Y,Z,A,B,C)
-//#define OSTRACE7(X,Y,Z,A,B,C,D)
+    //#define OSTRACE(X)
+    static void OSTRACE( string X, params object[] ap) { }
 #endif
 
     /*
@@ -98,7 +92,10 @@ static sqlite_u3264 g_elapsed;
     static int sqlite3_io_error_benign = 0;         /* True if errors are benign */
     //static int sqlite3_diskfull_pending = 0;
     //static int sqlite3_diskfull = 0;
-    static void SimulateIOErrorBenign( int X ) { sqlite3_io_error_benign = ( X ); }
+    static void SimulateIOErrorBenign( int X )
+    {
+      sqlite3_io_error_benign = ( X );
+    }
     //#define SimulateIOError(CODE)  \
     //  if( (sqlite3_io_error_persist && sqlite3_io_error_hit) \
     //       || sqlite3_io_error_pending-- == 1 )  \
@@ -120,7 +117,8 @@ static sqlite_u3264 g_elapsed;
       IOTRACE( "IOERR\n" );
 #endif
       sqlite3_io_error_hit.iValue++;
-      if ( sqlite3_io_error_benign == 0 ) sqlite3_io_error_hardhit.iValue++;
+      if ( sqlite3_io_error_benign == 0 )
+        sqlite3_io_error_hardhit.iValue++;
     }
     //#define SimulateDiskfullError(CODE) \
     //   if( sqlite3_diskfull_pending ){ \
@@ -152,7 +150,10 @@ static sqlite_u3264 g_elapsed;
       return false;
     }
 #else
+    static bool SimulateIOError() { return false; }
 //#define SimulateIOErrorBenign(X)
+    static void SimulateIOErrorBenign( int x ) { }
+
 //#define SimulateIOError(A)
 //#define SimulateDiskfullError(A)
 #endif

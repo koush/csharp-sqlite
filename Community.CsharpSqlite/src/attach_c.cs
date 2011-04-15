@@ -26,9 +26,8 @@ namespace Community.CsharpSqlite
     **  Included in SQLite3 port to C#-SQLite;  2008 Noah B Hart
     **  C#-SQLite is an independent reimplementation of the SQLite software library
     **
-    **  SQLITE_SOURCE_ID: 2010-03-09 19:31:43 4ae453ea7be69018d8c16eb8dabe05617397dc4d
+    **  SQLITE_SOURCE_ID: 2010-12-07 20:14:09 a586a4deeb25330037a49df295b36aaf624d0f45
     **
-    **  $Header$
     *************************************************************************
     */
     //#include "sqliteInt.h"
@@ -101,8 +100,8 @@ namespace Community.CsharpSqlite
 
       UNUSED_PARAMETER( NotUsed );
 
-      zFile = argv[0].z != null && ( argv[0].z.Length > 0 ) ? sqlite3_value_text( argv[0] ) : "";
-      zName = argv[1].z != null && ( argv[1].z.Length > 0 ) ? sqlite3_value_text( argv[1] ) : "";
+      zFile = argv[0].z != null && ( argv[0].z.Length > 0 ) && argv[0].flags != MEM_Null ? sqlite3_value_text( argv[0] ) : "";
+      zName = argv[1].z != null && ( argv[1].z.Length > 0 ) && argv[1].flags != MEM_Null ? sqlite3_value_text( argv[1] ) : "";
       //if( zFile==null ) zFile = "";
       //if ( zName == null ) zName = "";
 
@@ -129,7 +128,7 @@ namespace Community.CsharpSqlite
       {
         string z = db.aDb[i].zName;
         Debug.Assert( z != null && zName != null );
-        if ( sqlite3StrICmp( z, zName ) == 0 )
+        if ( z.Equals( zName, StringComparison.InvariantCultureIgnoreCase ) )
         {
           zErrDyn = sqlite3MPrintf( db, "database %s is already in use", zName );
           goto attach_error;
@@ -147,8 +146,10 @@ namespace Community.CsharpSqlite
       //  if( aNew==0 ) return;
       //  memcpy(aNew, db.aDb, sizeof(db.aDb[0])*2);
       //}else {
-      if ( db.aDb.Length <= db.nDb ) Array.Resize( ref db.aDb, db.nDb + 1 );//aNew = sqlite3DbRealloc(db, db.aDb, sizeof(db.aDb[0])*(db.nDb+1) );
-      if ( db.aDb == null ) return;   // if( aNew==0 ) return;
+      if ( db.aDb.Length <= db.nDb )
+        Array.Resize( ref db.aDb, db.nDb + 1 );//aNew = sqlite3DbRealloc(db, db.aDb, sizeof(db.aDb[0])*(db.nDb+1) );
+      if ( db.aDb == null )
+        return;   // if( aNew==0 ) return;
       //}
       db.aDb[db.nDb] = new Db();//db.aDb = aNew;
       aNew = db.aDb[db.nDb];//memset(aNew, 0, sizeof(*aNew));
@@ -158,9 +159,8 @@ namespace Community.CsharpSqlite
       ** it to obtain the database schema. At this point the schema may
       ** or may not be initialised.
       */
-      rc = sqlite3BtreeFactory( db, zFile, false, SQLITE_DEFAULT_CACHE_SIZE,
-      db.openFlags | SQLITE_OPEN_MAIN_DB,
-      ref aNew.pBt );
+      rc = sqlite3BtreeOpen( zFile, db, ref aNew.pBt, 0,
+                        db.openFlags | SQLITE_OPEN_MAIN_DB );
       db.nDb++;
       if ( rc == SQLITE_CONSTRAINT )
       {
@@ -183,9 +183,8 @@ namespace Community.CsharpSqlite
         }
         pPager = sqlite3BtreePager( aNew.pBt );
         sqlite3PagerLockingMode( pPager, db.dfltLockMode );
-        sqlite3PagerJournalMode( pPager, db.dfltJournalMode );
-        sqlite3BtreeSecureDelete(aNew.pBt,
-                                 sqlite3BtreeSecureDelete(db.aDb[0].pBt, -1));
+        sqlite3BtreeSecureDelete( aNew.pBt,
+                                 sqlite3BtreeSecureDelete( db.aDb[0].pBt, -1 ) );
       }
       aNew.safety_level = 3;
       aNew.zName = zName;//sqlite3DbStrDup(db, zName);
@@ -263,14 +262,15 @@ namespace Community.CsharpSqlite
 
       return;
 
-    attach_error:
+attach_error:
       /* Return an error if we get here */
       if ( zErrDyn != "" )
       {
         sqlite3_result_error( context, zErrDyn, -1 );
         sqlite3DbFree( db, ref zErrDyn );
       }
-      if ( rc != 0 ) sqlite3_result_error_code( context, rc );
+      if ( rc != 0 )
+        sqlite3_result_error_code( context, rc );
     }
 
     /*
@@ -291,37 +291,40 @@ namespace Community.CsharpSqlite
       sqlite3 db = sqlite3_context_db_handle( context );
       int i;
       Db pDb = null;
-      string zErr = "";
+      StringBuilder zErr = new StringBuilder( 200 );
 
       UNUSED_PARAMETER( NotUsed );
 
-      if ( zName == null ) zName = "";
+      if ( zName == null )
+        zName = "";
       for ( i = 0; i < db.nDb; i++ )
       {
         pDb = db.aDb[i];
-        if ( pDb.pBt == null ) continue;
-        if ( sqlite3StrICmp( pDb.zName, zName ) == 0 ) break;
+        if ( pDb.pBt == null )
+          continue;
+        if ( pDb.zName.Equals( zName, StringComparison.InvariantCultureIgnoreCase ) )
+          break;
       }
 
       if ( i >= db.nDb )
       {
-        sqlite3_snprintf( 200, ref zErr, "no such database: %s", zName );
+        sqlite3_snprintf( 200, zErr, "no such database: %s", zName );
         goto detach_error;
       }
       if ( i < 2 )
       {
-        sqlite3_snprintf( 200, ref zErr, "cannot detach database %s", zName );
+        sqlite3_snprintf( 200, zErr, "cannot detach database %s", zName );
         goto detach_error;
       }
       if ( 0 == db.autoCommit )
       {
-        sqlite3_snprintf( 200, ref zErr,
+        sqlite3_snprintf( 200, zErr,
         "cannot DETACH database within transaction" );
         goto detach_error;
       }
       if ( sqlite3BtreeIsInReadTrans( pDb.pBt ) || sqlite3BtreeIsInBackup( pDb.pBt ) )
       {
-        sqlite3_snprintf( 200, ref zErr, "database %s is locked", zName );
+        sqlite3_snprintf( 200, zErr, "database %s is locked", zName );
         goto detach_error;
       }
 
@@ -331,8 +334,8 @@ namespace Community.CsharpSqlite
       sqlite3ResetInternalSchema( db, 0 );
       return;
 
-    detach_error:
-      sqlite3_result_error( context, zErr, -1 );
+detach_error:
+      sqlite3_result_error( context, zErr.ToString(), -1 );
     }
 
     /*
@@ -402,7 +405,7 @@ goto attach_end;
         sqlite3VdbeAddOp1( v, OP_Expire, ( type == SQLITE_ATTACH ) ? 1 : 0 );
       }
 
-    attach_end:
+attach_end:
       sqlite3ExprDelete( db, ref pFilename );
       sqlite3ExprDelete( db, ref pDbname );
       sqlite3ExprDelete( db, ref pKey );
@@ -413,20 +416,21 @@ goto attach_end;
     **
     **     DETACH pDbname
     */
+    static FuncDef detach_func = new FuncDef(
+    1,                   /* nArg */
+    SQLITE_UTF8,         /* iPrefEnc */
+    0,                   /* flags */
+    null,                /* pUserData */
+    null,                /* pNext */
+    detachFunc,          /* xFunc */
+    null,                /* xStep */
+    null,                /* xFinalize */
+    "sqlite_detach",     /* zName */
+    null,                /* pHash */
+    null                 /* pDestructor */
+    );
     static void sqlite3Detach( Parse pParse, Expr pDbname )
     {
-      FuncDef detach_func = new FuncDef(
-      1,                   /* nArg */
-      SQLITE_UTF8,         /* iPrefEnc */
-      0,                   /* flags */
-      null,                /* pUserData */
-      null,                /* pNext */
-      detachFunc,          /* xFunc */
-      null,                /* xStep */
-      null,                /* xFinalize */
-      "sqlite_detach",     /* zName */
-      null                 /* pHash */
-      );
       codeAttach( pParse, SQLITE_DETACH, detach_func, pDbname, null, null, pDbname );
     }
 
@@ -435,20 +439,21 @@ goto attach_end;
     **
     **     ATTACH p AS pDbname KEY pKey
     */
+    static FuncDef attach_func = new FuncDef(
+    3,                /* nArg */
+    SQLITE_UTF8,      /* iPrefEnc */
+    0,                /* flags */
+    null,             /* pUserData */
+    null,             /* pNext */
+    attachFunc,       /* xFunc */
+    null,             /* xStep */
+    null,             /* xFinalize */
+    "sqlite_attach",  /* zName */
+    null,                /* pHash */
+    null                 /* pDestructor */
+    );
     static void sqlite3Attach( Parse pParse, Expr p, Expr pDbname, Expr pKey )
     {
-      FuncDef attach_func = new FuncDef(
-      3,                /* nArg */
-      SQLITE_UTF8,      /* iPrefEnc */
-      0,                /* flags */
-      null,             /* pUserData */
-      null,             /* pNext */
-      attachFunc,       /* xFunc */
-      null,             /* xStep */
-      null,             /* xFinalize */
-      "sqlite_attach",  /* zName */
-      null              /* pHash */
-      );
       codeAttach( pParse, SQLITE_ATTACH, attach_func, p, p, pDbname, pKey );
     }
 #endif // * SQLITE_OMIT_ATTACH */
@@ -470,7 +475,8 @@ goto attach_end;
     {
       sqlite3 db;
 
-      if ( NEVER( iDb < 0 ) || iDb == 1 ) return 0;
+      if ( NEVER( iDb < 0 ) || iDb == 1 )
+        return 0;
       db = pParse.db;
       Debug.Assert( db.nDb > iDb );
       pFix.pParse = pParse;
@@ -503,7 +509,8 @@ goto attach_end;
       string zDb;
       SrcList_item pItem;
 
-      if ( NEVER( pList == null ) ) return 0;
+      if ( NEVER( pList == null ) )
+        return 0;
       zDb = pFix.zDb;
       for ( i = 0; i < pList.nSrc; i++ )
       {//, pItem++){
@@ -512,7 +519,7 @@ goto attach_end;
         {
           pItem.zDatabase = zDb;// sqlite3DbStrDup( pFix.pParse.db, zDb );
         }
-        else if ( sqlite3StrICmp( pItem.zDatabase, zDb ) != 0 )
+        else if ( !pItem.zDatabase.Equals( zDb ,StringComparison.InvariantCultureIgnoreCase )  )
         {
           sqlite3ErrorMsg( pFix.pParse,
           "%s %T cannot reference objects in database %s",
@@ -520,8 +527,10 @@ goto attach_end;
           return 1;
         }
 #if !SQLITE_OMIT_VIEW || !SQLITE_OMIT_TRIGGER
-        if ( sqlite3FixSelect( pFix, pItem.pSelect ) != 0 ) return 1;
-        if ( sqlite3FixExpr( pFix, pItem.pOn ) != 0 ) return 1;
+        if ( sqlite3FixSelect( pFix, pItem.pSelect ) != 0 )
+          return 1;
+        if ( sqlite3FixExpr( pFix, pItem.pOn ) != 0 )
+          return 1;
 #endif
       }
       return 0;
@@ -561,14 +570,17 @@ goto attach_end;
     {
       while ( pExpr != null )
       {
-        if ( ExprHasAnyProperty( pExpr, EP_TokenOnly ) ) break;
+        if ( ExprHasAnyProperty( pExpr, EP_TokenOnly ) )
+          break;
         if ( ExprHasProperty( pExpr, EP_xIsSelect ) )
         {
-          if ( sqlite3FixSelect( pFix, pExpr.x.pSelect ) != 0 ) return 1;
+          if ( sqlite3FixSelect( pFix, pExpr.x.pSelect ) != 0 )
+            return 1;
         }
         else
         {
-          if ( sqlite3FixExprList( pFix, pExpr.x.pList ) != 0 ) return 1;
+          if ( sqlite3FixExprList( pFix, pExpr.x.pList ) != 0 )
+            return 1;
         }
         if ( sqlite3FixExpr( pFix, pExpr.pRight ) != 0 )
         {
@@ -585,7 +597,8 @@ goto attach_end;
     {
       int i;
       ExprList_item pItem;
-      if ( pList == null ) return 0;
+      if ( pList == null )
+        return 0;
       for ( i = 0; i < pList.nExpr; i++ )//, pItem++ )
       {
         pItem = pList.a[i];

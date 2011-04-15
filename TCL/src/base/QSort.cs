@@ -9,11 +9,11 @@
 * WARRANTIES.
 * 
 * Included in SQLite3 port to C# for use in testharness only;  2008 Noah B Hart
-* $Header$
+*
 * RCS @(#) $Id: QSort.java,v 1.2 1999/05/09 01:14:07 dejong Exp $
 *
 */
-using System;
+using System.Text;
 namespace tcl.lang
 {
 
@@ -197,7 +197,7 @@ namespace tcl.lang
       }
 
       int uniqueIx = 1;
-      for ( int ix = 1 ; ix < a.Length ; ix++ )
+      for ( int ix = 1; ix < a.Length; ix++ )
       {
         if ( compare( a[ix], a[uniqueIx - 1] ) == 0 )
         {
@@ -338,7 +338,7 @@ namespace tcl.lang
           break;
 
         case COMMAND:
-          System.Text.StringBuilder sbuf = new System.Text.StringBuilder( sortCommand );
+          StringBuilder sbuf = new StringBuilder( sortCommand );
 
           Util.appendElement( sortInterp, sbuf, obj1.ToString() );
 
